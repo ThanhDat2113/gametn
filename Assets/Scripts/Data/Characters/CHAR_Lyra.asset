@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f9330979f02ddf43a415e7748b42aae, type: 3}
+  m_Name: CHAR_Lyra
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterData
+  prefab: {fileID: 4867056905143320826, guid: debaa4c5f0fcd744a900eb4bad2a373b, type: 3}
+  characterName: Lyra
+  portrait: {fileID: 0}
+  battleSprite: {fileID: 21300000, guid: c1403451e78b1214096c752eeec6ed7c, type: 3}
+  lore: 
+  baseHP: 90
+  baseATK: 32
+  basePDEF: 6
+  baseMDEF: 18
+  baseLuck: 20
+  hpPerLevel: 4
+  atkPerLevel: 4
+  pdefPerLevel: 1
+  mdefPerLevel: 1
+  luckPerLevel: 1
+  skills:
+  - {fileID: 11400000, guid: 57dfcd1ff33832b4dbceb17a52e7dd57, type: 2}
+  - {fileID: 11400000, guid: 11f99b9e44f55d24f9a9be5905621f95, type: 2}
+  - {fileID: 11400000, guid: ba02412c7cef494438ad4a0169ac076e, type: 2}
