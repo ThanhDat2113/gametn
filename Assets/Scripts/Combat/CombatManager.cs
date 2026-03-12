@@ -42,7 +42,10 @@ public class CombatManager : MonoBehaviour
 
     // ── Events ────────────────────────────────────────────────
     public event System.Action OnCombatStarted;
+    // Legacy: gọi từng nhân vật một (không dùng với UI mới)
     public event System.Action<CombatUnit> OnPlayerUnitPlanning;
+    // UI mới: fired khi bắt đầu PlayerPlan, truyền toàn bộ danh sách để UI tự xử lý
+    public event System.Action<List<CombatUnit>> OnPlayerPlanStarted;
     // Fired sau khi enemy đã plan xong — dùng để hiện mũi tên chỉ target
     public event System.Action OnEnemyPlanDone;
     public event System.Action OnExecuteStarted;
@@ -74,7 +77,7 @@ public class CombatManager : MonoBehaviour
             if (slot?.data == null) continue;
             var unit = new CombatUnit();
             unit.Initialize(slot.data, slot.level, isPlayer: true);
-            unit.GridRow  = SlotToRow(slot.gridSlot);
+            unit.GridRow = SlotToRow(slot.gridSlot);
             unit.GridSlot = slot.gridSlot;
             PlayerUnits.Add(unit);
         }
@@ -84,7 +87,7 @@ public class CombatManager : MonoBehaviour
             if (entry?.data == null) continue;
             var unit = new CombatUnit();
             unit.Initialize(entry.data, entry.level, isPlayer: false);
-            unit.GridRow  = SlotToRow(entry.gridSlot);
+            unit.GridRow = SlotToRow(entry.gridSlot);
             unit.GridSlot = entry.gridSlot;
             EnemyUnits.Add(unit);
         }
@@ -104,13 +107,17 @@ public class CombatManager : MonoBehaviour
         {
             slots = playerSetup.ConvertAll(p => new FormationSlot
             {
-                data = p.data, level = p.level, gridSlot = p.gridSlot
+                data = p.data,
+                level = p.level,
+                gridSlot = p.gridSlot
             }).ToArray()
         };
         var enemyGroup = ScriptableObject.CreateInstance<EnemyGroupData>();
         enemyGroup.enemies = enemySetup.ConvertAll(e => new EnemyGroupData.EnemyEntry
         {
-            data = e.data, level = e.level, gridSlot = e.gridSlot
+            data = e.data,
+            level = e.level,
+            gridSlot = e.gridSlot
         }).ToArray();
         StartCombat(formation, enemyGroup);
     }
@@ -122,7 +129,7 @@ public class CombatManager : MonoBehaviour
             if (view != null) Destroy(view.gameObject);
         unitViews.Clear();
         SpawnSide(PlayerUnits, playerGridSlots);
-        SpawnSide(EnemyUnits,  enemyGridSlots);
+        SpawnSide(EnemyUnits, enemyGridSlots);
     }
 
     private void SpawnSide(List<CombatUnit> units, Transform[] gridSlots)
@@ -141,7 +148,7 @@ public class CombatManager : MonoBehaviour
                 Debug.LogError($"[CombatManager] gridSlot {slot} của {unit.UnitName} không có Transform!");
                 continue;
             }
-            var go   = Instantiate(prefab, gridSlots[slot].position, Quaternion.identity);
+            var go = Instantiate(prefab, gridSlots[slot].position, Quaternion.identity);
             var view = go.GetComponent<UnitView>();
             if (view == null) { Debug.LogError($"Prefab {prefab.name} thiếu UnitView!"); continue; }
             view.Setup(unit);
@@ -182,7 +189,12 @@ public class CombatManager : MonoBehaviour
     private void StartPlayerPlan()
     {
         planningIndex = 0;
-        RequestNextPlayerInput();
+        // Fire new UI event với toàn bộ danh sách player alive
+        var alivePlayers = PlayerUnits.Where(u => u.IsAlive).ToList();
+        OnPlayerPlanStarted?.Invoke(alivePlayers);
+        // Legacy fallback nếu không có listener mới
+        if (OnPlayerPlanStarted == null)
+            RequestNextPlayerInput();
     }
 
     private void RequestNextPlayerInput()
@@ -203,6 +215,41 @@ public class CombatManager : MonoBehaviour
         OnPlayerUnitPlanning?.Invoke(PlayerUnits[planningIndex]);
     }
 
+    /// <summary>
+    /// UI mới: submit tất cả lựa chọn cùng lúc sau khi player nhấn CONFIRM.
+    /// choices: list theo thứ tự hành động (index 0 = hành động đầu tiên)
+    /// </summary>
+    public void SubmitAllPlayerChoices(
+        List<(CombatUnit unit, SkillData skill, List<CombatUnit> targets)> choices)
+    {
+        if (stateMachine.Current != CombatPhase.PlayerPlan)
+        {
+            Debug.LogWarning("[CombatManager] SubmitAllPlayerChoices gọi sai phase!");
+            return;
+        }
+
+        // Reorder PlayerUnits theo thứ tự player đã sắp xếp
+        // (ảnh hưởng đến IndexOf → PlanningOrder → Retarget)
+        var orderedUnits = choices.Select(c => c.unit).ToList();
+        foreach (var unit in PlayerUnits.Where(u => !orderedUnits.Contains(u)))
+            orderedUnits.Add(unit); // unit chưa chọn (dead, etc.) thêm vào cuối
+        PlayerUnits.Clear();
+        PlayerUnits.AddRange(orderedUnits);
+
+        // Gán skill và target
+        foreach (var (unit, skill, targets) in choices)
+        {
+            unit.SelectSkill(skill, targets);
+            Debug.Log($"[Player] {unit.UnitName} chọn [{skill.skillName}] " +
+                      $"→ [{string.Join(", ", targets.Select(t => t.UnitName))}]");
+        }
+
+        stateMachine.TransitionTo(CombatPhase.RetargetCheck);
+    }
+
+    /// <summary>
+    /// Legacy: submit từng nhân vật một (dùng cho CombatTestUI cũ)
+    /// </summary>
     public void SubmitPlayerChoice(SkillData skill, List<CombatUnit> targets)
     {
         if (stateMachine.Current != CombatPhase.PlayerPlan)
@@ -277,8 +324,8 @@ public class CombatManager : MonoBehaviour
         // - Enemy không có clash pair → Bước 4 xử lý (free attack target gốc)
         // - Player không có clash pair và không trong afterClashQueue → Bước 4
 
-        var clashPairs    = new List<(CombatUnit player, CombatUnit enemy)>();
-        var handledUnits  = new HashSet<CombatUnit>();
+        var clashPairs = new List<(CombatUnit player, CombatUnit enemy)>();
+        var handledUnits = new HashSet<CombatUnit>();
         var afterClashQueue = new Dictionary<CombatUnit, List<(CombatUnit player, SkillData skill)>>();
 
         foreach (var enemy in EnemyUnits.Where(e => e.IsAlive))
@@ -469,11 +516,11 @@ public class CombatManager : MonoBehaviour
             yield break;
         }
 
-        var targetView    = unitViews.Find(v => v.LinkedUnit == target);
-        Vector3 origin    = attackerView.transform.position;
+        var targetView = unitViews.Find(v => v.LinkedUnit == target);
+        Vector3 origin = attackerView.transform.position;
         Vector3 targetPos = targetView != null ? targetView.transform.position : origin;
-        Vector3 dir       = (targetPos - origin).normalized;
-        Vector3 rushDest  = targetPos - dir * clashSequence.faceOffDistance;
+        Vector3 dir = (targetPos - origin).normalized;
+        Vector3 rushDest = targetPos - dir * clashSequence.faceOffDistance;
 
         // Phase 1: Rush
         attackerView.SetAnimationTrigger("Rush");
