@@ -40,6 +40,15 @@ public class ActionSlotUI : MonoBehaviour,
     private static readonly Color GhostColor = new Color(1f, 1f, 1f, 0.5f);
 
     // ─────────────────────────────────────────────────────────
+    // Gán thủ công trong Inspector — ưu tiên hơn tìm theo tên
+    [Header("References (kéo tay vào hoặc để trống — tự tìm)")]
+    public Image portraitRef;
+    public Image borderRef;
+    public Image dropIndicatorRef;
+    public TextMeshProUGUI unitNameRef;
+    public TextMeshProUGUI skillNameRef;
+    public TextMeshProUGUI orderRef;
+
     private void Awake()
     {
         rectTransform = GetComponent<RectTransform>();
@@ -48,14 +57,45 @@ public class ActionSlotUI : MonoBehaviour,
 
         rootCanvas = GetComponentInParent<Canvas>();
 
-        portrait = transform.Find("Portrait")?.GetComponent<Image>();
-        borderImage = transform.Find("Border")?.GetComponent<Image>();
-        unitNameText = transform.Find("UnitName")?.GetComponent<TextMeshProUGUI>();
-        skillNameText = transform.Find("SkillName")?.GetComponent<TextMeshProUGUI>();
-        orderText = transform.Find("OrderText")?.GetComponent<TextMeshProUGUI>();
-        dropIndicator = transform.Find("DropIndicator")?.GetComponent<Image>();
+        // Dùng reference gán tay nếu có, fallback tìm theo tên
+        portrait = portraitRef ?? FindChildImage("Portrait");
+        borderImage = borderRef ?? FindChildImage("Border");
+        dropIndicator = dropIndicatorRef ?? FindChildImage("DropIndicator");
+        unitNameText = unitNameRef ?? FindChildTMP("UnitName");
+        skillNameText = skillNameRef ?? FindChildTMP("SkillName");
+        orderText = orderRef ?? FindChildTMP("OrderText");
+
+        // Log để debug
+        Debug.Log($"[ActionSlotUI] Awake on {gameObject.name}: " +
+                  $"portrait={(portrait != null ? "OK" : "NULL")} " +
+                  $"border={(borderImage != null ? "OK" : "NULL")} " +
+                  $"unitName={(unitNameText != null ? "OK" : "NULL")}");
 
         HideIndicator();
+    }
+
+    // Tìm Image trong tất cả children (case-insensitive)
+    private Image FindChildImage(string childName)
+    {
+        foreach (Transform child in transform)
+        {
+            if (string.Equals(child.name, childName,
+                System.StringComparison.OrdinalIgnoreCase))
+                return child.GetComponent<Image>();
+        }
+        // Fallback: nếu chỉ có 1 Image con (ngoài root) thì dùng luôn
+        return null;
+    }
+
+    private TextMeshProUGUI FindChildTMP(string childName)
+    {
+        foreach (Transform child in transform)
+        {
+            if (string.Equals(child.name, childName,
+                System.StringComparison.OrdinalIgnoreCase))
+                return child.GetComponent<TextMeshProUGUI>();
+        }
+        return null;
     }
 
     // ─────────────────────────────────────────────────────────
@@ -69,8 +109,21 @@ public class ActionSlotUI : MonoBehaviour,
         SlotIndex = index;
         parentUI = parent;
 
-        if (portrait != null && unit.Data.portrait != null)
-            portrait.sprite = unit.Data.portrait;
+        Debug.Log($"[ActionSlotUI] Setup: unit={unit.UnitName} " +
+                  $"portrait={(portrait != null ? "found" : "NULL")} " +
+                  $"portraitRef={(portraitRef != null ? "found" : "NULL")} " +
+                  $"data.portrait={(unit.Data.portrait != null ? "has sprite" : "NULL")}");
+
+        // Dùng portrait nếu có, fallback sang battleSprite
+        var portraitSprite = unit.Data.portrait != null
+                             ? unit.Data.portrait
+                             : unit.Data.battleSprite;
+
+        if (portrait != null && portraitSprite != null)
+        {
+            portrait.sprite = portraitSprite;
+            portrait.enabled = true;
+        }
 
         if (unitNameText != null) unitNameText.text = unit.UnitName;
         if (orderText != null) orderText.text = (index + 1).ToString();
