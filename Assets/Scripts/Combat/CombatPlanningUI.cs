@@ -584,48 +584,30 @@ public class CombatPlanningUI : MonoBehaviour
         if (!isDragging) return;
         isDragging = false;
 
-        // Ẩn tất cả indicator
         foreach (var s in actionSlots) s.HideIndicator();
 
-        int insertBefore = hoveredSlotIndex;
+        int swapWith = hoveredSlotIndex;
         hoveredSlotIndex = -1;
 
-        if (insertBefore < 0 || insertBefore == dragFromIndex)
+        // Không hợp lệ hoặc thả vào chính nó → không đổi
+        if (swapWith < 0 || swapWith == dragFromIndex)
         {
-            // Thả vào vị trí không hợp lệ hoặc chính nó → không đổi
             dragFromIndex = -1;
             return;
         }
 
-        // INSERT: lấy unit ra khỏi vị trí cũ, chèn vào trước insertBefore
         var alive = actionOrder.Where(u => u.IsAlive).ToList();
 
-        if (dragFromIndex >= alive.Count || insertBefore > alive.Count)
+        if (dragFromIndex >= alive.Count || swapWith >= alive.Count)
         {
             dragFromIndex = -1;
             return;
         }
 
-        var moving = alive[dragFromIndex];
-        alive.RemoveAt(dragFromIndex);
-
-        // Sau khi remove khỏi vị trí cũ, index các slot phía sau giảm đi 1.
-        // Nếu insertBefore > dragFromIndex thì cần trừ 1 để compensate.
-        // Ví dụ: [A B C D E], drag A(0) thả vào trước D(3)
-        //   → remove A → [B C D E]
-        //   → insertBefore=3, dragFrom=0 → insertIdx = 3-1 = 2
-        //   → insert tại 2 → [B C A D E] ✓
-        //
-        // Ví dụ: [A B C D E], drag D(3) thả vào trước B(1)
-        //   → remove D → [A B C E]
-        //   → insertBefore=1, dragFrom=3 → insertIdx = 1 (không trừ)
-        //   → insert tại 1 → [A D B C E] ✓
-        int insertIdx = insertBefore > dragFromIndex
-            ? insertBefore - 1
-            : insertBefore;
-
-        insertIdx = Mathf.Clamp(insertIdx, 0, alive.Count);
-        alive.Insert(insertIdx, moving);
+        // SWAP: đổi chỗ 2 nhân vật
+        var tmp = alive[dragFromIndex];
+        alive[dragFromIndex] = alive[swapWith];
+        alive[swapWith] = tmp;
 
         actionOrder = alive;
         dragFromIndex = -1;
