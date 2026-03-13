@@ -522,6 +522,16 @@ public class CombatManager : MonoBehaviour
         Vector3 dir = (targetPos - origin).normalized;
         Vector3 rushDest = targetPos - dir * clashSequence.faceOffDistance;
 
+        // Fade out các unit không liên quan (giảm alpha xuống 20%)
+        var allUnits = FindObjectsByType<UnitView>(FindObjectsSortMode.None);
+        foreach (var unit in allUnits)
+        {
+            if (unit != attackerView && unit != targetView)
+            {
+                StartCoroutine(FadeUnitAlpha(unit, 0.2f, 0.3f));
+            }
+        }
+
         // Phase 1: Rush
         attackerView.SetAnimationTrigger("Rush");
         float elapsed = 0f;
@@ -537,6 +547,12 @@ public class CombatManager : MonoBehaviour
         // Phase 2: Attack
         attackerView.SetCurrentSkill(skill);
         attackerView.SetPendingHits(hits, target);
+        
+        // Camera zoom in vào attacker
+        if (clashSequence.cameraManager != null)
+            clashSequence.cameraManager.ZoomToUnit(attackerView.transform, 
+                clashSequence.cameraManager.damageZoomSize);
+        
         string trigger = skill.animationTrigger;
         if (!string.IsNullOrEmpty(trigger))
         {
@@ -553,9 +569,14 @@ public class CombatManager : MonoBehaviour
 
         yield return new WaitForSeconds(clashSequence.postSkillWait);
 
-        // Phase 3: Return
+        // Phase 3: Return - Reset camera ngay lập tức
         attackerView.SetAnimationTrigger("Idle");
         Vector3 currentPos = attackerView.transform.position;
+        
+        // Camera reset ngay để không bị kẹt vào target
+        if (clashSequence.cameraManager != null)
+            clashSequence.cameraManager.ResetCamera();
+
         elapsed = 0f;
         while (elapsed < clashSequence.returnDuration)
         {
@@ -565,11 +586,45 @@ public class CombatManager : MonoBehaviour
             yield return null;
         }
         attackerView.transform.position = origin;
+
+        // Fade back tất cả units về alpha = 1.0
+        var allUnitsEnd = FindObjectsByType<UnitView>(FindObjectsSortMode.None);
+        foreach (var unit in allUnitsEnd)
+        {
+            if (unit != attackerView && unit != targetView)
+            {
+                StartCoroutine(FadeUnitAlpha(unit, 1.0f, 0.3f));
+            }
+        }
     }
 
     // ── Public Helpers ────────────────────────────────────────
     public UnitView GetUnitView(CombatUnit unit) =>
         unitViews.Find(v => v.LinkedUnit == unit);
+
+    // ── Fade helper ───────────────────────────────────────────
+    private IEnumerator FadeUnitAlpha(UnitView unitView, float targetAlpha, float duration)
+    {
+        var spriteRenderer = unitView.spriteRenderer;
+        if (spriteRenderer == null) yield break;
+
+        Color startColor = spriteRenderer.color;
+        float elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / duration);
+            Color newColor = startColor;
+            newColor.a = Mathf.Lerp(startColor.a, targetAlpha, t);
+            spriteRenderer.color = newColor;
+            yield return null;
+        }
+
+        Color finalColor = spriteRenderer.color;
+        finalColor.a = targetAlpha;
+        spriteRenderer.color = finalColor;
+    }
 
     // ── Calculate Hits ────────────────────────────────────────
     private List<HitData> CalculateHits(CombatUnit attacker,

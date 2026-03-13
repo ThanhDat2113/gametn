@@ -16,6 +16,9 @@ public class ClashAnimationSequence : MonoBehaviour
 {
     [Header("References")]
     public ClashVisualController clashVisual;
+    
+    [Tooltip("CombatCameraManager để trigger camera effects")]
+    public CombatCameraManager cameraManager;
 
     [Header("Timing")]
     [Tooltip("Thời gian 2 nhân vật lao vào nhau (giây)")]
@@ -24,14 +27,22 @@ public class ClashAnimationSequence : MonoBehaviour
     [Tooltip("Khoảng cách dừng lại khi đứng đối mặt (world units)")]
     public float faceOffDistance = 1.2f;
 
-    [Tooltip("Thời gian chờ sau KnockBack trước khi winner đánh")]
-    public float postKnockbackWait = 0.3f;
-
     [Tooltip("Thời gian chờ sau skill animation trước khi về vị trí")]
-    public float postSkillWait = 0.3f;
+    public float postSkillWait = 0.5f;
+
+    [Tooltip("Thời gian chờ sau KnockBack trước khi bắt đầu Skill animation")]
+    public float postKnockbackWait = 0.2f;
 
     [Tooltip("Thời gian di chuyển về vị trí gốc")]
     public float returnDuration = 0.4f;
+
+    // ─────────────────────────────────────────────────────────────────────
+    private void Awake()
+    {
+        // Auto find camera manager nếu chưa assign
+        if (cameraManager == null)
+            cameraManager = FindFirstObjectByType<CombatCameraManager>();
+    }
 
     // ─────────────────────────────────────────────────────────────────────
     /// <summary>
@@ -59,6 +70,20 @@ public class ClashAnimationSequence : MonoBehaviour
         // ── Phase 1: Rush vào nhau ────────────────────────────────────────
         playerView.SetAnimationTrigger("Rush");
         enemyView.SetAnimationTrigger("Rush");
+
+        // Fade out các unit không liên quan (giảm alpha xuống 20% - tức giảm 80%)
+        var allUnits = FindObjectsByType<UnitView>(FindObjectsSortMode.None);
+        foreach (var unit in allUnits)
+        {
+            if (unit != playerView && unit != enemyView)
+            {
+                StartCoroutine(FadeUnit(unit, 0.2f, 0.3f)); // Fade to 20% alpha in 0.3s
+            }
+        }
+
+        // Camera effect: Zoom vào clash point
+        if (cameraManager != null)
+            cameraManager.PlayClashZoom(playerView.transform, enemyView.transform);
 
         // Tính midpoint giữa 2 nhân vật
         Vector3 mid = (playerOrigin + enemyOrigin) * 0.5f;
@@ -140,6 +165,10 @@ public class ClashAnimationSequence : MonoBehaviour
         playerView.SetAnimationTrigger("Idle");
         enemyView.SetAnimationTrigger("Idle");
 
+        // Camera effect: zoom out khi units trở về
+        if (cameraManager != null)
+            cameraManager.EndClashZoom();
+
         elapsed = 0f;
         Vector3 playerCurrent = playerView.transform.position;
         Vector3 enemyCurrent = enemyView.transform.position;
@@ -156,7 +185,42 @@ public class ClashAnimationSequence : MonoBehaviour
         playerView.transform.position = playerOrigin;
         enemyView.transform.position = enemyOrigin;
 
+        // Fade back tất cả units về alpha = 1.0
+        var allUnitsEnd = FindObjectsByType<UnitView>(FindObjectsSortMode.None);
+        foreach (var unit in allUnitsEnd)
+        {
+            if (unit != playerView && unit != enemyView)
+            {
+                StartCoroutine(FadeUnit(unit, 1.0f, 0.3f)); // Fade back to full alpha
+            }
+        }
+
         onComplete?.Invoke();
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // Helper: Fade unit alpha
+    private IEnumerator FadeUnit(UnitView unitView, float targetAlpha, float duration)
+    {
+        var spriteRenderer = unitView.spriteRenderer;
+        if (spriteRenderer == null) yield break;
+
+        Color startColor = spriteRenderer.color;
+        float elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / duration);
+            Color newColor = startColor;
+            newColor.a = Mathf.Lerp(startColor.a, targetAlpha, t);
+            spriteRenderer.color = newColor;
+            yield return null;
+        }
+
+        Color finalColor = spriteRenderer.color;
+        finalColor.a = targetAlpha;
+        spriteRenderer.color = finalColor;
     }
 
     // ─────────────────────────────────────────────────────────────────────

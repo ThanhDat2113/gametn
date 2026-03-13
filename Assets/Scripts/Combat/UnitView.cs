@@ -17,6 +17,7 @@ public class UnitView : MonoBehaviour
     private CombatUnit currentTarget;
     private List<HitData> pendingHits = new();
     private SkillData currentSkill;
+    private CombatCameraManager cameraManager;
 
     // ─────────────────────────────────────────────────────────
     public void Setup(CombatUnit unit)
@@ -29,8 +30,21 @@ public class UnitView : MonoBehaviour
         // Enemy nhìn sang trái
         spriteRenderer.flipX = !unit.IsPlayer;
 
+        // Find camera manager
+        if (cameraManager == null)
+            cameraManager = FindFirstObjectByType<CombatCameraManager>();
+
         // Lắng nghe events từ CombatUnit
-        unit.OnDamageTaken += (dmg, hitIndex) => TriggerHitFlash();
+        unit.OnDamageTaken += (dmg, hitIndex) => 
+        {
+            TriggerHitFlash();
+            // Camera effect: Zoom vào unit bị damage
+            if (cameraManager != null)
+            {
+                cameraManager.ZoomToUnit(transform, cameraManager.damageZoomSize);
+                cameraManager.PlayImpactShake();
+            }
+        };
         unit.OnDied += () => StartCoroutine(DeathFade());
 
         // Lắng nghe Animation Events
@@ -140,6 +154,13 @@ public class UnitView : MonoBehaviour
 
         var hit = pendingHits[hitIndex];
         currentTarget.TakeDamage(hit.Damage, hitIndex);
+
+        // Shake mạnh hơn cho hit cuối cùng
+        bool isFinalHit = (hitIndex == pendingHits.Count - 1);
+        if (isFinalHit && cameraManager != null)
+        {
+            cameraManager.PlayFinalImpactShake();
+        }
 
         Debug.Log($"[Hit {hitIndex + 1}/{pendingHits.Count}] " +
                   $"{LinkedUnit.UnitName} → {currentTarget.UnitName}: {hit.Damage} dmg");
