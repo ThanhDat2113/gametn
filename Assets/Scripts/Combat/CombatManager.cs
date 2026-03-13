@@ -270,9 +270,9 @@ public class CombatManager : MonoBehaviour
     }
 
     // ── RETARGET CHECK ────────────────────────────────────────
-    // Logic:
-    // - Nếu có player nhắm vào enemy này → enemy clash với player CUỐI CÙNG nhắm nó
-    //   (player cuối = index cao nhất trong PlayerUnits, tức chọn sau cùng)
+    // Logic mới (dựa trên planning order):
+    // - Nếu có player nhắm vào enemy này → enemy clash với player ĐẦU TIÊN
+    //   trong planning order nhắm nó (index thấp nhất = hành động sớm nhất)
     // - Nếu không có player nào nhắm → enemy giữ nguyên target AI đã chọn (free attack)
     private void DoRetargetCheck()
     {
@@ -292,14 +292,17 @@ public class CombatManager : MonoBehaviour
                 continue;
             }
 
-            // Có người nhắm → clash với player CUỐI CÙNG chọn nó
-            var lastPlayer = playersTargetingEnemy
-                .OrderByDescending(p => PlayerUnits.IndexOf(p))
+            // Có người nhắm → clash với player ĐẦU TIÊN trong planning order
+            // PlayerUnits đã được reorder theo planning order từ SubmitAllPlayerChoices
+            // → index thấp nhất = hành động sớm nhất
+            var firstPlayer = playersTargetingEnemy
+                .OrderBy(p => PlayerUnits.IndexOf(p))
                 .First();
 
             string prevTarget = string.Join(", ", enemy.SelectedTargets.Select(t => t.UnitName));
-            enemy.SelectSkill(enemy.SelectedSkill, new List<CombatUnit> { lastPlayer });
-            Debug.Log($"[Retarget] {enemy.UnitName}: {prevTarget} → {lastPlayer.UnitName} (bị nhắm)");
+            enemy.SelectSkill(enemy.SelectedSkill, new List<CombatUnit> { firstPlayer });
+            Debug.Log($"[Retarget] {enemy.UnitName}: {prevTarget} → {firstPlayer.UnitName} " +
+                      $"(player đầu tiên trong planning order nhắm nó)");
         }
 
         stateMachine.TransitionTo(CombatPhase.Execute);
@@ -311,6 +314,9 @@ public class CombatManager : MonoBehaviour
         OnExecuteStarted?.Invoke();
         Debug.Log("\n--- EXECUTE ---");
 
+        // allUnits xử lý theo planning order:
+        // PlayerUnits đã được reorder bởi SubmitAllPlayerChoices → giữ nguyên thứ tự
+        // EnemyUnits theo thứ tự spawn
         var allUnits = PlayerUnits.Concat(EnemyUnits)
                                    .Where(u => u.IsAlive)
                                    .ToList();
@@ -348,13 +354,14 @@ public class CombatManager : MonoBehaviour
             Debug.Log($"[ClashPair] {clashPlayer.UnitName} ↔ {enemy.UnitName}");
 
             // Các player KHÁC cùng nhắm enemy này → đánh sau clash
+            // Thứ tự theo planning order (PlayerUnits đã được sort theo planning order)
             // Snapshot skill ngay bây giờ trước khi bị ClearSelection
             var otherPlayers = PlayerUnits
                 .Where(p => p.IsAlive
                          && p != clashPlayer
                          && p.SelectedSkill != null
                          && p.SelectedTargets.Contains(enemy))
-                .OrderBy(p => PlayerUnits.IndexOf(p))
+                .OrderBy(p => PlayerUnits.IndexOf(p))  // planning order
                 .Select(p => (player: p, skill: p.SelectedSkill))
                 .ToList();
 
@@ -522,16 +529,6 @@ public class CombatManager : MonoBehaviour
         Vector3 dir = (targetPos - origin).normalized;
         Vector3 rushDest = targetPos - dir * clashSequence.faceOffDistance;
 
-        // Fade out các unit không liên quan (giảm alpha xuống 20%)
-        var allUnits = FindObjectsByType<UnitView>(FindObjectsSortMode.None);
-        foreach (var unit in allUnits)
-        {
-            if (unit != attackerView && unit != targetView)
-            {
-                StartCoroutine(FadeUnitAlpha(unit, 0.2f, 0.3f));
-            }
-        }
-
         // Phase 1: Rush
         attackerView.SetAnimationTrigger("Rush");
         float elapsed = 0f;
@@ -547,12 +544,6 @@ public class CombatManager : MonoBehaviour
         // Phase 2: Attack
         attackerView.SetCurrentSkill(skill);
         attackerView.SetPendingHits(hits, target);
-        
-        // Camera zoom in vào attacker
-        if (clashSequence.cameraManager != null)
-            clashSequence.cameraManager.ZoomToUnit(attackerView.transform, 
-                clashSequence.cameraManager.damageZoomSize);
-        
         string trigger = skill.animationTrigger;
         if (!string.IsNullOrEmpty(trigger))
         {
@@ -569,14 +560,9 @@ public class CombatManager : MonoBehaviour
 
         yield return new WaitForSeconds(clashSequence.postSkillWait);
 
-        // Phase 3: Return - Reset camera ngay lập tức
+        // Phase 3: Return
         attackerView.SetAnimationTrigger("Idle");
         Vector3 currentPos = attackerView.transform.position;
-        
-        // Camera reset ngay để không bị kẹt vào target
-        if (clashSequence.cameraManager != null)
-            clashSequence.cameraManager.ResetCamera();
-
         elapsed = 0f;
         while (elapsed < clashSequence.returnDuration)
         {
@@ -586,45 +572,11 @@ public class CombatManager : MonoBehaviour
             yield return null;
         }
         attackerView.transform.position = origin;
-
-        // Fade back tất cả units về alpha = 1.0
-        var allUnitsEnd = FindObjectsByType<UnitView>(FindObjectsSortMode.None);
-        foreach (var unit in allUnitsEnd)
-        {
-            if (unit != attackerView && unit != targetView)
-            {
-                StartCoroutine(FadeUnitAlpha(unit, 1.0f, 0.3f));
-            }
-        }
     }
 
     // ── Public Helpers ────────────────────────────────────────
     public UnitView GetUnitView(CombatUnit unit) =>
         unitViews.Find(v => v.LinkedUnit == unit);
-
-    // ── Fade helper ───────────────────────────────────────────
-    private IEnumerator FadeUnitAlpha(UnitView unitView, float targetAlpha, float duration)
-    {
-        var spriteRenderer = unitView.spriteRenderer;
-        if (spriteRenderer == null) yield break;
-
-        Color startColor = spriteRenderer.color;
-        float elapsed = 0f;
-
-        while (elapsed < duration)
-        {
-            elapsed += Time.deltaTime;
-            float t = Mathf.Clamp01(elapsed / duration);
-            Color newColor = startColor;
-            newColor.a = Mathf.Lerp(startColor.a, targetAlpha, t);
-            spriteRenderer.color = newColor;
-            yield return null;
-        }
-
-        Color finalColor = spriteRenderer.color;
-        finalColor.a = targetAlpha;
-        spriteRenderer.color = finalColor;
-    }
 
     // ── Calculate Hits ────────────────────────────────────────
     private List<HitData> CalculateHits(CombatUnit attacker,
