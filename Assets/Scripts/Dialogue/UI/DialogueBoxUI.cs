@@ -13,10 +13,17 @@ public class DialogueBoxUI : MonoBehaviour
     public Image backgroundImage;
     public TextMeshProUGUI continueIndicator;
     
-    [Header("Portrait Slots - Kéo trực tiếp 3 Image vào")]
+    [Header("Portrait Slots")]
     public Image portraitLeft;
     public Image portraitCenter;
     public Image portraitRight;
+    
+    [Header("Portrait Settings")]
+    public float fixedHeight = 180f;
+    public float bottomOffset = 20f;
+    public Vector2 leftPortraitPos = new Vector2(-400, 0);
+    public Vector2 centerPortraitPos = new Vector2(0, 0);
+    public Vector2 rightPortraitPos = new Vector2(400, 0);
     
     [Header("Typing Effect")]
     public float defaultTextSpeed = 0.05f;
@@ -39,18 +46,46 @@ public class DialogueBoxUI : MonoBehaviour
     
     void Awake()
     {
-        // Ẩn tất cả portrait ban đầu
-        if (portraitLeft != null) portraitLeft.gameObject.SetActive(false);
-        if (portraitCenter != null) portraitCenter.gameObject.SetActive(false);
-        if (portraitRight != null) portraitRight.gameObject.SetActive(false);
+        SetupPortraitSlot(portraitLeft, leftPortraitPos);
+        SetupPortraitSlot(portraitCenter, centerPortraitPos);
+        SetupPortraitSlot(portraitRight, rightPortraitPos);
         
         if (continueIndicator != null)
-        {
             continueIndicator.gameObject.SetActive(false);
-        }
         
         if (dialoguePanel != null)
             dialoguePanel.SetActive(false);
+    }
+    
+    private void SetupPortraitSlot(Image portrait, Vector2 position)
+    {
+        if (portrait == null) return;
+        
+        RectTransform rect = portrait.GetComponent<RectTransform>();
+        if (rect != null)
+        {
+            rect.anchorMin = new Vector2(0.5f, 0f);
+            rect.anchorMax = new Vector2(0.5f, 0f);
+            rect.pivot = new Vector2(0.5f, 0f);
+            rect.anchoredPosition = new Vector2(position.x, bottomOffset);
+            rect.sizeDelta = new Vector2(fixedHeight, fixedHeight);
+        }
+        
+        portrait.preserveAspect = false;
+        portrait.color = Color.white;
+        portrait.gameObject.SetActive(false);
+    }
+    
+    private void ResizePortraitToFit(Image portrait, Sprite sprite)
+    {
+        if (portrait == null || sprite == null) return;
+        
+        RectTransform rect = portrait.GetComponent<RectTransform>();
+        if (rect == null) return;
+        
+        float aspectRatio = sprite.rect.width / sprite.rect.height;
+        float newWidth = fixedHeight * aspectRatio;
+        rect.sizeDelta = new Vector2(newWidth, fixedHeight);
     }
     
     void Update()
@@ -98,29 +133,24 @@ public class DialogueBoxUI : MonoBehaviour
         if (continueIndicator != null)
             continueIndicator.gameObject.SetActive(false);
         
-        // Cập nhật portrait
         UpdatePortraits(line);
         
-        // Set name
         if (nameText != null && line.character != null)
         {
             nameText.text = line.character.characterName;
             nameText.color = line.character.nameColor;
         }
         
-        // Set background
         if (backgroundImage != null && line.backgroundSprite != null)
         {
             backgroundImage.sprite = line.backgroundSprite;
         }
         
-        // Audio
         if (line.voiceClip != null && audioSource != null)
         {
             audioSource.PlayOneShot(line.voiceClip);
         }
         
-        // Typing
         fullText = line.text;
         if (typingCoroutine != null)
             StopCoroutine(typingCoroutine);
@@ -129,39 +159,45 @@ public class DialogueBoxUI : MonoBehaviour
     
     private void UpdatePortraits(DialogueLine line)
     {
-        // Ẩn tất cả trước
+        // Ẩn tất cả
         if (portraitLeft != null) portraitLeft.gameObject.SetActive(false);
         if (portraitCenter != null) portraitCenter.gameObject.SetActive(false);
         if (portraitRight != null) portraitRight.gameObject.SetActive(false);
         
-        // Lấy sprite cho nhân vật chính
+        // Nhân vật chính
         if (line.character != null)
         {
-            Sprite mainSprite = line.character.GetPortrait(line.emotion);
+            string emotion = string.IsNullOrEmpty(line.emotionKey) ? "normal" : line.emotionKey;
+            Sprite mainSprite = line.character.GetPortrait(emotion);
+            
             if (mainSprite != null)
             {
                 Image targetImage = GetPortraitImage(line.position);
                 if (targetImage != null)
                 {
+                    ResizePortraitToFit(targetImage, mainSprite);
                     targetImage.sprite = mainSprite;
                     targetImage.gameObject.SetActive(true);
                 }
             }
         }
         
-        // Lấy sprite cho các nhân vật phụ
+        // Nhân vật phụ
         if (line.otherCharacters != null)
         {
             foreach (var other in line.otherCharacters)
             {
                 if (other.character != null)
                 {
-                    Sprite otherSprite = other.character.GetPortrait(other.emotion);
+                    string emotion = string.IsNullOrEmpty(other.emotionKey) ? "normal" : other.emotionKey;
+                    Sprite otherSprite = other.character.GetPortrait(emotion);
+                    
                     if (otherSprite != null)
                     {
                         Image targetImage = GetPortraitImage(other.position);
                         if (targetImage != null)
                         {
+                            ResizePortraitToFit(targetImage, otherSprite);
                             targetImage.sprite = otherSprite;
                             targetImage.gameObject.SetActive(true);
                         }
@@ -175,14 +211,10 @@ public class DialogueBoxUI : MonoBehaviour
     {
         switch (position)
         {
-            case CharacterPosition.Left:
-                return portraitLeft;
-            case CharacterPosition.Center:
-                return portraitCenter;
-            case CharacterPosition.Right:
-                return portraitRight;
-            default:
-                return portraitCenter;
+            case CharacterPosition.Left: return portraitLeft;
+            case CharacterPosition.Center: return portraitCenter;
+            case CharacterPosition.Right: return portraitRight;
+            default: return portraitCenter;
         }
     }
     

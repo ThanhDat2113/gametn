@@ -1,4 +1,3 @@
-// DialogueEnums.cs
 public enum DialogueEmotion
 {
     Normal,
@@ -27,4 +26,11 @@ public enum BackgroundEffect
     Flash,
     FadeToBlack,
     FadeFromBlack
+}
+
+public enum CharacterPosition
+{
+    Left,
+    Center,
+    Right
 }

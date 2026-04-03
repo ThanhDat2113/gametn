@@ -11,14 +11,16 @@ public class DialogueEvent : ScriptableObject
 [System.Serializable]
 public class DialogueLine
 {
-    [Header("Character")]
+    [Header("Main Character")]
     public DialogueCharacter character;
     public CharacterPosition position = CharacterPosition.Center;
+    
+    [Header("Emotion - Có thể nhập bất kỳ key nào")]
+    public string emotionKey = "normal";  // Thay vì enum, dùng string
     
     [Header("Text")]
     [TextArea(3, 5)]
     public string text;
-    public DialogueEmotion emotion = DialogueEmotion.Normal;
     public float textSpeed = 0.05f;
     
     [Header("Portrait Effects")]
@@ -34,7 +36,7 @@ public class DialogueLine
     public AudioClip voiceClip;
     public AudioClip textSound;
     
-    [Header("Other Characters (Hiện cùng lúc)")]
+    [Header("Other Characters")]
     public OtherCharacter[] otherCharacters;
 }
 
@@ -43,5 +45,5 @@ public class OtherCharacter
 {
     public DialogueCharacter character;
     public CharacterPosition position;
-    public DialogueEmotion emotion = DialogueEmotion.Normal;
+    public string emotionKey = "normal";
 }
