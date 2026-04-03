@@ -29,7 +29,6 @@ namespace MasterFX
 
         // public Gradient MappingGradient = new Gradient();
 
-        [SerializeField]
         public Texture2D MappingTexture => bulletDatas[currentBulletIndex].MappingTexture;
 
         public List<BulletData> bulletDatas = new List<BulletData>();
