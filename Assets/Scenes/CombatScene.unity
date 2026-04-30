@@ -595,7 +595,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 503556336}
-  - component: {fileID: 503556337}
   m_Layer: 5
   m_Name: 'SlotContainer    '
   m_TagString: Untagged
@@ -619,35 +618,9 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -325, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &503556337
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 503556335}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 30649d3a9faa99c48a7b1166b86bf2a0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.HorizontalLayoutGroup
-  m_Padding:
-    m_Left: 16
-    m_Right: 16
-    m_Top: 0
-    m_Bottom: 0
-  m_ChildAlignment: 4
-  m_Spacing: 200
-  m_ChildForceExpandWidth: 1
-  m_ChildForceExpandHeight: 0
-  m_ChildControlWidth: 1
-  m_ChildControlHeight: 1
-  m_ChildScaleWidth: 0
-  m_ChildScaleHeight: 0
-  m_ReverseArrangement: 0
 --- !u!1 &551415320
 GameObject:
   m_ObjectHideFlags: 0
@@ -659,7 +632,7 @@ GameObject:
   - component: {fileID: 551415322}
   - component: {fileID: 551415321}
   m_Layer: 0
-  m_Name: CombatManager
+  m_Name: 'ClashSequence '
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1238,6 +1211,8 @@ MonoBehaviour:
   shakeIntensity: 0.15
   shakeDuration: 0.2
   shakeFrequency: 20
+  finalHitShakeIntensity: 0.6
+  finalHitShakeDuration: 0.45
 --- !u!1 &874683033
 GameObject:
   m_ObjectHideFlags: 0
@@ -1665,8 +1640,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1000116218}
-  - component: {fileID: 1000116217}
   - component: {fileID: 1000116216}
+  - component: {fileID: 1000116219}
+  - component: {fileID: 1000116220}
   m_Layer: 0
   m_Name: CombatManager
   m_TagString: Untagged
@@ -1706,28 +1682,7 @@ MonoBehaviour:
   - {fileID: 2136036714}
   - {fileID: 1039118417}
   - {fileID: 874683034}
-  clashSequence: {fileID: 2015827097}
---- !u!114 &1000116217
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1000116215}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5bfcab7cb095d5b498cdefe056e8dc48, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CombatUI
-  playerRoster:
-  - {fileID: 11400000, guid: 1c79bd1f881cb4a498893ab76458fe2b, type: 2}
-  - {fileID: 11400000, guid: 1c79bd1f881cb4a498893ab76458fe2b, type: 2}
-  - {fileID: 11400000, guid: 1c79bd1f881cb4a498893ab76458fe2b, type: 2}
-  - {fileID: 11400000, guid: 1b10230c3faa85e4eacd33cb0c25a021, type: 2}
-  - {fileID: 11400000, guid: 3853047d5d72d06409286d150953b43c, type: 2}
-  playerLevels: 0100000001000000010000000100000001000000
-  playerGridSlots: 0000000002000000040000000600000008000000
-  enemyGroup: {fileID: 11400000, guid: 4f070e30182b8494687da0780ce4d0c1, type: 2}
+  clashSequence: {fileID: 551415321}
 --- !u!4 &1000116218
 Transform:
   m_ObjectHideFlags: 0
@@ -1743,6 +1698,42 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1000116219
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1000116215}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9d06c2c3b9775c249ab8f15cd447103b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CombatSceneStarter
+  enemyGroup: {fileID: 11400000, guid: 4f070e30182b8494687da0780ce4d0c1, type: 2}
+--- !u!114 &1000116220
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1000116215}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 610d70e09edd67649bd5c8f1f43ae074, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CombatTestStarter
+  testPlayerCharacters:
+  - {fileID: 11400000, guid: 1c79bd1f881cb4a498893ab76458fe2b, type: 2}
+  - {fileID: 11400000, guid: 1c79bd1f881cb4a498893ab76458fe2b, type: 2}
+  - {fileID: 11400000, guid: 1c79bd1f881cb4a498893ab76458fe2b, type: 2}
+  - {fileID: 11400000, guid: 1b10230c3faa85e4eacd33cb0c25a021, type: 2}
+  - {fileID: 11400000, guid: 3853047d5d72d06409286d150953b43c, type: 2}
+  testPlayerLevels: 0100000001000000010000000100000001000000
+  testPlayerSlots: 0000000002000000040000000600000008000000
+  testEnemyGroup: {fileID: 11400000, guid: 4f070e30182b8494687da0780ce4d0c1, type: 2}
+  autoStartOnAwake: 1
+  startKey: 116
 --- !u!1 &1034185899
 GameObject:
   m_ObjectHideFlags: 0
@@ -1777,9 +1768,9 @@ RectTransform:
   - {fileID: 1971778506}
   m_Father: {fileID: 1549338718}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 699, y: -10}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 1602, y: -80}
   m_SizeDelta: {x: 160, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1034185901
@@ -2470,6 +2461,8 @@ MonoBehaviour:
   actionSlotContainer: {fileID: 503556336}
   confirmButton: {fileID: 1034185901}
   instructionText: {fileID: 1900633178}
+  slotWidth: 0
+  slotSpacing: 200
   targetHighlightPrefab: {fileID: 0}
 --- !u!1 &1861474306
 GameObject:
@@ -2596,10 +2589,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1549338718}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 137}
-  m_SizeDelta: {x: 200, y: 50}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 930, y: 77}
+  m_SizeDelta: {x: 898.71, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1900633178
 MonoBehaviour:
@@ -2655,8 +2648,8 @@ MonoBehaviour:
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 0
-  m_HorizontalAlignment: 1
-  m_VerticalAlignment: 256
+  m_HorizontalAlignment: 2
+  m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
   m_characterHorizontalScale: 1
@@ -3005,57 +2998,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1519196810}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &2015827096
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 2015827098}
-  - component: {fileID: 2015827097}
-  m_Layer: 0
-  m_Name: 'ClashSequence '
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &2015827097
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2015827096}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 56070f3ff26144b4abaffc8f31c17d15, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ClashAnimationSequence
-  clashVisual: {fileID: 1941913555}
-  cameraManager: {fileID: 0}
-  rushDuration: 0.5
-  faceOffDistance: 1.2
-  postSkillWait: 0.3
-  postKnockbackWait: 0.3
-  returnDuration: 0.4
---- !u!4 &2015827098
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2015827096}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 13.17954, y: 0, z: 1.11442}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2031536605
 GameObject:
   m_ObjectHideFlags: 0
@@ -3169,7 +3111,6 @@ SceneRoots:
   - {fileID: 606078797}
   - {fileID: 917760679}
   - {fileID: 1941913554}
-  - {fileID: 2015827098}
   - {fileID: 1988924223}
   - {fileID: 951548989}
   - {fileID: 551415322}
