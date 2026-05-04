@@ -25,16 +25,24 @@ public class ClashAnimationSequence : MonoBehaviour
     public float rushDuration = 0.5f;
 
     [Tooltip("Khoảng cách dừng lại khi đứng đối mặt (world units)")]
-    public float faceOffDistance = 1.2f;
+    public float faceOffDistance = 2.0f;
 
     [Tooltip("Thời gian chờ sau skill animation trước khi về vị trí")]
-    public float postSkillWait = 0.5f;
+    public float postSkillWait = 0.1f;
 
     [Tooltip("Thời gian chờ sau KnockBack trước khi bắt đầu Skill animation")]
     public float postKnockbackWait = 0.2f;
 
     [Tooltip("Thời gian di chuyển về vị trí gốc")]
     public float returnDuration = 0.4f;
+
+    [Header("Clash Effects")]
+    [Tooltip("Kích thước camera khi zoom vào gần nhất")]
+    public float clashZoomSize = 5f;
+    [Tooltip("Khoảng cách đẩy lùi của người thua")]
+    public float knockbackDistance = 1.5f;
+    [Tooltip("Khoảng cách đẩy lùi nhẹ cho đòn đánh thường")]
+    public float lightKnockbackDistance = 0.5f;
 
     // ─────────────────────────────────────────────────────────────────────
     private void Awake()
@@ -66,6 +74,10 @@ public class ClashAnimationSequence : MonoBehaviour
         // Lưu vị trí gốc
         Vector3 playerOrigin = playerView.transform.position;
         Vector3 enemyOrigin = enemyView.transform.position;
+
+        // Cache a camera reference
+        var cam = cameraManager;
+        float startOrthoSize = cam != null ? cam.defaultOrthoSize : 15f;
 
         // ── Phase 1: Rush vào nhau ────────────────────────────────────────
         playerView.SetAnimationTrigger("Rush");
@@ -100,6 +112,21 @@ public class ClashAnimationSequence : MonoBehaviour
             float t = Mathf.Clamp01(elapsed / rushDuration);
             playerView.transform.position = Vector3.Lerp(playerOrigin, playerTarget, t);
             enemyView.transform.position = Vector3.Lerp(enemyOrigin, enemyTarget, t);
+
+            // Dynamically adjust camera
+            if (cam != null)
+            {
+                float distance = Vector3.Distance(playerView.transform.position, enemyView.transform.position);
+                float zoomT = 1f - Mathf.Clamp01((distance - faceOffDistance) / (Vector3.Distance(playerOrigin, enemyOrigin) - faceOffDistance));
+                
+                // Dịch camera lên một chút và zoom ra nhẹ (7f)
+                float newSize = Mathf.Lerp(startOrthoSize, 7f, zoomT);
+                
+                Vector3 midpoint = (playerView.transform.position + enemyView.transform.position) * 0.5f;
+                Vector3 clashCameraPosition = midpoint + new Vector3(0, 1.5f, 0);
+                cam.SetCameraPositionAndSize(clashCameraPosition, newSize);
+            }
+
             yield return null;
         }
 
@@ -113,23 +140,55 @@ public class ClashAnimationSequence : MonoBehaviour
         // ── Phase 2: Hiện ClashVisualController (xúc xắc + kết quả) ──────
         if (clashVisual != null)
         {
+            Coroutine shakeCoroutine = StartCoroutine(ContinuousShakeCoroutine(2.0f)); // Hardcoded duration
             yield return StartCoroutine(
                 clashVisual.PlayClashSequence(result.VisualData, null));
+            StopCoroutine(shakeCoroutine);
         }
         else
         {
             yield return new WaitForSeconds(0.8f);
         }
 
-        // ── Phase 3: Bên thua KnockBack ───────────────────────────────────
+        // Phase 3: Bên thua KnockBack ───────────────────────────────────
+        if (cameraManager != null) cameraManager.PlayImpactShake(); // Shake on clash result
         loserView.SetAnimationTrigger("KnockBack");
-        float knockbackLength = loserView.GetClipLength("KnockBack");
-        if (knockbackLength <= 0f) knockbackLength = 0.6f;
-        yield return new WaitForSeconds(knockbackLength);
 
+        // Move loser back
+        Vector3 knockbackDir = (loserView.transform.position - winnerView.transform.position).normalized;
+        Vector3 knockbackTarget = loserView.transform.position + knockbackDir * knockbackDistance;
+        
+        float knockbackAnimLength = loserView.GetClipLength("KnockBack");
+        if (knockbackAnimLength <= 0f) knockbackAnimLength = 0.6f;
+
+        // Move during the knockback animation
+        float kbElapsed = 0f;
+        Vector3 loserStartPos = loserView.transform.position;
+        while (kbElapsed < knockbackAnimLength)
+        {
+            kbElapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(kbElapsed / knockbackAnimLength);
+            loserView.transform.position = Vector3.Lerp(loserStartPos, knockbackTarget, t);
+            yield return null;
+        }
+        
         yield return new WaitForSeconds(postKnockbackWait);
 
         // ── Phase 4: Bên thắng play Skill animation ───────────────────────
+        // Move winner to loser
+        Vector3 attackPos = loserView.transform.position - (loserView.transform.position - winnerView.transform.position).normalized * faceOffDistance;
+        float moveElapsed = 0f;
+        float moveDuration = 0.2f;
+        Vector3 winnerStartPos = winnerView.transform.position;
+        while (moveElapsed < moveDuration)
+        {
+            moveElapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(moveElapsed / moveDuration);
+            winnerView.transform.position = Vector3.Lerp(winnerStartPos, attackPos, t);
+            yield return null;
+        }
+        winnerView.transform.position = attackPos;
+
         // Damage/VFX được xử lý bên trong qua Animation Events trên winner
         var winnerSkill = result.WinnerSkill;
 
@@ -154,7 +213,13 @@ public class ClashAnimationSequence : MonoBehaviour
             // Fallback: áp damage thẳng nếu không có animation
             var hits = BuildHitsForLoser(result);
             foreach (var hit in hits)
-                result.Loser.TakeDamage(hit.Damage, hit.HitIndex);
+                result.Loser.TakeDamage(result.Winner, hit.Damage, hit.HitIndex);
+
+            // Camera impact effect for fallback
+            if (cameraManager != null)
+            {
+                cameraManager.PlayFinalHitShake();
+            }
 
             yield return new WaitForSeconds(0.5f);
         }
@@ -165,9 +230,7 @@ public class ClashAnimationSequence : MonoBehaviour
         playerView.SetAnimationTrigger("Idle");
         enemyView.SetAnimationTrigger("Idle");
 
-        // Camera effect: zoom out khi units trở về
-        if (cameraManager != null)
-            cameraManager.EndClashZoom();
+        // Camera will be reset manually or by other systems
 
         elapsed = 0f;
         Vector3 playerCurrent = playerView.transform.position;
@@ -196,6 +259,20 @@ public class ClashAnimationSequence : MonoBehaviour
         }
 
         onComplete?.Invoke();
+    }
+
+    private IEnumerator ContinuousShakeCoroutine(float duration)
+    {
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            if (cameraManager != null)
+            {
+                cameraManager.PlayImpactShake();
+            }
+            yield return new WaitForSeconds(0.1f); // Adjust this value to change shake frequency
+            elapsed += 0.1f;
+        }
     }
 
     // ─────────────────────────────────────────────────────────────────────

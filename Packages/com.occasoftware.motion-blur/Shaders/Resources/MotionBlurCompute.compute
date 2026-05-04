@@ -1,0 +1,169 @@
+#pragma kernel ComputeMotionBlur
+#pragma exclude_renderers gles3
+
+
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Packing.hlsl"
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareOpaqueTexture.hlsl"
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
+
+
+
+TEXTURE2D_X_FLOAT(_MotionVectorTexture);
+SAMPLER(sampler_MotionVectorTexture);
+
+//Texture2D os_MotionVectors;
+//SamplerState sampler_os_MotionVectors;
+
+float3 LoadSceneMotion(uint2 uv)
+{
+    //return os_MotionVectors.Load(int3(uv.xy, 0)).rgb;
+    return LOAD_TEXTURE2D_X(_MotionVectorTexture, uv).rgb;
+}
+
+//Texture2D<float3> _MotionVectorTexture;
+Texture2D<float3> _ScreenTexture;
+RWTexture2D<float3> _MotionBlurTarget;
+
+Texture2D<float> os_MotionBlurMask;
+
+SamplerState my_point_clamp_sampler;
+SamplerState my_linear_clamp_sampler;
+float2 _ScreenSizePx;
+
+float _VelocityScale;
+int _MaxSamples;
+bool _DepthSeparationEnabled;
+float _DepthSeparationInverseDistance;
+int _FrameId;
+
+int _HasMask;
+int _InvertMask;
+int _StrictMask;
+
+float SampleDepth(float2 uv)
+{
+    return LinearEyeDepth(_CameraDepthTexture.SampleLevel(my_linear_clamp_sampler, uv, 0).r, _ZBufferParams);
+}
+
+#pragma multi_compile _ _FIRST_FRAME
+#define _ThreadSize 8
+
+float2 GetUV (uint3 id) 
+{
+	return (id.xy + 0.5) / _ScreenSizePx;
+}
+
+float2 GetUV(uint3 id, float2 texelSize)
+{
+    return (id.xy + 0.5) * texelSize;
+}
+
+float2 GetTexelSize()
+{
+    return 1.0 / _ScreenSizePx;
+}
+
+// Source: https://blog.demofox.org/2022/01/01/interleaved-gradient-noise-a-different-kind-of-low-discrepancy-sequence/
+float IGN(int pixelX, int pixelY, uint frameId)
+{
+    #define FRAME_REPEAT_RATE 64
+    #define OFFSET 5.588238
+    float3 magic = float3( 0.06711056, 0.00583715, 52.9829189 );
+    
+    float frame = frameId % FRAME_REPEAT_RATE;
+    float x = float(pixelX) + OFFSET * frame;
+    float y = float(pixelY) + OFFSET * frame;
+    
+    float f = magic.x * x + magic.y * y;
+    return frac(magic.z * frac(f));
+}
+
+//#define os_DepthSeparationDirection BOTH
+//#define os_DepthSeparationDirection FORWARD
+//#define os_DepthSeparationDirection BACKWARD
+
+[numthreads(_ThreadSize, _ThreadSize,1)]
+void ComputeMotionBlur (uint3 id : SV_DispatchThreadID)
+{
+    if (id.x >= uint(_ScreenSizePx.x) || id.y >= uint(_ScreenSizePx.y))
+        return;
+    
+    float2 texelSize = GetTexelSize();
+    float2 uv = GetUV(id, texelSize);
+
+    float3 sceneColor = _ScreenTexture.Load(uint3(id.xy,0)).rgb;
+    #if defined(_FIRST_FRAME)
+    _MotionBlurTarget[id.xy] = sceneColor;
+    return;
+    #endif
+    
+    float2 sceneMotion = LoadSceneMotion(id.xy).rg;
+    
+    float sceneDepth = LinearEyeDepth(LoadSceneDepth(id.xy), _ZBufferParams);
+    
+    // Check Blur Mask...
+    float maskComparator = 1e-7;
+    float sceneMask = 0;
+    if(_HasMask == 1)
+    {
+        sceneMask = step(maskComparator, os_MotionBlurMask.SampleLevel(my_linear_clamp_sampler, uv, 0).r);
+        sceneMask = lerp(sceneMask, 1.0 - sceneMask, _InvertMask);
+        if (sceneMask > 0)
+        {
+            _MotionBlurTarget[id.xy] = sceneColor;
+            return;
+        }
+    }
+    
+        
+    
+    sceneMotion *= _VelocityScale;
+    
+    float speed = length(sceneMotion / texelSize);
+    int sampleCount = clamp(int(speed), 1, _MaxSamples);
+    float stepSize = rcp(sampleCount);
+    float noise = IGN(id.x, id.y, _FrameId) - 0.5;
+    uv -= noise * sceneMotion * stepSize;
+    float sum = 1.0;
+    
+    for (int i = 1; i <= sampleCount; i++) 
+    {
+        float dist = saturate(i * stepSize) * 0.5;
+        float2 offset = sceneMotion * dist;
+        
+        float2 samplePos = uv - offset;
+        
+        if(samplePos.x < 0 || samplePos.x > 1 || samplePos.y < 0 || samplePos.y > 1)
+            continue;
+        
+        float v = 1.0;
+        v = abs(0.5 - dist);
+        
+        if(_DepthSeparationEnabled)
+        {
+            float sampleDepth = SampleDepth(samplePos);
+            float t = saturate(abs(sampleDepth - sceneDepth) * _DepthSeparationInverseDistance); // Prevent any objects from smearing on top of relatively distant objects
+            //float t = saturate((sampleDepth - sceneDepth) * _DepthSeparationInverseDistance); // Prevent background objects from smearing on top of foreground objects
+            //float t = saturate((sceneDepth - sampleDepth) * _DepthSeparationInverseDistance); // Prevent foreground objects from smearing on top of background objects
+            v = lerp(1.0, 0.0, t);
+        }
+        
+        if (_HasMask == 1 && _StrictMask == 1)
+        {
+            sceneMask = step(maskComparator, os_MotionBlurMask.SampleLevel(my_linear_clamp_sampler, samplePos, 0).r);
+            sceneMask = lerp(sceneMask, 1.0 - sceneMask, _InvertMask);
+            if(sceneMask > 0)
+                continue;
+        }
+        
+        sum += v;
+        sceneColor += _ScreenTexture.SampleLevel(my_linear_clamp_sampler, samplePos, 0) * v;
+    }
+    
+    
+    sceneColor /= sum + 1e-7;
+    
+    _MotionBlurTarget[id.xy] = sceneColor;
+}
