@@ -22,7 +22,7 @@ public class CombatCameraManager : MonoBehaviour
     // ── Default State ─────────────────────────────────────────
     [Header("Default State")]
     [Tooltip("Default camera size khi không zoom (TĂNG NỀU CÒN QUÁZO) - Default: 15-18")]
-    public float defaultOrthoSize = 16f;
+    public float defaultOrthoSize = 10f;
     public Vector3 defaultPosition = Vector3.zero;
     [Tooltip("Z position của camera (phía sau sân) - TĂNG NỀU CẬP THẤP")]
     public float cameraHeight = 8f;  // Z position (tăng từ 5)
@@ -63,6 +63,24 @@ public class CombatCameraManager : MonoBehaviour
     [Tooltip("Thời gian rung cho final hit")]
     public float finalHitShakeDuration = 0.45f;
 
+    [Header("Player Impact Settings")]
+    [Tooltip("Mức độ rung cho đòn đánh của player (mạnh hơn)")]
+    public float playerImpactShakeIntensity = 0.5f;
+    [Tooltip("Thời gian rung cho đòn đánh của player")]
+    public float playerImpactShakeDuration = 0.4f;
+    [Tooltip("Khoảng cách camera 'lao tới' mục tiêu")]
+    public float lungeAmount = 1.5f;
+    [Tooltip("Thời gian thực hiện cú 'lao tới'")]
+    public float lungeDuration = 0.1f;
+
+    [Header("Slow Motion Settings")]
+    [Tooltip("Thời gian 'đứng hình' ngay khi va chạm (giây)")]
+    public float hitStopDuration = 0.05f;
+    [Tooltip("Hệ số làm chậm (0.1 = 10% tốc độ)")]
+    public float slowMoFactor = 0.1f;
+    [Tooltip("Thời gian hiệu ứng slow-motion (giây)")]
+    public float slowMoDuration = 0.5f;
+
     // ── State ─────────────────────────────────────────────────
     private float currentOrthoSize;
     private Vector3 targetPosition;
@@ -73,6 +91,8 @@ public class CombatCameraManager : MonoBehaviour
     private Coroutine zoomCoroutine;
     private Coroutine followCoroutine;
     private Coroutine shakeCoroutine;
+    private Coroutine slowMoCoroutine;
+    private bool isSlowingDown = false;
 
     // ── Clash tracking (cho múltiples clashes cùng lúc) ─────────
     private int activeClashCount = 0;
@@ -188,6 +208,19 @@ public class CombatCameraManager : MonoBehaviour
 
     // ── PUBLIC METHODS ────────────────────────────────────────
 
+    public float GetCurrentOrthoSize()
+    {
+        return currentOrthoSize;
+    }
+
+    public void SetCameraSize(float newSize)
+    {
+        currentOrthoSize = newSize;
+        mainCamera.orthographicSize = currentOrthoSize;
+    }
+
+    // ── PUBLIC METHODS ────────────────────────────────────────
+
     /// <summary>
     /// Zoom vào unit, shake, rồi theo dõi
     /// </summary>
@@ -251,10 +284,17 @@ public class CombatCameraManager : MonoBehaviour
     /// <summary>
     /// Shake effect mạnh hơn cho hit cuối cùng
     /// </summary>
-    public void PlayFinalImpactShake()
+    public void PlayFinalHitShake()
     {
         StopCoroutineIfRunning(shakeCoroutine);
         shakeCoroutine = StartCoroutine(ShakeCoroutine(true));
+    }
+
+    public void SetCameraPositionAndSize(Vector3 position, float size)
+    {
+        targetPosition = position + new Vector3(0, 0, cameraHeight);
+        currentOrthoSize = size;
+        followTarget = null; // Ensure we are not following anything
     }
 
     /// <summary>
@@ -309,7 +349,7 @@ public class CombatCameraManager : MonoBehaviour
         // OrthoSize = height / 2 (vì camera height = full size * 2)
         // Thêm buffer 40% để thoải mái (tăng từ 30% lên 40%)
         float requiredSize = Mathf.Max(Mathf.Max(width, height) * 0.6f, 10f);  // Min 10 để safe
-        float bufferSize = Mathf.Max(requiredSize * 1.4f, 14f);  // Min 14 để không quá zoom
+        float bufferSize = Mathf.Max(requiredSize * 1.1f, 8f);  // Min 8 để không quá zoom
 
         defaultOrthoSize = bufferSize;
         defaultPosition = center;
@@ -345,7 +385,62 @@ public class CombatCameraManager : MonoBehaviour
         Debug.Log($"[CombatCamera] Distance adjusted: {defaultOrthoSize:F2}");
     }
 
+    /// <summary>
+    /// Hiệu ứng đặc biệt cho đòn đánh của Player: Lao tới + Rung mạnh
+    /// </summary>
+    public void PlayPlayerImpactEffect(Transform target)
+    {
+        StopCoroutineIfRunning(shakeCoroutine);
+        shakeCoroutine = StartCoroutine(PlayerImpactCoroutine(target));
+    }
+
     // ── COROUTINES ────────────────────────────────────────────
+
+    private IEnumerator PlayerImpactCoroutine(Transform target)
+    {
+        isShaking = true;
+        Vector3 originalPos = cameraTransform.position;
+        Vector3 targetDirection = (target.position - cameraTransform.position).normalized;
+        targetDirection.z = 0; // Đảm bảo không di chuyển trên trục Z
+        Vector3 lungeTargetPos = originalPos + targetDirection * lungeAmount;
+
+        // --- Lunge Phase ---
+        float elapsed = 0f;
+        while (elapsed < lungeDuration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / lungeDuration);
+            cameraTransform.position = Vector3.Lerp(originalPos, lungeTargetPos, EaseOutQuad(t));
+            yield return null;
+        }
+
+        // --- Shake Phase ---
+        shakeElapsed = 0f;
+        while (shakeElapsed < playerImpactShakeDuration)
+        {
+            shakeElapsed += Time.deltaTime;
+            float decay = 1f - (shakeElapsed / playerImpactShakeDuration);
+
+            float noiseX = Mathf.PerlinNoise(shakeElapsed * shakeFrequency, 0f) - 0.5f;
+            float noiseY = Mathf.PerlinNoise(shakeElapsed * shakeFrequency, 1f) - 0.5f;
+
+            shakeOffset = new Vector3(
+                noiseX * playerImpactShakeIntensity * decay,
+                noiseY * playerImpactShakeIntensity * decay,
+                0f);
+            
+            // Giữ vị trí sau khi lunge trong lúc rung
+            cameraTransform.position = lungeTargetPos + shakeOffset;
+
+            yield return null;
+        }
+
+        shakeOffset = Vector3.zero;
+        isShaking = false;
+
+        // --- Return Phase (tùy chọn, có thể để LateUpdate xử lý) ---
+        // Ở đây, ta không cần return vì LateUpdate sẽ tự động đưa camera về vị trí follow target.
+    }
 
     private IEnumerator ZoomInCoroutine(float targetSize)
     {
@@ -460,6 +555,39 @@ public class CombatCameraManager : MonoBehaviour
 
         shakeOffset = Vector3.zero;
         isShaking = false;
+    }
+
+    /// <summary>
+    /// Kích hoạt hiệu ứng Slow-motion kết hợp Hit-stop.
+    /// </summary>
+    /// <param name="onHitStopPeak">Action được thực thi tại đỉnh điểm của cú đứng hình.</param>
+    public void PlaySlowMotionEffect(System.Action onHitStopPeak = null)
+    {
+        // Nếu đang trong hiệu ứng rồi thì không chạy lại
+        if (isSlowingDown) return;
+        
+        StopCoroutineIfRunning(slowMoCoroutine);
+        slowMoCoroutine = StartCoroutine(SlowMotionCoroutine(onHitStopPeak));
+    }
+
+    private IEnumerator SlowMotionCoroutine(System.Action onHitStopPeak)
+    {
+        isSlowingDown = true;
+
+        // --- Phase 1: Hit Stop (Đứng hình) ---
+        Time.timeScale = 0f; // Đóng băng hoàn toàn
+        yield return new WaitForSecondsRealtime(hitStopDuration);
+
+        // --- Thực thi Action tại đỉnh điểm của va chạm ---
+        onHitStopPeak?.Invoke();
+
+        // --- Phase 2: Slow Motion ---
+        Time.timeScale = slowMoFactor;
+        yield return new WaitForSecondsRealtime(slowMoDuration);
+
+        // --- Phase 3: Trở lại bình thường ---
+        Time.timeScale = 1.0f;
+        isSlowingDown = false;
     }
 
     // ── EVENT HANDLERS ────────────────────────────────────────

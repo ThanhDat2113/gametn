@@ -654,9 +654,12 @@ MonoBehaviour:
   cameraManager: {fileID: 844719901}
   rushDuration: 0.5
   faceOffDistance: 1.2
-  postSkillWait: 0.3
+  postSkillWait: 0
   postKnockbackWait: 0.3
   returnDuration: 0.4
+  clashZoomSize: 5.53
+  knockbackDistance: 4.33
+  lightKnockbackDistance: 2.19
 --- !u!4 &551415322
 Transform:
   m_ObjectHideFlags: 0
@@ -1199,20 +1202,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6243a36d06773864f8243827f9aa414a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CombatCameraManager
-  defaultOrthoSize: 10
+  defaultOrthoSize: 3.91
   defaultPosition: {x: 0, y: 0, z: 0}
-  cameraHeight: -9.58
+  cameraHeight: -10.1
   clashZoomSize: 6
   damageZoomSize: 7
   zoomInDuration: 0.3
   zoomOutDuration: 0.5
   followOffset: {x: 0, y: 0, z: -5}
-  followSmoothness: 0.15
+  followSmoothness: 0.98
   shakeIntensity: 0.15
   shakeDuration: 0.2
   shakeFrequency: 20
   finalHitShakeIntensity: 0.6
   finalHitShakeDuration: 0.45
+  playerImpactShakeIntensity: 0.76
+  playerImpactShakeDuration: 0.05
+  lungeAmount: 1.93
+  lungeDuration: 0.1
+  hitStopDuration: 0.05
+  slowMoFactor: 0.37
+  slowMoDuration: 0.7
 --- !u!1 &874683033
 GameObject:
   m_ObjectHideFlags: 0
@@ -1683,6 +1693,7 @@ MonoBehaviour:
   - {fileID: 1039118417}
   - {fileID: 874683034}
   clashSequence: {fileID: 551415321}
+  cameraManager: {fileID: 0}
 --- !u!4 &1000116218
 Transform:
   m_ObjectHideFlags: 0
