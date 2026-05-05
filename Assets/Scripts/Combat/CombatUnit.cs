@@ -39,7 +39,7 @@ public class CombatUnit
     public List<CombatUnit> SelectedTargets { get; private set; } = new();
 
     // ── Events ────────────────────────────────────────────────
-    public event System.Action<int, int> OnDamageTaken; // (damage, hitIndex)
+    public event System.Action<CombatUnit, int, int> OnDamageTaken; // (caster, damage, hitIndex)
     public event System.Action<int> OnHealed;
     public event System.Action OnDied;
 
@@ -62,11 +62,11 @@ public class CombatUnit
     }
 
     // ── Damage ────────────────────────────────────────────────
-    public void TakeDamage(int amount, int hitIndex = 0)
+    public void TakeDamage(CombatUnit caster, int amount, int hitIndex = 0)
     {
         int actual = Mathf.Max(1, amount);
         CurrentHP = Mathf.Max(0, CurrentHP - actual);
-        OnDamageTaken?.Invoke(actual, hitIndex);
+        OnDamageTaken?.Invoke(caster, actual, hitIndex);
 
         Debug.Log($"  {UnitName} nhận {actual} dmg → HP {CurrentHP}/{MaxHP}");
 

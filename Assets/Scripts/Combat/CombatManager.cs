@@ -26,6 +26,7 @@ public class CombatManager : MonoBehaviour
 
     [Header("Animation")]
     public ClashAnimationSequence clashSequence;
+    public CombatCameraManager cameraManager;
 
     public event System.Action OnCombatStarted;
     public event System.Action<CombatUnit> OnPlayerUnitPlanning;
@@ -44,6 +45,9 @@ public class CombatManager : MonoBehaviour
         if (Instance != null) { Destroy(gameObject); return; }
         Instance = this;
         stateMachine.OnPhaseChanged += HandlePhaseChanged;
+
+        if (cameraManager == null)
+            cameraManager = FindFirstObjectByType<CombatCameraManager>();
     }
 
     public void StartCombat(FormationData playerFormation, EnemyGroupData enemyGroup)
@@ -163,6 +167,15 @@ public class CombatManager : MonoBehaviour
 
     private void StartPlayerPlan()
     {
+        // Reset vị trí của tất cả các unit về vị trí ban đầu
+        foreach (var view in unitViews)
+        {
+            if (view != null && view.gameObject.activeInHierarchy)
+            {
+                view.ResetPosition();
+            }
+        }
+
         planningIndex = 0;
         var alivePlayers = PlayerUnits.Where(u => u.IsAlive).ToList();
         OnPlayerPlanStarted?.Invoke(alivePlayers);
@@ -375,7 +388,7 @@ public class CombatManager : MonoBehaviour
 
         if (attackerView == null)
         {
-            foreach (var hit in hits) target.TakeDamage(hit.Damage, hit.HitIndex);
+            foreach (var hit in hits) target.TakeDamage(attacker, hit.Damage, hit.HitIndex);
             yield break;
         }
 
@@ -406,7 +419,7 @@ public class CombatManager : MonoBehaviour
         }
         else
         {
-            foreach (var hit in hits) target.TakeDamage(hit.Damage, hit.HitIndex);
+            foreach (var hit in hits) target.TakeDamage(attacker, hit.Damage, hit.HitIndex);
             yield return new WaitForSeconds(0.3f);
         }
         attackerView.ClearPendingHits();
