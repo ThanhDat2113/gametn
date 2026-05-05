@@ -20,9 +20,5 @@ public class MenuController : MonoBehaviour
 
         // Optional: pause game
         Time.timeScale = isOpen ? 0f : 1f;
-
-        // Optional: mở chuột
-        Cursor.lockState = isOpen ? CursorLockMode.None : CursorLockMode.Locked;
-        Cursor.visible = isOpen;
     }
 }

@@ -11,6 +11,9 @@ public class CombatPlanningUI : MonoBehaviour
     [Header("Canvas")]
     public Canvas planningCanvas;
 
+    [Header("Round Display")]
+    public TextMeshProUGUI roundText;
+
     [Header("Skill Wheel")]
     public GameObject skillButtonPrefab;
     public GameObject skillButtonUltiPrefab;
@@ -47,7 +50,7 @@ public class CombatPlanningUI : MonoBehaviour
     private SkillData pendingSkill;
     private bool isChoosingTarget;
     private Dictionary<CombatUnit, (SkillData skill, List<CombatUnit> targets)> choices = new();
-    private List<CombatUnit> actionOrder = new();  // Thứ tự từ trái sang phải
+    private List<CombatUnit> actionOrder = new();
     private List<GameObject> activeSkillButtons = new();
     private List<GameObject> targetHighlights = new();
     private List<ActionSlotUI> actionSlots = new();
@@ -99,6 +102,7 @@ public class CombatPlanningUI : MonoBehaviour
                 actionOrder = new List<CombatUnit>(alive);
                 RebuildActionBar();
                 SetInstruction("Đang chờ lượt...");
+                if (roundText != null) roundText.text = $"Round {combat.CurrentRound}";
             }
         }
     }
@@ -133,26 +137,22 @@ public class CombatPlanningUI : MonoBehaviour
             actionOrder = new List<CombatUnit>(playerUnits);
             RebuildActionBar();
             SetInstruction("Đang chờ lượt của bạn...");
+            if (roundText != null) roundText.text = $"Round {combat.CurrentRound}";
         }
     }
 
     private void OnPlanStarted(List<CombatUnit> units)
     {
         Debug.Log($"[PlanUI] OnPlanStarted: {units.Count} units");
+        // HIỆN UI KHI BẮT ĐẦU LƯỢT CỦA NGƯỜI CHƠI
+        if (planningCanvas != null) planningCanvas.gameObject.SetActive(true);
+
+        if (roundText != null)
+            roundText.text = $"Round {combat.CurrentRound}";
+
         planningUnits = units.Where(u => u.IsAlive).ToList();
-        
-        // GIỮ NGUYÊN THỨ TỰ CŨ cho những unit còn sống, thêm unit mới vào cuối
-        var newActionOrder = new List<CombatUnit>();
-        foreach (var u in actionOrder)
-            if (planningUnits.Contains(u))
-                newActionOrder.Add(u);
-        foreach (var u in planningUnits)
-            if (!newActionOrder.Contains(u))
-                newActionOrder.Add(u);
-        actionOrder = newActionOrder;
-        
-        // Reset lựa chọn skill (nhưng giữ thứ tự)
         choices.Clear();
+        actionOrder = new List<CombatUnit>(planningUnits);
         activeUnit = null;
         pendingUnit = null;
         pendingSkill = null;
@@ -167,7 +167,12 @@ public class CombatPlanningUI : MonoBehaviour
         SetInstruction("Nhấn vào nhân vật để chọn skill");
     }
 
-    private void OnExecuteStarted() { }
+    private void OnExecuteStarted()
+    {
+        // ẨN UI KHI BẮT ĐẦU THỰC THI COMBAT
+        if (planningCanvas != null) planningCanvas.gameObject.SetActive(false);
+    }
+
     private void HideUI() => planningCanvas.gameObject.SetActive(false);
 
     private void HandleWorldClick(Vector3 mousePos)
@@ -283,7 +288,6 @@ public class CombatPlanningUI : MonoBehaviour
 
     private void OnSkillButtonClicked(CombatUnit unit, SkillData skill, int skillIndex)
     {
-        // Hủy nếu chọn lại skill đã chọn
         if (choices.TryGetValue(unit, out var existing) && existing.skill == skill)
         {
             choices.Remove(unit);
@@ -295,7 +299,6 @@ public class CombatPlanningUI : MonoBehaviour
             return;
         }
 
-        // Xử lý auto-target
         if (skill.targetType == TargetType.AllEnemies)
         {
             var targets = combat.EnemyUnits.Where(e => e.IsAlive).ToList();
@@ -311,7 +314,6 @@ public class CombatPlanningUI : MonoBehaviour
             return;
         }
 
-        // Single target: chờ chọn target
         pendingUnit = unit;
         pendingSkill = skill;
         isChoosingTarget = true;
@@ -441,7 +443,6 @@ public class CombatPlanningUI : MonoBehaviour
             txt.text = allChosen ? "✓ CONFIRM" : $"Còn {planningUnits.Count(u => u.IsAlive && !choices.ContainsKey(u))} chưa chọn";
     }
 
-    // Drag & drop
     public void OnSlotDragStart(int index)
     {
         dragFromIndex = index;
@@ -504,7 +505,6 @@ public class CombatPlanningUI : MonoBehaviour
     {
         if (!planningUnits.All(u => !u.IsAlive || choices.ContainsKey(u))) return;
 
-        // Tạo danh sách theo đúng thứ tự actionOrder (từ trái sang phải)
         var submitList = new List<(CombatUnit unit, SkillData skill, List<CombatUnit> targets)>();
         foreach (var unit in actionOrder)
         {
@@ -516,7 +516,7 @@ public class CombatPlanningUI : MonoBehaviour
 
         Debug.Log("[PlanUI] Submitting actions in order: " + string.Join(" -> ", submitList.Select(x => x.unit.UnitName)));
         combat.SubmitAllPlayerChoices(submitList);
-        // planningCanvas.gameObject.SetActive(false);
+        // UI sẽ được ẩn khi ExecuteStarted, không cần ẩn ở đây
     }
 
     private void SetInstruction(string text)

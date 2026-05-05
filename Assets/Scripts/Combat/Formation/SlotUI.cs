@@ -37,7 +37,7 @@ public class SlotUI : MonoBehaviour, IDropHandler, IPointerClickHandler, IBeginD
     public void Clear()
     {
         CurrentCharacter = null;
-        nameText.text = "Empty";
+        nameText.text = "";
         icon.gameObject.SetActive(false);
     }
 
