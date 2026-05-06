@@ -3,7 +3,8 @@ using UnityEngine;
 public class MenuController : MonoBehaviour
 {
     public GameObject menuUI;
-    private bool isOpen = false;
+    public GameObject inventoryUI;  // Kéo Inventory Panel vào đây
+    private bool isMenuOpen = false;
 
     void Update()
     {
@@ -11,14 +12,26 @@ public class MenuController : MonoBehaviour
         {
             ToggleMenu();
         }
+        if (Input.GetKeyDown(KeyCode.Q))
+        {
+            ToggleInventory();
+        }
     }
 
     void ToggleMenu()
     {
-        isOpen = !isOpen;
-        menuUI.SetActive(isOpen);
+        isMenuOpen = !isMenuOpen;
+        menuUI.SetActive(isMenuOpen);
+        Time.timeScale = isMenuOpen ? 0f : 1f;
+    }
 
-        // Optional: pause game
-        Time.timeScale = isOpen ? 0f : 1f;
+    void ToggleInventory()
+    {
+        if (inventoryUI != null)
+        {
+            bool isActive = !inventoryUI.activeSelf;
+            inventoryUI.SetActive(isActive);
+            // Không pause game khi mở inventory
+        }
     }
 }
