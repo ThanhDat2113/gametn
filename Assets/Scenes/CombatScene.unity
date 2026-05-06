@@ -3746,17 +3746,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 1988924222}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ef279cd1581e9a247ba7c5ba39b7a414, type: 3}
+  m_Script: {fileID: 11500000, guid: 876c590dc26fa2c4a84f6ab354ba1654, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::EnemyTargetArrow
-  lineColor: {r: 1, g: 0.3, b: 0.3, a: 0.85}
-  lineWidth: 0.06
-  sourceOffsetY: 1.2
-  targetOffsetY: 1.2
-  lineMaterial: {fileID: 10756, guid: 0000000000000000e000000000000000, type: 0}
-  arrowHeadSprite: {fileID: 10901, guid: 0000000000000000f000000000000000, type: 0}
-  arrowHeadScale: 0.35
-  arrowHeadOffset: 0.3
+  m_EditorClassIdentifier: Assembly-CSharp::TargetingArrowController
+  lineWidth: 0.12
+  lineMaterial: {fileID: 2100000, guid: 18c27c05ad9cd19418dcce4855a1e9d0, type: 2}
+  enemyAttackColor: {r: 1, g: 0, b: 0, a: 1}
+  playerAttackColor: {r: 0.3, g: 0.5, b: 1, a: 1}
+  clashColor: {r: 1, g: 0.9, b: 0.2, a: 1}
 --- !u!1 &1993059769
 GameObject:
   m_ObjectHideFlags: 0

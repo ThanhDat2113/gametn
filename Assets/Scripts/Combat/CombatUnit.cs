@@ -3,6 +3,8 @@ using UnityEngine;
 
 public class CombatUnit
 {
+    private static int nextId = 0;
+    public int Id { get; private set; }
     public int GridRow { get; set; } = 2;  // 0=Back, 1=Mid, 2=Front
     public int GridSlot { get; set; } = 0;  // 0-8, vị trí trong lưới 3x3
 
@@ -46,6 +48,7 @@ public class CombatUnit
     // ── Initialize ────────────────────────────────────────────
     public void Initialize(CharacterData data, int level, bool isPlayer)
     {
+        Id = nextId++;
         Data = data;
         Level = level;
         IsPlayer = isPlayer;

@@ -19,6 +19,8 @@ public class CombatManager : MonoBehaviour
     public Transform[] enemyGridSlots;
     private List<UnitView> unitViews = new();
 
+
+
     private static int SlotToRow(int slot) => 2 - (slot / 3);
 
     private int planningIndex = 0;
@@ -31,6 +33,7 @@ public class CombatManager : MonoBehaviour
     public event System.Action OnCombatStarted;
     public event System.Action<CombatUnit> OnPlayerUnitPlanning;
     public event System.Action<List<CombatUnit>> OnPlayerPlanStarted;
+    public event System.Action<CombatUnit> OnPlayerSkillSelected;
     public event System.Action OnEnemyPlanDone;
     public event System.Action OnExecuteStarted;
     public event System.Action<ClashResult> OnClashResolved;
@@ -48,6 +51,20 @@ public class CombatManager : MonoBehaviour
 
         if (cameraManager == null)
             cameraManager = FindFirstObjectByType<CombatCameraManager>();
+
+        // Đảm bảo TargetingArrowController tồn tại trong scene
+        if (gameObject.GetComponent<TargetingArrowController>() == null)
+        {
+            gameObject.AddComponent<TargetingArrowController>();
+        }
+    }
+
+    private void OnDestroy()
+    {
+        if (stateMachine != null)
+        {
+            stateMachine.OnPhaseChanged -= HandlePhaseChanged;
+        }
     }
 
     public void StartCombat(FormationData playerFormation, EnemyGroupData enemyGroup)
@@ -237,6 +254,8 @@ public class CombatManager : MonoBehaviour
 
         Debug.Log($"[Player] {unit.UnitName} chọn [{skill.skillName}] → [{string.Join(", ", targets.Select(t => t.UnitName))}]");
 
+        OnPlayerSkillSelected?.Invoke(unit);
+
         planningIndex++;
         Debug.Log($"[CombatManager] planningIndex = {planningIndex}/{PlayerUnits.Count}");
         RequestNextPlayerInput();
@@ -425,6 +444,10 @@ public class CombatManager : MonoBehaviour
         attackerView.ClearPendingHits();
 
         yield return new WaitForSeconds(clashSequence.postSkillWait);
+
+        // Reset camera về chế độ xem mặc định NGAY LẬP TỨC sau khi skill kết thúc
+        if (cameraManager != null)
+            cameraManager.AutoFitUnitsInView();
 
         attackerView.SetAnimationTrigger("Idle");
         Vector3 currentPos = attackerView.transform.position;

@@ -226,6 +226,10 @@ public class ClashAnimationSequence : MonoBehaviour
 
         yield return new WaitForSeconds(postSkillWait);
 
+        // Reset camera về chế độ xem mặc định NGAY LẬP TỨC sau khi skill kết thúc
+        if (cameraManager != null)
+            cameraManager.AutoFitUnitsInView();
+
         // ── Phase 5: Cả 2 trở về vị trí gốc ─────────────────────────────
         playerView.SetAnimationTrigger("Idle");
         enemyView.SetAnimationTrigger("Idle");
