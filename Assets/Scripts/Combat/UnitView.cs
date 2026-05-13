@@ -18,11 +18,32 @@ public class UnitView : MonoBehaviour
     private List<HitData> pendingHits = new();
     private SkillData currentSkill;
     private CombatCameraManager cameraManager;
+    private ClashAnimationSequence clashSequence;
+    private Vector3 originalPosition;
+    private bool originalPositionHasBeenSet = false;
 
     // ─────────────────────────────────────────────────────────
+
+    public Vector3 GetOriginalPosition()
+    {
+        return originalPosition;
+    }
+
+    public void StoreOriginalPosition(Vector3 position)
+    {
+        originalPosition = position;
+        originalPositionHasBeenSet = true;
+    }
+
+    public void StoreOriginalPosition()
+    {
+        StoreOriginalPosition(transform.position);
+    }
+
     public void Setup(CombatUnit unit)
     {
         LinkedUnit = unit;
+
 
         if (unit.Data.battleSprite != null)
             spriteRenderer.sprite = unit.Data.battleSprite;
@@ -34,15 +55,30 @@ public class UnitView : MonoBehaviour
         if (cameraManager == null)
             cameraManager = FindFirstObjectByType<CombatCameraManager>();
 
+        if (clashSequence == null)
+            clashSequence = FindFirstObjectByType<ClashAnimationSequence>();
+
         // Lắng nghe events từ CombatUnit
-        unit.OnDamageTaken += (dmg, hitIndex) => 
+        unit.OnDamageTaken += (caster, dmg, hitIndex) => 
         {
             TriggerHitFlash();
             // Camera effect: Zoom vào unit bị damage
             if (cameraManager != null)
             {
                 cameraManager.ZoomToUnit(transform, cameraManager.damageZoomSize);
-                cameraManager.PlayImpactShake();
+
+                // Nếu là player tấn công, dùng hiệu ứng đặc biệt
+                if (caster != null && caster.IsPlayer)
+                {
+                    var targetView = FindObjectsByType<UnitView>(FindObjectsSortMode.None)
+                        .FirstOrDefault(v => v.LinkedUnit == this.LinkedUnit);
+                    if(targetView != null)
+                        cameraManager.PlayPlayerImpactEffect(targetView.transform);
+                }
+                else
+                {
+                    cameraManager.PlayImpactShake();
+                }
             }
         };
         unit.OnDied += () => StartCoroutine(DeathFade());
@@ -88,6 +124,22 @@ public class UnitView : MonoBehaviour
     {
         if (animator != null && !string.IsNullOrEmpty(triggerName))
             animator.SetTrigger(triggerName);
+    }
+
+    public void ForcePlayAnimationState(string stateName)
+    {
+        if (animator != null)
+        {
+            animator.Play(stateName);
+        }
+    }
+
+    public void ResetAnimationTrigger(string triggerName)
+    {
+        if (animator != null && !string.IsNullOrEmpty(triggerName))
+        {
+            animator.ResetTrigger(triggerName);
+        }
     }
 
     // ── Chờ animation clip chạy xong hoàn toàn ─────────────
@@ -153,18 +205,73 @@ public class UnitView : MonoBehaviour
         }
 
         var hit = pendingHits[hitIndex];
-        currentTarget.TakeDamage(hit.Damage, hitIndex);
-
-        // Shake mạnh hơn cho hit cuối cùng
         bool isFinalHit = (hitIndex == pendingHits.Count - 1);
-        if (isFinalHit && cameraManager != null)
+
+        // Gây sát thương
+        currentTarget.TakeDamage(LinkedUnit, hit.Damage, hitIndex);
+
+        // Hiệu ứng camera và knockback
+        if (cameraManager != null)
         {
-            cameraManager.PlayFinalImpactShake();
+            // Áp dụng hiệu ứng camera cho mỗi hit, hit cuối sẽ mạnh hơn
+            StartCoroutine(HitImpactEffectCoroutine(cameraManager, isFinalHit));
+
+            if (isFinalHit)
+            {
+                // Knockback chỉ ở đòn cuối
+                var targetView = FindObjectsByType<UnitView>(FindObjectsSortMode.None).FirstOrDefault(v => v.LinkedUnit == currentTarget);
+                if (targetView != null && clashSequence != null)
+                {
+                    Vector3 direction = (targetView.transform.position - transform.position).normalized;
+                    targetView.StartCoroutine(targetView.KnockbackCoroutine(direction, clashSequence.lightKnockbackDistance, 0.2f));
+                }
+            }
         }
 
         Debug.Log($"[Hit {hitIndex + 1}/{pendingHits.Count}] " +
                   $"{LinkedUnit.UnitName} → {currentTarget.UnitName}: {hit.Damage} dmg");
     }
+
+    private IEnumerator HitImpactEffectCoroutine(CombatCameraManager cam, bool isFinalHit)
+    {
+        // 1. Rung camera
+        if (isFinalHit)
+            cam.PlayFinalHitShake();
+        else
+            cam.PlayImpactShake();
+
+        // 2. Xác định thông số zoom dựa trên loại hit
+        float zoomInMultiplier = isFinalHit ? 0.75f : 0.90f; // Hit cuối zoom 25%, hit thường zoom 10%
+        float zoomInDuration = isFinalHit ? 0.03f : 0.04f;   // Hit cuối nhanh hơn. Giảm giá trị để tăng tác động.
+        float zoomOutDuration = isFinalHit ? 0.06f : 0.08f;
+
+        // 3. Zoom nhanh vào và ra
+        float originalSize = cam.GetCurrentOrthoSize();
+        float zoomInSize = originalSize * zoomInMultiplier;
+
+        // Zoom vào
+        float elapsed = 0f;
+        while (elapsed < zoomInDuration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / zoomInDuration);
+            cam.SetCameraSize(Mathf.Lerp(originalSize, zoomInSize, t));
+            yield return null;
+        }
+        cam.SetCameraSize(zoomInSize);
+
+        // Zoom ra
+        elapsed = 0f;
+        while (elapsed < zoomOutDuration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / zoomOutDuration);
+            cam.SetCameraSize(Mathf.Lerp(zoomInSize, originalSize, t));
+            yield return null;
+        }
+        cam.SetCameraSize(originalSize);
+    }
+
 
     // ── Được gọi từ Animation Event — OnSpawnVFX ─────────────
     private void ProcessVFXAtFrame(int vfxIndex)
@@ -233,5 +340,56 @@ public class UnitView : MonoBehaviour
         }
 
         gameObject.SetActive(false);
+    }
+
+    public IEnumerator KnockbackCoroutine(Vector3 direction, float distance, float duration)
+    {
+        Vector3 startPos = transform.position;
+        Vector3 targetPos = startPos + direction * distance;
+        float elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / duration);
+            transform.position = Vector3.Lerp(startPos, targetPos, t);
+            yield return null;
+        }
+
+        transform.position = targetPos;
+    }
+
+    /// <summary>
+    /// Đưa unit trở về vị trí gốc đã được lưu.
+    /// </summary>
+    public void ResetPosition()
+    {
+        Debug.LogWarning($"[UnitView] RESET POSITION được gọi cho {LinkedUnit.UnitName}. Vị trí gốc: {originalPosition}", this.gameObject);
+        transform.position = originalPosition;
+    }
+
+    // ── Animation Parameters ─────────────────────────────────────
+    public void SetAnimationBool(string boolName, bool value)
+    {
+        if (animator != null)
+        {
+            animator.SetBool(boolName, value);
+        }
+    }
+
+    public void SetAnimationFloat(string floatName, float value)
+    {
+        if (animator != null)
+        {
+            animator.SetFloat(floatName, value);
+        }
+    }
+
+    public void DisableRootMotion()
+    {
+        if (animator != null)
+        {
+            animator.applyRootMotion = false;
+        }
     }
 }
