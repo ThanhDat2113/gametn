@@ -20,11 +20,28 @@ public class UnitView : MonoBehaviour
     private CombatCameraManager cameraManager;
     private ClashAnimationSequence clashSequence;
     private Vector3 originalPosition;
+    private bool originalPositionHasBeenSet = false;
 
     // ─────────────────────────────────────────────────────────
+
+    public Vector3 GetOriginalPosition()
+    {
+        return originalPosition;
+    }
+
+    public void StoreOriginalPosition(Vector3 position)
+    {
+        originalPosition = position;
+        originalPositionHasBeenSet = true;
+    }
+
+    public void StoreOriginalPosition()
+    {
+        StoreOriginalPosition(transform.position);
+    }
+
     public void Setup(CombatUnit unit)
     {
-        originalPosition = transform.position;
         LinkedUnit = unit;
 
 
@@ -107,6 +124,22 @@ public class UnitView : MonoBehaviour
     {
         if (animator != null && !string.IsNullOrEmpty(triggerName))
             animator.SetTrigger(triggerName);
+    }
+
+    public void ForcePlayAnimationState(string stateName)
+    {
+        if (animator != null)
+        {
+            animator.Play(stateName);
+        }
+    }
+
+    public void ResetAnimationTrigger(string triggerName)
+    {
+        if (animator != null && !string.IsNullOrEmpty(triggerName))
+        {
+            animator.ResetTrigger(triggerName);
+        }
     }
 
     // ── Chờ animation clip chạy xong hoàn toàn ─────────────
@@ -326,8 +359,37 @@ public class UnitView : MonoBehaviour
         transform.position = targetPos;
     }
 
+    /// <summary>
+    /// Đưa unit trở về vị trí gốc đã được lưu.
+    /// </summary>
     public void ResetPosition()
     {
+        Debug.LogWarning($"[UnitView] RESET POSITION được gọi cho {LinkedUnit.UnitName}. Vị trí gốc: {originalPosition}", this.gameObject);
         transform.position = originalPosition;
+    }
+
+    // ── Animation Parameters ─────────────────────────────────────
+    public void SetAnimationBool(string boolName, bool value)
+    {
+        if (animator != null)
+        {
+            animator.SetBool(boolName, value);
+        }
+    }
+
+    public void SetAnimationFloat(string floatName, float value)
+    {
+        if (animator != null)
+        {
+            animator.SetFloat(floatName, value);
+        }
+    }
+
+    public void DisableRootMotion()
+    {
+        if (animator != null)
+        {
+            animator.applyRootMotion = false;
+        }
     }
 }

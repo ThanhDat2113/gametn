@@ -44,6 +44,7 @@ public class CombatPlanningUI : MonoBehaviour
 
     private CombatManager combat;
     private Camera mainCam;
+    private CanvasGroup planningCanvasGroup;
     private List<CombatUnit> planningUnits = new();
     private CombatUnit activeUnit;
     private CombatUnit pendingUnit;
@@ -73,19 +74,27 @@ public class CombatPlanningUI : MonoBehaviour
         combat.OnVictory += HideUI;
         combat.OnDefeat += HideUI;
         combat.OnCombatStarted += OnCombatStarted;
+        combat.OnPlanChanged += RebuildActionBar;
 
         if (confirmButton != null)
             confirmButton.onClick.AddListener(OnConfirm);
         else
             Debug.LogError("[PlanUI] confirmButton chưa gán!");
 
-        if (planningCanvas != null) planningCanvas.gameObject.SetActive(true);
+        if (planningCanvas != null) 
+        {
+            planningCanvas.gameObject.SetActive(true);
+            planningCanvasGroup = planningCanvas.GetComponent<CanvasGroup>();
+            if (planningCanvasGroup == null)
+            {
+                planningCanvasGroup = planningCanvas.gameObject.AddComponent<CanvasGroup>();
+            }
+        }
         if (actionBarPanel != null) actionBarPanel.gameObject.SetActive(true);
         if (leftSkillContainer != null) leftSkillContainer.gameObject.SetActive(false);
         if (rightSkillContainer != null) rightSkillContainer.gameObject.SetActive(false);
 
         SetInstruction("");
-        confirmButton.interactable = false;
 
         StartCoroutine(EnsureActionBarInit());
     }
@@ -115,6 +124,7 @@ public class CombatPlanningUI : MonoBehaviour
         combat.OnVictory -= HideUI;
         combat.OnDefeat -= HideUI;
         combat.OnCombatStarted -= OnCombatStarted;
+        combat.OnPlanChanged -= RebuildActionBar;
     }
 
     private void Update()
@@ -144,7 +154,6 @@ public class CombatPlanningUI : MonoBehaviour
     private void OnPlanStarted(List<CombatUnit> units)
     {
         Debug.Log($"[PlanUI] OnPlanStarted: {units.Count} units");
-        // HIỆN UI KHI BẮT ĐẦU LƯỢT CỦA NGƯỜI CHƠI
         if (planningCanvas != null) planningCanvas.gameObject.SetActive(true);
 
         if (roundText != null)
@@ -163,17 +172,21 @@ public class CombatPlanningUI : MonoBehaviour
         actionSlots.Clear();
 
         RebuildActionBar();
-        UpdateConfirmButton();
-        SetInstruction("Nhấn vào nhân vật để chọn skill");
+        if (confirmButton != null) confirmButton.interactable = true;
+        SetInstruction("Nhấn vào nhân vật để chọn skill hoặc nhấn Confirm để tự động.");
     }
 
     private void OnExecuteStarted()
     {
-        // ẨN UI KHI BẮT ĐẦU THỰC THI COMBAT
         if (planningCanvas != null) planningCanvas.gameObject.SetActive(false);
+        if (confirmButton != null) confirmButton.interactable = false;
     }
 
-    private void HideUI() => planningCanvas.gameObject.SetActive(false);
+    private void HideUI()
+    {
+        if (planningCanvas != null) planningCanvas.gameObject.SetActive(false);
+        if (confirmButton != null) confirmButton.interactable = false;
+    }
 
     private void HandleWorldClick(Vector3 mousePos)
     {
@@ -251,7 +264,7 @@ public class CombatPlanningUI : MonoBehaviour
             if (label != null)
             {
                 bool cd = !unit.IsSkillReady(i);
-                label.text = cd ? $"{skill.skillName}\n<size=70%>CD: {unit.SkillCooldowns[i]}</size>" : $"{skill.skillName}\n<size=70%>{skill.basePoint}pt</size>";
+                label.text = cd ? $"{skill.skillName}\\n<size=70%>CD: {unit.SkillCooldowns[i]}</size>" : $"{skill.skillName}\\n<size=70%>{skill.basePoint}pt</size>";
             }
 
             var img = go.GetComponent<Image>();
@@ -290,9 +303,9 @@ public class CombatPlanningUI : MonoBehaviour
     {
         if (choices.TryGetValue(unit, out var existing) && existing.skill == skill)
         {
+            combat.ClearPlayerSkillSelection(unit);
             choices.Remove(unit);
             RebuildActionBar();
-            UpdateConfirmButton();
             SetInstruction($"{unit.UnitName} đã hủy {skill.skillName}.");
             CloseSkillWheel();
             Debug.Log($"[PlanUI] {unit.UnitName} hủy {skill.skillName}");
@@ -363,10 +376,12 @@ public class CombatPlanningUI : MonoBehaviour
     private void ConfirmSkillChoice(CombatUnit unit, SkillData skill, List<CombatUnit> targets)
     {
         if (unit == null) return;
+        Debug.Log($"[DebugUI] Calling SetPlayerSkillSelection for {unit.UnitName}");
+        combat.SetPlayerSkillSelection(unit, skill, targets);
+
         choices[unit] = (skill, targets);
         if (!actionOrder.Contains(unit)) actionOrder.Add(unit);
         RebuildActionBar();
-        UpdateConfirmButton();
         Debug.Log($"[PlanUI] {unit.UnitName} → {skill.skillName} → {string.Join(",", targets.Select(t => t.UnitName))}");
     }
 
@@ -392,8 +407,8 @@ public class CombatPlanningUI : MonoBehaviour
 
     private void RebuildActionBar()
     {
-        var aliveUnits = actionOrder.Where(u => u.IsAlive).ToList();
-        Debug.Log($"[PlanUI] RebuildActionBar: {aliveUnits.Count} slots");
+        var aliveUnits = combat.ActionOrder.Where(u => u.IsAlive).ToList();
+        Debug.Log($"[PlanUI] RebuildActionBar: {aliveUnits.Count} slots from CombatManager's ActionOrder");
 
         foreach (var slot in actionSlots)
             if (slot != null) Destroy(slot.gameObject);
@@ -476,15 +491,19 @@ public class CombatPlanningUI : MonoBehaviour
         int swapWith = hoveredSlotIndex;
         hoveredSlotIndex = -1;
         if (swapWith < 0 || swapWith == dragFromIndex) { dragFromIndex = -1; return; }
-        var alive = actionOrder.Where(u => u.IsAlive).ToList();
+        
+        var alive = combat.ActionOrder.Where(u => u.IsAlive).ToList();
         if (dragFromIndex >= alive.Count || swapWith >= alive.Count) { dragFromIndex = -1; return; }
-        var tmp = alive[dragFromIndex];
-        alive[dragFromIndex] = alive[swapWith];
-        alive[swapWith] = tmp;
-        actionOrder = alive;
+        
+        var newOrder = new List<CombatUnit>(alive);
+        var tmp = newOrder[dragFromIndex];
+        newOrder[dragFromIndex] = newOrder[swapWith];
+        newOrder[swapWith] = tmp;
+
+        combat.UpdateActionOrder(newOrder);
+        
         dragFromIndex = -1;
-        RebuildActionBar();
-        Debug.Log("[PlanUI] New action order: " + string.Join(" -> ", actionOrder.Select(u => u.UnitName)));
+        Debug.Log("[PlanUI] Sent new action order to CombatManager.");
     }
 
     private int FindNearestSlot(Vector2 screenPos)
@@ -503,20 +522,7 @@ public class CombatPlanningUI : MonoBehaviour
 
     private void OnConfirm()
     {
-        if (!planningUnits.All(u => !u.IsAlive || choices.ContainsKey(u))) return;
-
-        var submitList = new List<(CombatUnit unit, SkillData skill, List<CombatUnit> targets)>();
-        foreach (var unit in actionOrder)
-        {
-            if (unit.IsAlive && choices.TryGetValue(unit, out var choice))
-            {
-                submitList.Add((unit, choice.skill, choice.targets));
-            }
-        }
-
-        Debug.Log("[PlanUI] Submitting actions in order: " + string.Join(" -> ", submitList.Select(x => x.unit.UnitName)));
-        combat.SubmitAllPlayerChoices(submitList);
-        // UI sẽ được ẩn khi ExecuteStarted, không cần ẩn ở đây
+        combat.AutoCompleteAndConfirm();
     }
 
     private void SetInstruction(string text)
@@ -538,9 +544,11 @@ public class CombatPlanningUI : MonoBehaviour
         exitEntry.callback.AddListener(_ =>
         {
             var img = go.GetComponent<Image>();
-            if (img == null) return;
-            bool isChosen = choices.TryGetValue(unit, out var ch) && ch.skill == unit.Data.skills[skillIdx];
-            img.color = isChosen ? skillSelectedColor : skillNormalColor;
+            if (img != null && unit.IsSkillReady(skillIdx))
+            {
+                bool isChosen = choices.TryGetValue(unit, out var ch) && ch.skill == unit.Data.skills[skillIdx];
+                img.color = isChosen ? skillSelectedColor : skillNormalColor;
+            }
         });
         trigger.triggers.Add(exitEntry);
     }

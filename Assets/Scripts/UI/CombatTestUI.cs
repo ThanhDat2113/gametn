@@ -55,7 +55,7 @@ public class CombatTestUI : MonoBehaviour
         GUILayout.BeginArea(new Rect(10, 10, 420, 900));
 
         // ── Chưa bắt đầu ──────────────────────────────────────
-        if (combat.CurrentPhase == CombatPhase.Init ||
+        if (combat.CurrentPhase == CombatPhase.None ||
             combat.CurrentPhase == CombatPhase.Defeat)
         {
             GUILayout.Label($"Phase: {combat.CurrentPhase}");

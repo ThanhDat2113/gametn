@@ -7,17 +7,26 @@ public class CombatManager : MonoBehaviour
 {
     public static CombatManager Instance { get; private set; }
 
+
+
     private CombatStateMachine stateMachine = new();
     private ClashResolver clashResolver = new();
     private EnemyAI enemyAI = new();
 
     public List<CombatUnit> PlayerUnits { get; private set; } = new();
     public List<CombatUnit> EnemyUnits { get; private set; } = new();
+    public List<CombatUnit> ActionOrder { get; private set; } = new();
 
     [Header("Grid Spawn Settings")]
     public Transform[] playerGridSlots;
     public Transform[] enemyGridSlots;
+    public Transform enemyRallyPoint; // Điểm tập kết cho kẻ địch
     private List<UnitView> unitViews = new();
+
+    public List<UnitView> GetAllUnitViews()
+    {
+        return unitViews;
+    }
 
 
 
@@ -29,6 +38,8 @@ public class CombatManager : MonoBehaviour
     [Header("Animation")]
     public ClashAnimationSequence clashSequence;
     public CombatCameraManager cameraManager;
+    public CanvasGroup combatUICanvasGroup; // Kéo CanvasGroup cha vào đây
+    private TargetingArrowController arrowController;
 
     public event System.Action OnCombatStarted;
     public event System.Action<CombatUnit> OnPlayerUnitPlanning;
@@ -40,6 +51,7 @@ public class CombatManager : MonoBehaviour
     public event System.Action OnRoundEnded;
     public event System.Action OnVictory;
     public event System.Action OnDefeat;
+    public event System.Action OnPlanChanged;
 
     public CombatPhase CurrentPhase => stateMachine.Current;
 
@@ -51,11 +63,30 @@ public class CombatManager : MonoBehaviour
 
         if (cameraManager == null)
             cameraManager = FindFirstObjectByType<CombatCameraManager>();
-
-        // Đảm bảo TargetingArrowController tồn tại trong scene
-        if (gameObject.GetComponent<TargetingArrowController>() == null)
+        
+        // Tự động hóa việc thiết lập CanvasGroup cho UI
+        if (combatUICanvasGroup == null)
         {
-            gameObject.AddComponent<TargetingArrowController>();
+            var planningUI = FindFirstObjectByType<CombatPlanningUI>();
+            if (planningUI != null && planningUI.planningCanvas != null)
+            {
+                combatUICanvasGroup = planningUI.planningCanvas.GetComponent<CanvasGroup>();
+                if (combatUICanvasGroup == null)
+                {
+                    Debug.Log("[CombatManager] Tự động thêm CanvasGroup vào planningCanvas.");
+                    combatUICanvasGroup = planningUI.planningCanvas.gameObject.AddComponent<CanvasGroup>();
+                }
+            }
+            else
+            {
+                Debug.LogWarning("[CombatManager] Không thể tự động tìm thấy UI Canvas. Fade UI sẽ không hoạt động.");
+            }
+        }
+
+        arrowController = GetComponent<TargetingArrowController>();
+        if (arrowController == null)
+        {
+            arrowController = gameObject.AddComponent<TargetingArrowController>();
         }
     }
 
@@ -96,7 +127,7 @@ public class CombatManager : MonoBehaviour
         SpawnUnitViews();
         Debug.Log($"=== COMBAT STARTED === Player:{PlayerUnits.Count} vs Enemy:{EnemyUnits.Count}");
         OnCombatStarted?.Invoke();
-        stateMachine.TransitionTo(CombatPhase.EnemyPlan);
+        stateMachine.TransitionTo(CombatPhase.Intro);
     }
 
     public void StartCombat(
@@ -147,12 +178,24 @@ public class CombatManager : MonoBehaviour
                 Debug.LogError($"[CombatManager] gridSlot {slot} của {unit.UnitName} không có Transform!");
                 continue;
             }
-            var go = Instantiate(prefab, gridSlots[slot].position, Quaternion.identity);
+
+            // Vị trí cuối cùng trên lưới
+            Vector3 finalGridPosition = gridSlots[slot].position;
+
+            // Nếu là enemy, spawn tại rally point. Nếu không, spawn tại grid.
+            bool isEnemy = !unit.IsPlayer;
+            Vector3 spawnPos = isEnemy && enemyRallyPoint != null ? enemyRallyPoint.position : finalGridPosition;
+
+            var go = Instantiate(prefab, spawnPos, Quaternion.identity);
             var view = go.GetComponent<UnitView>();
             if (view == null) { Debug.LogError($"Prefab {prefab.name} thiếu UnitView!"); continue; }
             view.Setup(unit);
+
+            // Lưu vị trí cuối cùng trên lưới vào UnitView để sử dụng sau
+            view.StoreOriginalPosition(finalGridPosition);
+
             unitViews.Add(view);
-            Debug.Log($"[Spawn] {unit.UnitName} slot{slot} row{unit.GridRow}");
+            Debug.Log($"[Spawn] {unit.UnitName} slot{slot} at {spawnPos}. Final grid pos: {finalGridPosition}");
         }
     }
 
@@ -160,14 +203,149 @@ public class CombatManager : MonoBehaviour
     {
         switch (next)
         {
+            case CombatPhase.Intro: StartCoroutine(DoIntro()); break;
             case CombatPhase.EnemyPlan: StartEnemyPlan(); break;
             case CombatPhase.PlayerPlan: StartPlayerPlan(); break;
-            case CombatPhase.RetargetCheck: DoRetargetCheck(); break;
+            case CombatPhase.RetargetCheck: StartCoroutine(DoRetargetCheck()); break;
             case CombatPhase.Execute: StartCoroutine(ExecuteRound()); break;
             case CombatPhase.RoundEnd: DoRoundEnd(); break;
             case CombatPhase.Victory: DoVictory(); break;
             case CombatPhase.Defeat: DoDefeat(); break;
         }
+    }
+
+    private IEnumerator DoIntro()
+    {
+        cameraManager.BeginIntroSequence();
+
+        // 0. Hide UI
+        yield return FadeUI(0f, 0.5f); // Fade to transparent
+
+        // 1. Mờ đen, hiện ra ở vị trí lệch, rồi pan vào trung tâm của grid team địch
+        Vector3 enemyGridCenter = Vector3.zero;
+        int validSlotCount = 0;
+        if (enemyGridSlots != null && enemyGridSlots.Length > 0)
+        {
+            foreach (var slot in enemyGridSlots)
+            {
+                if (slot != null)
+                {
+                    enemyGridCenter += slot.position;
+                    validSlotCount++;
+                }
+            }
+        }
+
+        if (validSlotCount > 0)
+        {
+            enemyGridCenter /= validSlotCount;
+            // Camera pan từ trái qua, nhanh hơn và xa hơn
+            yield return cameraManager.FadeInAndSetPosition(enemyGridCenter, 7.5f, Vector3.left * 20f, 1.0f);
+        }
+        else
+        {
+            Debug.LogError("[Intro] Không có enemy grid slots hợp lệ để tính trung tâm! Dùng vị trí mặc định.");
+            yield return cameraManager.FadeInAndSetPosition(Vector3.zero, 10f, Vector3.zero, 0f);
+        }
+
+        // --- KỊCH BẢN NÂNG CẤP ---
+
+        // Thêm một khoảng lặng ngắn để camera "đứng" tại vị trí địch
+        yield return new WaitForSeconds(0.75f);
+
+        // 2. Bắt đầu di chuyển camera lùi ra (dolly out) và cho địch lao ra CÙNG LÚC.
+        float dollyOutDuration = 2.0f;
+        StartCoroutine(cameraManager.ZoomOutToFinalView(dollyOutDuration));
+
+        var enemyViews = unitViews.Where(v => v.LinkedUnit != null && !v.LinkedUnit.IsPlayer).ToList();
+        if (enemyViews.Count > 0)
+        {
+            // 3. "Tướng địch" (chọn tên ở giữa) lao ra trước tiên.
+            var leader = enemyViews[enemyViews.Count / 2];
+            enemyViews.Remove(leader); // Xóa khỏi danh sách để không xử lý lại
+            StartCoroutine(MoveUnitToPosition(leader, leader.GetOriginalPosition(), 0.5f));
+
+            // 4. Sau một khoảng trễ ngắn, những tên còn lại lao ra.
+            yield return new WaitForSeconds(0.2f);
+
+            foreach (var follower in enemyViews)
+            {
+                // Cho chúng lao ra với tốc độ và thời gian trễ ngẫu nhiên nhẹ để tạo sự hỗn loạn có tổ chức
+                float randomSpeed = Random.Range(0.4f, 0.6f);
+                StartCoroutine(MoveUnitToPosition(follower, follower.GetOriginalPosition(), randomSpeed));
+                yield return new WaitForSeconds(Random.Range(0.05f, 0.15f));
+            }
+        }
+
+        // 5. Đợi cho camera hoàn thành việc lùi ra.
+        yield return new WaitForSeconds(dollyOutDuration);
+
+        // 6. Show UI again
+        yield return FadeUI(1f, 0.5f); // Fade to opaque
+
+        // 7. Trận đấu bắt đầu
+        Debug.Log("[Intro] Intro sequence finished. Starting combat.");
+        cameraManager.EndIntroSequence();
+        stateMachine.TransitionTo(CombatPhase.EnemyPlan);
+    }
+
+
+    private IEnumerator FadeUI(float targetAlpha, float duration)
+    {
+        if (combatUICanvasGroup == null) yield break;
+
+        float startAlpha = combatUICanvasGroup.alpha;
+        float elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            combatUICanvasGroup.alpha = Mathf.Lerp(startAlpha, targetAlpha, elapsed / duration);
+            yield return null;
+        }
+
+        combatUICanvasGroup.alpha = targetAlpha;
+    }
+
+    private IEnumerator MoveUnitToPosition(UnitView unitView, Vector3 targetPosition, float duration)
+    {
+        unitView.SetAnimationTrigger("Rush");
+
+        Vector3 startPosition = unitView.transform.position;
+        float elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = elapsed / duration;
+            unitView.transform.position = Vector3.Lerp(startPosition, targetPosition, t);
+            yield return null;
+        }
+
+        unitView.transform.position = targetPosition;
+        unitView.ForcePlayAnimationState("Idle");
+    }
+
+    private Vector3 GetSideCenter(List<CombatUnit> units, Transform[] gridSlots)
+    {
+        if (units == null || units.Count == 0 || gridSlots == null || gridSlots.Length == 0)
+        {
+            return Vector3.zero;
+        }
+
+        Vector3 center = Vector3.zero;
+        int count = 0;
+
+        foreach (var unit in units)
+        {
+            if (unit.GridSlot >= 0 && unit.GridSlot < gridSlots.Length && gridSlots[unit.GridSlot] != null)
+            {
+                center += gridSlots[unit.GridSlot].position;
+                count++;
+            }
+        }
+
+        return count > 0 ? center / count : Vector3.zero;
     }
 
     private void StartEnemyPlan()
@@ -184,20 +362,21 @@ public class CombatManager : MonoBehaviour
 
     private void StartPlayerPlan()
     {
-        // Reset vị trí của tất cả các unit về vị trí ban đầu
-        foreach (var view in unitViews)
-        {
-            if (view != null && view.gameObject.activeInHierarchy)
-            {
-                view.ResetPosition();
-            }
-        }
+        // KHÔNG reset vị trí ở đây nữa để giữ vị trí của enemy sau intro
 
         planningIndex = 0;
         var alivePlayers = PlayerUnits.Where(u => u.IsAlive).ToList();
+        ActionOrder = new List<CombatUnit>(alivePlayers);
         OnPlayerPlanStarted?.Invoke(alivePlayers);
         if (OnPlayerPlanStarted == null)
             RequestNextPlayerInput();
+    }
+
+    public void UpdateActionOrder(List<CombatUnit> newOrder)
+    {
+        ActionOrder = new List<CombatUnit>(newOrder);
+        Debug.Log("[CombatManager] Action order updated by UI.");
+        OnPlanChanged?.Invoke();
     }
 
     private void RequestNextPlayerInput()
@@ -261,31 +440,100 @@ public class CombatManager : MonoBehaviour
         RequestNextPlayerInput();
     }
 
-    private void DoRetargetCheck()
+    public void SetPlayerSkillSelection(CombatUnit player, SkillData skill, List<CombatUnit> targets)
     {
-        foreach (var enemy in EnemyUnits.Where(e => e.IsAlive))
+        if (player == null || !PlayerUnits.Contains(player) || CurrentPhase != CombatPhase.PlayerPlan)
         {
-            if (enemy.SelectedSkill == null) continue;
-
-            var playersTargetingEnemy = PlayerUnits
-                .Where(p => p.IsAlive && p.SelectedTargets.Contains(enemy))
-                .ToList();
-
-            if (playersTargetingEnemy.Count == 0)
-            {
-                Debug.Log($"[Retarget] {enemy.UnitName}: không bị nhắm → giữ target [{string.Join(", ", enemy.SelectedTargets.Select(t => t.UnitName))}]");
-                continue;
-            }
-
-            var firstPlayer = playersTargetingEnemy
-                .OrderBy(p => PlayerUnits.IndexOf(p))
-                .First();
-
-            string prevTarget = string.Join(", ", enemy.SelectedTargets.Select(t => t.UnitName));
-            enemy.SelectSkill(enemy.SelectedSkill, new List<CombatUnit> { firstPlayer });
-            Debug.Log($"[Retarget] {enemy.UnitName}: {prevTarget} → {firstPlayer.UnitName} (player đầu tiên trong planning order nhắm nó)");
+            Debug.LogWarning($"[DebugManager] SetPlayerSkillSelection rejected. Player: {player?.UnitName}, Phase: {CurrentPhase}");
+            return;
         }
 
+        // 1. Cập nhật lựa chọn của người chơi
+        player.SelectSkill(skill, targets);
+        Debug.Log($"[DebugManager] Firing OnPlayerSkillSelected for {player.UnitName}");
+        OnPlayerSkillSelected?.Invoke(player);
+
+        // 2. Xử lý AI phản ứng (nếu có)
+        if (skill.type == SkillType.Clash)
+        {
+            foreach (var enemyTarget in targets.Where(t => !t.IsPlayer && t.IsAlive))
+            {
+                var enemyClashSkillInfo = enemyTarget.Data.skills
+                    .Select((s, i) => new { Skill = s, Index = i })
+                    .FirstOrDefault(s => s.Skill.type == SkillType.Clash && enemyTarget.IsSkillReady(s.Index));
+
+                if (enemyClashSkillInfo != null)
+                {
+                    // Kẻ địch BẮT BUỘC phản ứng, ghi đè lên hành động cũ.
+                    Debug.Log($"[Reactive AI] {enemyTarget.UnitName} is FORCED to react to {player.UnitName}'s clash.");
+                    enemyTarget.SelectSkill(enemyClashSkillInfo.Skill, new List<CombatUnit> { player });
+                }
+            }
+        }
+
+        // 3. Sau khi tất cả thay đổi (player + AI) đã xong, thông báo cho UI cập nhật.
+        // Đây là nguồn sự thật duy nhất cho việc vẽ lại.
+        OnPlanChanged?.Invoke();
+    }
+
+    public void ClearPlayerSkillSelection(CombatUnit player)
+    {
+        if (player == null || !PlayerUnits.Contains(player) || CurrentPhase != CombatPhase.PlayerPlan) return;
+        player.ClearSelection();
+        OnPlanChanged?.Invoke();
+    }
+
+    public void NotifyOrderChanged()
+    {
+        OnPlanChanged?.Invoke();
+    }
+
+    public void AutoCompleteAndConfirm()
+    {
+        if (CurrentPhase != CombatPhase.PlayerPlan) return;
+
+        // THEO YÊU CẦU: Loại bỏ hoàn toàn cơ chế tự động chọn.
+        // Nút Confirm giờ chỉ có tác dụng bắt đầu lượt thực thi với các lựa chọn thủ công đã có.
+
+        // Chuyển sang phase tiếp theo
+        stateMachine.TransitionTo(CombatPhase.RetargetCheck);
+    }
+
+    private IEnumerator DoRetargetCheck()
+    {
+        // VÔ HIỆU HÓA TẠM THỜI THEO YÊU CẦU
+        // Logic này tự động buộc người chơi phải target kẻ địch đang tấn công mình.
+        // Bằng cách vô hiệu hóa nó, lựa chọn thủ công của người chơi sẽ được tôn trọng 100%.
+        /*
+        bool retargetHappened = false;
+
+        // Logic mới: Người chơi bị buộc phải đối đầu
+        foreach (var player in PlayerUnits.Where(p => p.IsAlive))
+        {
+            var attacker = EnemyUnits.FirstOrDefault(e => e.IsAlive && e.SelectedTargets.Contains(player));
+
+            if (attacker != null)
+            {
+                // Nếu người chơi đã chọn skill và mục tiêu không phải là kẻ đang tấn công mình
+                if (player.SelectedSkill != null && !player.SelectedTargets.Contains(attacker))
+                {
+                    string prevTargetName = player.SelectedTargets.Any() ? player.SelectedTargets[0].UnitName : "none";
+                    Debug.Log($"[Retarget] {player.UnitName} was targeting {prevTargetName}, but is being attacked by {attacker.UnitName}. Forcing retarget.");
+                    player.SelectSkill(player.SelectedSkill, new List<CombatUnit> { attacker });
+                    retargetHappened = true;
+                }
+            }
+        }
+
+        if (retargetHappened)
+        {
+            Debug.Log("[Retarget] Targets were changed. Redrawing arrows and waiting.");
+            arrowController.DrawAllArrows();
+            yield return new WaitForSeconds(1.0f); 
+        }
+        */
+
+        yield return null; // Logic is disabled, wait a frame before continuing.
         stateMachine.TransitionTo(CombatPhase.Execute);
     }
 
@@ -294,14 +542,19 @@ public class CombatManager : MonoBehaviour
         OnExecuteStarted?.Invoke();
         Debug.Log("\n--- EXECUTE (theo thứ tự Action Bar) ---");
 
-        var playerOrder = PlayerUnits.Where(p => p.IsAlive).ToList();
-        if (playerOrder.Count == 0) yield break;
+        // TẠO BẢN SAO CỦA ActionOrder ĐỂ THỰC THI, KHÔNG LÀM THAY ĐỔI BẢN GỐC
+        var executionOrder = ActionOrder.Where(p => p.IsAlive).ToList();
+        if (executionOrder.Count == 0)
+        {
+            StartCoroutine(CheckEndCombat());
+            yield break;
+        }
 
         var clashedEnemies = new HashSet<CombatUnit>();
 
-        for (int i = 0; i < playerOrder.Count; i++)
+        for (int i = 0; i < executionOrder.Count; i++)
         {
-            var player = playerOrder[i];
+            var player = executionOrder[i];
             if (!player.IsAlive) continue;
             if (player.SelectedSkill == null) continue;
 
@@ -310,34 +563,18 @@ public class CombatManager : MonoBehaviour
             if (targets.Count == 0) continue;
 
             CombatUnit target = targets[0];
-            bool isEnemy = !target.IsPlayer;
 
-            bool isClash = false;
-            CombatUnit enemy = null;
-            if (isEnemy && skill.type == SkillType.Clash)
-            {
-                enemy = target;
-                if (enemy.SelectedSkill != null && enemy.SelectedSkill.type == SkillType.Clash &&
-                    !clashedEnemies.Contains(enemy) &&
-                    enemy.SelectedTargets != null && enemy.SelectedTargets.Contains(player))
-                {
-                    isClash = true;
-                }
-            }
+            // Xác định xem đây có phải là một cuộc đấu tay đôi (clash) hay không
+            bool isClash = WillAttackResultInClash(player, target);
 
-            if (isClash)
+            if (isClash && !clashedEnemies.Contains(target))
             {
-                Debug.Log($"\n[CLASH] {player.UnitName} ↔ {enemy.UnitName}");
-                var result = clashResolver.Resolve(player, enemy, skill, enemy.SelectedSkill);
+                Debug.Log($"\n[CLASH] {player.UnitName} ↔ {target.UnitName}");
+                var result = clashResolver.Resolve(player, target, skill, target.SelectedSkill);
                 Debug.Log($"  → [{result.Winner.UnitName}] thắng ({result.WinnerScore} vs {result.LoserScore})");
 
                 var playerView = GetUnitView(player);
-                var enemyView = GetUnitView(enemy);
-                var winnerView = result.Winner.IsPlayer ? playerView : enemyView;
-
-                var hits = CalculateHits(result.Winner, result.Loser, result.WinnerSkill);
-                winnerView?.SetPendingHits(hits, result.Loser);
-                winnerView?.SetCurrentSkill(result.WinnerSkill);
+                var enemyView = GetUnitView(target);
 
                 OnClashResolved?.Invoke(result);
 
@@ -349,27 +586,29 @@ public class CombatManager : MonoBehaviour
                 }
                 else
                 {
+                    // Fallback nếu không có animation
                     result.Winner.ExecuteSelectedSkill();
                     yield return new WaitForSeconds(0.5f);
                 }
 
-                clashedEnemies.Add(enemy);
-                enemy.ClearSelection(); // Xóa skill của enemy để không thể clash/tấn công tiếp
+                clashedEnemies.Add(target); // Đánh dấu kẻ địch đã clash
+                target.ClearSelection(); // Xóa skill của enemy để không thể clash/tấn công tiếp
+                player.ClearSelection();
 
                 yield return new WaitForSeconds(0.2f);
             }
-            else
+            else if (player.SelectedSkill != null) // Nếu không clash, hoặc target đã clash rồi, thì tấn công thường
             {
                 Debug.Log($"\n[FreeAttack] {player.UnitName} → {target.UnitName} [{skill.skillName}]");
                 yield return StartCoroutine(ExecuteFreeAttack(player, target, skill));
+                player.ClearSelection();
                 yield return new WaitForSeconds(0.2f);
             }
         }
 
-        // Enemy còn lại tấn công free
-        foreach (var enemy in EnemyUnits.Where(e => e.IsAlive))
+        // Các kẻ địch còn lại chưa bị clash sẽ tấn công tự do
+        foreach (var enemy in EnemyUnits.Where(e => e.IsAlive && e.SelectedSkill != null))
         {
-            if (enemy.SelectedSkill == null) continue;
             if (enemy.SelectedTargets.Count == 0) continue;
             var target = enemy.SelectedTargets[0];
             if (target == null || !target.IsAlive) continue;
@@ -379,22 +618,31 @@ public class CombatManager : MonoBehaviour
             yield return new WaitForSeconds(0.2f);
         }
 
-        foreach (var u in PlayerUnits.Concat(EnemyUnits).Where(u => u.IsAlive))
+        // Dọn dẹp tất cả các lựa chọn còn lại
+        foreach (var u in PlayerUnits.Concat(EnemyUnits))
             u.ClearSelection();
+
+        StartCoroutine(CheckEndCombat());
+    }
+
+    private IEnumerator CheckEndCombat()
+    {
+        yield return new WaitForSeconds(0.5f); // Chờ một chút để các hiệu ứng kết thúc
 
         if (!EnemyUnits.Any(e => e.IsAlive))
         {
             stateMachine.TransitionTo(CombatPhase.Victory);
-            yield break;
         }
-        if (!PlayerUnits.Any(p => p.IsAlive))
+        else if (!PlayerUnits.Any(p => p.IsAlive))
         {
             stateMachine.TransitionTo(CombatPhase.Defeat);
-            yield break;
         }
-
-        stateMachine.TransitionTo(CombatPhase.RoundEnd);
+        else
+        {
+            stateMachine.TransitionTo(CombatPhase.RoundEnd);
+        }
     }
+
 
     private IEnumerator ExecuteFreeAttack(CombatUnit attacker, CombatUnit target, SkillData skill)
     {
@@ -501,5 +749,20 @@ public class CombatManager : MonoBehaviour
     {
         Debug.Log("=== DEFEAT ===");
         OnDefeat?.Invoke();
+    }
+
+    public bool WillAttackResultInClash(CombatUnit unitA, CombatUnit unitB)
+    {
+        if (unitA == null || unitB == null) return false;
+
+        // Một cuộc "Clash" trực quan xảy ra khi và chỉ khi cả hai đơn vị
+        // cùng sử dụng kỹ năng loại Clash VÀ cùng nhắm vào nhau.
+        // Logic này đối xứng và không phụ thuộc vào ActionOrder,
+        // đảm bảo việc vẽ đường luôn chính xác trong giai đoạn lập kế hoạch.
+
+        bool aTargetsBWithClash = unitA.SelectedSkill?.type == SkillType.Clash && unitA.SelectedTargets.Contains(unitB);
+        bool bTargetsAWithClash = unitB.SelectedSkill?.type == SkillType.Clash && unitB.SelectedTargets.Contains(unitA);
+
+        return aTargetsBWithClash && bTargetsAWithClash;
     }
 }

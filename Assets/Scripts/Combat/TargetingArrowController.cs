@@ -6,7 +6,6 @@ public class TargetingArrowController : MonoBehaviour
 {
     [Header("Settings")]
     [SerializeField] private float lineWidth = 0.1f;
-    [SerializeField] private Material lineMaterial;
 
     [Header("Colors")]
     [SerializeField] private Color enemyAttackColor = Color.red;
@@ -17,7 +16,20 @@ public class TargetingArrowController : MonoBehaviour
     private readonly List<LineRenderer> lines = new List<LineRenderer>();
     private bool isSubscribed = false;
 
+    // --- New fields for dynamic visuals ---
+    private Material solidMaterial;
+    private Material dashedMaterialPrototype;
+    private Camera mainCamera;
+    private bool isHoveringOnUnit = false;
+    private readonly Dictionary<LineRenderer, Color> lineColors = new Dictionary<LineRenderer, Color>();
+
     // ─────────────────────────────────────────────────────────
+
+    private void Start()
+    {
+        mainCamera = Camera.main;
+        CreateMaterials();
+    }
 
     private void Update()
     {
@@ -25,28 +37,100 @@ public class TargetingArrowController : MonoBehaviour
         {
             SubscribeToEvents();
         }
+
+        // Only run the visual update logic when in player planning phase
+        if (combat != null && combat.CurrentPhase == CombatPhase.PlayerPlan)
+        {
+            CheckForHover();
+            UpdateLineVisuals();
+        }
     }
+
+    private void CreateMaterials()
+    {
+        // Material for solid lines
+        solidMaterial = new Material(Shader.Find("Legacy Shaders/Particles/Alpha Blended Premultiply"));
+
+        // Material prototype for dashed lines
+        dashedMaterialPrototype = new Material(Shader.Find("Legacy Shaders/Particles/Alpha Blended Premultiply"));
+
+        // Create a texture for the dashed effect programmatically
+        var tex = new Texture2D(32, 1, TextureFormat.RGBA32, false);
+        tex.wrapMode = TextureWrapMode.Repeat;
+        for (int i = 0; i < 32; ++i)
+        {
+            // Create a pattern of solid and transparent parts
+            tex.SetPixel(i, 0, i < 16 ? Color.white : Color.clear);
+        }
+        tex.Apply();
+        dashedMaterialPrototype.mainTexture = tex;
+    }
+
+    private void CheckForHover()
+    {
+        var ray = mainCamera.ScreenPointToRay(Input.mousePosition);
+        // Check if the mouse is over any object with a UnitView component
+        if (Physics.Raycast(ray, out RaycastHit hit, 200f)) // Increased distance
+        {
+            if (hit.collider.GetComponentInParent<UnitView>() != null)
+            {
+                isHoveringOnUnit = true;
+                return;
+            }
+        }
+        isHoveringOnUnit = false;
+    }
+
+    private void UpdateLineVisuals()
+    {
+        // DEBUG: Force blinking effect for enemy lines
+        float blinkAlpha = 0.4f + Mathf.PingPong(Time.time * 2f, 0.6f);
+
+        foreach (var lr in lines)
+        {
+            if (!lr.enabled || !lineColors.ContainsKey(lr)) continue;
+
+            Color originalColor = lineColors[lr];
+
+            // If the line is NOT an enemy attack, make it solid.
+            if (originalColor != enemyAttackColor)
+            {
+                lr.material = solidMaterial;
+                lr.startColor = lr.endColor = originalColor;
+            }
+            else // It's an enemy attack line -> FORCE it to be dashed and blinking for debugging
+            {
+                // This assigns the prototype. Unity will create an instance if we modify properties.
+                lr.material = dashedMaterialPrototype;
+
+                Color blinkingColor = originalColor;
+                blinkingColor.a = blinkAlpha;
+                lr.startColor = lr.endColor = blinkingColor;
+
+                // Adjust texture tiling based on line length to make dashes look consistent.
+                float distance = Vector3.Distance(lr.GetPosition(0), lr.GetPosition(1));
+                lr.material.mainTextureScale = new Vector2(distance * 1.5f, 1f);
+            }
+        }
+    }
+
 
     private void SubscribeToEvents()
     {
+        if (combat != null) return;
+
         combat = CombatManager.Instance;
         if (combat == null) return;
 
-        Debug.Log("[TargetingArrowController] Subscribed to CombatManager events.");
-
-        // Đăng ký sự kiện
         combat.OnPlayerPlanStarted += HandlePlanStarted;
         combat.OnPlayerSkillSelected += HandleSkillSelected;
+        combat.OnPlanChanged += DrawAllArrows;
         combat.OnExecuteStarted += HideAllArrows;
         combat.OnVictory += HideAllArrows;
         combat.OnDefeat += HideAllArrows;
 
-        isSubscribed = true;
-
-        // Kiểm tra ngay lập tức nếu đang trong giai đoạn planning
         if (combat.CurrentPhase == CombatPhase.PlayerPlan)
         {
-            Debug.Log("[TargetingArrowController] Already in planning phase. Drawing arrows now.");
             DrawAllArrows();
         }
     }
@@ -57,13 +141,13 @@ public class TargetingArrowController : MonoBehaviour
         {
             combat.OnPlayerPlanStarted -= HandlePlanStarted;
             combat.OnPlayerSkillSelected -= HandleSkillSelected;
+            combat.OnPlanChanged -= DrawAllArrows;
             combat.OnExecuteStarted -= HideAllArrows;
             combat.OnVictory -= HideAllArrows;
             combat.OnDefeat -= HideAllArrows;
         }
     }
 
-    // Các hàm xử lý sự kiện mới
     private void HandlePlanStarted(List<CombatUnit> units) => DrawAllArrows();
     private void HandleSkillSelected(CombatUnit unit) => DrawAllArrows();
 
@@ -73,55 +157,62 @@ public class TargetingArrowController : MonoBehaviour
         {
             lr.enabled = false;
         }
+        // Clear the color tracking dictionary as lines are no longer valid
+        lineColors.Clear();
     }
 
-    private void DrawAllArrows()
+    public void DrawAllArrows()
     {
         HideAllArrows();
 
-        var allUnits = combat.PlayerUnits.Concat(combat.EnemyUnits);
-        var attacks = new Dictionary<CombatUnit, CombatUnit>();
+        if (combat == null) return;
 
-        // Gather all selected attacks
+        var allUnits = combat.PlayerUnits.Concat(combat.EnemyUnits).Where(u => u.IsAlive).ToList();
+        var allAttacks = new List<(CombatUnit attacker, CombatUnit target)>();
+
         foreach (var unit in allUnits)
         {
-            if (unit.IsAlive && unit.SelectedSkill != null && unit.SelectedTargets.Count > 0)
+            if (unit.SelectedSkill != null && unit.SelectedTargets.Count > 0)
             {
-                var target = unit.SelectedTargets[0];
-                if (target != null && target.IsAlive)
+                foreach (var target in unit.SelectedTargets)
                 {
-                    attacks[unit] = target;
+                    if (target != null && target.IsAlive)
+                    {
+                        allAttacks.Add((unit, target));
+                    }
                 }
             }
         }
 
-        EnsurePool(attacks.Count);
-        int arrowIndex = 0;
+        EnsurePool(allAttacks.Count);
+        int lineIndex = 0;
 
-        var drawnClashes = new HashSet<CombatUnit>();
+        var drawnClashes = new HashSet<(CombatUnit, CombatUnit)>();
 
-        foreach (var attack in attacks)
+        foreach (var (source, target) in allAttacks)
         {
-            var source = attack.Key;
-            var target = attack.Value;
+            bool isClash = combat.WillAttackResultInClash(source, target);
 
-            // Check for a clash
-            if (attacks.TryGetValue(target, out var reverseTarget) && reverseTarget == source)
+            if (isClash)
             {
-                // This is a clash
-                if (drawnClashes.Contains(source) || drawnClashes.Contains(target)) continue;
+                var unit1 = source.Id < target.Id ? source : target;
+                var unit2 = source.Id < target.Id ? target : source;
+                if (drawnClashes.Contains((unit1, unit2)))
+                {
+                    continue;
+                }
 
-                DrawLine(arrowIndex++, source, target, clashColor);
-                drawnClashes.Add(source);
-                drawnClashes.Add(target);
+                DrawLine(lineIndex++, source, target, clashColor);
+                drawnClashes.Add((unit1, unit2));
             }
             else
             {
-                // This is a one-way attack
                 Color color = source.IsPlayer ? playerAttackColor : enemyAttackColor;
-                DrawLine(arrowIndex++, source, target, color);
+                DrawLine(lineIndex++, source, target, color);
             }
         }
+        // After drawing, force an immediate visual update
+        UpdateLineVisuals();
     }
 
     private void DrawLine(int index, CombatUnit source, CombatUnit target, Color color)
@@ -137,7 +228,10 @@ public class TargetingArrowController : MonoBehaviour
         lr.enabled = true;
         lr.SetPosition(0, sourceView.transform.position);
         lr.SetPosition(1, targetView.transform.position);
-        lr.startColor = lr.endColor = color;
+
+        // Store the intended color, but don't apply material/color here.
+        // That will be handled in UpdateLineVisuals().
+        lineColors[lr] = color;
     }
 
     private void EnsurePool(int count)
@@ -154,14 +248,8 @@ public class TargetingArrowController : MonoBehaviour
             lr.useWorldSpace = true;
             lr.sortingOrder = 30000;
 
-            if (lineMaterial != null)
-            {
-                lr.material = lineMaterial;
-            }
-            else
-            {
-                lr.material = new Material(Shader.Find("Sprites/Default"));
-            }
+            // IMPORTANT: Do NOT create a new material here.
+            // We will assign shared materials in the update loop.
 
             lr.enabled = false;
             lines.Add(lr);
