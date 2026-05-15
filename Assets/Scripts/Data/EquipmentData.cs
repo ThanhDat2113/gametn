@@ -7,16 +7,20 @@ public class EquipmentData : ItemData
     public int atkBonus;
     public int defBonus;
     public int hpBonus;
-    public int critRateBonus;   // %
-    public int critDamageBonus; // %
+    public int critRateBonus;
+    public int critDamageBonus;
+
+    // Đảm bảo itemType là Equipment khi khởi tạo
+    void OnEnable()
+    {
+        itemType = ItemType.Equipment;
+    }
 }
 
 public enum EquipmentSlot
 {
     Weapon,
-    Armor,
     Helmet,
-    Gloves,
-    Boots,
+    Armor,
     Accessory
 }

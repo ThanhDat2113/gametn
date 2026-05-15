@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -23,6 +24,10 @@ public class FormationManager : MonoBehaviour
     private FormationData currentFormation = new FormationData { slots = new FormationSlot[9] };
     private const int MAX_UNITS = 5;
     private bool isFormationUIOpen = false;
+
+    // Map để tra cứu nhanh CharacterDragItem theo CharacterData
+    private Dictionary<CharacterData, CharacterDragItem> rosterItemMap
+        = new Dictionary<CharacterData, CharacterDragItem>();
 
     void Start()
     {
@@ -62,11 +67,27 @@ public class FormationManager : MonoBehaviour
 
     void BuildRoster()
     {
+        rosterItemMap.Clear();
         foreach (var cd in availableCharacters)
         {
             var go = Instantiate(characterIconPrefab, rosterContainer);
             var drag = go.GetComponent<CharacterDragItem>();
             drag.Initialize(cd, this);
+            rosterItemMap[cd] = drag; // Lưu lại để ẩn/hiện sau
+        }
+    }
+
+    // Ẩn hoặc hiện icon của nhân vật trên roster
+    private void SetRosterVisible(CharacterData character, bool visible)
+    {
+        if (character == null) return;
+        if (rosterItemMap.TryGetValue(character, out var dragItem))
+        {
+            dragItem.gameObject.SetActive(visible);
+            // Reset alpha/blocksRaycasts SAU SetActive(true)
+            // vì mọi thay đổi CanvasGroup khi inactive đều vô hiệu
+            if (visible)
+                dragItem.ResetVisual();
         }
     }
 
@@ -80,7 +101,9 @@ public class FormationManager : MonoBehaviour
         if (currentCount >= MAX_UNITS && currentFormation.slots[uiSlotIndex]?.data == null)
             return false;
 
+        // Nếu ô đích đang có nhân vật, trả nhân vật đó về roster trước
         ClearSlot(uiSlotIndex);
+
         currentFormation.slots[uiSlotIndex] = new FormationSlot
         {
             data = character,
@@ -88,6 +111,9 @@ public class FormationManager : MonoBehaviour
             gridSlot = uiSlotIndex
         };
         slots[uiSlotIndex].SetCharacter(character);
+
+        // Ẩn icon trên roster
+        SetRosterVisible(character, false);
         return true;
     }
 
@@ -97,15 +123,16 @@ public class FormationManager : MonoBehaviour
     }
 
     // ─── Hoán đổi hoặc di chuyển nhân vật giữa 2 ô ───
+    // Swap không ảnh hưởng roster vì cả 2 nhân vật đều đang được placed
     public void TrySwapCharacters(int fromSlot, int toSlot)
     {
         if (fromSlot == toSlot) return;
         var charFrom = currentFormation.slots[fromSlot]?.data;
-        var charTo = currentFormation.slots[toSlot]?.data;
+        var charTo   = currentFormation.slots[toSlot]?.data;
 
         if (charTo == null)
         {
-            // Di chuyển từ -> to
+            // Di chuyển từ -> to (roster không thay đổi)
             if (charFrom != null)
             {
                 currentFormation.slots[toSlot] = new FormationSlot
@@ -114,15 +141,16 @@ public class FormationManager : MonoBehaviour
                     level = currentFormation.slots[fromSlot].level,
                     gridSlot = toSlot
                 };
-                ClearSlot(fromSlot);
+                // Dùng ClearSlotInternal để không hiện lại roster
+                ClearSlotInternal(fromSlot);
                 slots[toSlot].SetCharacter(charFrom);
             }
         }
         else
         {
-            // Hoán đổi
+            // Hoán đổi (cả 2 đều đang placed, roster không thay đổi)
             var levelFrom = currentFormation.slots[fromSlot].level;
-            var levelTo = currentFormation.slots[toSlot].level;
+            var levelTo   = currentFormation.slots[toSlot].level;
 
             currentFormation.slots[fromSlot] = new FormationSlot
             {
@@ -141,12 +169,26 @@ public class FormationManager : MonoBehaviour
         }
     }
 
+    // Xóa slot và HIỆN LẠI icon roster của nhân vật bị gỡ
     void ClearSlot(int uiSlotIndex)
+    {
+        if (currentFormation.slots[uiSlotIndex] != null)
+        {
+            var removedChar = currentFormation.slots[uiSlotIndex].data;
+            currentFormation.slots[uiSlotIndex] = null;
+            slots[uiSlotIndex].Clear();
+            SetRosterVisible(removedChar, true); // Trả nhân vật về roster
+        }
+    }
+
+    // Xóa slot mà KHÔNG hiện lại roster (dùng khi di chuyển nội bộ giữa các ô)
+    void ClearSlotInternal(int uiSlotIndex)
     {
         if (currentFormation.slots[uiSlotIndex] != null)
         {
             currentFormation.slots[uiSlotIndex] = null;
             slots[uiSlotIndex].Clear();
+            // Không gọi SetRosterVisible ở đây
         }
     }
 
