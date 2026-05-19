@@ -55,7 +55,7 @@ public class CombatTestUI : MonoBehaviour
         GUILayout.BeginArea(new Rect(10, 10, 420, 900));
 
         // ── Chưa bắt đầu ──────────────────────────────────────
-        if (combat.CurrentPhase == CombatPhase.Init ||
+        if (combat.CurrentPhase == CombatPhase.None ||
             combat.CurrentPhase == CombatPhase.Defeat)
         {
             GUILayout.Label($"Phase: {combat.CurrentPhase}");
@@ -158,7 +158,8 @@ public class CombatTestUI : MonoBehaviour
     private void Submit(SkillData skill, List<CombatUnit> targets)
     {
         selectedSkill = null;
-        combat.SubmitPlayerChoice(skill, targets);
+        // combat.SubmitPlayerChoice(skill, targets);
+        Debug.LogWarning("CombatTestUI.Submit is disabled due to API changes. Use the main game UI.");
     }
 
     // ─────────────────────────────────────────────────────────

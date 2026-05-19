@@ -9,6 +9,7 @@ public class UnitView : MonoBehaviour
     public SpriteRenderer spriteRenderer;
     public Animator animator;
     public HitEventReceiver hitReceiver;
+    public UnityEngine.UI.Slider healthBar;
 
     // ── Public ────────────────────────────────────────────────
     public CombatUnit LinkedUnit { get; private set; }
@@ -20,11 +21,28 @@ public class UnitView : MonoBehaviour
     private CombatCameraManager cameraManager;
     private ClashAnimationSequence clashSequence;
     private Vector3 originalPosition;
+    private bool originalPositionHasBeenSet = false;
 
     // ─────────────────────────────────────────────────────────
+
+    public Vector3 GetOriginalPosition()
+    {
+        return originalPosition;
+    }
+
+    public void StoreOriginalPosition(Vector3 position)
+    {
+        originalPosition = position;
+        originalPositionHasBeenSet = true;
+    }
+
+    public void StoreOriginalPosition()
+    {
+        StoreOriginalPosition(transform.position);
+    }
+
     public void Setup(CombatUnit unit)
     {
-        originalPosition = transform.position;
         LinkedUnit = unit;
 
 
@@ -45,6 +63,7 @@ public class UnitView : MonoBehaviour
         unit.OnDamageTaken += (caster, dmg, hitIndex) => 
         {
             TriggerHitFlash();
+            UpdateHealthBar();
             // Camera effect: Zoom vào unit bị damage
             if (cameraManager != null)
             {
@@ -83,6 +102,14 @@ public class UnitView : MonoBehaviour
         }
     }
 
+    public void UpdateHealthBar()
+    {
+        if (healthBar != null && LinkedUnit != null)
+        {
+            healthBar.value = (float)LinkedUnit.CurrentHP / LinkedUnit.MaxHP;
+        }
+    }
+
     // ── Set data trước khi animation chạy ────────────────────
     public void SetCurrentSkill(SkillData skill)
     {
@@ -107,6 +134,22 @@ public class UnitView : MonoBehaviour
     {
         if (animator != null && !string.IsNullOrEmpty(triggerName))
             animator.SetTrigger(triggerName);
+    }
+
+    public void ForcePlayAnimationState(string stateName)
+    {
+        if (animator != null)
+        {
+            animator.Play(stateName);
+        }
+    }
+
+    public void ResetAnimationTrigger(string triggerName)
+    {
+        if (animator != null && !string.IsNullOrEmpty(triggerName))
+        {
+            animator.ResetTrigger(triggerName);
+        }
     }
 
     // ── Chờ animation clip chạy xong hoàn toàn ─────────────
@@ -190,7 +233,7 @@ public class UnitView : MonoBehaviour
                 if (targetView != null && clashSequence != null)
                 {
                     Vector3 direction = (targetView.transform.position - transform.position).normalized;
-                    targetView.StartCoroutine(targetView.KnockbackCoroutine(direction, clashSequence.lightKnockbackDistance, 0.2f));
+                    targetView.StartCoroutine(targetView.KnockbackCoroutine(direction, 0.5f, 0.2f));
                 }
             }
         }
@@ -326,8 +369,37 @@ public class UnitView : MonoBehaviour
         transform.position = targetPos;
     }
 
+    /// <summary>
+    /// Đưa unit trở về vị trí gốc đã được lưu.
+    /// </summary>
     public void ResetPosition()
     {
+        Debug.LogWarning($"[UnitView] RESET POSITION được gọi cho {LinkedUnit.UnitName}. Vị trí gốc: {originalPosition}", this.gameObject);
         transform.position = originalPosition;
+    }
+
+    // ── Animation Parameters ─────────────────────────────────────
+    public void SetAnimationBool(string boolName, bool value)
+    {
+        if (animator != null)
+        {
+            animator.SetBool(boolName, value);
+        }
+    }
+
+    public void SetAnimationFloat(string floatName, float value)
+    {
+        if (animator != null)
+        {
+            animator.SetFloat(floatName, value);
+        }
+    }
+
+    public void DisableRootMotion()
+    {
+        if (animator != null)
+        {
+            animator.applyRootMotion = false;
+        }
     }
 }

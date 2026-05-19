@@ -1,66 +1,75 @@
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
-// ClashResult.cs — thêm visual data
-public class ClashResult
+// Lớp chứa kết quả của một hành động, thay thế cho ClashResult
+public class ActionResult
 {
-    public CombatUnit Winner;
-    public CombatUnit Loser;
-    public SkillData WinnerSkill;
-    public SkillData LoserSkill;
-    public int WinnerScore;
-    public int LoserScore;
-    public ClashVisualData VisualData; // thêm dòng này
-}
+    public CombatUnit Actor { get; set; }
+    public SkillData Skill { get; set; }
+    public List<CombatUnit> InitialTargets { get; set; }
+    public List<ActionOutcome> Outcomes { get; set; } = new List<ActionOutcome>();
 
-public class ClashResolver
-{
-    // Tung xúc xắc có tính Luck
-    private int RollScore(int basePoint, int luck)
+    // Phương thức này sẽ áp dụng tất cả các kết quả đã được tính toán
+    public void ApplyOutcomes()
     {
-        int dice = Random.Range(1, 7);          // 1~6
-        int luckBonus = luck / 20;                   // mỗi 20 Luck → +1
-        return basePoint + dice + luckBonus;
+        foreach (var outcome in Outcomes)
+        {
+            if (outcome.Target.IsAlive)
+            {
+                outcome.Target.TakeDamage(Actor, outcome.Damage);
+                Debug.Log($"{outcome.Target.UnitName} takes {outcome.Damage} damage. HP left: {outcome.Target.CurrentHP}");
+            }
+        }
     }
 
-    public ClashResult Resolve(CombatUnit attacker, CombatUnit defender,
-                            SkillData atkSkill, SkillData defSkill)
+    // Áp dụng các hiệu ứng không phải sát thương (ví dụ: buff, debuff)
+    public void ApplyNonDamageOutcomes()
     {
-        int atkDice, defDice;
-        int atkScore, defScore;
-        int attempts = 0;
+        // Hiện tại chưa có logic này, nhưng để sẵn cấu trúc
+        Debug.Log("[ActionResult] Applying non-damage outcomes (Not Implemented).");
+    }
+}
 
-        do
+// Lớp con chứa kết quả cho một mục tiêu cụ thể
+public class ActionOutcome
+{
+    public CombatUnit Target { get; set; }
+    public int Damage { get; set; }
+    // Có thể thêm các hiệu ứng, hồi máu, v.v. ở đây
+}
+
+
+// Đổi tên từ ClashResolver thành ActionResolver
+public class ActionResolver
+{
+    // Viết lại phương thức Resolve để phù hợp với turn-based
+    public ActionResult Resolve(CombatUnit actor, SkillData skill, List<CombatUnit> targets)
+    {
+        var result = new ActionResult
         {
-            atkDice = Random.Range(1, 7);
-            defDice = Random.Range(1, 7);
-            atkScore = atkSkill.basePoint + atkDice + attacker.Luck / 20;
-            defScore = defSkill.basePoint + defDice + defender.Luck / 20;
-            attempts++;
-        }
-        while (atkScore == defScore && attempts < 10);
-
-        bool attackerWins = atkScore > defScore;
-
-        return new ClashResult
-        {
-            Winner = attackerWins ? attacker : defender,
-            Loser = attackerWins ? defender : attacker,
-            WinnerSkill = attackerWins ? atkSkill : defSkill,
-            LoserSkill = attackerWins ? defSkill : atkSkill,
-            WinnerScore = attackerWins ? atkScore : defScore,
-            LoserScore = attackerWins ? defScore : atkScore,
-
-            // Data cho visual
-            VisualData = new ClashVisualData
-            {
-                PlayerBasePoint = atkSkill.basePoint,
-                PlayerDiceResult = atkDice,
-                PlayerTotalScore = atkScore,
-                EnemyBasePoint = defSkill.basePoint,
-                EnemyDiceResult = defDice,
-                EnemyTotalScore = defScore,
-                PlayerWins = attackerWins
-            }
+            Actor = actor,
+            Skill = skill,
+            InitialTargets = targets
         };
+
+        Debug.Log($"[ActionResolver] {actor.UnitName} uses '{skill.skillName}' on {targets.Count} target(s).");
+
+        foreach (var target in targets)
+        {
+            if (!target.IsAlive) continue;
+
+            // Logic tính sát thương cơ bản
+            // TODO: Mở rộng với các loại sát thương, hiệu ứng, v.v.
+            int damage = Mathf.Max(1, actor.ATK - target.PDEF);
+
+            result.Outcomes.Add(new ActionOutcome
+            {
+                Target = target,
+                Damage = damage
+            });
+        }
+
+        return result;
     }
 }
