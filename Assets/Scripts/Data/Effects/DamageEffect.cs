@@ -14,7 +14,7 @@ public class DamageEffect : SkillEffect
         {
             var hits = CalculateHits(caster, target, caster.SelectedSkill.hitCount);
             foreach (var hit in hits)
-                target.TakeDamage(hit.Damage, hit.HitIndex);
+                target.TakeDamage(caster, hit.Damage, hit.HitIndex);
         }
     }
 

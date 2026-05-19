@@ -3,6 +3,8 @@ using UnityEngine;
 
 public class CombatUnit
 {
+    private static int nextId = 0;
+    public int Id { get; private set; }
     public int GridRow { get; set; } = 2;  // 0=Back, 1=Mid, 2=Front
     public int GridSlot { get; set; } = 0;  // 0-8, vị trí trong lưới 3x3
 
@@ -18,7 +20,7 @@ public class CombatUnit
     public int ATK { get; private set; }
     public int PDEF { get; private set; }
     public int MDEF { get; private set; }
-    public int Luck { get; private set; }
+    public int Speed { get; private set; }
 
     public float BaseCritRate { get; private set; } = 0.05f;
     public float BaseCritDmg { get; private set; } = 1.50f;
@@ -39,13 +41,14 @@ public class CombatUnit
     public List<CombatUnit> SelectedTargets { get; private set; } = new();
 
     // ── Events ────────────────────────────────────────────────
-    public event System.Action<int, int> OnDamageTaken; // (damage, hitIndex)
+    public event System.Action<CombatUnit, int, int> OnDamageTaken; // (caster, damage, hitIndex)
     public event System.Action<int> OnHealed;
     public event System.Action OnDied;
 
     // ── Initialize ────────────────────────────────────────────
     public void Initialize(CharacterData data, int level, bool isPlayer)
     {
+        Id = nextId++;
         Data = data;
         Level = level;
         IsPlayer = isPlayer;
@@ -56,17 +59,22 @@ public class CombatUnit
         ATK = data.GetATK(level);
         PDEF = data.GetPDEF(level);
         MDEF = data.GetMDEF(level);
-        Luck = data.GetLuck(level);
+        Speed = data.GetSpeed(level);
 
         SkillCooldowns = new int[data.skills.Length];
     }
 
     // ── Damage ────────────────────────────────────────────────
-    public void TakeDamage(int amount, int hitIndex = 0)
+    public void TakeDamage(int amount)
+    {
+        TakeDamage(null, amount, 0);
+    }
+
+    public void TakeDamage(CombatUnit caster, int amount, int hitIndex = 0)
     {
         int actual = Mathf.Max(1, amount);
         CurrentHP = Mathf.Max(0, CurrentHP - actual);
-        OnDamageTaken?.Invoke(actual, hitIndex);
+        OnDamageTaken?.Invoke(caster, actual, hitIndex);
 
         Debug.Log($"  {UnitName} nhận {actual} dmg → HP {CurrentHP}/{MaxHP}");
 
