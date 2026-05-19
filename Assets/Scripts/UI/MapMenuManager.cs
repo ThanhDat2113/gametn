@@ -10,7 +10,7 @@ public class MapMenuManager : MonoBehaviour
     public GameObject formationPanel;
     public GameObject inventoryPanel;
 
-    [Header("Animation Settings")]
+    [Header("Animation Settings (chỉ cho main panel)")]
     public float animationDuration = 0.5f;
     public AnimationCurve zoomCurve = AnimationCurve.EaseInOut(0, 0, 1, 1);
     public float startScale = 2.5f;
@@ -21,6 +21,9 @@ public class MapMenuManager : MonoBehaviour
     public AudioClip closeSound;
     [Range(0f, 1f)]
     public float volume = 0.7f;
+
+    [Header("Sub Panel Managers (kéo vào)")]
+    public CharacterPanelManager characterPanelManager; // Gán trong Inspector
 
     private RectTransform mainRect;
     private CanvasGroup mainCG;
@@ -50,6 +53,9 @@ public class MapMenuManager : MonoBehaviour
         characterPanel.SetActive(false);
         formationPanel.SetActive(false);
         inventoryPanel.SetActive(false);
+        
+        // Đảm bảo characterPanel tắt (dự phòng)
+        if (characterPanel != null) characterPanel.SetActive(false);
     }
 
     void Update()
@@ -65,14 +71,21 @@ public class MapMenuManager : MonoBehaviour
         switch (currentState)
         {
             case MenuState.Closed:
-                PlaySound(openSound);  // Phát ngay khi bấm
+                PlaySound(openSound);
                 OpenMainPanelWithEffect();
                 break;
             case MenuState.Main:
-                PlaySound(closeSound); // Phát ngay khi bấm
+                PlaySound(closeSound);
                 CloseMainPanelWithEffect();
                 break;
-            default:
+            case MenuState.Character:
+                // Ưu tiên cho CharacterPanelManager xử lý
+                if (characterPanelManager != null && characterPanelManager.TryGoBack())
+                    return; // Đã xử lý xong (đóng info panel), không làm gì thêm
+                else
+                    GoBackToMainWithoutEffect(); // Quay về main panel
+                break;
+            default: // Formation, Inventory (có thể thêm tương tự sau)
                 GoBackToMainWithoutEffect();
                 break;
         }
@@ -81,10 +94,7 @@ public class MapMenuManager : MonoBehaviour
     void PlaySound(AudioClip clip)
     {
         if (clip != null && audioSource != null)
-        {
             audioSource.PlayOneShot(clip, volume);
-            Debug.Log("Sound played: " + clip.name);
-        }
     }
 
     void OpenMainPanelWithEffect()
@@ -116,9 +126,15 @@ public class MapMenuManager : MonoBehaviour
     {
         switch (currentState)
         {
-            case MenuState.Character: characterPanel.SetActive(false); break;
-            case MenuState.Formation: formationPanel.SetActive(false); break;
-            case MenuState.Inventory: inventoryPanel.SetActive(false); break;
+            case MenuState.Character:
+                characterPanel.SetActive(false);
+                break;
+            case MenuState.Formation:
+                formationPanel.SetActive(false);
+                break;
+            case MenuState.Inventory:
+                inventoryPanel.SetActive(false);
+                break;
         }
     }
 
@@ -159,7 +175,18 @@ public class MapMenuManager : MonoBehaviour
         currentAnim = null;
     }
 
-    public void OpenCharacterPanel() => OpenSubPanel(characterPanel, MenuState.Character);
-    public void OpenFormationPanel() => OpenSubPanel(formationPanel, MenuState.Formation);
-    public void OpenInventoryPanel() => OpenSubPanel(inventoryPanel, MenuState.Inventory);
+    public void OpenCharacterPanel()
+    {
+        OpenSubPanel(characterPanel, MenuState.Character);
+    }
+
+    public void OpenFormationPanel()
+    {
+        OpenSubPanel(formationPanel, MenuState.Formation);
+    }
+
+    public void OpenInventoryPanel()
+    {
+        OpenSubPanel(inventoryPanel, MenuState.Inventory);
+    }
 }
