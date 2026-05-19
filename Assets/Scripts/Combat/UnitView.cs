@@ -9,6 +9,7 @@ public class UnitView : MonoBehaviour
     public SpriteRenderer spriteRenderer;
     public Animator animator;
     public HitEventReceiver hitReceiver;
+    public UnityEngine.UI.Slider healthBar;
 
     // ── Public ────────────────────────────────────────────────
     public CombatUnit LinkedUnit { get; private set; }
@@ -62,6 +63,7 @@ public class UnitView : MonoBehaviour
         unit.OnDamageTaken += (caster, dmg, hitIndex) => 
         {
             TriggerHitFlash();
+            UpdateHealthBar();
             // Camera effect: Zoom vào unit bị damage
             if (cameraManager != null)
             {
@@ -97,6 +99,14 @@ public class UnitView : MonoBehaviour
         {
             hitReceiver.OnHitFrame -= ProcessHitAtFrame;
             hitReceiver.OnVFXFrame -= ProcessVFXAtFrame;
+        }
+    }
+
+    public void UpdateHealthBar()
+    {
+        if (healthBar != null && LinkedUnit != null)
+        {
+            healthBar.value = (float)LinkedUnit.CurrentHP / LinkedUnit.MaxHP;
         }
     }
 
@@ -223,7 +233,7 @@ public class UnitView : MonoBehaviour
                 if (targetView != null && clashSequence != null)
                 {
                     Vector3 direction = (targetView.transform.position - transform.position).normalized;
-                    targetView.StartCoroutine(targetView.KnockbackCoroutine(direction, clashSequence.lightKnockbackDistance, 0.2f));
+                    targetView.StartCoroutine(targetView.KnockbackCoroutine(direction, 0.5f, 0.2f));
                 }
             }
         }

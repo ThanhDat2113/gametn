@@ -158,7 +158,8 @@ public class CombatTestUI : MonoBehaviour
     private void Submit(SkillData skill, List<CombatUnit> targets)
     {
         selectedSkill = null;
-        combat.SubmitPlayerChoice(skill, targets);
+        // combat.SubmitPlayerChoice(skill, targets);
+        Debug.LogWarning("CombatTestUI.Submit is disabled due to API changes. Use the main game UI.");
     }
 
     // ─────────────────────────────────────────────────────────

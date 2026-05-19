@@ -28,36 +28,23 @@ public class CombatPlanningUI : MonoBehaviour
     public Color skillCooldownColor = new Color(0.3f, 0.3f, 0.3f, 0.6f);
     public Color skillSelectedColor = new Color(1f, 0.7f, 0f, 1f);
 
-    [Header("Action Bar")]
-    public RectTransform actionBarPanel;
-    public GameObject actionSlotPrefab;
-    public RectTransform actionSlotContainer;
-    public Button confirmButton;
-    public TextMeshProUGUI instructionText;
-
-    [Header("Action Bar Layout")]
-    public float slotWidth = 100f;
-    public float slotSpacing = 20f;
-
     [Header("Target Highlight")]
     public GameObject targetHighlightPrefab;
+    
+    [Header("Instruction Text")]
+    public TextMeshProUGUI instructionText;
+
 
     private CombatManager combat;
     private Camera mainCam;
     private CanvasGroup planningCanvasGroup;
-    private List<CombatUnit> planningUnits = new();
-    private CombatUnit activeUnit;
-    private CombatUnit pendingUnit;
-    private SkillData pendingSkill;
+
+    private CombatUnit currentUnit;
+    private SkillData selectedSkill;
     private bool isChoosingTarget;
-    private Dictionary<CombatUnit, (SkillData skill, List<CombatUnit> targets)> choices = new();
-    private List<CombatUnit> actionOrder = new();
+
     private List<GameObject> activeSkillButtons = new();
     private List<GameObject> targetHighlights = new();
-    private List<ActionSlotUI> actionSlots = new();
-    private int dragFromIndex = -1;
-    private bool isDragging;
-    private int hoveredSlotIndex = -1;
 
     private void Start()
     {
@@ -66,22 +53,19 @@ public class CombatPlanningUI : MonoBehaviour
         if (combat == null)
         {
             Debug.LogError("[PlanUI] Không tìm thấy CombatManager!");
+            gameObject.SetActive(false);
             return;
         }
 
-        combat.OnPlayerPlanStarted += OnPlanStarted;
-        combat.OnExecuteStarted += OnExecuteStarted;
+        // Subscribe to new turn-based events
+        combat.OnPlayerTurnStart += OnPlayerTurn;
+        combat.OnActionResolved += OnActionResolved; // Hide UI after action
         combat.OnVictory += HideUI;
         combat.OnDefeat += HideUI;
         combat.OnCombatStarted += OnCombatStarted;
-        combat.OnPlanChanged += RebuildActionBar;
 
-        if (confirmButton != null)
-            confirmButton.onClick.AddListener(OnConfirm);
-        else
-            Debug.LogError("[PlanUI] confirmButton chưa gán!");
 
-        if (planningCanvas != null) 
+        if (planningCanvas != null)
         {
             planningCanvas.gameObject.SetActive(true);
             planningCanvasGroup = planningCanvas.GetComponent<CanvasGroup>();
@@ -89,104 +73,102 @@ public class CombatPlanningUI : MonoBehaviour
             {
                 planningCanvasGroup = planningCanvas.gameObject.AddComponent<CanvasGroup>();
             }
+            // Start hidden
+            planningCanvasGroup.alpha = 0;
+            planningCanvasGroup.interactable = false;
         }
-        if (actionBarPanel != null) actionBarPanel.gameObject.SetActive(true);
+
         if (leftSkillContainer != null) leftSkillContainer.gameObject.SetActive(false);
         if (rightSkillContainer != null) rightSkillContainer.gameObject.SetActive(false);
 
         SetInstruction("");
-
-        StartCoroutine(EnsureActionBarInit());
-    }
-
-    private IEnumerator EnsureActionBarInit()
-    {
-        yield return new WaitForSeconds(0.2f);
-        if (actionSlots.Count == 0 && combat.PlayerUnits != null && combat.PlayerUnits.Count > 0)
-        {
-            var alive = combat.PlayerUnits.Where(u => u.IsAlive).ToList();
-            if (alive.Count > 0)
-            {
-                planningUnits = alive;
-                actionOrder = new List<CombatUnit>(alive);
-                RebuildActionBar();
-                SetInstruction("Đang chờ lượt...");
-                if (roundText != null) roundText.text = $"Round {combat.CurrentRound}";
-            }
-        }
     }
 
     private void OnDestroy()
     {
         if (combat == null) return;
-        combat.OnPlayerPlanStarted -= OnPlanStarted;
-        combat.OnExecuteStarted -= OnExecuteStarted;
+        combat.OnPlayerTurnStart -= OnPlayerTurn;
+        combat.OnActionResolved -= OnActionResolved;
         combat.OnVictory -= HideUI;
         combat.OnDefeat -= HideUI;
         combat.OnCombatStarted -= OnCombatStarted;
-        combat.OnPlanChanged -= RebuildActionBar;
     }
 
     private void Update()
     {
-        if (planningCanvas == null || !planningCanvas.gameObject.activeSelf) return;
+        if (planningCanvas == null || !planningCanvas.gameObject.activeSelf || !isChoosingTarget) return;
 
         if (Input.GetMouseButtonDown(0) && !EventSystem.current.IsPointerOverGameObject())
             HandleWorldClick(Input.mousePosition);
         if (Input.GetMouseButtonDown(1) || Input.GetKeyDown(KeyCode.Escape))
             CancelCurrentAction();
     }
-
+    
     private void OnCombatStarted()
     {
-        Debug.Log("[PlanUI] OnCombatStarted called");
-        var playerUnits = combat.PlayerUnits.Where(u => u.IsAlive).ToList();
-        if (playerUnits.Count > 0 && actionSlots.Count == 0)
+        if (roundText != null) roundText.text = $"Round {combat.CurrentRound}";
+    }
+
+    // This is the main entry point for the UI now
+    private void OnPlayerTurn(CombatUnit unit)
+    {
+        Debug.Log($"[PlanUI] OnPlayerTurn event received for {unit.UnitName}.");
+        currentUnit = unit;
+        isChoosingTarget = false;
+        selectedSkill = null;
+
+        var view = combat.GetAllUnitViews().FirstOrDefault(v => v.LinkedUnit == unit);
+        if (view == null)
         {
-            planningUnits = playerUnits;
-            actionOrder = new List<CombatUnit>(playerUnits);
-            RebuildActionBar();
-            SetInstruction("Đang chờ lượt của bạn...");
-            if (roundText != null) roundText.text = $"Round {combat.CurrentRound}";
+            Debug.LogError($"[PlanUI] Could not find UnitView for {unit.UnitName}. UI will not be shown.");
+            return;
+        }
+        
+        Debug.Log($"[PlanUI] Found UnitView for {unit.UnitName}. Opening skill wheel.");
+        if (roundText != null) roundText.text = $"Round {combat.CurrentRound}";
+
+        ShowUI();
+        OpenSkillWheel(unit, view);
+    }
+    
+    private void OnActionResolved(ActionResult result)
+    {
+        // Hide the UI as soon as the action is resolved and animations start
+        if (currentUnit != null && result.Actor == currentUnit)
+        {
+            HideUI();
         }
     }
 
-    private void OnPlanStarted(List<CombatUnit> units)
+    private void ShowUI()
     {
-        Debug.Log($"[PlanUI] OnPlanStarted: {units.Count} units");
-        if (planningCanvas != null) planningCanvas.gameObject.SetActive(true);
+        if (planningCanvasGroup != null)
+        {
+            planningCanvasGroup.alpha = 1;
+            planningCanvasGroup.interactable = true;
+        }
+    }
 
-        if (roundText != null)
-            roundText.text = $"Round {combat.CurrentRound}";
-
-        planningUnits = units.Where(u => u.IsAlive).ToList();
-        choices.Clear();
-        actionOrder = new List<CombatUnit>(planningUnits);
-        activeUnit = null;
-        pendingUnit = null;
-        pendingSkill = null;
+    private void HideUI(ActionResult _ = null) // Overload to match event signature
+    {
+        CloseSkillWheel();
+        ClearTargetHighlights();
+        if (planningCanvasGroup != null)
+        {
+            planningCanvasGroup.alpha = 0;
+            planningCanvasGroup.interactable = false;
+        }
+        currentUnit = null;
+        selectedSkill = null;
         isChoosingTarget = false;
-
-        foreach (var slot in actionSlots)
-            if (slot != null) Destroy(slot.gameObject);
-        actionSlots.Clear();
-
-        RebuildActionBar();
-        if (confirmButton != null) confirmButton.interactable = true;
-        SetInstruction("Nhấn vào nhân vật để chọn skill hoặc nhấn Confirm để tự động.");
+        SetInstruction("");
     }
-
-    private void OnExecuteStarted()
+    
+    private void HideUI() // Overload for events without parameters
     {
-        if (planningCanvas != null) planningCanvas.gameObject.SetActive(false);
-        if (confirmButton != null) confirmButton.interactable = false;
+        HideUI(null);
     }
 
-    private void HideUI()
-    {
-        if (planningCanvas != null) planningCanvas.gameObject.SetActive(false);
-        if (confirmButton != null) confirmButton.interactable = false;
-    }
 
     private void HandleWorldClick(Vector3 mousePos)
     {
@@ -202,32 +184,16 @@ public class CombatPlanningUI : MonoBehaviour
                 break;
             }
         }
+
         if (isChoosingTarget)
-            HandleTargetClick(clickedView);
-        else
-            HandleUnitClick(clickedView);
-    }
-
-    private void HandleUnitClick(UnitView view)
-    {
-        if (view == null)
         {
-            CloseSkillWheel();
-            return;
+            OnTargetSelected(clickedView);
         }
-        var unit = view.LinkedUnit;
-        if (!unit.IsPlayer || !unit.IsAlive) return;
-
-        if (activeUnit != null && activeUnit != unit)
-            CloseSkillWheel();
-
-        OpenSkillWheel(unit, view);
     }
 
     private void OpenSkillWheel(CombatUnit unit, UnitView view)
     {
         CloseSkillWheel();
-        activeUnit = unit;
 
         var skills = unit.Data.skills;
         Vector2 screenPos = mainCam.WorldToScreenPoint(view.transform.position);
@@ -264,15 +230,13 @@ public class CombatPlanningUI : MonoBehaviour
             if (label != null)
             {
                 bool cd = !unit.IsSkillReady(i);
-                label.text = cd ? $"{skill.skillName}\\n<size=70%>CD: {unit.SkillCooldowns[i]}</size>" : $"{skill.skillName}\\n<size=70%>{skill.basePoint}pt</size>";
+                label.text = cd ? $"{skill.skillName}\n<size=70%>CD: {unit.SkillCooldowns[i]}</size>" : $"{skill.skillName}\n<size=70%>{skill.basePoint}pt</size>";
             }
 
             var img = go.GetComponent<Image>();
             if (img != null)
             {
-                bool onCD = !unit.IsSkillReady(i);
-                bool isChosen = choices.TryGetValue(unit, out var ch) && ch.skill == skill;
-                img.color = onCD ? skillCooldownColor : (isChosen ? skillSelectedColor : skillNormalColor);
+                img.color = !unit.IsSkillReady(i) ? skillCooldownColor : skillNormalColor;
             }
 
             int capturedIdx = i;
@@ -280,12 +244,12 @@ public class CombatPlanningUI : MonoBehaviour
             if (btn != null)
             {
                 btn.interactable = unit.IsSkillReady(i);
-                btn.onClick.AddListener(() => OnSkillButtonClicked(unit, skill, capturedIdx));
+                btn.onClick.AddListener(() => OnSkillSelected(skill));
             }
-            AddHoverEffect(go, unit, i);
+            AddHoverEffect(go, unit, capturedIdx, skill);
             activeSkillButtons.Add(go);
         }
-        SetInstruction($"{unit.UnitName} — chọn skill");
+        SetInstruction($"{unit.UnitName} — Choose a skill");
     }
 
     private void CloseSkillWheel()
@@ -294,105 +258,90 @@ public class CombatPlanningUI : MonoBehaviour
         activeSkillButtons.Clear();
         if (leftSkillContainer != null) leftSkillContainer.gameObject.SetActive(false);
         if (rightSkillContainer != null) rightSkillContainer.gameObject.SetActive(false);
-        activeUnit = null;
-        if (!isChoosingTarget)
-            SetInstruction("Nhấn vào nhân vật để chọn skill");
     }
 
-    private void OnSkillButtonClicked(CombatUnit unit, SkillData skill, int skillIndex)
+    private void OnSkillSelected(SkillData skill)
     {
-        if (choices.TryGetValue(unit, out var existing) && existing.skill == skill)
-        {
-            combat.ClearPlayerSkillSelection(unit);
-            choices.Remove(unit);
-            RebuildActionBar();
-            SetInstruction($"{unit.UnitName} đã hủy {skill.skillName}.");
-            CloseSkillWheel();
-            Debug.Log($"[PlanUI] {unit.UnitName} hủy {skill.skillName}");
-            return;
-        }
-
+        // Handle instant skills
         if (skill.targetType == TargetType.AllEnemies)
         {
             var targets = combat.EnemyUnits.Where(e => e.IsAlive).ToList();
-            ConfirmSkillChoice(unit, skill, targets);
-            CloseSkillWheel();
+            combat.SubmitPlayerTurnAction(skill, targets);
+            // UI will be hidden by OnActionResolved
             return;
         }
         if (skill.targetType == TargetType.AllAllies)
         {
             var targets = combat.PlayerUnits.Where(p => p.IsAlive).ToList();
-            ConfirmSkillChoice(unit, skill, targets);
-            CloseSkillWheel();
+            combat.SubmitPlayerTurnAction(skill, targets);
+            // UI will be hidden by OnActionResolved
             return;
         }
 
-        pendingUnit = unit;
-        pendingSkill = skill;
+        // Prepare for target selection
+        selectedSkill = skill;
         isChoosingTarget = true;
         HighlightValidTargets(skill);
-        SetInstruction($"Chọn mục tiêu cho [{skill.skillName}] (Chuột phải hủy)");
+        SetInstruction($"Choose a target for [{skill.skillName}] (Right-click to cancel)");
         CloseSkillWheel();
     }
 
-    private void HandleTargetClick(UnitView view)
+    private void OnTargetSelected(UnitView view)
     {
-        if (!isChoosingTarget || view == null) return;
-        var target = view.LinkedUnit;
-        if (!target.IsAlive) return;
-        bool wantEnemy = pendingSkill.targetType == TargetType.SingleEnemy;
-        bool wantAlly = pendingSkill.targetType == TargetType.SingleAlly;
-        if ((wantEnemy && !target.IsPlayer) || (wantAlly && target.IsPlayer))
-            FinishTargetSelection(new List<CombatUnit> { target });
+        if (!isChoosingTarget || view == null || selectedSkill == null) return;
+
+        var targetUnit = view.LinkedUnit;
+        if (!targetUnit.IsAlive) return;
+
+        // Validate target
+        bool isEnemyTarget = selectedSkill.targetType == TargetType.SingleEnemy;
+        bool isAllyTarget = selectedSkill.targetType == TargetType.SingleAlly;
+
+        if ((isEnemyTarget && !targetUnit.IsPlayer) || (isAllyTarget && targetUnit.IsPlayer))
+        {
+            // Valid target clicked, submit the action
+            combat.SubmitPlayerTurnAction(selectedSkill, new List<CombatUnit> { targetUnit });
+            // The UI will be hidden by the OnActionResolved event
+        }
     }
 
-    private void FinishTargetSelection(List<CombatUnit> targets)
-    {
-        isChoosingTarget = false;
-        ClearTargetHighlights();
-        if (pendingUnit != null && pendingSkill != null)
-            ConfirmSkillChoice(pendingUnit, pendingSkill, targets);
-        pendingUnit = null;
-        pendingSkill = null;
-        SetInstruction("Nhấn vào nhân vật để chọn skill");
-    }
 
     private void CancelCurrentAction()
     {
         if (isChoosingTarget)
         {
             isChoosingTarget = false;
-            pendingUnit = null;
-            pendingSkill = null;
+            selectedSkill = null;
             ClearTargetHighlights();
-            SetInstruction("Nhấn vào nhân vật để chọn skill");
+            // Re-open skill wheel for the current unit
+            var view = combat.GetAllUnitViews().FirstOrDefault(v => v.LinkedUnit == currentUnit);
+            if(view != null) OpenSkillWheel(currentUnit, view);
+            else SetInstruction("Action canceled. Select a unit.");
         }
-        else
-        {
-            CloseSkillWheel();
-        }
-    }
-
-    private void ConfirmSkillChoice(CombatUnit unit, SkillData skill, List<CombatUnit> targets)
-    {
-        if (unit == null) return;
-        Debug.Log($"[DebugUI] Calling SetPlayerSkillSelection for {unit.UnitName}");
-        combat.SetPlayerSkillSelection(unit, skill, targets);
-
-        choices[unit] = (skill, targets);
-        if (!actionOrder.Contains(unit)) actionOrder.Add(unit);
-        RebuildActionBar();
-        Debug.Log($"[PlanUI] {unit.UnitName} → {skill.skillName} → {string.Join(",", targets.Select(t => t.UnitName))}");
+        // If not choosing a target, there's nothing to cancel as the wheel is just open.
     }
 
     private void HighlightValidTargets(SkillData skill)
     {
         ClearTargetHighlights();
         if (targetHighlightPrefab == null) return;
-        var pool = skill.targetType == TargetType.SingleEnemy ? combat.EnemyUnits.Where(e => e.IsAlive) : combat.PlayerUnits.Where(p => p.IsAlive);
+
+        IEnumerable<CombatUnit> pool;
+        switch (skill.targetType)
+        {
+            case TargetType.SingleEnemy:
+                pool = combat.EnemyUnits.Where(e => e.IsAlive);
+                break;
+            case TargetType.SingleAlly:
+                pool = combat.PlayerUnits.Where(p => p.IsAlive);
+                break;
+            default:
+                return; // No highlights for AoE or self-target skills
+        }
+
         foreach (var unit in pool)
         {
-            var view = combat.GetUnitView(unit);
+            var view = combat.GetAllUnitViews().FirstOrDefault(v => v.LinkedUnit == unit);
             if (view == null) continue;
             var go = Instantiate(targetHighlightPrefab, view.transform.position, Quaternion.identity);
             targetHighlights.Add(go);
@@ -405,132 +354,12 @@ public class CombatPlanningUI : MonoBehaviour
         targetHighlights.Clear();
     }
 
-    private void RebuildActionBar()
-    {
-        var aliveUnits = combat.ActionOrder.Where(u => u.IsAlive).ToList();
-        Debug.Log($"[PlanUI] RebuildActionBar: {aliveUnits.Count} slots from CombatManager's ActionOrder");
-
-        foreach (var slot in actionSlots)
-            if (slot != null) Destroy(slot.gameObject);
-        actionSlots.Clear();
-
-        for (int i = 0; i < aliveUnits.Count; i++)
-        {
-            var unit = aliveUnits[i];
-            SkillData skill = null;
-            List<CombatUnit> targets = null;
-            if (choices.TryGetValue(unit, out var ch))
-            {
-                skill = ch.skill;
-                targets = ch.targets;
-            }
-            var go = Instantiate(actionSlotPrefab, actionSlotContainer);
-            var slot = go.GetComponent<ActionSlotUI>();
-            if (slot == null) slot = go.AddComponent<ActionSlotUI>();
-            slot.Setup(unit, skill, targets, i, this);
-            actionSlots.Add(slot);
-        }
-        AlignActionSlots();
-    }
-
-    private void AlignActionSlots()
-    {
-        if (actionSlotContainer == null) return;
-        int count = actionSlots.Count;
-        if (count == 0) return;
-
-        float totalWidth = count * slotWidth + (count - 1) * slotSpacing;
-        float startX = -totalWidth / 2f;
-        for (int i = 0; i < count; i++)
-        {
-            float x = startX + i * (slotWidth + slotSpacing) + slotWidth / 2f;
-            var rect = actionSlots[i].GetComponent<RectTransform>();
-            rect.anchoredPosition = new Vector2(x, 0);
-        }
-    }
-
-    private void UpdateConfirmButton()
-    {
-        bool allChosen = planningUnits.All(u => !u.IsAlive || choices.ContainsKey(u));
-        confirmButton.interactable = allChosen;
-        var txt = confirmButton.GetComponentInChildren<TextMeshProUGUI>();
-        if (txt != null)
-            txt.text = allChosen ? "✓ CONFIRM" : $"Còn {planningUnits.Count(u => u.IsAlive && !choices.ContainsKey(u))} chưa chọn";
-    }
-
-    public void OnSlotDragStart(int index)
-    {
-        dragFromIndex = index;
-        isDragging = true;
-        hoveredSlotIndex = -1;
-    }
-
-    public void OnSlotDragging(Vector2 screenPos)
-    {
-        if (!isDragging) return;
-        int nearest = FindNearestSlot(screenPos);
-        if (nearest != hoveredSlotIndex)
-        {
-            foreach (var s in actionSlots) s.HideIndicator();
-            if (nearest >= 0 && nearest != dragFromIndex) actionSlots[nearest].ShowIndicator();
-            hoveredSlotIndex = nearest;
-        }
-    }
-
-    public void OnSlotHovered(int index)
-    {
-        if (!isDragging) return;
-        hoveredSlotIndex = index;
-    }
-
-    public void OnSlotDragEnd()
-    {
-        if (!isDragging) return;
-        isDragging = false;
-        foreach (var s in actionSlots) s.HideIndicator();
-        int swapWith = hoveredSlotIndex;
-        hoveredSlotIndex = -1;
-        if (swapWith < 0 || swapWith == dragFromIndex) { dragFromIndex = -1; return; }
-        
-        var alive = combat.ActionOrder.Where(u => u.IsAlive).ToList();
-        if (dragFromIndex >= alive.Count || swapWith >= alive.Count) { dragFromIndex = -1; return; }
-        
-        var newOrder = new List<CombatUnit>(alive);
-        var tmp = newOrder[dragFromIndex];
-        newOrder[dragFromIndex] = newOrder[swapWith];
-        newOrder[swapWith] = tmp;
-
-        combat.UpdateActionOrder(newOrder);
-        
-        dragFromIndex = -1;
-        Debug.Log("[PlanUI] Sent new action order to CombatManager.");
-    }
-
-    private int FindNearestSlot(Vector2 screenPos)
-    {
-        if (actionSlots.Count == 0) return -1;
-        float minDist = float.MaxValue;
-        int nearest = -1;
-        for (int i = 0; i < actionSlots.Count; i++)
-        {
-            Vector2 slotScreen = RectTransformUtility.WorldToScreenPoint(null, actionSlots[i].GetComponent<RectTransform>().position);
-            float dist = Mathf.Abs(screenPos.x - slotScreen.x);
-            if (dist < minDist) { minDist = dist; nearest = i; }
-        }
-        return nearest;
-    }
-
-    private void OnConfirm()
-    {
-        combat.AutoCompleteAndConfirm();
-    }
-
     private void SetInstruction(string text)
     {
         if (instructionText != null) instructionText.text = text;
     }
 
-    private void AddHoverEffect(GameObject go, CombatUnit unit, int skillIdx)
+    private void AddHoverEffect(GameObject go, CombatUnit unit, int skillIdx, SkillData skill)
     {
         var trigger = go.AddComponent<EventTrigger>();
         var enterEntry = new EventTrigger.Entry { eventID = EventTriggerType.PointerEnter };
@@ -540,14 +369,14 @@ public class CombatPlanningUI : MonoBehaviour
             if (img != null && unit.IsSkillReady(skillIdx)) img.color = skillHoverColor;
         });
         trigger.triggers.Add(enterEntry);
+
         var exitEntry = new EventTrigger.Entry { eventID = EventTriggerType.PointerExit };
         exitEntry.callback.AddListener(_ =>
         {
             var img = go.GetComponent<Image>();
             if (img != null && unit.IsSkillReady(skillIdx))
             {
-                bool isChosen = choices.TryGetValue(unit, out var ch) && ch.skill == unit.Data.skills[skillIdx];
-                img.color = isChosen ? skillSelectedColor : skillNormalColor;
+                img.color = (selectedSkill == skill) ? skillSelectedColor : skillNormalColor;
             }
         });
         trigger.triggers.Add(exitEntry);

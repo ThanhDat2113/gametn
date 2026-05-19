@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Linq;
 using UnityEngine;
 
 /// <summary>
@@ -28,51 +29,24 @@ public class CombatCameraAnimationIntegration : MonoBehaviour
         CombatManager combat = CombatManager.Instance;
         if (combat != null)
         {
-            // Khi clash bắt đầu
-            combat.OnClashResolved += OnClashHappened;
+            combat.OnActionResolved += OnActionHappened;
         }
     }
 
-    /// <summary>
-    /// Gọi từ ClashAnimationSequence khi 2 unit va chạm
-    /// </summary>
-    public void OnClashAnimationStart(Transform attacker, Transform defender)
+    private void OnActionHappened(ActionResult result)
     {
-        if (cameraManager == null) return;
+        // Khi một hành động được thực hiện, có thể lia camera hoặc shake
+        if (cameraManager != null && result.InitialTargets.Any())
+        {
+            var primaryTarget = result.InitialTargets.First();
+            var targetView = FindObjectsByType<UnitView>(FindObjectsSortMode.None)
+                .FirstOrDefault(v => v.LinkedUnit == primaryTarget);
 
-        // Zoom vào điểm giữa 2 unit
-        cameraManager.PlayClashZoom(attacker, defender);
-    }
-
-    /// <summary>
-    /// Gọi từ ClashAnimationSequence sau KnockBack (winner thắng)
-    /// </summary>
-    public void OnClashWinnerAttack(Transform winner)
-    {
-        if (cameraManager == null) return;
-
-        // Zoom vào winner + shake
-        cameraManager.ZoomToUnit(winner, cameraManager.damageZoomSize);
-        cameraManager.PlayImpactShake();
-    }
-
-    /// <summary>
-    /// Gọi từ UnitView khi unit bị damage
-    /// </summary>
-    public void OnUnitTakeDamage(Transform targetUnit)
-    {
-        if (cameraManager == null) return;
-
-        // Light zoom vào unit bị damage
-        cameraManager.ZoomToUnit(targetUnit, cameraManager.damageZoomSize);
-        cameraManager.PlayImpactShake();
-    }
-
-    /// <summary>
-    /// Event handler
-    /// </summary>
-    private void OnClashHappened(ClashResult result)
-    {
-        // (Optional) có thể thêm logic khác
+            if(targetView != null)
+            {
+                cameraManager.ZoomToUnit(targetView.transform, cameraManager.damageZoomSize);
+                cameraManager.PlayImpactShake();
+            }
+        }
     }
 }

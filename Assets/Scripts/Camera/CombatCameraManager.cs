@@ -66,7 +66,6 @@ public class CombatCameraManager : MonoBehaviour
     private Coroutine shakeCoroutine;
     private Coroutine slowMoCoroutine;
     private bool isSlowingDown = false;
-    private int activeClashCount = 0;
     private List<Behaviour> disabledBehaviours = new List<Behaviour>();
     private bool isIntroSequenceActive = false;
 
@@ -99,7 +98,6 @@ public class CombatCameraManager : MonoBehaviour
         if (CombatManager.Instance != null)
         {
             CombatManager.Instance.OnCombatStarted += HandleCombatStarted;
-            CombatManager.Instance.OnClashResolved += HandleClashResolved;
             CombatManager.Instance.OnRoundEnded += HandleRoundEnded;
             CombatManager.Instance.OnDefeat += HandleCombatEnd;
             CombatManager.Instance.OnVictory += HandleCombatEnd;
@@ -136,7 +134,6 @@ public class CombatCameraManager : MonoBehaviour
         if (CombatManager.Instance != null)
         {
             CombatManager.Instance.OnCombatStarted -= HandleCombatStarted;
-            CombatManager.Instance.OnClashResolved -= HandleClashResolved;
             CombatManager.Instance.OnRoundEnded -= HandleRoundEnded;
             CombatManager.Instance.OnDefeat -= HandleCombatEnd;
             CombatManager.Instance.OnVictory -= HandleCombatEnd;
@@ -180,29 +177,6 @@ public class CombatCameraManager : MonoBehaviour
         zoomCoroutine = StartCoroutine(ZoomInCoroutine(zoomSize));
     }
 
-    public void PlayClashZoom(Transform unit1, Transform unit2)
-    {
-        if (unit1 == null || unit2 == null) return;
-        activeClashCount++;
-        Debug.Log($"[CombatCamera] PlayClashZoom started. Active clashes: {activeClashCount}");
-        Vector3 midpoint = (unit1.position + unit2.position) * 0.5f;
-        StartCoroutine(ClashZoomSequence(midpoint));
-    }
-
-    public void EndClashZoom()
-    {
-        if (activeClashCount > 0)
-        {
-            activeClashCount--;
-            Debug.Log($"[CombatCamera] EndClashZoom. Remaining clashes: {activeClashCount}");
-            if (activeClashCount == 0)
-            {
-                StopCoroutineIfRunning(zoomCoroutine);
-                zoomCoroutine = StartCoroutine(ZoomOutCoroutine());
-            }
-        }
-    }
-
     public void PlayImpactShake()
     {
         StopCoroutineIfRunning(shakeCoroutine);
@@ -235,7 +209,6 @@ public class CombatCameraManager : MonoBehaviour
         followTarget = null;
         shakeOffset = Vector3.zero;
         isShaking = false;
-        activeClashCount = 0;
         currentOrthoSize = defaultOrthoSize;
         targetPosition = defaultPosition + new Vector3(0, 0, cameraHeight);
         Debug.Log($"[CombatCamera] Reset: size={currentOrthoSize:F2}, pos={targetPosition}");
@@ -352,15 +325,6 @@ public class CombatCameraManager : MonoBehaviour
         followTarget = null;
     }
 
-    private IEnumerator ClashZoomSequence(Vector3 midpoint)
-    {
-        StopCoroutineIfRunning(zoomCoroutine);
-        followTarget = null;
-        targetPosition = midpoint + new Vector3(0, 0, cameraHeight);
-        zoomCoroutine = StartCoroutine(ZoomInCoroutine(clashZoomSize));
-        yield return new WaitForSeconds(zoomInDuration);
-    }
-
     private IEnumerator ShakeCoroutine(bool isFinalHit = false)
     {
         isShaking = true;
@@ -392,11 +356,6 @@ public class CombatCameraManager : MonoBehaviour
     private void HandleCombatStarted()
     {
         AutoFitUnitsInView();
-    }
-
-    private void HandleClashResolved(ClashResult result)
-    {
-        EndClashZoom();
     }
 
     private void HandleRoundEnded()

@@ -949,6 +949,83 @@ RectTransform:
   m_AnchoredPosition: {x: -88, y: 0}
   m_SizeDelta: {x: 2087.37, y: 680.0194}
   m_Pivot: {x: 1, y: 1}
+--- !u!1 &454989944
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 454989945}
+  - component: {fileID: 454989947}
+  - component: {fileID: 454989946}
+  m_Layer: 0
+  m_Name: IconContainer
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &454989945
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 454989944}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2095934302}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 100, y: 100}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &454989946
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 454989944}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3245ec927659c4140ac4f8d17403cc18, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.ContentSizeFitter
+  m_HorizontalFit: 0
+  m_VerticalFit: 0
+--- !u!114 &454989947
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 454989944}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 30649d3a9faa99c48a7b1166b86bf2a0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.HorizontalLayoutGroup
+  m_Padding:
+    m_Left: 0
+    m_Right: 0
+    m_Top: 0
+    m_Bottom: 0
+  m_ChildAlignment: 0
+  m_Spacing: 0
+  m_ChildForceExpandWidth: 1
+  m_ChildForceExpandHeight: 1
+  m_ChildControlWidth: 0
+  m_ChildControlHeight: 0
+  m_ChildScaleWidth: 0
+  m_ChildScaleHeight: 0
+  m_ReverseArrangement: 0
 --- !u!1 &503556335
 GameObject:
   m_ObjectHideFlags: 0
@@ -1013,16 +1090,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 56070f3ff26144b4abaffc8f31c17d15, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ClashAnimationSequence
-  clashVisual: {fileID: 1941913555}
   cameraManager: {fileID: 844719901}
-  rushDuration: 0.5
-  faceOffDistance: 1.2
-  postSkillWait: 0
-  postKnockbackWait: 0.3
+  moveToTargetDuration: 0.3
   returnDuration: 0.4
-  clashZoomSize: 5.53
-  knockbackDistance: 4.33
-  lightKnockbackDistance: 2.19
+  postSkillWait: 0
+  faceOffDistance: 1.2
 --- !u!4 &551415322
 Transform:
   m_ObjectHideFlags: 0
@@ -2187,12 +2259,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CombatTestStarter
   testPlayerCharacters:
   - {fileID: 11400000, guid: 1c79bd1f881cb4a498893ab76458fe2b, type: 2}
-  - {fileID: 11400000, guid: 1c79bd1f881cb4a498893ab76458fe2b, type: 2}
+  - {fileID: 11400000, guid: 3853047d5d72d06409286d150953b43c, type: 2}
+  - {fileID: 11400000, guid: 1b10230c3faa85e4eacd33cb0c25a021, type: 2}
   - {fileID: 11400000, guid: 1c79bd1f881cb4a498893ab76458fe2b, type: 2}
   - {fileID: 11400000, guid: 1b10230c3faa85e4eacd33cb0c25a021, type: 2}
-  - {fileID: 11400000, guid: 3853047d5d72d06409286d150953b43c, type: 2}
   testPlayerLevels: 0100000001000000010000000100000001000000
-  testPlayerSlots: 0000000002000000040000000600000008000000
+  testPlayerSlots: 0000000001000000020000000600000008000000
   testEnemyGroup: {fileID: 11400000, guid: 4f070e30182b8494687da0780ce4d0c1, type: 2}
   autoStartOnAwake: 1
   startKey: 116
@@ -3406,6 +3478,7 @@ RectTransform:
   - {fileID: 2052149953}
   - {fileID: 1549338718}
   - {fileID: 208387822}
+  - {fileID: 2095934302}
   m_Father: {fileID: 951548989}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -3437,14 +3510,8 @@ MonoBehaviour:
   skillHoverColor: {r: 1, g: 1, b: 1, a: 1}
   skillCooldownColor: {r: 1, g: 1, b: 1, a: 0.6}
   skillSelectedColor: {r: 1, g: 0.7, b: 0, a: 1}
-  actionBarPanel: {fileID: 1549338718}
-  actionSlotPrefab: {fileID: 268347075869462220, guid: f88cee58de35e0e4782a2a2d3cc0ccfe, type: 3}
-  actionSlotContainer: {fileID: 503556336}
-  confirmButton: {fileID: 1034185901}
-  instructionText: {fileID: 1900633178}
-  slotWidth: 0
-  slotSpacing: 200
   targetHighlightPrefab: {fileID: 0}
+  instructionText: {fileID: 1900633178}
 --- !u!1 &1861474306
 GameObject:
   m_ObjectHideFlags: 0
@@ -3940,10 +4007,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 876c590dc26fa2c4a84f6ab354ba1654, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TargetingArrowController
-  lineWidth: 0.12
+  lineWidth: 0.1
   enemyAttackColor: {r: 1, g: 0, b: 0, a: 1}
-  playerAttackColor: {r: 0.3, g: 0.5, b: 1, a: 1}
-  clashColor: {r: 1, g: 0.9, b: 0.2, a: 1}
+  playerAttackColor: {r: 0, g: 1, b: 1, a: 1}
+  clashColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
 --- !u!1 &1993059769
 GameObject:
   m_ObjectHideFlags: 0
@@ -4047,6 +4114,57 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!1 &2095934301
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2095934302}
+  - component: {fileID: 2095934303}
+  m_Layer: 0
+  m_Name: TurnOrderUI
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2095934302
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2095934301}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -821.1, y: -363.6, z: -724.871}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 454989945}
+  m_Father: {fileID: 1860085304}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2095934303
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2095934301}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 82723fae84d602449a1ba2517e2358e9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TurnOrderUIController
+  iconPrefab: {fileID: 8109933637998325815, guid: f88cee58de35e0e4782a2a2d3cc0ccfe, type: 3}
+  iconContainer: {fileID: 454989945}
+  playerColor: {r: 0.2, g: 0.3, b: 0.8, a: 0.5}
+  enemyColor: {r: 0.8, g: 0.2, b: 0.2, a: 0.5}
+  currentTurnColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  displayCount: 5
 --- !u!1 &2124131537
 GameObject:
   m_ObjectHideFlags: 0

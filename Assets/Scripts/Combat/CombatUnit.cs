@@ -20,7 +20,7 @@ public class CombatUnit
     public int ATK { get; private set; }
     public int PDEF { get; private set; }
     public int MDEF { get; private set; }
-    public int Luck { get; private set; }
+    public int Speed { get; private set; }
 
     public float BaseCritRate { get; private set; } = 0.05f;
     public float BaseCritDmg { get; private set; } = 1.50f;
@@ -59,12 +59,17 @@ public class CombatUnit
         ATK = data.GetATK(level);
         PDEF = data.GetPDEF(level);
         MDEF = data.GetMDEF(level);
-        Luck = data.GetLuck(level);
+        Speed = data.GetSpeed(level);
 
         SkillCooldowns = new int[data.skills.Length];
     }
 
     // ── Damage ────────────────────────────────────────────────
+    public void TakeDamage(int amount)
+    {
+        TakeDamage(null, amount, 0);
+    }
+
     public void TakeDamage(CombatUnit caster, int amount, int hitIndex = 0)
     {
         int actual = Mathf.Max(1, amount);
