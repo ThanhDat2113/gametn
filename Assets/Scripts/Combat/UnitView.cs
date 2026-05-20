@@ -11,6 +11,9 @@ public class UnitView : MonoBehaviour
     public HitEventReceiver hitReceiver;
     public UnityEngine.UI.Slider healthBar;
 
+    // Event cho Animation-driven hits
+    public event System.Action OnHitAnimationEvent;
+
     // ── Public ────────────────────────────────────────────────
     public CombatUnit LinkedUnit { get; private set; }
 
@@ -44,7 +47,6 @@ public class UnitView : MonoBehaviour
     public void Setup(CombatUnit unit)
     {
         LinkedUnit = unit;
-
 
         if (unit.Data.battleSprite != null)
             spriteRenderer.sprite = unit.Data.battleSprite;
@@ -196,6 +198,11 @@ public class UnitView : MonoBehaviour
                   $"remaining={remaining:F2}s");
 
         yield return new WaitForSeconds(remaining);
+    }
+
+    public void OnHit()
+    {
+        OnHitAnimationEvent?.Invoke();
     }
 
     // ── Được gọi từ Animation Event — OnHit ──────────────────
@@ -392,6 +399,16 @@ public class UnitView : MonoBehaviour
         if (animator != null)
         {
             animator.SetFloat(floatName, value);
+        }
+    }
+
+    public void SetAlpha(float alpha)
+    {
+        if (spriteRenderer != null)
+        {
+            Color color = spriteRenderer.color;
+            color.a = alpha;
+            spriteRenderer.color = color;
         }
     }
 
