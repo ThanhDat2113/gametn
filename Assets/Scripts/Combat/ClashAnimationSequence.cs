@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
@@ -17,6 +18,8 @@ public class ClashAnimationSequence : MonoBehaviour
 
     [Header("Effects")]
     public float faceOffDistance = 4.0f; // TĂNG KHOẢNG CÁCH ĐỂ KHÔNG ĐỨNG QUÁ SÁT
+    [Range(0, 1)]
+    public float dimAlpha = 0.5f; // Mức độ mờ (0: trong suốt, 1: rõ nét)
 
     private void Awake()
     {
@@ -27,6 +30,9 @@ public class ClashAnimationSequence : MonoBehaviour
     // Phương thức chính để chạy animation cho một hành động
     public IEnumerator PlayAction(ActionResult result)
     {
+        var actor = result.Actor;
+        var targets = result.Outcomes.Select(o => o.Target).ToList();
+
         var actorView = GetViewForUnit(result.Actor);
         var primaryTargetView = GetViewForUnit(result.InitialTargets.FirstOrDefault());
 
@@ -53,66 +59,78 @@ public class ClashAnimationSequence : MonoBehaviour
         Vector3 attackPosition = targetPosition - direction * faceOffDistance;
 
         actorView.SetAnimationTrigger("Rush");
-        yield return StartCoroutine(MoveCoroutine(actorView, attackPosition, moveToTargetDuration));
+        yield return StartCoroutine(MoveAndDimCoroutine(actorView, attackPosition, moveToTargetDuration, targets, true));
 
         // --- Phase 2: Thực hiện Skill Animation và xử lý từng Hit ---
         var skill = result.Skill;
-        float animLength = 0.5f; // Thời gian animation mặc định
-
-        if (skill != null && !string.IsNullOrEmpty(skill.animationTrigger))
-        {
-            actorView.SetAnimationTrigger(skill.animationTrigger);
-            animLength = actorView.GetClipLength(skill.animationTrigger);
+        if (skill == null) {
+            // Nếu không có skill, vẫn thực hiện 1 hit cơ bản
+            result.ApplyOutcomes();
+            yield break;
         }
 
-        // >>> LOGIC MỚI: CHIA NHỎ SÁT THƯƠNG VÀ HIỆU ỨNG THEO TỪNG HIT <<<
-        int hitCount = (skill != null && skill.hitCount > 0) ? skill.hitCount : 1;
-        float timePerHit = animLength / hitCount;
+        // >>> LOGIC MỚI: SỬ DỤNG ANIMATION EVENTS <<<
+        int hitCount = skill.hitCount > 0 ? skill.hitCount : 1;
+        bool animationFinished = false;
 
-        // Áp dụng từng outcome (cho từng mục tiêu)
-        foreach (var outcome in result.Outcomes)
-        {
-            var targetView = GetViewForUnit(outcome.Target);
-            if (targetView == null) continue;
-
-            // Chia nhỏ sát thương cho mỗi hit
-            int damagePerHit = outcome.Damage / hitCount;
-            int remainingDamage = outcome.Damage % hitCount; // Sát thương còn lại nếu không chia hết
-
-            for (int i = 0; i < hitCount; i++)
+        // Hàm xử lý khi nhận được event OnHit
+        Action onHitHandler = () => {
+            // Áp dụng sát thương và hiệu ứng cho TẤT CẢ các mục tiêu mỗi khi có hit
+            foreach (var outcome in result.Outcomes)
             {
-                // Đợi nửa thời gian để hiệu ứng xảy ra giữa animation
-                yield return new WaitForSeconds(timePerHit / 2f);
+                var targetView = GetViewForUnit(outcome.Target);
+                if (targetView == null) continue;
 
-                // Camera effect và sát thương xảy ra gần như cùng lúc
+                // Camera effect
                 if (cameraManager != null) cameraManager.PlayImpactShake();
-                
-                int currentHitDamage = damagePerHit;
-                if (i == hitCount - 1)
-                {
-                    currentHitDamage += remainingDamage;
-                }
 
-                if (currentHitDamage > 0)
-                {
-                    outcome.Target.TakeDamage(currentHitDamage);
+                // Chia đều sát thương cho mỗi hit
+                int damagePerHit = outcome.Damage / hitCount;
+                if (damagePerHit > 0) {
+                    outcome.Target.TakeDamage(damagePerHit);
                     targetView.SetAnimationTrigger("Hurt");
                 }
-
-                // Đợi nốt nửa thời gian còn lại
-                yield return new WaitForSeconds(timePerHit / 2f);
             }
+        };
+
+        // Đăng ký lắng nghe sự kiện OnHit từ actor
+        actorView.OnHitAnimationEvent += onHitHandler;
+
+        // Kích hoạt animation
+        if (!string.IsNullOrEmpty(skill.animationTrigger))
+        {
+            actorView.SetAnimationTrigger(skill.animationTrigger);
+            float animLength = actorView.GetClipLength(skill.animationTrigger);
+            // Dùng coroutine để biết khi nào animation kết thúc
+            StartCoroutine(WaitForAnimationToEnd(animLength, () => animationFinished = true));
+        } else {
+            animationFinished = true; // Không có animation, coi như xong luôn
         }
 
-        // Đảm bảo tất cả các hiệu ứng khác (không phải sát thương) được áp dụng
+        // Chờ cho đến khi animation kết thúc
+        yield return new WaitUntil(() => animationFinished);
+
+        // Hủy đăng ký sự kiện để tránh lỗi
+        actorView.OnHitAnimationEvent -= onHitHandler;
+
+        // Xử lý phần sát thương còn lại (do chia không hết) và các hiệu ứng khác
+        foreach(var outcome in result.Outcomes) {
+            int remainingDamage = outcome.Damage % hitCount;
+            if (remainingDamage > 0) {
+                outcome.Target.TakeDamage(remainingDamage);
+            }
+        }
         result.ApplyNonDamageOutcomes();
 
         yield return new WaitForSeconds(postSkillWait);
 
         // --- Phase 3: Quay về vị trí cũ ---
         actorView.SetAnimationTrigger("Idle");
-        yield return StartCoroutine(MoveCoroutine(actorView, actorOrigin, returnDuration));
+        yield return StartCoroutine(MoveAndDimCoroutine(actorView, actorOrigin, returnDuration, targets, false));
         actorView.SetAnimationTrigger("Idle");
+
+        // --- Khôi phục màu sắc NGAY LẬP TỨC ---
+        ResetAllUnitColors();
 
         // --- Camera Phase 2: Reset về chế độ xem toàn cảnh ---
         if (cameraManager != null)
@@ -122,24 +140,73 @@ public class ClashAnimationSequence : MonoBehaviour
         }
     }
 
-    private IEnumerator MoveCoroutine(UnitView unitView, Vector3 targetPos, float duration)
+    private IEnumerator MoveAndDimCoroutine(UnitView actorView, Vector3 targetPos, float duration, List<CombatUnit> targets, bool isMovingForward)
     {
-        Vector3 startPos = unitView.transform.position;
+        Vector3 startPos = actorView.transform.position;
         float elapsed = 0f;
+
+        // Lấy danh sách các unit không liên quan
+        var allUnitViews = FindObjectsByType<UnitView>(FindObjectsSortMode.None);
+        var involvedUnits = new HashSet<CombatUnit>(targets);
+        involvedUnits.Add(actorView.LinkedUnit);
+        var uninvolvedViews = allUnitViews.Where(v => v.LinkedUnit != null && !involvedUnits.Contains(v.LinkedUnit)).ToList();
 
         while (elapsed < duration)
         {
             elapsed += Time.deltaTime;
             float t = Mathf.Clamp01(elapsed / duration);
-            unitView.transform.position = Vector3.Lerp(startPos, targetPos, t);
+
+            // Di chuyển actor
+            actorView.transform.position = Vector3.Lerp(startPos, targetPos, t);
+
+            // Tính toán và áp dụng độ mờ
+            float currentAlpha;
+            if (isMovingForward)
+            {
+                // Mờ dần đi khi lao tới
+                currentAlpha = Mathf.Lerp(1f, dimAlpha, t);
+            }
+            else
+            {
+                // Rõ dần lại khi lùi về
+                currentAlpha = Mathf.Lerp(dimAlpha, 1f, t);
+            }
+
+            foreach (var view in uninvolvedViews)
+            {
+                view.SetAlpha(currentAlpha);
+            }
+
             yield return null;
         }
-        unitView.transform.position = targetPos;
+
+        // Đảm bảo vị trí và độ mờ cuối cùng chính xác
+        actorView.transform.position = targetPos;
+        float finalAlpha = isMovingForward ? dimAlpha : 1f;
+        foreach (var view in uninvolvedViews)
+        {
+            view.SetAlpha(finalAlpha);
+        }
+    }
+
+    private IEnumerator WaitForAnimationToEnd(float duration, Action onEnd)
+    {
+        yield return new WaitForSeconds(duration);
+        onEnd?.Invoke();
     }
 
     private UnitView GetViewForUnit(CombatUnit unit)
     {
         if (unit == null) return null;
         return FindObjectsByType<UnitView>(FindObjectsSortMode.None).FirstOrDefault(v => v.LinkedUnit == unit);
+    }
+
+    private void ResetAllUnitColors()
+    {
+        var allUnitViews = FindObjectsByType<UnitView>(FindObjectsSortMode.None);
+        foreach (var unitView in allUnitViews)
+        {
+            unitView.SetAlpha(1f);
+        }
     }
 }

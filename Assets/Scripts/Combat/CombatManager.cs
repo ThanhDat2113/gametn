@@ -372,6 +372,13 @@ public class CombatManager : MonoBehaviour
 
         OnRoundSetup?.Invoke(ActionOrder);
 
+        // Gọi thủ công UI để đảm bảo nó được vẽ sau khi ActionOrder đã hoàn chỉnh
+        var turnOrderUI = FindFirstObjectByType<TurnOrderUIController>();
+        if (turnOrderUI != null)
+        {
+            turnOrderUI.RebuildTurnOrderUI(ActionOrder);
+        }
+
         // AI planning will be done in ExecuteRound, turn-by-turn
         OnEnemyPlanDone?.Invoke();
         stateMachine.TransitionTo(CombatPhase.Execute);

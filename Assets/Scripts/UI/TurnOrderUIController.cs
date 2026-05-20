@@ -35,7 +35,7 @@ public class TurnOrderUIController : MonoBehaviour
         combatManager = CombatManager.Instance;
         if (combatManager != null)
         {
-            combatManager.OnRoundSetup += SetupInitialTurnOrder;
+            // combatManager.OnRoundSetup += RebuildTurnOrderUI; // Sẽ được gọi thủ công từ CombatManager
             combatManager.OnUnitTurnStart += UpdateVisibleIcons;
         }
     }
@@ -44,23 +44,34 @@ public class TurnOrderUIController : MonoBehaviour
     {
         if (combatManager != null)
         {
-            combatManager.OnRoundSetup -= SetupInitialTurnOrder;
+            // combatManager.OnRoundSetup -= RebuildTurnOrderUI;
             combatManager.OnUnitTurnStart -= UpdateVisibleIcons;
         }
     }
 
-    private void SetupInitialTurnOrder(List<CombatUnit> turnOrder)
+    public void RebuildTurnOrderUI(List<CombatUnit> turnOrder)
     {
+        if (turnOrder == null)
+        {
+            Debug.LogError("[TurnOrderUI] Nhận được turn order là null!");
+            return;
+        }
+        
         // Xóa các icon cũ
         foreach (var icon in activeIcons)
         {
-            Destroy(icon.gameObject);
+            if(icon != null) Destroy(icon.gameObject);
         }
         activeIcons.Clear();
 
         // Tạo icon mới cho mỗi unit trong turn order, theo đúng thứ tự
         foreach (var unit in turnOrder)
         {
+            if (unit == null)
+            {
+                Debug.LogWarning("[TurnOrderUI] Bỏ qua một unit null trong turn order.");
+                continue;
+            }
             ActionSlotUI newIcon = Instantiate(iconPrefab, iconContainer);
             newIcon.SetupForTurnOrder(unit, unit.IsPlayer ? playerColor : enemyColor);
             activeIcons.Add(newIcon);

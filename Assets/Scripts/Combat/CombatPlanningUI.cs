@@ -226,6 +226,9 @@ public class CombatPlanningUI : MonoBehaviour
             var rect = go.GetComponent<RectTransform>();
             rect.anchoredPosition = new Vector2(0f, -localIdx * skillRowSpacing);
 
+            // Thêm hiệu ứng pop-out
+            StartCoroutine(AnimateSkillButton(rect, localIdx * 0.05f));
+
             var label = go.GetComponentInChildren<TextMeshProUGUI>();
             if (label != null)
             {
@@ -258,6 +261,40 @@ public class CombatPlanningUI : MonoBehaviour
         activeSkillButtons.Clear();
         if (leftSkillContainer != null) leftSkillContainer.gameObject.SetActive(false);
         if (rightSkillContainer != null) rightSkillContainer.gameObject.SetActive(false);
+    }
+
+    private IEnumerator AnimateSkillButton(RectTransform buttonRect, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+
+        buttonRect.localScale = Vector3.zero;
+        float duration = 0.25f; // Nhanh hơn
+        float elapsed = 0f;
+        float overshoot = 1.25f; // Mạnh hơn
+
+        // Pop out
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / duration);
+            float currentScale = Mathf.Lerp(0, overshoot, t);
+            buttonRect.localScale = new Vector3(currentScale, currentScale, 1f);
+            yield return null;
+        }
+
+        // Settle back
+        duration = 0.15f;
+        elapsed = 0f;
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / duration);
+            float currentScale = Mathf.Lerp(overshoot, 1f, t);
+            buttonRect.localScale = new Vector3(currentScale, currentScale, 1f);
+            yield return null;
+        }
+
+        buttonRect.localScale = Vector3.one;
     }
 
     private void OnSkillSelected(SkillData skill)
