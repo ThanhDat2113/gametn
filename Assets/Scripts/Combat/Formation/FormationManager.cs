@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using TMPro; // Thêm dòng này
 
 public class FormationManager : MonoBehaviour
 {
@@ -20,12 +21,14 @@ public class FormationManager : MonoBehaviour
     [Header("Mapping: UI slot index -> Combat slot index (0-8)")]
     public int[] uiToCombatSlot = new int[9] { 6, 3, 0, 7, 4, 1, 8, 5, 2 };
 
+    [Header("Counter")]
+    public TextMeshProUGUI counterText; // Kéo Text vào đây
+
     private SlotUI[] slots = new SlotUI[9];
     private FormationData currentFormation = new FormationData { slots = new FormationSlot[9] };
     private const int MAX_UNITS = 5;
     private bool isFormationUIOpen = false;
 
-    // Map để tra cứu nhanh CharacterDragItem theo CharacterData
     private Dictionary<CharacterData, CharacterDragItem> rosterItemMap
         = new Dictionary<CharacterData, CharacterDragItem>();
 
@@ -34,6 +37,7 @@ public class FormationManager : MonoBehaviour
         BuildGrid();
         BuildRoster();
         formationPanel.SetActive(false);
+        UpdateCounter(); // Khởi tạo hiển thị 0/5
     }
 
     void Update()
@@ -42,6 +46,7 @@ public class FormationManager : MonoBehaviour
         {
             isFormationUIOpen = !isFormationUIOpen;
             formationPanel.SetActive(isFormationUIOpen);
+            if (isFormationUIOpen) UpdateCounter();
         }
 
         if (Input.GetKeyDown(KeyCode.T))
@@ -73,37 +78,38 @@ public class FormationManager : MonoBehaviour
             var go = Instantiate(characterIconPrefab, rosterContainer);
             var drag = go.GetComponent<CharacterDragItem>();
             drag.Initialize(cd, this);
-            rosterItemMap[cd] = drag; // Lưu lại để ẩn/hiện sau
+            rosterItemMap[cd] = drag;
         }
     }
 
-    // Ẩn hoặc hiện icon của nhân vật trên roster
+    private void UpdateCounter()
+    {
+        int count = currentFormation.slots.Count(s => s != null && s.data != null);
+        if (counterText != null)
+            counterText.text = $"{count}/{MAX_UNITS}";
+    }
+
     private void SetRosterVisible(CharacterData character, bool visible)
     {
         if (character == null) return;
         if (rosterItemMap.TryGetValue(character, out var dragItem))
         {
             dragItem.gameObject.SetActive(visible);
-            // Reset alpha/blocksRaycasts SAU SetActive(true)
-            // vì mọi thay đổi CanvasGroup khi inactive đều vô hiệu
-            if (visible)
-                dragItem.ResetVisual();
+            if (visible) dragItem.ResetVisual();
         }
     }
 
     public bool TryPlaceCharacter(CharacterData character, int uiSlotIndex)
     {
         if (character == null) return false;
-        if (IsCharacterAlreadyPlaced(character))
-            return false;
+        if (IsCharacterAlreadyPlaced(character)) return false;
 
         int currentCount = currentFormation.slots.Count(s => s != null && s.data != null);
-        if (currentCount >= MAX_UNITS && currentFormation.slots[uiSlotIndex]?.data == null)
-            return false;
+        if (currentCount >= MAX_UNITS) return false;
 
-        // Nếu ô đích đang có nhân vật, trả nhân vật đó về roster trước
+        if (currentFormation.slots[uiSlotIndex]?.data != null) return false;
+
         ClearSlot(uiSlotIndex);
-
         currentFormation.slots[uiSlotIndex] = new FormationSlot
         {
             data = character,
@@ -111,28 +117,25 @@ public class FormationManager : MonoBehaviour
             gridSlot = uiSlotIndex
         };
         slots[uiSlotIndex].SetCharacter(character);
-
-        // Ẩn icon trên roster
         SetRosterVisible(character, false);
+        UpdateCounter(); // Cập nhật sau khi thêm
         return true;
     }
 
     public void RemoveCharacter(int uiSlotIndex)
     {
         ClearSlot(uiSlotIndex);
+        UpdateCounter(); // Cập nhật sau khi xóa
     }
 
-    // ─── Hoán đổi hoặc di chuyển nhân vật giữa 2 ô ───
-    // Swap không ảnh hưởng roster vì cả 2 nhân vật đều đang được placed
     public void TrySwapCharacters(int fromSlot, int toSlot)
     {
         if (fromSlot == toSlot) return;
         var charFrom = currentFormation.slots[fromSlot]?.data;
-        var charTo   = currentFormation.slots[toSlot]?.data;
+        var charTo = currentFormation.slots[toSlot]?.data;
 
         if (charTo == null)
         {
-            // Di chuyển từ -> to (roster không thay đổi)
             if (charFrom != null)
             {
                 currentFormation.slots[toSlot] = new FormationSlot
@@ -141,16 +144,15 @@ public class FormationManager : MonoBehaviour
                     level = currentFormation.slots[fromSlot].level,
                     gridSlot = toSlot
                 };
-                // Dùng ClearSlotInternal để không hiện lại roster
                 ClearSlotInternal(fromSlot);
                 slots[toSlot].SetCharacter(charFrom);
+                UpdateCounter(); // Số lượng không đổi nhưng gọi để đồng bộ (nếu cần)
             }
         }
         else
         {
-            // Hoán đổi (cả 2 đều đang placed, roster không thay đổi)
             var levelFrom = currentFormation.slots[fromSlot].level;
-            var levelTo   = currentFormation.slots[toSlot].level;
+            var levelTo = currentFormation.slots[toSlot].level;
 
             currentFormation.slots[fromSlot] = new FormationSlot
             {
@@ -166,10 +168,10 @@ public class FormationManager : MonoBehaviour
             };
             slots[fromSlot].SetCharacter(charTo);
             slots[toSlot].SetCharacter(charFrom);
+            UpdateCounter();
         }
     }
 
-    // Xóa slot và HIỆN LẠI icon roster của nhân vật bị gỡ
     void ClearSlot(int uiSlotIndex)
     {
         if (currentFormation.slots[uiSlotIndex] != null)
@@ -177,18 +179,16 @@ public class FormationManager : MonoBehaviour
             var removedChar = currentFormation.slots[uiSlotIndex].data;
             currentFormation.slots[uiSlotIndex] = null;
             slots[uiSlotIndex].Clear();
-            SetRosterVisible(removedChar, true); // Trả nhân vật về roster
+            SetRosterVisible(removedChar, true);
         }
     }
 
-    // Xóa slot mà KHÔNG hiện lại roster (dùng khi di chuyển nội bộ giữa các ô)
     void ClearSlotInternal(int uiSlotIndex)
     {
         if (currentFormation.slots[uiSlotIndex] != null)
         {
             currentFormation.slots[uiSlotIndex] = null;
             slots[uiSlotIndex].Clear();
-            // Không gọi SetRosterVisible ở đây
         }
     }
 
@@ -200,7 +200,6 @@ public class FormationManager : MonoBehaviour
     void SaveAndStartCombat()
     {
         var mappedFormation = new FormationData { slots = new FormationSlot[9] };
-
         for (int uiIdx = 0; uiIdx < currentFormation.slots.Length; uiIdx++)
         {
             if (currentFormation.slots[uiIdx] != null)
@@ -214,7 +213,6 @@ public class FormationManager : MonoBehaviour
                 };
             }
         }
-
         FormationDataStorage.PendingFormation = mappedFormation;
         SceneManager.LoadScene("CombatScene");
     }
