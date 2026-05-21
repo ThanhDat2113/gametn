@@ -2,16 +2,19 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using Game.Combat;
 
 public class CombatManager : MonoBehaviour
 {
     public static CombatManager Instance { get; private set; }
 
-
-
     private CombatStateMachine stateMachine = new();
     private ActionResolver actionResolver = new();
     private EnemyAI enemyAI = new();
+
+    // Command System
+    private readonly Queue<ICombatCommand> _commandQueue = new Queue<ICombatCommand>();
+    private bool _isProcessingCommands = false;
 
     public List<CombatUnit> PlayerUnits { get; private set; } = new();
     public List<CombatUnit> EnemyUnits { get; private set; } = new();
@@ -28,8 +31,6 @@ public class CombatManager : MonoBehaviour
         return unitViews;
     }
 
-
-
     private static int SlotToRow(int slot) => 2 - (slot / 3);
 
     private int planningIndex = 0;
@@ -45,6 +46,34 @@ public class CombatManager : MonoBehaviour
 
     public event System.Action OnCombatStarted;
     public event System.Action<CombatUnit> OnPlayerUnitPlanning;
+
+    #region Command System
+    public void AddCommand(ICombatCommand command)
+    {
+        _commandQueue.Enqueue(command);
+        if (!_isProcessingCommands)
+        {
+            StartCoroutine(ProcessCommandQueue());
+        }
+    }
+
+    private IEnumerator ProcessCommandQueue()
+    {
+        _isProcessingCommands = true;
+        while (_commandQueue.Count > 0)
+        {
+            ICombatCommand command = _commandQueue.Dequeue();
+            IEnumerator commandCoroutine = command.Execute();
+
+            if (commandCoroutine != null)
+            {
+                yield return StartCoroutine(commandCoroutine);
+            }
+        }
+        _isProcessingCommands = false;
+    }
+    #endregion
+
     public event System.Action<CombatUnit> OnPlayerTurnStart; // Sự kiện mới cho turn-based
     public event System.Action<CombatUnit> OnUnitTurnStart; // Sự kiện cho mỗi lượt của unit bất kỳ
     public event System.Action<List<CombatUnit>> OnRoundSetup;
@@ -314,9 +343,8 @@ public class CombatManager : MonoBehaviour
 
     private IEnumerator MoveUnitToPosition(UnitView unitView, Vector3 targetPosition, float duration)
     {
-        // unitView.SetAnimationTrigger("Rush"); // TẠM VÔ HIỆU HÓA - Gây lỗi trên một số model
-        // Tạm thời vô hiệu hóa animation để tránh lỗi "State could not be found"
-        // Sẽ tìm giải pháp tốt hơn sau
+        // Kích hoạt animation chạy (nếu có)
+        unitView.SetAnimationTrigger("Rush");
 
         Vector3 startPosition = unitView.transform.position;
         float elapsed = 0f;
@@ -325,12 +353,15 @@ public class CombatManager : MonoBehaviour
         {
             elapsed += Time.deltaTime;
             float t = elapsed / duration;
-            unitView.transform.position = Vector3.Lerp(startPosition, targetPosition, t);
+            // Sử dụng EaseOutQuad để di chuyển mượt hơn
+            unitView.transform.position = Vector3.Lerp(startPosition, targetPosition, t * t);
             yield return null;
         }
 
         unitView.transform.position = targetPosition;
-        // unitView.ForcePlayAnimationState("Idle"); // TẠM VÔ HIỆU HÓA - Gây lỗi trên một số model
+        
+        // Đảm bảo unit chuyển về trạng thái Idle sau khi di chuyển xong
+        unitView.SetAnimationTrigger("Idle");
     }
 
     private Vector3 GetSideCenter(List<CombatUnit> units, Transform[] gridSlots)

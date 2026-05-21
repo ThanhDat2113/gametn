@@ -64,6 +64,9 @@ public class UnitView : MonoBehaviour
         // Lắng nghe events từ CombatUnit
         unit.OnDamageTaken += (caster, dmg, hitIndex) => 
         {
+            // Kích hoạt animation bị đánh
+            SetAnimationTrigger("Knockback");
+
             TriggerHitFlash();
             UpdateHealthBar();
             // Camera effect: Zoom vào unit bị damage
