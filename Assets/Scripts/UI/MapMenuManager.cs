@@ -1,5 +1,7 @@
 using UnityEngine;
 using System.Collections;
+using UnityEngine.UI;
+using UnityEngine.SceneManagement; // thêm để load scene
 
 public class MapMenuManager : MonoBehaviour
 {
@@ -9,6 +11,9 @@ public class MapMenuManager : MonoBehaviour
     public GameObject characterPanel;
     public GameObject formationPanel;
     public GameObject inventoryPanel;
+    public GameObject savePanel;
+    public GameObject loadPanel;
+    public GameObject quitPanel;  // Panel nhỏ xác nhận thoát
 
     [Header("Animation Settings (chỉ cho main panel)")]
     public float animationDuration = 0.5f;
@@ -22,16 +27,27 @@ public class MapMenuManager : MonoBehaviour
     [Range(0f, 1f)]
     public float volume = 0.7f;
 
-    [Header("Sub Panel Managers (kéo vào)")]
-    public CharacterPanelManager characterPanelManager; // Gán trong Inspector
+    [Header("Sub Panel Managers")]
+    public CharacterPanelManager characterPanelManager;
 
     private RectTransform mainRect;
     private CanvasGroup mainCG;
     private AudioSource audioSource;
 
-    private enum MenuState { Closed, Main, Character, Formation, Inventory }
+    private enum MenuState { Closed, Main, Character, Formation, Inventory, Save, Load, Quit }
     private MenuState currentState = MenuState.Closed;
     private Coroutine currentAnim;
+
+    void Awake()
+    {
+        if (characterPanel != null) characterPanel.SetActive(false);
+        if (formationPanel != null) formationPanel.SetActive(false);
+        if (inventoryPanel != null) inventoryPanel.SetActive(false);
+        if (savePanel != null) savePanel.SetActive(false);
+        if (loadPanel != null) loadPanel.SetActive(false);
+        if (quitPanel != null) quitPanel.SetActive(false);
+        if (mainPanel != null) mainPanel.SetActive(false);
+    }
 
     void Start()
     {
@@ -53,9 +69,9 @@ public class MapMenuManager : MonoBehaviour
         characterPanel.SetActive(false);
         formationPanel.SetActive(false);
         inventoryPanel.SetActive(false);
-        
-        // Đảm bảo characterPanel tắt (dự phòng)
-        if (characterPanel != null) characterPanel.SetActive(false);
+        savePanel.SetActive(false);
+        loadPanel.SetActive(false);
+        quitPanel.SetActive(false);
     }
 
     void Update()
@@ -79,13 +95,15 @@ public class MapMenuManager : MonoBehaviour
                 CloseMainPanelWithEffect();
                 break;
             case MenuState.Character:
-                // Ưu tiên cho CharacterPanelManager xử lý
                 if (characterPanelManager != null && characterPanelManager.TryGoBack())
-                    return; // Đã xử lý xong (đóng info panel), không làm gì thêm
+                    return;
                 else
-                    GoBackToMainWithoutEffect(); // Quay về main panel
+                    GoBackToMainWithoutEffect();
                 break;
-            default: // Formation, Inventory (có thể thêm tương tự sau)
+            case MenuState.Quit:
+                CloseQuitPanel(); // Chỉ đóng quit panel, không ẩn main
+                break;
+            default:
                 GoBackToMainWithoutEffect();
                 break;
         }
@@ -115,7 +133,7 @@ public class MapMenuManager : MonoBehaviour
 
     void GoBackToMainWithoutEffect()
     {
-        CloseCurrentSubPanel();
+        CloseCurrentSubPanel(); // sẽ đóng các panel con bình thường (trừ quit)
         mainPanel.SetActive(true);
         mainRect.localScale = Vector3.one;
         if (useFade && mainCG != null) mainCG.alpha = 1f;
@@ -126,15 +144,12 @@ public class MapMenuManager : MonoBehaviour
     {
         switch (currentState)
         {
-            case MenuState.Character:
-                characterPanel.SetActive(false);
-                break;
-            case MenuState.Formation:
-                formationPanel.SetActive(false);
-                break;
-            case MenuState.Inventory:
-                inventoryPanel.SetActive(false);
-                break;
+            case MenuState.Character: characterPanel.SetActive(false); break;
+            case MenuState.Formation: formationPanel.SetActive(false); break;
+            case MenuState.Inventory: inventoryPanel.SetActive(false); break;
+            case MenuState.Save: savePanel.SetActive(false); break;
+            case MenuState.Load: loadPanel.SetActive(false); break;
+            // Không đóng quit panel ở đây vì nó được xử lý riêng
         }
     }
 
@@ -145,8 +160,42 @@ public class MapMenuManager : MonoBehaviour
             mainPanel.SetActive(false);
         else
             CloseCurrentSubPanel();
+        
         panel.SetActive(true);
         currentState = nextState;
+        Canvas.ForceUpdateCanvases();
+        if (panel.GetComponent<RectTransform>() != null)
+            LayoutRebuilder.ForceRebuildLayoutImmediate(panel.GetComponent<RectTransform>());
+    }
+
+    // Quit panel đặc biệt: không ẩn main panel
+    void OpenQuitPanel()
+    {
+        if (quitPanel != null)
+        {
+            quitPanel.SetActive(true);
+            currentState = MenuState.Quit;
+        }
+    }
+
+    void CloseQuitPanel()
+    {
+        if (quitPanel != null)
+            quitPanel.SetActive(false);
+        currentState = MenuState.Main;
+    }
+
+    // Hàm gọi khi chọn Yes (xác nhận quit)
+    public void QuitToMainMenu()
+    {
+        // Load scene main menu (tên scene của bạn)
+        SceneManager.LoadScene("Main Menu");
+    }
+
+    // Hàm gọi khi chọn No (hủy)
+    public void CancelQuit()
+    {
+        CloseQuitPanel();
     }
 
     IEnumerator AnimateMainPanel(float startScaleVal, float endScaleVal, float startAlpha, float endAlpha, bool deactivateOnEnd)
@@ -175,18 +224,11 @@ public class MapMenuManager : MonoBehaviour
         currentAnim = null;
     }
 
-    public void OpenCharacterPanel()
-    {
-        OpenSubPanel(characterPanel, MenuState.Character);
-    }
-
-    public void OpenFormationPanel()
-    {
-        OpenSubPanel(formationPanel, MenuState.Formation);
-    }
-
-    public void OpenInventoryPanel()
-    {
-        OpenSubPanel(inventoryPanel, MenuState.Inventory);
-    }
+    // Các hàm public để gọi từ button
+    public void OpenCharacterPanel() => OpenSubPanel(characterPanel, MenuState.Character);
+    public void OpenFormationPanel() => OpenSubPanel(formationPanel, MenuState.Formation);
+    public void OpenInventoryPanel() => OpenSubPanel(inventoryPanel, MenuState.Inventory);
+    public void OpenSavePanel() => OpenSubPanel(savePanel, MenuState.Save);
+    public void OpenLoadPanel() => OpenSubPanel(loadPanel, MenuState.Load);
+    public void OpenQuit() => OpenQuitPanel(); // gán cho nút Quit
 }

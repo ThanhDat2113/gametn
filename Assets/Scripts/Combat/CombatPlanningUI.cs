@@ -34,7 +34,6 @@ public class CombatPlanningUI : MonoBehaviour
     [Header("Instruction Text")]
     public TextMeshProUGUI instructionText;
 
-
     private CombatManager combat;
     private Camera mainCam;
     private CanvasGroup planningCanvasGroup;
@@ -59,11 +58,10 @@ public class CombatPlanningUI : MonoBehaviour
 
         // Subscribe to new turn-based events
         combat.OnPlayerTurnStart += OnPlayerTurn;
-        combat.OnActionResolved += OnActionResolved; // Hide UI after action
+        combat.OnActionResolved += OnActionResolved;
         combat.OnVictory += HideUI;
         combat.OnDefeat += HideUI;
         combat.OnCombatStarted += OnCombatStarted;
-
 
         if (planningCanvas != null)
         {
@@ -106,10 +104,10 @@ public class CombatPlanningUI : MonoBehaviour
     
     private void OnCombatStarted()
     {
-        if (roundText != null) roundText.text = $"Round {combat.CurrentRound}";
+        // Đã xóa hiển thị round text theo yêu cầu
+        // if (roundText != null) roundText.text = $"Round {combat.CurrentRound}";
     }
 
-    // This is the main entry point for the UI now
     private void OnPlayerTurn(CombatUnit unit)
     {
         Debug.Log($"[PlanUI] OnPlayerTurn event received for {unit.UnitName}.");
@@ -125,7 +123,8 @@ public class CombatPlanningUI : MonoBehaviour
         }
         
         Debug.Log($"[PlanUI] Found UnitView for {unit.UnitName}. Opening skill wheel.");
-        if (roundText != null) roundText.text = $"Round {combat.CurrentRound}";
+        // Đã xóa hiển thị round text theo yêu cầu
+        // if (roundText != null) roundText.text = $"Round {combat.CurrentRound}";
 
         ShowUI();
         OpenSkillWheel(unit, view);
@@ -133,7 +132,6 @@ public class CombatPlanningUI : MonoBehaviour
     
     private void OnActionResolved(ActionResult result)
     {
-        // Hide the UI as soon as the action is resolved and animations start
         if (currentUnit != null && result.Actor == currentUnit)
         {
             HideUI();
@@ -149,7 +147,7 @@ public class CombatPlanningUI : MonoBehaviour
         }
     }
 
-    private void HideUI(ActionResult _ = null) // Overload to match event signature
+    private void HideUI(ActionResult _ = null)
     {
         CloseSkillWheel();
         ClearTargetHighlights();
@@ -164,11 +162,10 @@ public class CombatPlanningUI : MonoBehaviour
         SetInstruction("");
     }
     
-    private void HideUI() // Overload for events without parameters
+    private void HideUI()
     {
         HideUI(null);
     }
-
 
     private void HandleWorldClick(Vector3 mousePos)
     {
@@ -226,7 +223,6 @@ public class CombatPlanningUI : MonoBehaviour
             var rect = go.GetComponent<RectTransform>();
             rect.anchoredPosition = new Vector2(0f, -localIdx * skillRowSpacing);
 
-            // Thêm hiệu ứng pop-out
             StartCoroutine(AnimateSkillButton(rect, localIdx * 0.05f));
 
             var label = go.GetComponentInChildren<TextMeshProUGUI>();
@@ -268,11 +264,10 @@ public class CombatPlanningUI : MonoBehaviour
         yield return new WaitForSeconds(delay);
 
         buttonRect.localScale = Vector3.zero;
-        float duration = 0.25f; // Nhanh hơn
+        float duration = 0.25f;
         float elapsed = 0f;
-        float overshoot = 1.25f; // Mạnh hơn
+        float overshoot = 1.25f;
 
-        // Pop out
         while (elapsed < duration)
         {
             elapsed += Time.deltaTime;
@@ -282,7 +277,6 @@ public class CombatPlanningUI : MonoBehaviour
             yield return null;
         }
 
-        // Settle back
         duration = 0.15f;
         elapsed = 0f;
         while (elapsed < duration)
@@ -299,23 +293,19 @@ public class CombatPlanningUI : MonoBehaviour
 
     private void OnSkillSelected(SkillData skill)
     {
-        // Handle instant skills
         if (skill.targetType == TargetType.AllEnemies)
         {
             var targets = combat.EnemyUnits.Where(e => e.IsAlive).ToList();
             combat.SubmitPlayerTurnAction(skill, targets);
-            // UI will be hidden by OnActionResolved
             return;
         }
         if (skill.targetType == TargetType.AllAllies)
         {
             var targets = combat.PlayerUnits.Where(p => p.IsAlive).ToList();
             combat.SubmitPlayerTurnAction(skill, targets);
-            // UI will be hidden by OnActionResolved
             return;
         }
 
-        // Prepare for target selection
         selectedSkill = skill;
         isChoosingTarget = true;
         HighlightValidTargets(skill);
@@ -330,18 +320,14 @@ public class CombatPlanningUI : MonoBehaviour
         var targetUnit = view.LinkedUnit;
         if (!targetUnit.IsAlive) return;
 
-        // Validate target
         bool isEnemyTarget = selectedSkill.targetType == TargetType.SingleEnemy;
         bool isAllyTarget = selectedSkill.targetType == TargetType.SingleAlly;
 
         if ((isEnemyTarget && !targetUnit.IsPlayer) || (isAllyTarget && targetUnit.IsPlayer))
         {
-            // Valid target clicked, submit the action
             combat.SubmitPlayerTurnAction(selectedSkill, new List<CombatUnit> { targetUnit });
-            // The UI will be hidden by the OnActionResolved event
         }
     }
-
 
     private void CancelCurrentAction()
     {
@@ -350,12 +336,10 @@ public class CombatPlanningUI : MonoBehaviour
             isChoosingTarget = false;
             selectedSkill = null;
             ClearTargetHighlights();
-            // Re-open skill wheel for the current unit
             var view = combat.GetAllUnitViews().FirstOrDefault(v => v.LinkedUnit == currentUnit);
             if(view != null) OpenSkillWheel(currentUnit, view);
             else SetInstruction("Action canceled. Select a unit.");
         }
-        // If not choosing a target, there's nothing to cancel as the wheel is just open.
     }
 
     private void HighlightValidTargets(SkillData skill)
@@ -373,7 +357,7 @@ public class CombatPlanningUI : MonoBehaviour
                 pool = combat.PlayerUnits.Where(p => p.IsAlive);
                 break;
             default:
-                return; // No highlights for AoE or self-target skills
+                return;
         }
 
         foreach (var unit in pool)
