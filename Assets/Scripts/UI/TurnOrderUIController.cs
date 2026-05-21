@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 
 public class TurnOrderUIController : MonoBehaviour
 {
@@ -30,6 +29,7 @@ public class TurnOrderUIController : MonoBehaviour
         {
             combatManager.OnRoundSetup += RebuildTurnOrderUI;
             combatManager.OnUnitTurnStart += OnUnitTurnStart;
+            combatManager.OnActionResolved += OnActionResolved; // Xóa icon khi hành động xong
         }
     }
 
@@ -39,6 +39,7 @@ public class TurnOrderUIController : MonoBehaviour
         {
             combatManager.OnRoundSetup -= RebuildTurnOrderUI;
             combatManager.OnUnitTurnStart -= OnUnitTurnStart;
+            combatManager.OnActionResolved -= OnActionResolved;
         }
     }
 
@@ -65,6 +66,7 @@ public class TurnOrderUIController : MonoBehaviour
 
     private void OnUnitTurnStart(CombatUnit currentUnit)
     {
+        // Highlight icon của lượt hiện tại (không xóa)
         int currentIndex = allIcons.FindIndex(icon => icon.LinkedUnit == currentUnit);
         if (currentIndex == -1) return;
 
@@ -76,5 +78,18 @@ public class TurnOrderUIController : MonoBehaviour
             else
                 icon.SetBorderColor(icon.LinkedUnit.IsPlayer ? playerColor : enemyColor);
         }
+    }
+
+    private void OnActionResolved(ActionResult result)
+    {
+        // Xóa icon của unit vừa hành động khỏi danh sách (chờ 0.2s để animation kịp)
+        var actor = result.Actor;
+        var iconToRemove = allIcons.Find(icon => icon.LinkedUnit == actor);
+        if (iconToRemove != null)
+        {
+            allIcons.Remove(iconToRemove);
+            Destroy(iconToRemove.gameObject);
+        }
+        // Sau khi xóa, dồn các icon còn lại (nếu cần layout lại, tự động)
     }
 }
