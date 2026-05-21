@@ -1,11 +1,12 @@
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class LoadGameUI : MonoBehaviour
 {
     [Header("Panel References")]
     public ScrollRect scrollRect;
-    public RectTransform slotContainer;   // Content
+    public RectTransform slotContainer;
     public GameObject slotPrefab;
     public int totalSlots = 24;
     public int columns = 4;
@@ -20,44 +21,38 @@ public class LoadGameUI : MonoBehaviour
             SetupScrollRect();
             isInitialized = true;
         }
-        // Buộc cập nhật layout và cuộn lên đầu
         Canvas.ForceUpdateCanvases();
         if (scrollRect != null) scrollRect.verticalNormalizedPosition = 1f;
     }
 
     void CreateSlots()
     {
-        // Xóa slot cũ
         foreach (Transform child in slotContainer)
             Destroy(child.gameObject);
 
-        // Tạo slot mới
         for (int i = 0; i < totalSlots; i++)
         {
-            Instantiate(slotPrefab, slotContainer);
+            GameObject slot = Instantiate(slotPrefab, slotContainer);
+            TextMeshProUGUI numberText = slot.transform.Find("SlotNumber")?.GetComponent<TextMeshProUGUI>();
+            if (numberText != null)
+                numberText.text = (i + 1).ToString();
+            else
+                Debug.LogWarning("Không tìm thấy Text 'SlotNumber' trong prefab slot");
         }
-
         Debug.Log($"Load panel: created {slotContainer.childCount} slots");
     }
 
     void SetupScrollRect()
     {
         if (scrollRect == null) return;
-
-        // Không cho kéo quá biên
         scrollRect.movementType = ScrollRect.MovementType.Clamped;
-
-        // Thêm ContentSizeFitter để tự động điều chỉnh chiều cao
         ContentSizeFitter csf = slotContainer.GetComponent<ContentSizeFitter>();
         if (csf == null) csf = slotContainer.gameObject.AddComponent<ContentSizeFitter>();
         csf.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
         csf.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-
-        // Cập nhật kích thước content
         Canvas.ForceUpdateCanvases();
     }
 
-    // Các hàm mở/đóng (gán từ nút)
     public void OpenLoadPanel() => gameObject.SetActive(true);
     public void CloseLoadPanel() => gameObject.SetActive(false);
 }
