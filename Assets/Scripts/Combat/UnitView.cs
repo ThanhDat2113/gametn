@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class UnitView : MonoBehaviour
 {
@@ -9,7 +10,7 @@ public class UnitView : MonoBehaviour
     public SpriteRenderer spriteRenderer;
     public Animator animator;
     public HitEventReceiver hitReceiver;
-    public UnityEngine.UI.Slider healthBar;
+    public Slider healthBar;
 
     // Event cho Animation-driven hits
     public event System.Action OnHitAnimationEvent;
@@ -93,6 +94,32 @@ public class UnitView : MonoBehaviour
             hitReceiver.OnHitFrame += ProcessHitAtFrame;
             hitReceiver.OnVFXFrame += ProcessVFXAtFrame;
         }
+
+        // === CẢI THIỆN: ĐẶT MÀU THANH MÁU NGAY LẬP TỨC ===
+        if (healthBar != null)
+        {
+            // Tìm Image Fill (màu của phần máu)
+            Image fillImage = null;
+            if (healthBar.fillRect != null)
+                fillImage = healthBar.fillRect.GetComponentInChildren<Image>();
+            if (fillImage == null)
+                fillImage = healthBar.GetComponentInChildren<Image>();
+            
+            if (fillImage != null)
+            {
+                fillImage.color = unit.IsPlayer ? Color.green : Color.red;
+                fillImage.enabled = true;
+                // Ép alpha = 1 để chắc chắn hiển thị
+                fillImage.color = new Color(fillImage.color.r, fillImage.color.g, fillImage.color.b, 1f);
+            }
+            else
+            {
+                Debug.LogWarning($"UnitView: Không tìm thấy Fill Image cho {unit.UnitName}");
+            }
+            
+            // Cập nhật giá trị slider ngay
+            healthBar.value = (float)unit.CurrentHP / unit.MaxHP;
+        }
     }
 
     private void OnDestroy()
@@ -141,62 +168,42 @@ public class UnitView : MonoBehaviour
     public void ForcePlayAnimationState(string stateName)
     {
         if (animator != null)
-        {
             animator.Play(stateName);
-        }
     }
 
     public void ResetAnimationTrigger(string triggerName)
     {
         if (animator != null && !string.IsNullOrEmpty(triggerName))
-        {
             animator.ResetTrigger(triggerName);
-        }
     }
 
-    // ── Chờ animation clip chạy xong hoàn toàn ─────────────
-    // Cơ chế:
-    //   1. Lưu hash của state HIỆN TẠI (trước khi trigger)
-    //   2. Polling đến khi Animator chuyển sang state KHÁC (state mới)
-    //   3. Đọc length của state mới, chờ hết
-    //   Timeout 4s phòng trường hợp Animator không chuyển state
+    // ── Chờ animation clip chạy xong ─────────────────────────
     public IEnumerator WaitUntilAnimationDone(string triggerName)
     {
         if (animator == null) yield break;
 
-        // Lưu hash state hiện tại trước khi trigger
         int prevStateHash = animator.GetCurrentAnimatorStateInfo(0).fullPathHash;
-
-        // Bước 1: chờ Animator chuyển sang state MỚI (khác state cũ)
         float waitTimeout = 0.5f;
         float waited = 0f;
         while (waited < waitTimeout)
         {
             var info = animator.GetCurrentAnimatorStateInfo(0);
-            if (info.fullPathHash != prevStateHash)
-                break;
+            if (info.fullPathHash != prevStateHash) break;
             waited += Time.deltaTime;
             yield return null;
         }
 
         if (waited >= waitTimeout)
         {
-            Debug.LogWarning($"[UnitView] '{triggerName}': Animator không đổi state " +
-                             $"sau {waitTimeout}s. Trigger có đúng tên không?");
+            Debug.LogWarning($"[UnitView] '{triggerName}': Animator không đổi state sau {waitTimeout}s.");
             yield break;
         }
 
-        // Bước 2: đọc length của state mới, chờ hết
         var newStateInfo = animator.GetCurrentAnimatorStateInfo(0);
         float clipLength = newStateInfo.length;
-
-        // Tính thời gian đã chạy rồi, chờ phần còn lại
         float alreadyElapsed = newStateInfo.normalizedTime * clipLength;
         float remaining = Mathf.Max(0f, clipLength - alreadyElapsed);
-
-        Debug.Log($"[UnitView] '{triggerName}' clipLength={clipLength:F2}s " +
-                  $"remaining={remaining:F2}s");
-
+        Debug.Log($"[UnitView] '{triggerName}' clipLength={clipLength:F2}s remaining={remaining:F2}s");
         yield return new WaitForSeconds(remaining);
     }
 
@@ -205,37 +212,21 @@ public class UnitView : MonoBehaviour
         OnHitAnimationEvent?.Invoke();
     }
 
-    // ── Được gọi từ Animation Event — OnHit ──────────────────
+    // ── Xử lý hit từ Animation Event ──────────────────────────
     private void ProcessHitAtFrame(int hitIndex)
     {
-        if (currentTarget == null)
-        {
-            Debug.LogWarning($"[UnitView] ProcessHitAtFrame: currentTarget is null");
-            return;
-        }
-
-        if (hitIndex >= pendingHits.Count)
-        {
-            Debug.LogWarning($"[UnitView] hitIndex {hitIndex} vượt quá " +
-                             $"pendingHits.Count {pendingHits.Count}");
-            return;
-        }
+        if (currentTarget == null) return;
+        if (hitIndex >= pendingHits.Count) return;
 
         var hit = pendingHits[hitIndex];
         bool isFinalHit = (hitIndex == pendingHits.Count - 1);
-
-        // Gây sát thương
         currentTarget.TakeDamage(LinkedUnit, hit.Damage, hitIndex);
 
-        // Hiệu ứng camera và knockback
         if (cameraManager != null)
         {
-            // Áp dụng hiệu ứng camera cho mỗi hit, hit cuối sẽ mạnh hơn
             StartCoroutine(HitImpactEffectCoroutine(cameraManager, isFinalHit));
-
             if (isFinalHit)
             {
-                // Knockback chỉ ở đòn cuối
                 var targetView = FindObjectsByType<UnitView>(FindObjectsSortMode.None).FirstOrDefault(v => v.LinkedUnit == currentTarget);
                 if (targetView != null && clashSequence != null)
                 {
@@ -244,29 +235,21 @@ public class UnitView : MonoBehaviour
                 }
             }
         }
-
-        Debug.Log($"[Hit {hitIndex + 1}/{pendingHits.Count}] " +
-                  $"{LinkedUnit.UnitName} → {currentTarget.UnitName}: {hit.Damage} dmg");
+        Debug.Log($"[Hit {hitIndex + 1}/{pendingHits.Count}] {LinkedUnit.UnitName} → {currentTarget.UnitName}: {hit.Damage} dmg");
     }
 
     private IEnumerator HitImpactEffectCoroutine(CombatCameraManager cam, bool isFinalHit)
     {
-        // 1. Rung camera
-        if (isFinalHit)
-            cam.PlayFinalHitShake();
-        else
-            cam.PlayImpactShake();
+        if (isFinalHit) cam.PlayFinalHitShake();
+        else cam.PlayImpactShake();
 
-        // 2. Xác định thông số zoom dựa trên loại hit
-        float zoomInMultiplier = isFinalHit ? 0.75f : 0.90f; // Hit cuối zoom 25%, hit thường zoom 10%
-        float zoomInDuration = isFinalHit ? 0.03f : 0.04f;   // Hit cuối nhanh hơn. Giảm giá trị để tăng tác động.
+        float zoomInMultiplier = isFinalHit ? 0.75f : 0.90f;
+        float zoomInDuration = isFinalHit ? 0.03f : 0.04f;
         float zoomOutDuration = isFinalHit ? 0.06f : 0.08f;
 
-        // 3. Zoom nhanh vào và ra
         float originalSize = cam.GetCurrentOrthoSize();
         float zoomInSize = originalSize * zoomInMultiplier;
 
-        // Zoom vào
         float elapsed = 0f;
         while (elapsed < zoomInDuration)
         {
@@ -277,7 +260,6 @@ public class UnitView : MonoBehaviour
         }
         cam.SetCameraSize(zoomInSize);
 
-        // Zoom ra
         elapsed = 0f;
         while (elapsed < zoomOutDuration)
         {
@@ -289,46 +271,30 @@ public class UnitView : MonoBehaviour
         cam.SetCameraSize(originalSize);
     }
 
-
-    // ── Được gọi từ Animation Event — OnSpawnVFX ─────────────
     private void ProcessVFXAtFrame(int vfxIndex)
     {
         if (currentSkill?.vfxPrefab == null) return;
         if (currentTarget == null) return;
 
         Vector3 spawnPos = Vector3.zero;
-
-        var targetView = FindObjectsByType<UnitView>(FindObjectsSortMode.None)
-            .FirstOrDefault(v => v.LinkedUnit == currentTarget);
-
-        if (targetView != null)
-            spawnPos = targetView.transform.position;
-
+        var targetView = FindObjectsByType<UnitView>(FindObjectsSortMode.None).FirstOrDefault(v => v.LinkedUnit == currentTarget);
+        if (targetView != null) spawnPos = targetView.transform.position;
         spawnPos += Vector3.up * currentSkill.vfxOffset;
 
         var vfx = Instantiate(currentSkill.vfxPrefab, spawnPos, Quaternion.identity);
         Destroy(vfx, 2f);
-
         Debug.Log($"[VFX] Spawn {currentSkill.vfxPrefab.name} tại {spawnPos}");
     }
 
-    // ── Helper: lấy độ dài clip ───────────────────────────────
     public float GetClipLength(string clipName)
     {
         if (animator?.runtimeAnimatorController == null) return 0.5f;
-
         foreach (var clip in animator.runtimeAnimatorController.animationClips)
             if (clip.name == clipName) return clip.length;
-
         return 0.5f;
     }
 
-    // ── Hit Flash ─────────────────────────────────────────────
-    public void TriggerHitFlash()
-    {
-        StartCoroutine(HitFlash());
-    }
-
+    public void TriggerHitFlash() => StartCoroutine(HitFlash());
     private IEnumerator HitFlash()
     {
         spriteRenderer.color = Color.red;
@@ -340,14 +306,10 @@ public class UnitView : MonoBehaviour
         spriteRenderer.color = Color.white;
     }
 
-    // ── Death ─────────────────────────────────────────────────
     private IEnumerator DeathFade()
     {
         SetAnimationTrigger("Die");
-
-        float elapsed = 0f;
-        float duration = 0.6f;
-
+        float elapsed = 0f, duration = 0.6f;
         while (elapsed < duration)
         {
             elapsed += Time.deltaTime;
@@ -355,7 +317,6 @@ public class UnitView : MonoBehaviour
             spriteRenderer.color = new Color(1f, 1f, 1f, alpha);
             yield return null;
         }
-
         gameObject.SetActive(false);
     }
 
@@ -364,7 +325,6 @@ public class UnitView : MonoBehaviour
         Vector3 startPos = transform.position;
         Vector3 targetPos = startPos + direction * distance;
         float elapsed = 0f;
-
         while (elapsed < duration)
         {
             elapsed += Time.deltaTime;
@@ -372,51 +332,25 @@ public class UnitView : MonoBehaviour
             transform.position = Vector3.Lerp(startPos, targetPos, t);
             yield return null;
         }
-
         transform.position = targetPos;
     }
 
-    /// <summary>
-    /// Đưa unit trở về vị trí gốc đã được lưu.
-    /// </summary>
     public void ResetPosition()
     {
-        Debug.LogWarning($"[UnitView] RESET POSITION được gọi cho {LinkedUnit.UnitName}. Vị trí gốc: {originalPosition}", this.gameObject);
+        Debug.LogWarning($"[UnitView] RESET POSITION gọi cho {LinkedUnit.UnitName}. Vị trí gốc: {originalPosition}", this.gameObject);
         transform.position = originalPosition;
     }
 
-    // ── Animation Parameters ─────────────────────────────────────
-    public void SetAnimationBool(string boolName, bool value)
-    {
-        if (animator != null)
-        {
-            animator.SetBool(boolName, value);
-        }
-    }
-
-    public void SetAnimationFloat(string floatName, float value)
-    {
-        if (animator != null)
-        {
-            animator.SetFloat(floatName, value);
-        }
-    }
-
+    public void SetAnimationBool(string boolName, bool value) => animator?.SetBool(boolName, value);
+    public void SetAnimationFloat(string floatName, float value) => animator?.SetFloat(floatName, value);
     public void SetAlpha(float alpha)
     {
         if (spriteRenderer != null)
         {
-            Color color = spriteRenderer.color;
-            color.a = alpha;
-            spriteRenderer.color = color;
+            Color c = spriteRenderer.color;
+            c.a = alpha;
+            spriteRenderer.color = c;
         }
     }
-
-    public void DisableRootMotion()
-    {
-        if (animator != null)
-        {
-            animator.applyRootMotion = false;
-        }
-    }
+    public void DisableRootMotion() { if (animator != null) animator.applyRootMotion = false; }
 }

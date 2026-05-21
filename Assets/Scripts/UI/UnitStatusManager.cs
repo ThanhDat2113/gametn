@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -11,7 +12,7 @@ public class UnitStatusManager : MonoBehaviour
     private CombatManager combat;
     private Dictionary<CombatUnit, UnitStatusSlot> unitSlots = new Dictionary<CombatUnit, UnitStatusSlot>();
 
-    void Start()
+    void Awake()
     {
         combat = CombatManager.Instance;
         if (combat == null)
@@ -25,6 +26,18 @@ public class UnitStatusManager : MonoBehaviour
         combat.OnDefeat += ClearAllSlots;
     }
 
+    void Start()
+    {
+        if (combat == null) return;
+
+        // Fallback: nếu OnCombatStarted đã fire trước khi Awake kịp subscribe
+        if (combat.CurrentPhase != CombatPhase.None)
+        {
+            Debug.Log($"[UnitStatusManager] Combat already in phase {combat.CurrentPhase}, creating slots.");
+            OnCombatStarted();
+        }
+    }
+
     private void OnDestroy()
     {
         if (combat == null) return;
@@ -35,14 +48,32 @@ public class UnitStatusManager : MonoBehaviour
 
     private void OnCombatStarted()
     {
-        ClearAllSlots();
-        CreateSlots();
+        Debug.Log("[UnitStatusManager] OnCombatStarted called");
+        StartCoroutine(CreateSlotsDelayed()); // Chờ 1 frame để units spawn xong
+    }
+
+    private IEnumerator CreateSlotsDelayed()
+    {
+        // Thử tối đa 5 frame, đợi đến khi PlayerUnits có data
+        for (int attempt = 0; attempt < 5; attempt++)
+        {
+            yield return null;
+            if (combat.PlayerUnits.Count > 0)
+            {
+                ClearAllSlots();
+                CreateSlots();
+                yield break;
+            }
+            Debug.Log($"[UnitStatusManager] Attempt {attempt + 1}: PlayerUnits empty, retrying...");
+        }
+        Debug.LogWarning("[UnitStatusManager] PlayerUnits still empty after 5 frames!");
     }
 
     private void CreateSlots()
     {
         var playerUnits = combat.PlayerUnits.Where(u => u.IsAlive).ToList();
-
+        Debug.Log($"[UnitStatusManager] Creating {playerUnits.Count} slots.");
+        
         foreach (var unit in playerUnits)
         {
             GameObject slotObj = Instantiate(slotPrefab, slotContainer);
