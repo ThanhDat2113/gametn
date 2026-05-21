@@ -161,12 +161,42 @@ public class UnitView : MonoBehaviour
         currentSkill = null;
     }
 
-    // ── Animation Trigger ─────────────────────────────────────
+    // ── Animation Control ─────────────────────────────────────
+    
+    /// <summary>
+    /// (Mới) Buộc Animator phải chạy một state cụ thể.
+    /// Rất mạnh mẽ, bỏ qua các transition, đi thẳng vào state.
+    /// </summary>
+    public void PlayAnimation(string stateName)
+    {
+        if (animator != null && !string.IsNullOrEmpty(stateName))
+        {
+            // Tham số thứ hai (-1) là layer index, -1 có nghĩa là layer base.
+            // Tham số thứ ba (0f) là normalized time, 0f để bắt đầu từ đầu.
+            animator.Play(stateName, -1, 0f);
+        }
+    }
+
+    /// <summary>
+    /// (Cải tiến) Kích hoạt một trigger.
+    /// Sẽ reset các trigger khác để đảm bảo chỉ có trigger này được kích hoạt.
+    /// </summary>
     public void SetAnimationTrigger(string triggerName)
     {
-        if (animator != null && !string.IsNullOrEmpty(triggerName))
-            animator.SetTrigger(triggerName);
+        if (animator == null || string.IsNullOrEmpty(triggerName)) return;
+
+        // Reset tất cả các trigger khác trước khi đặt trigger mới
+        // để tránh các hành vi không mong muốn.
+        foreach (var trigger in animator.parameters)
+        {
+            if (trigger.type == AnimatorControllerParameterType.Trigger)
+            {
+                animator.ResetTrigger(trigger.name);
+            }
+        }
+        animator.SetTrigger(triggerName);
     }
+
 
     public void ForcePlayAnimationState(string stateName)
     {

@@ -101,7 +101,7 @@ public class ClashAnimationSequence : MonoBehaviour
 
     private IEnumerator ApproachPhase(UnitView actorView, Vector3 attackPosition)
     {
-        actorView.SetAnimationTrigger("Rush");
+        actorView.PlayAnimation(AnimationConstants.Rush);
         yield return StartCoroutine(MoveCoroutine(actorView, attackPosition, moveToTargetDuration));
     }
 
@@ -131,7 +131,7 @@ public class ClashAnimationSequence : MonoBehaviour
                 int damagePerHit = outcome.Damage / hitCount;
                 if (damagePerHit > 0) {
                     outcome.Target.TakeDamage(damagePerHit);
-                    targetView.SetAnimationTrigger("Hurt");
+                    targetView.SetAnimationTrigger(AnimationConstants.Hurt);
                 }
             }
         };
@@ -140,6 +140,7 @@ public class ClashAnimationSequence : MonoBehaviour
 
         if (!string.IsNullOrEmpty(skill.animationTrigger))
         {
+            // Sử dụng SetAnimationTrigger đã được cải tiến để đảm bảo an toàn
             actorView.SetAnimationTrigger(skill.animationTrigger);
             float animLength = actorView.GetClipLength(skill.animationTrigger);
             yield return new WaitForSeconds(animLength);
@@ -161,11 +162,11 @@ public class ClashAnimationSequence : MonoBehaviour
         foreach (var outcome in result.Outcomes)
         {
             var targetView = GetViewForUnit(outcome.Target);
-            if (targetView != null) targetView.SetAnimationTrigger("Idle");
+            if (targetView != null) targetView.PlayAnimation(AnimationConstants.Idle);
         }
 
         // Actor di chuyển về
-        actorView.SetAnimationTrigger("Idle"); // Chuyển sang Idle để chạy về
+        actorView.PlayAnimation(AnimationConstants.Idle); // Chuyển sang Idle để chạy về
         yield return StartCoroutine(MoveCoroutine(actorView, originPosition, returnDuration));
     }
 
@@ -174,7 +175,7 @@ public class ClashAnimationSequence : MonoBehaviour
         // Hard Reset: Đảm bảo TẤT CẢ các unit đều ở trạng thái Idle
         foreach (var view in allUnitViews)
         {
-            if(view != null) view.SetAnimationTrigger("Idle");
+            if(view != null) view.PlayAnimation(AnimationConstants.Idle);
         }
 
         // Khôi phục màu sắc của tất cả unit
