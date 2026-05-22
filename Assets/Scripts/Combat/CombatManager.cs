@@ -20,6 +20,12 @@ public class CombatManager : MonoBehaviour
     public List<CombatUnit> EnemyUnits { get; private set; } = new();
     public List<CombatUnit> ActionOrder { get; private set; } = new();
 
+    // Action Point System
+    public int CurrentPlayerAP { get; private set; }
+    private const int MAX_PLAYER_AP = 5; // Giới hạn AP có thể tích trữ
+    private const int STARTING_PLAYER_AP = 3; // AP khởi đầu
+    private bool isFirstPlayerTurnOfRound;
+
     [Header("Grid Spawn Settings")]
     public Transform[] playerGridSlots;
     public Transform[] enemyGridSlots;
@@ -86,6 +92,7 @@ public class CombatManager : MonoBehaviour
     public event System.Action OnVictory;
     public event System.Action OnDefeat;
     public event System.Action OnPlanChanged;
+    public event System.Action<int> OnAPChanged; // (newAPValue)
 
     public CombatPhase CurrentPhase => stateMachine.Current;
 
@@ -137,6 +144,8 @@ public class CombatManager : MonoBehaviour
         PlayerUnits.Clear();
         EnemyUnits.Clear();
         CurrentRound = 0;
+        CurrentPlayerAP = STARTING_PLAYER_AP;
+        OnAPChanged?.Invoke(CurrentPlayerAP);
 
         foreach (var slot in playerFormation.slots)
         {
@@ -161,6 +170,16 @@ public class CombatManager : MonoBehaviour
         SpawnUnitViews();
         Debug.Log($"=== COMBAT STARTED === Player:{PlayerUnits.Count} vs Enemy:{EnemyUnits.Count}");
         OnCombatStarted?.Invoke();
+
+        // Xử lý nội tại của Aleus
+        var aleus = PlayerUnits.Find(u => u.UnitName == "Aleus");
+        var charlotte = PlayerUnits.Find(u => u.UnitName == "Charlotte");
+        if (aleus != null && charlotte != null)
+        {
+            Debug.Log("[Passive] Aleus applies 'Gio Tien' to Charlotte.");
+            charlotte.ApplyStatus(StatusEffectType.GioTien, 999, 0, 1); // 999 duration = vĩnh viễn
+        }
+
         stateMachine.TransitionTo(CombatPhase.Intro);
     }
 
@@ -224,12 +243,56 @@ public class CombatManager : MonoBehaviour
             var view = go.GetComponent<UnitView>();
             if (view == null) { Debug.LogError($"Prefab {prefab.name} thiếu UnitView!"); continue; }
             view.Setup(unit);
+            InitializePassives(unit); // GỌI KHỞI TẠO NỘI TẠI
 
             // Lưu vị trí cuối cùng trên lưới vào UnitView để sử dụng sau
             view.StoreOriginalPosition(finalGridPosition);
 
             unitViews.Add(view);
             Debug.Log($"[Spawn] {unit.UnitName} slot{slot} at {spawnPos}. Final grid pos: {finalGridPosition}");
+        }
+    }
+
+    private void InitializePassives(CombatUnit unit)
+    {
+        switch (unit.UnitName)
+        {
+            case "Celine":
+                // Mỗi khi nhận hoặc gây sát thương, nhận 1 tầng giảm sát thương
+                unit.OnDamageTaken += (attacker, damage) => unit.ApplyStatus(StatusEffectType.GiamSatThuong, 999, 0.05f, 1);
+                unit.OnDealDamage += (target, damage) => unit.ApplyStatus(StatusEffectType.GiamSatThuong, 999, 0.05f, 1);
+                break;
+
+            case "Lilith":
+                // Mỗi khi tiêu hao AP, nhận 1 tầng Bụi sao
+                unit.OnSpendAP += (amount) => unit.ApplyStatus(StatusEffectType.BuiSao, 999, 0.05f, amount);
+                break;
+
+            case "Lei Heng":
+                // Mỗi khi nhận sát thương, nhận 1 tầng Ý chí
+                unit.OnDamageTaken += (attacker, damage) => unit.ApplyStatus(StatusEffectType.YChi, 999, 0.05f, 1);
+                // Sau khi tấn công, reset Ý chí
+                unit.OnDealDamage += (target, damage) => {
+                    var yChi = unit.GetActiveStatus(StatusEffectType.YChi);
+                    if (yChi != null) yChi.Stacks = 0;
+                };
+                break;
+
+            case "Lucio":
+                // Nếu tấn công mục tiêu có Điểm Yếu, nhận 1 tầng Siêu Việt
+                unit.OnDealDamage += (target, damage) => {
+                    if (target.HasStatus(StatusEffectType.DiemYeu))
+                    {
+                        unit.ApplyStatus(StatusEffectType.SieuViet, 999, 0.10f, 1);
+                    }
+                };
+                break;
+
+            case "Nicholas":
+                unit.CritChance = 0.2f;
+                break;
+            
+            // Thêm các nhân vật khác ở đây
         }
     }
 
@@ -389,6 +452,7 @@ public class CombatManager : MonoBehaviour
     private void SetupRound()
     {
         CurrentRound++;
+        isFirstPlayerTurnOfRound = true; // Reset lại cờ mỗi đầu round
         Debug.Log($"\n=== ROUND {CurrentRound} ===");
 
         // Tạo danh sách lượt đánh dựa trên Speed, ngẫu nhiên hóa các unit có cùng speed
@@ -430,6 +494,13 @@ public class CombatManager : MonoBehaviour
             return;
         }
 
+        if (skill.apCost > CurrentPlayerAP)
+        {
+            Debug.LogWarning($"[AP] Không đủ AP để dùng {skill.skillName}. Cần {skill.apCost}, có {CurrentPlayerAP}.");
+            // Có thể thêm một event ở đây để báo cho UI biết là hành động không thành công
+            return;
+        }
+
         var currentUnit = ActionOrder[turnIndex];
         if (currentUnit == null || !currentUnit.IsPlayer)
         {
@@ -437,12 +508,37 @@ public class CombatManager : MonoBehaviour
             return;
         }
 
+        // Trừ AP và kích hoạt sự kiện
+        CurrentPlayerAP -= skill.apCost;
+        OnAPChanged?.Invoke(CurrentPlayerAP);
+        currentUnit.SpendAP(skill.apCost); // Kích hoạt passive của unit
+        Debug.Log($"[AP] Đã dùng {skill.apCost} AP. Còn lại {CurrentPlayerAP}.");
+
         currentUnit.SelectSkill(skill, targets);
         Debug.Log($"[Player Turn] {currentUnit.UnitName} selected [{skill.skillName}] -> [{string.Join(", ", targets.Select(t => t.UnitName))}]");
 
         isWaitingForPlayerInput = false; // Signal to the ExecuteRound coroutine that the player has made a choice.
     }
 
+    private IEnumerator HandleStartOfTurnEffects(CombatUnit unit)
+    {
+        var burnStatus = unit.GetActiveStatus(StatusEffectType.ThieuDot);
+        if (burnStatus != null)
+        {
+            int burnDamage = Mathf.RoundToInt(burnStatus.Value);
+            Debug.Log($"<color=red>[ThieuDot] {unit.UnitName} nhận {burnDamage} sát thương thiêu đốt.</color>");
+            unit.TakeDamage(null, burnDamage); // Sát thương không có caster
+            
+            // Có thể thêm animation/VFX ở đây
+            var view = unitViews.FirstOrDefault(v => v.LinkedUnit == unit);
+            if (view != null)
+            {
+                view.TriggerHitFlash();
+            }
+
+            yield return new WaitForSeconds(0.5f);
+        }
+    }
 
     private IEnumerator DoRetargetCheck()
     {
@@ -500,6 +596,19 @@ public class CombatManager : MonoBehaviour
                 continue;
             }
 
+            // Xử lý hiệu ứng đầu lượt (ví dụ: Burn)
+            yield return StartCoroutine(HandleStartOfTurnEffects(currentUnit));
+            if (!currentUnit.IsAlive)
+            {
+                Debug.Log($"[Execute] {currentUnit.UnitName} đã chết do hiệu ứng đầu lượt.");
+                // 3. Kiểm tra điều kiện kết thúc trận đấu sau mỗi hành động
+                if (CheckForCombatEnd())
+                {
+                    yield break; // Kết thúc coroutine ExecuteRound
+                }
+                continue; // Bỏ qua phần còn lại của lượt
+            }
+
             Debug.Log($"--- Lượt của: {currentUnit.UnitName} ---");
             OnUnitTurnStart?.Invoke(currentUnit);
 
@@ -511,6 +620,18 @@ public class CombatManager : MonoBehaviour
             }
             else
             {
+                // Hồi AP nếu đây không phải là lượt đầu tiên của người chơi trong round
+                if (!isFirstPlayerTurnOfRound)
+                {
+                    if (CurrentPlayerAP < MAX_PLAYER_AP)
+                    {
+                        CurrentPlayerAP++;
+                        OnAPChanged?.Invoke(CurrentPlayerAP);
+                        Debug.Log($"[AP] Hồi 1 AP. Hiện có: {CurrentPlayerAP}");
+                    }
+                }
+                isFirstPlayerTurnOfRound = false; // Đánh dấu đã qua lượt người chơi đầu tiên
+
                 // Đến lượt người chơi -> Đợi input
                 Debug.Log($"[Execute] {currentUnit.UnitName} is a player. Waiting for input...");
                 isWaitingForPlayerInput = true;
@@ -543,6 +664,17 @@ public class CombatManager : MonoBehaviour
             else
             {
                 Debug.LogWarning($"[Execute] {currentUnit.UnitName} không có hành động nào được chọn.");
+            }
+
+            // Tick status effects at the end of the turn
+            currentUnit.TickStatuses();
+
+            // Nội tại của NoName: Hồi 5% HP tối đa vào cuối lượt
+            if (currentUnit.UnitName == "NoName")
+            {
+                int healAmount = Mathf.RoundToInt(currentUnit.MaxHP * 0.05f);
+                currentUnit.Heal(healAmount);
+                Debug.Log($"[Passive] NoName recovered {healAmount} HP.");
             }
 
             // 3. Kiểm tra điều kiện kết thúc trận đấu sau mỗi hành động
@@ -586,29 +718,11 @@ public class CombatManager : MonoBehaviour
     public UnitView GetUnitView(CombatUnit unit) =>
         unitViews.Find(v => v.LinkedUnit == unit);
 
-    private List<HitData> CalculateHits(CombatUnit attacker, CombatUnit target, SkillData skill)
-    {
-        var hits = new List<HitData>();
-        int hitCount = Mathf.Max(1, skill.hitCount);
-        int raw = Mathf.RoundToInt(attacker.ATK * attacker.GetBuffMultiplier(StatType.ATK));
-        int defend = target.PDEF;
-        int totalDmg = Mathf.Max(hitCount, raw - defend);
-        for (int i = 0; i < hitCount; i++)
-        {
-            int dmg = (i == hitCount - 1)
-                ? totalDmg - (totalDmg / hitCount) * (hitCount - 1)
-                : totalDmg / hitCount;
-            hits.Add(new HitData { Damage = dmg, HitIndex = i });
-        }
-        return hits;
-    }
-
     private void DoRoundEnd()
     {
-        foreach (var u in PlayerUnits.Concat(EnemyUnits).Where(u => u.IsAlive))
-            u.TickCooldowns();
         OnRoundEnded?.Invoke();
         Debug.Log("--- ROUND END ---\n");
+        // The state transition is now handled by the EnemyPlan phase start.
         stateMachine.TransitionTo(CombatPhase.EnemyPlan);
     }
 

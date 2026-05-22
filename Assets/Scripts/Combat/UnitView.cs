@@ -63,7 +63,7 @@ public class UnitView : MonoBehaviour
             clashSequence = FindFirstObjectByType<ClashAnimationSequence>();
 
         // Lắng nghe events từ CombatUnit
-        unit.OnDamageTaken += (caster, dmg, hitIndex) => 
+        unit.OnDamageTaken += (caster, dmg) => 
         {
             // Kích hoạt animation bị đánh
             SetAnimationTrigger("Knockback");

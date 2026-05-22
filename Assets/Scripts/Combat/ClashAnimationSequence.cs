@@ -117,7 +117,7 @@ public class ClashAnimationSequence : MonoBehaviour
         }
 
         // Logic xử lý hit bằng Animation Events
-        int hitCount = skill.hitCount > 0 ? skill.hitCount : 1;
+        int hitCount = 1; // Tạm thời hardcode là 1, vì đã bỏ hitCount khỏi SkillData
         bool animationFinished = false;
         
         Action onHitHandler = () => {
@@ -130,7 +130,7 @@ public class ClashAnimationSequence : MonoBehaviour
 
                 int damagePerHit = outcome.Damage / hitCount;
                 if (damagePerHit > 0) {
-                    outcome.Target.TakeDamage(damagePerHit);
+                    outcome.Target.TakeDamage(result.Actor, damagePerHit); // Truyền actor vào
                     targetView.SetAnimationTrigger(AnimationConstants.Hurt);
                 }
             }
@@ -151,7 +151,7 @@ public class ClashAnimationSequence : MonoBehaviour
         // Áp dụng phần sát thương còn lại và các hiệu ứng khác
         foreach(var outcome in result.Outcomes) {
             int remainingDamage = outcome.Damage % hitCount;
-            if (remainingDamage > 0) outcome.Target.TakeDamage(remainingDamage);
+            if (remainingDamage > 0) outcome.Target.TakeDamage(result.Actor, remainingDamage); // Truyền actor vào
         }
         result.ApplyNonDamageOutcomes();
     }

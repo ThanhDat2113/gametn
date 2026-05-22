@@ -34,7 +34,7 @@ public class UnitStatusSlot : MonoBehaviour
         }
     }
 
-    private void OnUnitDamaged(CombatUnit caster, int damage, int hitIndex)
+    private void OnUnitDamaged(CombatUnit caster, int damage)
     {
         UpdateHealth();
     }

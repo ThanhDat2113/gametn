@@ -104,18 +104,16 @@ public class CombatTestUI : MonoBehaviour
     private void DrawSkillSelection()
     {
         GUILayout.Label($"Chọn skill cho: {planningUnit.UnitName}");
+        GUILayout.Label($"AP hiện tại: {combat.CurrentPlayerAP}");
 
         for (int i = 0; i < planningUnit.Data.skills.Length; i++)
         {
             var skill = planningUnit.Data.skills[i];
-            bool ready = planningUnit.IsSkillReady(i);
-            int cd = planningUnit.SkillCooldowns[i];
+            bool canAfford = skill.apCost <= combat.CurrentPlayerAP;
 
-            string cdStr = ready ? "" : $" (CD:{cd})";
-            string label = $"[{skill.skillName}]  Base:{skill.basePoint}" +
-                            $"  {skill.type}{cdStr}";
+            string label = $"[{skill.skillName}] (AP: {skill.apCost})";
 
-            GUI.enabled = ready;
+            GUI.enabled = canAfford;
             if (GUILayout.Button(label))
                 selectedSkill = skill;
             GUI.enabled = true;

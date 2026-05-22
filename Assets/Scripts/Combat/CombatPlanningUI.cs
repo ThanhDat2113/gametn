@@ -225,24 +225,27 @@ public class CombatPlanningUI : MonoBehaviour
 
             StartCoroutine(AnimateSkillButton(rect, localIdx * 0.05f));
 
+            bool canAfford = skill.apCost <= combat.CurrentPlayerAP;
+
             var label = go.GetComponentInChildren<TextMeshProUGUI>();
             if (label != null)
             {
-                bool cd = !unit.IsSkillReady(i);
-                label.text = cd ? $"{skill.skillName}\n<size=70%>CD: {unit.SkillCooldowns[i]}</size>" : $"{skill.skillName}\n<size=70%>{skill.basePoint}pt</size>";
+                label.text = $"{skill.skillName}\n<size=70%>AP: {skill.apCost}</size>";
             }
 
             var img = go.GetComponent<Image>();
             if (img != null)
             {
-                img.color = !unit.IsSkillReady(i) ? skillCooldownColor : skillNormalColor;
+                // Nếu không đủ AP, nút sẽ có màu khác
+                img.color = canAfford ? skillNormalColor : skillCooldownColor;
             }
 
             int capturedIdx = i;
             var btn = go.GetComponent<Button>();
             if (btn != null)
             {
-                btn.interactable = unit.IsSkillReady(i);
+                // Chỉ có thể nhấn nút nếu đủ AP
+                btn.interactable = canAfford;
                 btn.onClick.AddListener(() => OnSkillSelected(skill));
             }
             AddHoverEffect(go, unit, capturedIdx, skill);
@@ -383,11 +386,13 @@ public class CombatPlanningUI : MonoBehaviour
     private void AddHoverEffect(GameObject go, CombatUnit unit, int skillIdx, SkillData skill)
     {
         var trigger = go.AddComponent<EventTrigger>();
+        bool canAfford = skill.apCost <= combat.CurrentPlayerAP;
+
         var enterEntry = new EventTrigger.Entry { eventID = EventTriggerType.PointerEnter };
         enterEntry.callback.AddListener(_ =>
         {
             var img = go.GetComponent<Image>();
-            if (img != null && unit.IsSkillReady(skillIdx)) img.color = skillHoverColor;
+            if (img != null && canAfford) img.color = skillHoverColor;
         });
         trigger.triggers.Add(enterEntry);
 
@@ -395,7 +400,7 @@ public class CombatPlanningUI : MonoBehaviour
         exitEntry.callback.AddListener(_ =>
         {
             var img = go.GetComponent<Image>();
-            if (img != null && unit.IsSkillReady(skillIdx))
+            if (img != null && canAfford)
             {
                 img.color = (selectedSkill == skill) ? skillSelectedColor : skillNormalColor;
             }

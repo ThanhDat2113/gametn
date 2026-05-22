@@ -17,14 +17,11 @@ public class SkillData : ScriptableObject
     [Tooltip("Chỉ dùng khi type = Clash")]
     public int basePoint = 4;
 
-    [Header("Hit Settings")]
-    [Tooltip("Số lần đánh. VD: 3 = đánh 3 lần")]
-    [Min(1)]
-    public int hitCount = 1;
+    [Header("Cost")]
+    [Tooltip("Chi phí Action Point để sử dụng skill này.")]
+    public int apCost = 1;
 
-    [Header("Cooldown")]
-    [Tooltip("0 = không có cooldown")]
-    public int cooldown = 0;
+    [Header("Hit Settings")]
 
     [Header("Animation")]
     [Tooltip("Tên Trigger trong Animator. VD: Skill1, Skill2...")]

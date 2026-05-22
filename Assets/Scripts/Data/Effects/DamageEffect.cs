@@ -12,7 +12,8 @@ public class DamageEffect : SkillEffect
     {
         foreach (var target in targets)
         {
-            var hits = CalculateHits(caster, target, caster.SelectedSkill.hitCount);
+            // Vì đã bỏ hitCount, ta coi như chỉ có 1 hit
+            var hits = CalculateHits(caster, target, 1);
             foreach (var hit in hits)
                 target.TakeDamage(caster, hit.Damage, hit.HitIndex);
         }
@@ -27,9 +28,21 @@ public class DamageEffect : SkillEffect
 
         int raw = Mathf.RoundToInt(caster.ATK
                        * multiplier
-                       * caster.GetBuffMultiplier(StatType.ATK));
+                       * caster.GetStatMultiplier(StatType.ATK)
+                       * caster.GetDamageMultiplier()); // <--- Tăng sát thương từ hiệu ứng của caster
+
         int defend = damageType == DamageType.Physical ? target.PDEF : target.MDEF;
-        int totalDmg = Mathf.Max(hitCount, raw - defend); // tối thiểu 1 per hit
+        int baseDamage = Mathf.Max(hitCount, raw - defend);
+
+        // Tính toán chí mạng
+        bool isCritical = Random.value < caster.CritChance;
+        if (isCritical)
+        {
+            baseDamage = Mathf.RoundToInt(baseDamage * caster.CritDamage);
+        }
+        
+        // Áp dụng hiệu ứng tăng sát thương nhận vào của target
+        int totalDmg = Mathf.RoundToInt(baseDamage * target.GetDamageTakenMultiplier());
 
         for (int i = 0; i < hitCount; i++)
         {
