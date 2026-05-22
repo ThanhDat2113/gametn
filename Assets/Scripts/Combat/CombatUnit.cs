@@ -29,8 +29,8 @@ public class CombatUnit
     public bool IsAlive => CurrentHP > 0;
 
     // ── Buff & Status ───────────────────────────────────────
-    private List<ActiveBuff> activeBuffs = new();
-    private List<ActiveStatus> activeStatuses = new();
+    private List<ActiveBuff> activeBuffs = new List<ActiveBuff>();
+    private List<ActiveStatus> activeStatuses = new List<ActiveStatus>();
 
     // ── Challenge Stack ───────────────────────────────────────
     public ChallengeStack ChallengeStack { get; private set; } = new();
@@ -47,11 +47,6 @@ public class CombatUnit
     public event System.Action<CombatUnit> OnKill; // (target)
     public event System.Action<int> OnSpendAP; // (amount)
     public event System.Action OnTurnStart;
-
-    public void SpendAP(int amount)
-    {
-        OnSpendAP?.Invoke(amount);
-    }
 
     // ── Initialize ────────────────────────────────────────────
     public void Initialize(CharacterData data, int level, bool isPlayer)
@@ -80,10 +75,9 @@ public class CombatUnit
     {
         // Áp dụng giảm sát thương
         int modifiedAmount = Mathf.RoundToInt(amount * GetDamageReductionMultiplier());
-
         int actual = Mathf.Max(1, modifiedAmount);
         CurrentHP = Mathf.Max(0, CurrentHP - actual);
-        
+
         // Kích hoạt sự kiện
         OnDamageTaken?.Invoke(caster, actual);
         caster?.OnDealDamage?.Invoke(this, actual);
@@ -91,14 +85,14 @@ public class CombatUnit
         Debug.Log($"  {UnitName} nhận {actual} dmg → HP {CurrentHP}/{MaxHP}");
 
         // Xử lý phản sát thương
-        var reflectStatus = activeStatuses.FirstOrDefault(s => s.Type == StatusEffectType.ReflectDamage);
+        var reflectStatus = GetActiveStatus(StatusEffectType.ReflectDamage);
         if (caster != null && caster.IsAlive && reflectStatus != null)
         {
             int reflectDamage = Mathf.RoundToInt(actual * reflectStatus.Value);
             if (reflectDamage > 0)
             {
                 Debug.Log($"  [{UnitName}] phản {reflectDamage} dmg lại cho [{caster.UnitName}]!");
-                caster.TakeDamage(null, reflectDamage); // caster tự nhận dmg, ko có caster
+                caster.TakeDamage(null, reflectDamage);
             }
         }
 
@@ -115,7 +109,6 @@ public class CombatUnit
         int actual = Mathf.Min(amount, MaxHP - CurrentHP);
         CurrentHP += actual;
         OnHealed?.Invoke(actual);
-
         Debug.Log($"  {UnitName} hồi {actual} HP → HP {CurrentHP}/{MaxHP}");
     }
 
@@ -136,161 +129,129 @@ public class CombatUnit
     public void ExecuteSelectedSkill(int apCost)
     {
         if (SelectedSkill == null || SelectedTargets.Count == 0) return;
-
-        if (apCost > 0)
-        {
-            OnSpendAP?.Invoke(apCost);
-        }
-
+        if (apCost > 0) OnSpendAP?.Invoke(apCost);
         Debug.Log($"[{UnitName}] dùng [{SelectedSkill.skillName}]");
-
         foreach (var effect in SelectedSkill.effects)
-        {
             effect.Apply(this, SelectedTargets.ToArray());
-        }
     }
 
     // ── Buff & Status Management ──────────────────────────────
 
     public void ApplyBuff(StatType stat, float multiplier, int duration)
     {
-        // Nếu đã có buff cùng loại, reset thời gian
-        var existing = activeBuffs.FirstOrDefault(b => b.Stat == stat);
+        var existing = activeBuffs.Find(b => b.Stat == stat);
         if (existing != null)
         {
-            existing.Duration = duration;
+            if (duration != 0) existing.Duration = duration;
+            existing.Multiplier = multiplier;
         }
         else
         {
             activeBuffs.Add(new ActiveBuff(stat, multiplier, duration));
         }
-        Debug.Log($"  {UnitName} nhận buff {stat} x{multiplier} ({duration} lượt)");
+        Debug.Log($"  {UnitName} nhận buff {stat} x{multiplier} ({(duration == 0 ? "vĩnh viễn" : duration + " lượt")})");
     }
 
     public void ApplyStatus(StatusEffectType status, int duration, float value = 0, int stacks = 1)
     {
-        var existing = activeStatuses.FirstOrDefault(s => s.Type == status);
+        var existing = activeStatuses.Find(s => s.Type == status);
         if (existing != null)
         {
-            existing.Duration = duration;
-            existing.Value = value; 
-            existing.Stacks += stacks; // Cộng dồn stack
-            Debug.Log($"  [{UnitName}] trạng thái {status} cộng dồn lên {existing.Stacks} stacks ({duration} lượt, value: {value})");
+            if (duration != 0) existing.Duration = duration;
+            existing.Value = value;
+            existing.Stacks += stacks;
+            Debug.Log($"  [{UnitName}] trạng thái {status} cộng dồn lên {existing.Stacks} stacks");
         }
         else
         {
             activeStatuses.Add(new ActiveStatus(status, duration, value, stacks));
-            Debug.Log($"  [{UnitName}] nhận trạng thái {status} ({duration} lượt, {stacks} stacks, value: {value})");
+            Debug.Log($"  [{UnitName}] nhận trạng thái {status} ({(duration == 0 ? "vĩnh viễn" : duration + " lượt")}, {stacks} stacks, value: {value})");
         }
     }
 
-    public bool HasStatus(StatusEffectType status)
+    public ActiveStatus GetActiveStatus(StatusEffectType type)
     {
-        return activeStatuses.Any(s => s.Type == status);
+        return activeStatuses.Find(s => s.Type == type);
     }
 
-    public ActiveStatus GetActiveStatus(StatusEffectType status)
+    public bool HasStatus(StatusEffectType type)
     {
-        return activeStatuses.FirstOrDefault(s => s.Type == status);
+        return activeStatuses.Exists(s => s.Type == type);
     }
 
     public float GetStatMultiplier(StatType stat)
     {
         float total = 1f;
         foreach (var buff in activeBuffs.Where(b => b.Stat == stat))
-        {
             total *= buff.Multiplier;
-        }
         return total;
     }
 
-    /// <summary>
-    /// Tính tổng hệ số nhân sát thương gây ra từ các hiệu ứng (Bụi sao, Ý chí, Siêu việt, v.v.)
-    /// </summary>
     public float GetDamageMultiplier()
     {
-        float multiplier = 1.0f;
-
-        // Ý chí (Lei Heng): +5% sát thương mỗi tầng
-        var yChi = GetActiveStatus(StatusEffectType.YChi);
-        if (yChi != null)
-        {
-            multiplier += yChi.Stacks * 0.05f;
-        }
-
-        // Bụi sao (Lilith): +5% sát thương mỗi tầng
-        var buiSao = GetActiveStatus(StatusEffectType.BuiSao);
-        if (buiSao != null)
-        {
-            multiplier += buiSao.Stacks * 0.05f;
-        }
-
-        // Siêu việt (Lucio): +10% sát thương mỗi tầng
+        float multiplier = 1f;
         var sieuViet = GetActiveStatus(StatusEffectType.SieuViet);
-        if (sieuViet != null)
-        {
-            multiplier += sieuViet.Stacks * 0.10f;
-        }
-
+        if (sieuViet != null) multiplier += sieuViet.Stacks * sieuViet.Value;
+        var buiSao = GetActiveStatus(StatusEffectType.BuiSao);
+        if (buiSao != null) multiplier += buiSao.Stacks * buiSao.Value;
+        var yChi = GetActiveStatus(StatusEffectType.YChi);
+        if (yChi != null) multiplier += yChi.Stacks * yChi.Value;
         return multiplier;
     }
 
-    /// <summary>
-    /// Tính tổng hệ số nhân sát thương nhận vào từ các hiệu ứng (Điểm yếu, v.v.)
-    /// </summary>
     public float GetDamageTakenMultiplier()
     {
-        float multiplier = 1.0f;
-
-        // Điểm yếu (Lucio): +10% sát thương nhận vào mỗi tầng
+        float multiplier = 1f;
         var diemYeu = GetActiveStatus(StatusEffectType.DiemYeu);
-        if (diemYeu != null)
-        {
-            multiplier += diemYeu.Stacks * 0.10f;
-        }
-
+        if (diemYeu != null) multiplier += diemYeu.Stacks * diemYeu.Value;
         return multiplier;
     }
 
-    /// <summary>
-    /// Tính tổng hệ số giảm sát thương từ các hiệu ứng (Nội tại Celine, v.v.)
-    /// </summary>
     public float GetDamageReductionMultiplier()
     {
-        float reduction = 0.0f;
-
-        // Nội tại Celine: 5% mỗi tầng, tối đa 5 tầng
+        float reduction = 0f;
         var giamSatThuong = GetActiveStatus(StatusEffectType.GiamSatThuong);
         if (giamSatThuong != null)
         {
-            int stacks = Mathf.Min(giamSatThuong.Stacks, 5); // Giới hạn 5 tầng
-            reduction += stacks * 0.05f;
+            int stacks = Mathf.Min(giamSatThuong.Stacks, 5);
+            reduction += stacks * giamSatThuong.Value;
         }
-
-        return 1.0f - reduction; // Trả về hệ số nhân (vd: 0.75 cho 25% giảm)
+        return 1f - reduction;
     }
 
-    // Được gọi vào cuối lượt của nhân vật này
+    public void SpendAP(int amount)
+    {
+        OnSpendAP?.Invoke(amount);
+    }
+
     public void TickStatuses()
     {
-        // Giảm thời gian của buff và xóa nếu hết hạn
-        activeBuffs.ForEach(b => b.Duration--);
-        int buffsRemoved = activeBuffs.RemoveAll(b => b.Duration <= 0);
-        if (buffsRemoved > 0) Debug.Log($"  [{UnitName}] {buffsRemoved} buff đã hết hạn.");
+        // Buffs
+        for (int i = activeBuffs.Count - 1; i >= 0; i--)
+        {
+            if (activeBuffs[i].Duration == 0) continue;
+            activeBuffs[i].Duration--;
+            if (activeBuffs[i].Duration <= 0)
+                activeBuffs.RemoveAt(i);
+        }
 
-        // Giảm thời gian của status và xóa nếu hết hạn
-        activeStatuses.ForEach(s => s.Duration--);
-        int statusesRemoved = activeStatuses.RemoveAll(s => s.Duration <= 0);
-        if (statusesRemoved > 0) Debug.Log($"  [{UnitName}] {statusesRemoved} trạng thái đã hết hạn.");
+        // Statuses
+        for (int i = activeStatuses.Count - 1; i >= 0; i--)
+        {
+            if (activeStatuses[i].Duration == 0) continue;
+            activeStatuses[i].Duration--;
+            if (activeStatuses[i].Duration <= 0)
+                activeStatuses.RemoveAt(i);
+        }
     }
 }
 
-// Lớp lưu trữ thông tin về một buff đang hoạt động
+// Lớp lưu trữ buff
 public class ActiveBuff
 {
     public StatType Stat { get; }
-    public float Multiplier { get; }
-    public int Duration { get; set; } // Số lượt còn lại
+    public float Multiplier { get; set; }
+    public int Duration { get; set; }
 
     public ActiveBuff(StatType stat, float multiplier, int duration)
     {
@@ -300,13 +261,13 @@ public class ActiveBuff
     }
 }
 
-// Lớp lưu trữ thông tin về một trạng thái đặc biệt đang hoạt động
+// Lớp lưu trữ trạng thái
 public class ActiveStatus
 {
     public StatusEffectType Type { get; }
     public int Duration { get; set; }
-    public float Value { get; set; } // Dùng cho các trạng thái có giá trị, vd: % phản sát thương
-    public int Stacks { get; set; } // Số tầng cộng dồn
+    public float Value { get; set; }
+    public int Stacks { get; set; }
 
     public ActiveStatus(StatusEffectType type, int duration, float value = 0, int stacks = 1)
     {

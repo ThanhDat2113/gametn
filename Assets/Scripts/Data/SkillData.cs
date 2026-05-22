@@ -10,21 +10,18 @@ public class SkillData : ScriptableObject
     public Sprite icon;
 
     [Header("Type")]
-    public SkillType type = SkillType.Clash;
+    public SkillType type = SkillType.Auto;     // Không còn clash, mặc định Auto
     public TargetType targetType = TargetType.SingleEnemy;
-
-    [Header("Clash Settings")]
-    [Tooltip("Chỉ dùng khi type = Clash")]
-    public int basePoint = 4;
 
     [Header("Cost")]
     [Tooltip("Chi phí Action Point để sử dụng skill này.")]
     public int apCost = 1;
 
     [Header("Hit Settings")]
+    [Tooltip("Số lần gây sát thương (hiển thị nhiều số)")]
+    public int hitCount = 1;
 
     [Header("Animation")]
-    [Tooltip("Tên Trigger trong Animator. VD: Skill1, Skill2...")]
     public string animationTrigger;
     public GameObject vfxPrefab;
     public float vfxOffset = 0f;

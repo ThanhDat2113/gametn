@@ -740,16 +740,6 @@ public class CombatManager : MonoBehaviour
 
     public bool WillAttackResultInClash(CombatUnit unitA, CombatUnit unitB)
     {
-        if (unitA == null || unitB == null) return false;
-
-        // Một cuộc "Clash" trực quan xảy ra khi và chỉ khi cả hai đơn vị
-        // cùng sử dụng kỹ năng loại Clash VÀ cùng nhắm vào nhau.
-        // Logic này đối xứng và không phụ thuộc vào ActionOrder,
-        // đảm bảo việc vẽ đường luôn chính xác trong giai đoạn lập kế hoạch.
-
-        bool aTargetsBWithClash = unitA.SelectedSkill?.type == SkillType.Clash && unitA.SelectedTargets.Contains(unitB);
-        bool bTargetsAWithClash = unitB.SelectedSkill?.type == SkillType.Clash && unitB.SelectedTargets.Contains(unitA);
-
-        return aTargetsBWithClash && bTargetsAWithClash;
+        return false;
     }
 }
