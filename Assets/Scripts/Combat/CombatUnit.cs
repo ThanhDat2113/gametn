@@ -38,6 +38,7 @@ public class CombatUnit
     // ── Round selection ───────────────────────────────────────
     public SkillData SelectedSkill { get; private set; }
     public List<CombatUnit> SelectedTargets { get; private set; } = new();
+    public PassiveAbility Passive { get; private set; }
 
     // ── Events ────────────────────────────────────────────────
     public event System.Action<CombatUnit, int> OnDamageTaken; // (attacker, damage)
@@ -242,6 +243,15 @@ public class CombatUnit
             activeStatuses[i].Duration--;
             if (activeStatuses[i].Duration <= 0)
                 activeStatuses.RemoveAt(i);
+        }
+    }
+
+    public void SetPassive(PassiveAbility passive)
+    {
+        Passive = passive;
+        if (Passive != null)
+        {
+            Passive.Initialize(this);
         }
     }
 }

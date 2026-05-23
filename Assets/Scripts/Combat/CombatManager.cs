@@ -171,15 +171,6 @@ public class CombatManager : MonoBehaviour
         Debug.Log($"=== COMBAT STARTED === Player:{PlayerUnits.Count} vs Enemy:{EnemyUnits.Count}");
         OnCombatStarted?.Invoke();
 
-        // Xử lý nội tại của Aleus
-        var aleus = PlayerUnits.Find(u => u.UnitName == "Aleus");
-        var charlotte = PlayerUnits.Find(u => u.UnitName == "Charlotte");
-        if (aleus != null && charlotte != null)
-        {
-            Debug.Log("[Passive] Aleus applies 'Gio Tien' to Charlotte.");
-            charlotte.ApplyStatus(StatusEffectType.GioTien, 999, 0, 1); // 999 duration = vĩnh viễn
-        }
-
         stateMachine.TransitionTo(CombatPhase.Intro);
     }
 
@@ -255,44 +246,11 @@ public class CombatManager : MonoBehaviour
 
     private void InitializePassives(CombatUnit unit)
     {
-        switch (unit.UnitName)
+        if (unit.Data.passiveAbility != null)
         {
-            case "Celine":
-                // Mỗi khi nhận hoặc gây sát thương, nhận 1 tầng giảm sát thương
-                unit.OnDamageTaken += (attacker, damage) => unit.ApplyStatus(StatusEffectType.GiamSatThuong, 999, 0.05f, 1);
-                unit.OnDealDamage += (target, damage) => unit.ApplyStatus(StatusEffectType.GiamSatThuong, 999, 0.05f, 1);
-                break;
-
-            case "Lilith":
-                // Mỗi khi tiêu hao AP, nhận 1 tầng Bụi sao
-                unit.OnSpendAP += (amount) => unit.ApplyStatus(StatusEffectType.BuiSao, 999, 0.05f, amount);
-                break;
-
-            case "Lei Heng":
-                // Mỗi khi nhận sát thương, nhận 1 tầng Ý chí
-                unit.OnDamageTaken += (attacker, damage) => unit.ApplyStatus(StatusEffectType.YChi, 999, 0.05f, 1);
-                // Sau khi tấn công, reset Ý chí
-                unit.OnDealDamage += (target, damage) => {
-                    var yChi = unit.GetActiveStatus(StatusEffectType.YChi);
-                    if (yChi != null) yChi.Stacks = 0;
-                };
-                break;
-
-            case "Lucio":
-                // Nếu tấn công mục tiêu có Điểm Yếu, nhận 1 tầng Siêu Việt
-                unit.OnDealDamage += (target, damage) => {
-                    if (target.HasStatus(StatusEffectType.DiemYeu))
-                    {
-                        unit.ApplyStatus(StatusEffectType.SieuViet, 999, 0.10f, 1);
-                    }
-                };
-                break;
-
-            case "Nicholas":
-                unit.CritChance = 0.2f;
-                break;
-            
-            // Thêm các nhân vật khác ở đây
+            var passiveInstance = Instantiate(unit.Data.passiveAbility);
+            unit.SetPassive(passiveInstance);
+            Debug.Log($"[Passive] Initialized passive '{passiveInstance.name.Replace("(Clone)","")}' for {unit.UnitName}.");
         }
     }
 
