@@ -112,14 +112,18 @@ public class ClashAnimationSequence : MonoBehaviour
 
         if (skill == null)
         {
-            result.ApplyOutcomes();
+            // Không có skill asset → chỉ play animation mặc định
+            if (actorView != null)
+            {
+                actorView.SetAnimationTrigger(AnimationConstants.Attack);
+                float animLength = actorView.GetClipLength(AnimationConstants.Attack);
+                yield return new WaitForSeconds(animLength);
+            }
             yield break;
         }
 
-        // Logic xử lý hit bằng Animation Events
-        int hitCount = 1; // Tạm thời hardcode là 1, vì đã bỏ hitCount khỏi SkillData
-        bool animationFinished = false;
-        
+        // VISUAL ONLY: Damage đã được apply bởi effect.Apply() trong CombatManager.ResolveAction
+        // Animation events chỉ trigger camera shake và hurt animation
         Action onHitHandler = () => {
             foreach (var outcome in result.Outcomes)
             {
@@ -127,12 +131,7 @@ public class ClashAnimationSequence : MonoBehaviour
                 if (targetView == null) continue;
 
                 if (cameraManager != null) cameraManager.PlayImpactShake();
-
-                int damagePerHit = outcome.Damage / hitCount;
-                if (damagePerHit > 0) {
-                    outcome.Target.TakeDamage(result.Actor, damagePerHit); // Truyền actor vào
-                    targetView.SetAnimationTrigger(AnimationConstants.Hurt);
-                }
+                targetView.SetAnimationTrigger(AnimationConstants.Hurt);
             }
         };
 
@@ -140,20 +139,19 @@ public class ClashAnimationSequence : MonoBehaviour
 
         if (!string.IsNullOrEmpty(skill.animationTrigger))
         {
-            // Sử dụng SetAnimationTrigger đã được cải tiến để đảm bảo an toàn
             actorView.SetAnimationTrigger(skill.animationTrigger);
             float animLength = actorView.GetClipLength(skill.animationTrigger);
             yield return new WaitForSeconds(animLength);
         }
+        else
+        {
+            // Fallback nếu skill không có animation trigger
+            actorView.SetAnimationTrigger(AnimationConstants.Attack);
+            float animLength = actorView.GetClipLength(AnimationConstants.Attack);
+            yield return new WaitForSeconds(animLength);
+        }
 
         actorView.OnHitAnimationEvent -= onHitHandler;
-
-        // Áp dụng phần sát thương còn lại và các hiệu ứng khác
-        foreach(var outcome in result.Outcomes) {
-            int remainingDamage = outcome.Damage % hitCount;
-            if (remainingDamage > 0) outcome.Target.TakeDamage(result.Actor, remainingDamage); // Truyền actor vào
-        }
-        result.ApplyNonDamageOutcomes();
     }
 
     private IEnumerator ReturnPhase(UnitView actorView, Vector3 originPosition, ActionResult result)

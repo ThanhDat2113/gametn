@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using Game.Combat;
 
 public class CombatUnit
 {
@@ -36,9 +37,11 @@ public class CombatUnit
     public ChallengeStack ChallengeStack { get; private set; } = new();
 
     // ── Round selection ───────────────────────────────────────
+    public List<SkillData> AvailableSkills { get; private set; } = new();
     public SkillData SelectedSkill { get; private set; }
     public List<CombatUnit> SelectedTargets { get; private set; } = new();
     public PassiveAbility Passive { get; private set; }
+    private PlannedAction _plannedAction;
 
     // ── Events ────────────────────────────────────────────────
     public event System.Action<CombatUnit, int> OnDamageTaken; // (attacker, damage)
@@ -47,6 +50,13 @@ public class CombatUnit
     public event System.Action OnDied;
     public event System.Action<CombatUnit> OnKill; // (target)
     public event System.Action<int> OnSpendAP; // (amount)
+    public event System.Action<SkillData, List<CombatUnit>> OnActionConfirmed; // (skill, targets)
+
+    public void RaiseActionConfirmed(SkillData skill, List<CombatUnit> targets)
+    {
+        OnActionConfirmed?.Invoke(skill, targets);
+    }
+
     public event System.Action OnTurnStart;
 
     // ── Initialize ────────────────────────────────────────────
@@ -64,6 +74,21 @@ public class CombatUnit
         PDEF = data.GetPDEF(level);
         MDEF = data.GetMDEF(level);
         Speed = data.GetSpeed(level);
+
+        // Instantiate skills to make them unique to this unit
+        AvailableSkills.Clear();
+        if (data.skills != null)
+        {
+            foreach (var skillAsset in data.skills)
+            {
+                if (skillAsset != null)
+                {
+                    var skillInstance = Object.Instantiate(skillAsset);
+                    skillInstance.name = skillAsset.name; // Remove "(Clone)" from name
+                    AvailableSkills.Add(skillInstance);
+                }
+            }
+        }
     }
 
     // ── Damage ────────────────────────────────────────────────
@@ -82,6 +107,8 @@ public class CombatUnit
         // Kích hoạt sự kiện
         OnDamageTaken?.Invoke(caster, actual);
         caster?.OnDealDamage?.Invoke(this, actual);
+        Passive?.OnTakeDamage(caster, actual);
+        caster?.Passive?.OnDealDamage(this, actual);
 
         Debug.Log($"  {UnitName} nhận {actual} dmg → HP {CurrentHP}/{MaxHP}");
 
@@ -100,7 +127,9 @@ public class CombatUnit
         if (CurrentHP <= 0)
         {
             caster?.OnKill?.Invoke(this);
+            caster?.Passive?.OnKill(this);
             OnDied?.Invoke();
+            Passive?.OnDied();
         }
     }
 
@@ -110,6 +139,7 @@ public class CombatUnit
         int actual = Mathf.Min(amount, MaxHP - CurrentHP);
         CurrentHP += actual;
         OnHealed?.Invoke(actual);
+        Passive?.OnHeal(actual);
         Debug.Log($"  {UnitName} hồi {actual} HP → HP {CurrentHP}/{MaxHP}");
     }
 
@@ -124,6 +154,18 @@ public class CombatUnit
     {
         SelectedSkill = null;
         SelectedTargets.Clear();
+    }
+
+    public void SetPlannedAction(PlannedAction action)
+    {
+        _plannedAction = action;
+    }
+
+    public PlannedAction GetPlannedAction()
+    {
+        var action = _plannedAction;
+        _plannedAction = null; // Clear action after getting it
+        return action;
     }
 
     // ── Execute skill ─────────────────────────────────────────
@@ -223,6 +265,13 @@ public class CombatUnit
     public void SpendAP(int amount)
     {
         OnSpendAP?.Invoke(amount);
+        Passive?.OnSpendAP(amount);
+    }
+
+    public void TriggerTurnStart()
+    {
+        OnTurnStart?.Invoke();
+        Passive?.OnTurnStart();
     }
 
     public void TickStatuses()

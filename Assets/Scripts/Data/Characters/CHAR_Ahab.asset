@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: CHAR_Ahab
   m_EditorClassIdentifier: Assembly-CSharp::CharacterData
   prefab: {fileID: 8820226409191382249, guid: c8f35d29d5c6d95429a8b7ff7002a2a9, type: 3}
-  characterName: Ahab
+  characterName: Aleus
   portrait: {fileID: -1194721189, guid: 5ad4d70fcdcf9ca4fb6a0f30d9d6f73a, type: 3}
   battleSprite: {fileID: -1194721189, guid: 5ad4d70fcdcf9ca4fb6a0f30d9d6f73a, type: 3}
   lore: 
@@ -21,11 +21,14 @@ MonoBehaviour:
   baseATK: 15
   basePDEF: 10
   baseMDEF: 10
-  baseLuck: 10
+  baseSpeed: 10
   hpPerLevel: 5
   atkPerLevel: 2
   pdefPerLevel: 1
   mdefPerLevel: 1
-  luckPerLevel: 1
+  speedPerLevel: 1
   skills:
-  - {fileID: 11400000, guid: bbddf821e9341ce42abc11d18b9bbfe7, type: 2}
+  - {fileID: 11400000, guid: 899f69e946d5af444bf198a34fa07f4e, type: 2}
+  - {fileID: 11400000, guid: 9bfe6785cd1d2ae45a86559e066258f4, type: 2}
+  - {fileID: 11400000, guid: e18d2d6a09f81494187a31d4ef43e8e5, type: 2}
+  passiveScript: {fileID: 11500000, guid: a4e84cc1f0b3f294db93df8eaea3e8cf, type: 3}

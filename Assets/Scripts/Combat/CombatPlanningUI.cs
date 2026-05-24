@@ -170,15 +170,28 @@ public class CombatPlanningUI : MonoBehaviour
     private void HandleWorldClick(Vector3 mousePos)
     {
         Ray ray = mainCam.ScreenPointToRay(mousePos);
-        var hits = Physics2D.GetRayIntersectionAll(ray);
+        RaycastHit2D[] hits2D = Physics2D.GetRayIntersectionAll(ray);
         UnitView clickedView = null;
-        foreach (var hit in hits)
+
+        // Thử 2D physics trước
+        foreach (var hit in hits2D)
         {
             var view = hit.collider?.GetComponent<UnitView>();
             if (view != null && view.LinkedUnit.IsAlive)
             {
                 clickedView = view;
                 break;
+            }
+        }
+
+        // Nếu không tìm thấy với 2D, thử 3D physics
+        if (clickedView == null)
+        {
+            if (Physics.Raycast(ray, out RaycastHit hit3D, 100f))
+            {
+                clickedView = hit3D.collider?.GetComponent<UnitView>();
+                if (clickedView != null && !clickedView.LinkedUnit.IsAlive)
+                    clickedView = null;
             }
         }
 
@@ -192,7 +205,8 @@ public class CombatPlanningUI : MonoBehaviour
     {
         CloseSkillWheel();
 
-        var skills = unit.Data.skills;
+        // Dùng AvailableSkills từ unit instance (đã được instantiate riêng) thay vì Data.skills gốc
+        var skills = unit.AvailableSkills.Count > 0 ? unit.AvailableSkills.ToArray() : unit.Data.skills;
         Vector2 screenPos = mainCam.WorldToScreenPoint(view.transform.position);
         RectTransform canvasRect = planningCanvas.GetComponent<RectTransform>();
         RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, screenPos, planningCanvas.worldCamera, out Vector2 canvasPos);

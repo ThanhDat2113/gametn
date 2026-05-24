@@ -31,8 +31,9 @@ public class CharacterData : ScriptableObject
     [Tooltip("Kéo SkillData vào đây")]
     public SkillData[] skills;
 
-    [Header("Passive Ability")]
-    public PassiveAbility passiveAbility;
+    [Header("Passive Script")]
+    [Tooltip("Kéo file .cs của passive vào đây (VD: AleusPassive.cs)")]
+    public Object passiveScript;
 
     // Tính stat theo level
     public int GetHP(int level) => baseHP + hpPerLevel * (level - 1);

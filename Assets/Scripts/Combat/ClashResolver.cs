@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-// Lớp chứa kết quả của một hành động, thay thế cho ClashResult
+// Lớp chứa kết quả của một hành động
 public class ActionResult
 {
     public CombatUnit Actor { get; set; }
@@ -10,7 +10,9 @@ public class ActionResult
     public List<CombatUnit> InitialTargets { get; set; }
     public List<ActionOutcome> Outcomes { get; set; } = new List<ActionOutcome>();
 
-    // Phương thức này sẽ áp dụng tất cả các kết quả đã được tính toán
+    /// <summary>
+    /// Fallback: chỉ dùng khi clashSequence == null
+    /// </summary>
     public void ApplyOutcomes()
     {
         foreach (var outcome in Outcomes)
@@ -23,10 +25,8 @@ public class ActionResult
         }
     }
 
-    // Áp dụng các hiệu ứng không phải sát thương (ví dụ: buff, debuff)
     public void ApplyNonDamageOutcomes()
     {
-        // Hiện tại chưa có logic này, nhưng để sẵn cấu trúc
         Debug.Log("[ActionResult] Applying non-damage outcomes (Not Implemented).");
     }
 }
@@ -36,14 +36,14 @@ public class ActionOutcome
 {
     public CombatUnit Target { get; set; }
     public int Damage { get; set; }
-    // Có thể thêm các hiệu ứng, hồi máu, v.v. ở đây
 }
 
-
-// Đổi tên từ ClashResolver thành ActionResolver
+/// <summary>
+/// ActionResolver: chỉ populate dữ liệu display từ skill effects.
+/// KHÔNG apply damage ở đây. CombatManager.ResolveAction sẽ gọi effect.Apply() sau đó.
+/// </summary>
 public class ActionResolver
 {
-    // Viết lại phương thức Resolve để phù hợp với turn-based
     public ActionResult Resolve(CombatUnit actor, SkillData skill, List<CombatUnit> targets)
     {
         var result = new ActionResult
@@ -55,19 +55,45 @@ public class ActionResolver
 
         Debug.Log($"[ActionResolver] {actor.UnitName} uses '{skill.skillName}' on {targets.Count} target(s).");
 
-        foreach (var target in targets)
+        // Populate Outcomes từ skill effects để UI có thể hiển thị damage numbers
+        bool hasEffects = skill.effects != null && skill.effects.Length > 0;
+        if (hasEffects)
         {
-            if (!target.IsAlive) continue;
-
-            // Logic tính sát thương cơ bản
-            // TODO: Mở rộng với các loại sát thương, hiệu ứng, v.v.
-            int damage = Mathf.Max(1, actor.ATK - target.PDEF);
-
-            result.Outcomes.Add(new ActionOutcome
+            foreach (var effect in skill.effects)
             {
-                Target = target,
-                Damage = damage
-            });
+                if (effect is DamageEffect damageEffect)
+                {
+                    foreach (var target in targets)
+                    {
+                        if (!target.IsAlive) continue;
+                        // Tính damage preview (1 hit) để hiển thị
+                        var hits = damageEffect.CalculateHits(actor, target, 1);
+                        foreach (var hit in hits)
+                        {
+                            result.Outcomes.Add(new ActionOutcome
+                            {
+                                Target = target,
+                                Damage = hit.Damage
+                            });
+                        }
+                    }
+                }
+            }
+        }
+        else
+        {
+            // Fallback: nếu skill không có effects, dùng công thức ATK - PDEF cho display
+            Debug.LogWarning($"[ActionResolver] Skill '{skill.skillName}' không có effects! Dùng công thức fallback.");
+            foreach (var target in targets)
+            {
+                if (!target.IsAlive) continue;
+                int damage = Mathf.Max(1, actor.ATK - target.PDEF);
+                result.Outcomes.Add(new ActionOutcome
+                {
+                    Target = target,
+                    Damage = damage
+                });
+            }
         }
 
         return result;

@@ -4,6 +4,23 @@ using System.Linq;
 using UnityEngine;
 using Game.Combat;
 
+namespace Game.Combat
+{
+    public class PlannedAction
+    {
+        public CombatUnit Caster { get; }
+        public SkillData Skill { get; }
+        public List<CombatUnit> Targets { get; }
+
+        public PlannedAction(CombatUnit caster, SkillData skill, List<CombatUnit> targets)
+        {
+            Caster = caster;
+            Skill = skill;
+            Targets = targets;
+        }
+    }
+}
+
 public class CombatManager : MonoBehaviour
 {
     public static CombatManager Instance { get; private set; }
@@ -234,6 +251,27 @@ public class CombatManager : MonoBehaviour
             var view = go.GetComponent<UnitView>();
             if (view == null) { Debug.LogError($"Prefab {prefab.name} thiếu UnitView!"); continue; }
             view.Setup(unit);
+            // --- DEBUG: Kiểm tra kỹ năng của Celine ---
+            if (unit.UnitName == "Celine")
+            {
+                foreach (var skill in unit.Data.skills)
+                {
+                    if (skill == null) continue;
+
+                    // Giả định các skill buff/tự dùng có tên chứa "Blessing", "Aura", "Pledge", "Stance"
+                    bool isLikelySelfSkill = skill.skillName.Contains("Blessing") ||
+                                             skill.skillName.Contains("Aura") ||
+                                             skill.skillName.Contains("Pledge") ||
+                                             skill.skillName.Contains("Stance");
+
+                    if (isLikelySelfSkill && skill.targetType != TargetType.Self)
+                    {
+                        Debug.LogWarning($"[Celine Skill Check] Kỹ năng '{skill.skillName}' của Celine có vẻ là kỹ năng tự dùng nhưng TargetType đang là '{skill.targetType}'. Hãy cân nhắc đổi thành 'Self' trong SkillData asset.");
+                    }
+                }
+            }
+            // --- Hết DEBUG ---
+
             InitializePassives(unit); // GỌI KHỞI TẠO NỘI TẠI
 
             // Lưu vị trí cuối cùng trên lưới vào UnitView để sử dụng sau
@@ -246,11 +284,47 @@ public class CombatManager : MonoBehaviour
 
     private void InitializePassives(CombatUnit unit)
     {
-        if (unit.Data.passiveAbility != null)
+        if (unit.Data.passiveScript == null) return;
+
+        string className = unit.Data.passiveScript.name;
+        Debug.Log($"[Passive] Attempting to initialize passive for {unit.UnitName}. Script name: '{className}'.");
+
+        var passiveType = System.Type.GetType($"Game.Data.Passives.{className}");
+
+        if (passiveType == null)
         {
-            var passiveInstance = Instantiate(unit.Data.passiveAbility);
-            unit.SetPassive(passiveInstance);
-            Debug.Log($"[Passive] Initialized passive '{passiveInstance.name.Replace("(Clone)","")}' for {unit.UnitName}.");
+            Debug.LogWarning($"[Passive] Could not find type 'Game.Data.Passives.{className}'. Searching all assemblies...");
+            foreach (var assembly in System.AppDomain.CurrentDomain.GetAssemblies())
+            {
+                passiveType = assembly.GetType(className);
+                if (passiveType != null)
+                {
+                    Debug.Log($"[Passive] Found type '{passiveType.FullName}' in assembly '{assembly.FullName}'.");
+                    break;
+                }
+            }
+        }
+
+        if (passiveType != null && typeof(PassiveAbility).IsAssignableFrom(passiveType))
+        {
+            var passiveInstance = System.Activator.CreateInstance(passiveType) as PassiveAbility;
+            if (passiveInstance != null)
+            {
+                unit.SetPassive(passiveInstance);
+                passiveInstance.Initialize(unit);
+                Debug.Log($"[Passive] SUCCESS: Initialized and Subscribed passive '{className}' for {unit.UnitName}.");
+            }
+        }
+        else
+        {
+            if (passiveType == null)
+            {
+                Debug.LogError($"[Passive] FAILURE: Could not find any type named '{className}' in any loaded assembly.");
+            }
+            else
+            {
+                Debug.LogError($"[Passive] FAILURE: Type '{passiveType.FullName}' was found, but it does not inherit from PassiveAbility.");
+            }
         }
     }
 
@@ -437,6 +511,9 @@ public class CombatManager : MonoBehaviour
         stateMachine.TransitionTo(CombatPhase.Execute);
     }
 
+
+
+
     private void StartPlayerPlan()
     {
         // This phase is now deprecated and replaced by turn-by-turn input.
@@ -469,13 +546,15 @@ public class CombatManager : MonoBehaviour
         // Trừ AP và kích hoạt sự kiện
         CurrentPlayerAP -= skill.apCost;
         OnAPChanged?.Invoke(CurrentPlayerAP);
-        currentUnit.SpendAP(skill.apCost); // Kích hoạt passive của unit
+        currentUnit.SpendAP(skill.apCost);
         Debug.Log($"[AP] Đã dùng {skill.apCost} AP. Còn lại {CurrentPlayerAP}.");
 
+        // Gán hành động cho unit
         currentUnit.SelectSkill(skill, targets);
-        Debug.Log($"[Player Turn] {currentUnit.UnitName} selected [{skill.skillName}] -> [{string.Join(", ", targets.Select(t => t.UnitName))}]");
+        Debug.Log($"[Player Input] {currentUnit.UnitName} đã chọn dùng {skill.skillName} lên {string.Join(", ", targets.Select(t => t.UnitName))}.");
 
-        isWaitingForPlayerInput = false; // Signal to the ExecuteRound coroutine that the player has made a choice.
+        // Báo cho coroutine ExecuteRound biết là có thể tiếp tục
+        isWaitingForPlayerInput = false;
     }
 
     private IEnumerator HandleStartOfTurnEffects(CombatUnit unit)
@@ -531,10 +610,68 @@ public class CombatManager : MonoBehaviour
             yield return new WaitForSeconds(1.0f); 
         }
         */
-
-        yield return null; // Logic is disabled, wait a frame before continuing.
+        yield return null; // Đảm bảo coroutine luôn yield
         stateMachine.TransitionTo(CombatPhase.Execute);
     }
+
+    private IEnumerator ResolveAction(PlannedAction action)
+    {
+        Debug.Log($"[Resolve] {action.Caster.UnitName} dùng {action.Skill.skillName}");
+        var result = actionResolver.Resolve(action.Caster, action.Skill, action.Targets);
+        OnActionResolved?.Invoke(result);
+
+        // DATA-DRIVEN: Apply tất cả skill effects
+        bool hasAppliedEffects = false;
+        if (action.Skill.effects != null && action.Skill.effects.Length > 0)
+        {
+            foreach (var effect in action.Skill.effects)
+            {
+                if (effect != null)
+                {
+                    Debug.Log($"[Resolve] Applying effect: {effect.GetType().Name}");
+                    effect.Apply(action.Caster, action.Targets.ToArray());
+                    hasAppliedEffects = true;
+                }
+            }
+        }
+
+        // Fallback: nếu skill không có effects hoặc effects rỗng, dùng ActionResolver outcomes làm damage thật
+        if (!hasAppliedEffects)
+        {
+            if (result.Outcomes.Count > 0)
+            {
+                Debug.LogWarning($"Skill '{action.Skill.skillName}' data-driven fallback: dùng ActionResolver outcomes.");
+                result.ApplyOutcomes();
+            }
+            else
+            {
+                Debug.LogWarning($"Skill '{action.Skill.skillName}' không có effects và không có fallback outcomes!");
+            }
+        }
+
+        // Animation CHỈ để visual - không apply damage (tránh double damage)
+        if (clashSequence != null)
+        {
+            yield return StartCoroutine(clashSequence.PlayAction(result));
+        }
+        else
+        {
+            Debug.LogError("Clash sequence not set!");
+            yield return new WaitForSeconds(1f);
+        }
+
+        // Kích hoạt sự kiện sau khi hành động đã được giải quyết hoàn toàn
+        // để các nội tại (như của Aleus) có thể phản ứng.
+        Debug.Log($"[EVENT] Chuẩn bị kích hoạt OnActionConfirmed cho {action.Caster.UnitName} với kỹ năng {action.Skill.skillName}.");
+        action.Caster.RaiseActionConfirmed(action.Skill, action.Targets);
+
+        if (CheckForCombatEnd())
+        {
+            yield break;
+        }
+    }
+
+
 
     private IEnumerator ExecuteRound()
     {
@@ -569,6 +706,7 @@ public class CombatManager : MonoBehaviour
 
             Debug.Log($"--- Lượt của: {currentUnit.UnitName} ---");
             OnUnitTurnStart?.Invoke(currentUnit);
+            currentUnit.TriggerTurnStart();
 
             // 1. Lên kế hoạch hành động (AI hoặc Player)
             if (!currentUnit.IsPlayer)
@@ -599,25 +737,13 @@ public class CombatManager : MonoBehaviour
                 yield return new WaitUntil(() => !isWaitingForPlayerInput);
             }
 
-            // 2. Thực thi hành động và animation
+            // 2. Thực thi hành động
             if (currentUnit.SelectedSkill != null && currentUnit.SelectedTargets.Any())
             {
-                var actionResult = actionResolver.Resolve(currentUnit, currentUnit.SelectedSkill, currentUnit.SelectedTargets);
-
-                // Gửi sự kiện để các hệ thống khác (như UI) cập nhật
-                OnActionResolved?.Invoke(actionResult);
-
-                // Chạy animation và ĐỢI cho nó xong
-                if (clashSequence != null)
-                {
-                    yield return StartCoroutine(clashSequence.PlayAction(actionResult));
-                }
-                else
-                {
-                    Debug.LogError("[ExecuteRound] ClashAnimationSequence chưa được gán!");
-                    actionResult.ApplyOutcomes(); // Apply outcomes immediately if no animation
-                    yield return new WaitForSeconds(1f); 
-                }
+                // The instruction implies a PlannedAction and ResolveAction method exist.
+                // This change restores that logic.
+                var action = new PlannedAction(currentUnit, currentUnit.SelectedSkill, currentUnit.SelectedTargets);
+                yield return StartCoroutine(ResolveAction(action));
             }
             else
             {
@@ -648,7 +774,7 @@ public class CombatManager : MonoBehaviour
             unit.ClearSelection();
         }
         Debug.Log("--- Tất cả các lượt đã thực hiện ---");
-        
+
         // Tạm thời vô hiệu hóa Fade UI
         // yield return FadeUI(1f, 0.2f);
 
@@ -684,15 +810,27 @@ public class CombatManager : MonoBehaviour
         stateMachine.TransitionTo(CombatPhase.EnemyPlan);
     }
 
+    private void CleanupPassives()
+    {
+        var allUnits = PlayerUnits.Concat(EnemyUnits);
+        foreach (var unit in allUnits)
+        {
+            unit.Passive?.Cleanup();
+        }
+        Debug.Log("[Passive] All passives cleaned up.");
+    }
+
     private void DoVictory()
     {
         Debug.Log("=== VICTORY ===");
+        CleanupPassives(); // Dọn dẹp nội tại
         OnVictory?.Invoke();
     }
 
     private void DoDefeat()
     {
         Debug.Log("=== DEFEAT ===");
+        CleanupPassives(); // Dọn dẹp nội tại
         OnDefeat?.Invoke();
     }
 
