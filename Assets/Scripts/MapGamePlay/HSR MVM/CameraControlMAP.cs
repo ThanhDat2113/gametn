@@ -2,29 +2,39 @@ using UnityEngine;
 
 public class HSRCameraController : MonoBehaviour
 {
-    [Header("Targeting")]
+    [Header("Target")]
     public Transform target;        // Kéo Player vào đây
-    
-    [Header("Positioning")]
-    public float distance = 15f;    // Khoảng cách từ camera tới player
-    public Vector3 targetOffset = new Vector3(0, 1.5f, 0); // Offset để nhìn vào thân/đầu nhân vật thay vì dưới chân
-    
+
+    [Header("Orbit Settings")]
+    public float distance = 10f;
+    public float yawSpeed = 80f;    // Tốc độ xoay ngang (độ/giây)
+    public KeyCode rotateLeft = KeyCode.Q;
+    public KeyCode rotateRight = KeyCode.E;
+
+    [Header("Vertical Offset")]
+    public float heightOffset = 1.5f; // Độ cao so với target
+
     [Header("Smoothing")]
     public float smoothTime = 0.2f;
-    private Vector3 _currentVelocity = Vector3.zero;
+    private float _currentYaw = 0f;
+    private Vector3 _velocity = Vector3.zero;
 
     void LateUpdate()
     {
-        if (!target) return;
+        if (target == null) return;
 
-        // 1. Lấy vị trí mục tiêu mà camera muốn nhìn vào (thường là người chơi + một chút chiều cao)
-        Vector3 lookAtPos = target.position + targetOffset;
+        // Xoay khi giữ Q/E
+        if (Input.GetKey(rotateLeft))
+            _currentYaw -= yawSpeed * Time.deltaTime;
+        if (Input.GetKey(rotateRight))
+            _currentYaw += yawSpeed * Time.deltaTime;
 
-        // 2. Tính toán hướng "lùi lại" dựa trên Rotation hiện tại của Camera
-        // transform.forward là hướng camera đang nhìn, nhân với -distance để lùi ra sau
-        Vector3 desiredPosition = lookAtPos - (transform.forward * distance);
-
-        // 3. Di chuyển mượt mà tới vị trí đó
-        transform.position = Vector3.SmoothDamp(transform.position, desiredPosition, ref _currentVelocity, smoothTime);
+        // Tính vị trí camera: xoay vector (0,0,-distance) quanh trục Y
+        Quaternion rot = Quaternion.Euler(0, _currentYaw, 0);
+        Vector3 desiredPos = target.position + new Vector3(0, heightOffset, 0) + rot * new Vector3(0, 0, -distance);
+        transform.position = Vector3.SmoothDamp(transform.position, desiredPos, ref _velocity, smoothTime);
+        transform.LookAt(target.position + Vector3.up * heightOffset);
     }
+
+    public void ResetYaw() => _currentYaw = 0f;
 }

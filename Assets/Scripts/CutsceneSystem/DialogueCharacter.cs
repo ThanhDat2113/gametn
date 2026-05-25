@@ -6,8 +6,6 @@ public class DialogueCharacter : ScriptableObject
 {
     public string characterName;
     public Color nameColor = Color.white;
-
-    [Header("Portraits")]
     public List<PortraitEntry> portraits = new List<PortraitEntry>();
 
     private Dictionary<string, Sprite> _portraitDict;
@@ -21,12 +19,10 @@ public class DialogueCharacter : ScriptableObject
                 if (!string.IsNullOrEmpty(entry.emotionKey))
                     _portraitDict[entry.emotionKey] = entry.sprite;
         }
-        if (_portraitDict.TryGetValue(emotionKey, out Sprite s)) return s;
-        return portraits.Count > 0 ? portraits[0].sprite : null;
+        return _portraitDict.TryGetValue(emotionKey, out Sprite s)
+            ? s
+            : (portraits.Count > 0 ? portraits[0].sprite : null);
     }
-
-    public Sprite GetPortrait(DialogueEmotion emotion) =>
-        GetPortrait(emotion.ToString().ToLower());
 }
 
 [System.Serializable]
@@ -36,7 +32,4 @@ public class PortraitEntry
     public Sprite sprite;
 }
 
-public enum DialogueEmotion
-{
-    Normal, Happy, Angry, Sad, Surprised, Cry, Blush
-}
+public enum DialogueEmotion { Normal, Happy, Angry, Sad, Surprised, Cry, Blush }
