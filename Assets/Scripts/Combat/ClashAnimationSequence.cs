@@ -152,6 +152,12 @@ public class ClashAnimationSequence : MonoBehaviour
         }
 
         actorView.OnHitAnimationEvent -= onHitHandler;
+
+        // Fallback: nếu sau animation vẫn còn pendingOutcomes chưa process → force apply
+        if (actorView != null)
+        {
+            actorView.FlushPendingOutcomes();
+        }
     }
 
     private IEnumerator ReturnPhase(UnitView actorView, Vector3 originPosition, ActionResult result)

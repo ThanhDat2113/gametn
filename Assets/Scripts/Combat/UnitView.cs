@@ -24,6 +24,12 @@ public class UnitView : MonoBehaviour
     private Vector3 originalPosition;
     private bool originalPositionHasBeenSet = false;
 
+    // Per-hit damage tracking
+    private List<ActionOutcome> pendingOutcomes = new();
+    private CombatUnit pendingCaster;
+    private int pendingHitCount = 1;
+    private int currentHitIndex = 0;
+
     public Vector3 GetOriginalPosition()
     {
         return originalPosition;
@@ -167,9 +173,91 @@ public class UnitView : MonoBehaviour
         yield return new WaitForSeconds(ns.length - ns.normalizedTime * ns.length);
     }
 
+    /// <summary>
+    /// Gán danh sách outcomes và hitCount để animation per-hit có thể apply damage
+    /// </summary>
+    public void SetPendingOutcomes(List<ActionOutcome> outcomes, CombatUnit caster, int hitCount)
+    {
+        pendingOutcomes = outcomes;
+        pendingCaster = caster;
+        pendingHitCount = Mathf.Max(1, hitCount);
+        currentHitIndex = 0;
+    }
+
+    /// <summary>
+    /// Force apply tất cả pending outcomes còn lại (fallback khi animation không có hit events)
+    /// </summary>
+    public void FlushPendingOutcomes()
+    {
+        if (pendingOutcomes.Count == 0 || pendingCaster == null) return;
+
+        // Apply damage còn lại cho tất cả outcomes chưa được process
+        while (currentHitIndex < pendingHitCount)
+        {
+            foreach (var outcome in pendingOutcomes)
+            {
+                if (outcome.Target == null || !outcome.Target.IsAlive) continue;
+
+                int baseDamage = outcome.Damage / pendingHitCount;
+                int damageThisHit = baseDamage;
+                if (currentHitIndex == pendingHitCount - 1)
+                {
+                    int remainder = outcome.Damage - baseDamage * (pendingHitCount - 1);
+                    damageThisHit = remainder;
+                }
+
+                if (damageThisHit > 0)
+                {
+                    outcome.Target.TakeDamage(pendingCaster, damageThisHit, currentHitIndex);
+                    Debug.Log($"[Flush Hit {currentHitIndex}] {outcome.Target.UnitName} nhận {damageThisHit} damage (fallback).");
+                }
+            }
+            currentHitIndex++;
+        }
+
+        pendingOutcomes.Clear();
+        pendingCaster = null;
+        pendingHitCount = 1;
+        currentHitIndex = 0;
+    }
+
     public void OnHit() { OnHitAnimationEvent?.Invoke(); }
 
-    private void ProcessHitAtFrame(int hitIndex) { }
+    private void ProcessHitAtFrame(int hitIndex)
+    {
+        // Apply damage per-hit từ pendingOutcomes
+        if (pendingOutcomes.Count == 0 || pendingCaster == null) return;
+
+        // Skip nếu đã xử lý hết hit count rồi (tránh duplicate từ animation)
+        if (currentHitIndex >= pendingHitCount) return;
+
+        int damageThisHit = 0;
+        foreach (var outcome in pendingOutcomes)
+        {
+            if (outcome.Target == null || !outcome.Target.IsAlive) continue;
+
+            // Chia damage đều cho các hit
+            int baseDamage = outcome.Damage / pendingHitCount;
+            // Hit cuối nhận phần dư
+            if (currentHitIndex == pendingHitCount - 1)
+            {
+                int remainder = outcome.Damage - baseDamage * (pendingHitCount - 1);
+                damageThisHit = remainder;
+            }
+            else
+            {
+                damageThisHit = baseDamage;
+            }
+
+            if (damageThisHit > 0)
+            {
+                outcome.Target.TakeDamage(pendingCaster, damageThisHit, currentHitIndex);
+                Debug.Log($"[Hit {currentHitIndex}] {outcome.Target.UnitName} nhận {damageThisHit} damage. HP: {outcome.Target.CurrentHP}");
+            }
+        }
+
+        currentHitIndex++;
+    }
     private void ProcessVFXAtFrame(int vfxIndex)
     {
         if (currentSkill?.vfxPrefab == null || currentTarget == null) return;

@@ -11,7 +11,7 @@ public class ActionResult
     public List<ActionOutcome> Outcomes { get; set; } = new List<ActionOutcome>();
 
     /// <summary>
-    /// Fallback: chỉ dùng khi clashSequence == null
+    /// Áp dụng outcomes damage vào target (fallback khi không có animation)
     /// </summary>
     public void ApplyOutcomes()
     {
@@ -39,8 +39,7 @@ public class ActionOutcome
 }
 
 /// <summary>
-/// ActionResolver: chỉ populate dữ liệu display từ skill effects.
-/// KHÔNG apply damage ở đây. CombatManager.ResolveAction sẽ gọi effect.Apply() sau đó.
+/// ActionResolver: tính toán damage preview và lưu vào Outcomes.
 /// </summary>
 public class ActionResolver
 {
@@ -55,7 +54,7 @@ public class ActionResolver
 
         Debug.Log($"[ActionResolver] {actor.UnitName} uses '{skill.skillName}' on {targets.Count} target(s).");
 
-        // Populate Outcomes từ skill effects để UI có thể hiển thị damage numbers
+        // Populate Outcomes từ skill effects
         bool hasEffects = skill.effects != null && skill.effects.Length > 0;
         if (hasEffects)
         {
@@ -66,7 +65,7 @@ public class ActionResolver
                     foreach (var target in targets)
                     {
                         if (!target.IsAlive) continue;
-                        // Tính damage preview (1 hit) để hiển thị
+                        // Tính tổng damage (hitCount = 1 để lấy tổng)
                         var hits = damageEffect.CalculateHits(actor, target, 1);
                         foreach (var hit in hits)
                         {
@@ -82,7 +81,7 @@ public class ActionResolver
         }
         else
         {
-            // Fallback: nếu skill không có effects, dùng công thức ATK - PDEF cho display
+            // Fallback: nếu skill không có effects, dùng công thức ATK - PDEF
             Debug.LogWarning($"[ActionResolver] Skill '{skill.skillName}' không có effects! Dùng công thức fallback.");
             foreach (var target in targets)
             {

@@ -39,14 +39,14 @@ public class CombatManager : MonoBehaviour
 
     // Action Point System
     public int CurrentPlayerAP { get; private set; }
-    private const int MAX_PLAYER_AP = 5; // Giới hạn AP có thể tích trữ
-    private const int STARTING_PLAYER_AP = 3; // AP khởi đầu
+    private const int MAX_PLAYER_AP = 5;
+    private const int STARTING_PLAYER_AP = 3;
     private bool isFirstPlayerTurnOfRound;
 
     [Header("Grid Spawn Settings")]
     public Transform[] playerGridSlots;
     public Transform[] enemyGridSlots;
-    public Transform enemyRallyPoint; // Điểm tập kết cho kẻ địch
+    public Transform enemyRallyPoint;
     private List<UnitView> unitViews = new();
 
     public List<UnitView> GetAllUnitViews()
@@ -64,7 +64,7 @@ public class CombatManager : MonoBehaviour
     [Header("Animation")]
     public ClashAnimationSequence clashSequence;
     public CombatCameraManager cameraManager;
-    public CanvasGroup combatUICanvasGroup; // Kéo CanvasGroup cha vào đây
+    public CanvasGroup combatUICanvasGroup;
     private TargetingArrowController arrowController;
 
     public event System.Action OnCombatStarted;
@@ -97,8 +97,8 @@ public class CombatManager : MonoBehaviour
     }
     #endregion
 
-    public event System.Action<CombatUnit> OnPlayerTurnStart; // Sự kiện mới cho turn-based
-    public event System.Action<CombatUnit> OnUnitTurnStart; // Sự kiện cho mỗi lượt của unit bất kỳ
+    public event System.Action<CombatUnit> OnPlayerTurnStart;
+    public event System.Action<CombatUnit> OnUnitTurnStart;
     public event System.Action<List<CombatUnit>> OnRoundSetup;
     public event System.Action<List<CombatUnit>> OnPlayerPlanStarted;
     public event System.Action<CombatUnit> OnPlayerSkillSelected;
@@ -109,7 +109,7 @@ public class CombatManager : MonoBehaviour
     public event System.Action OnVictory;
     public event System.Action OnDefeat;
     public event System.Action OnPlanChanged;
-    public event System.Action<int> OnAPChanged; // (newAPValue)
+    public event System.Action<int> OnAPChanged;
 
     public CombatPhase CurrentPhase => stateMachine.Current;
 
@@ -122,7 +122,6 @@ public class CombatManager : MonoBehaviour
         if (cameraManager == null)
             cameraManager = FindFirstObjectByType<CombatCameraManager>();
         
-        // Tự động hóa việc thiết lập CanvasGroup cho UI
         if (combatUICanvasGroup == null)
         {
             var planningUI = FindFirstObjectByType<CombatPlanningUI>();
@@ -240,10 +239,8 @@ public class CombatManager : MonoBehaviour
                 continue;
             }
 
-            // Vị trí cuối cùng trên lưới
             Vector3 finalGridPosition = gridSlots[slot].position;
 
-            // Nếu là enemy, spawn tại rally point. Nếu không, spawn tại grid.
             bool isEnemy = !unit.IsPlayer;
             Vector3 spawnPos = isEnemy && enemyRallyPoint != null ? enemyRallyPoint.position : finalGridPosition;
 
@@ -251,30 +248,8 @@ public class CombatManager : MonoBehaviour
             var view = go.GetComponent<UnitView>();
             if (view == null) { Debug.LogError($"Prefab {prefab.name} thiếu UnitView!"); continue; }
             view.Setup(unit);
-            // --- DEBUG: Kiểm tra kỹ năng của Celine ---
-            if (unit.UnitName == "Celine")
-            {
-                foreach (var skill in unit.Data.skills)
-                {
-                    if (skill == null) continue;
+            InitializePassives(unit);
 
-                    // Giả định các skill buff/tự dùng có tên chứa "Blessing", "Aura", "Pledge", "Stance"
-                    bool isLikelySelfSkill = skill.skillName.Contains("Blessing") ||
-                                             skill.skillName.Contains("Aura") ||
-                                             skill.skillName.Contains("Pledge") ||
-                                             skill.skillName.Contains("Stance");
-
-                    if (isLikelySelfSkill && skill.targetType != TargetType.Self)
-                    {
-                        Debug.LogWarning($"[Celine Skill Check] Kỹ năng '{skill.skillName}' của Celine có vẻ là kỹ năng tự dùng nhưng TargetType đang là '{skill.targetType}'. Hãy cân nhắc đổi thành 'Self' trong SkillData asset.");
-                    }
-                }
-            }
-            // --- Hết DEBUG ---
-
-            InitializePassives(unit); // GỌI KHỞI TẠO NỘI TẠI
-
-            // Lưu vị trí cuối cùng trên lưới vào UnitView để sử dụng sau
             view.StoreOriginalPosition(finalGridPosition);
 
             unitViews.Add(view);
@@ -287,21 +262,14 @@ public class CombatManager : MonoBehaviour
         if (unit.Data.passiveScript == null) return;
 
         string className = unit.Data.passiveScript.name;
-        Debug.Log($"[Passive] Attempting to initialize passive for {unit.UnitName}. Script name: '{className}'.");
 
-        var passiveType = System.Type.GetType($"Game.Data.Passives.{className}");
-
+        var passiveType = System.Type.GetType(className);
         if (passiveType == null)
         {
-            Debug.LogWarning($"[Passive] Could not find type 'Game.Data.Passives.{className}'. Searching all assemblies...");
             foreach (var assembly in System.AppDomain.CurrentDomain.GetAssemblies())
             {
                 passiveType = assembly.GetType(className);
-                if (passiveType != null)
-                {
-                    Debug.Log($"[Passive] Found type '{passiveType.FullName}' in assembly '{assembly.FullName}'.");
-                    break;
-                }
+                if (passiveType != null) break;
             }
         }
 
@@ -311,20 +279,12 @@ public class CombatManager : MonoBehaviour
             if (passiveInstance != null)
             {
                 unit.SetPassive(passiveInstance);
-                passiveInstance.Initialize(unit);
-                Debug.Log($"[Passive] SUCCESS: Initialized and Subscribed passive '{className}' for {unit.UnitName}.");
+                Debug.Log($"[Passive] Initialized passive '{className}' for {unit.UnitName}.");
             }
         }
         else
         {
-            if (passiveType == null)
-            {
-                Debug.LogError($"[Passive] FAILURE: Could not find any type named '{className}' in any loaded assembly.");
-            }
-            else
-            {
-                Debug.LogError($"[Passive] FAILURE: Type '{passiveType.FullName}' was found, but it does not inherit from PassiveAbility.");
-            }
+            Debug.LogWarning($"[Passive] '{className}' không tìm thấy hoặc không kế thừa PassiveAbility.");
         }
     }
 
@@ -347,10 +307,8 @@ public class CombatManager : MonoBehaviour
     {
         cameraManager.BeginIntroSequence();
 
-        // 0. Hide UI
-        yield return FadeUI(0f, 0.5f); // Fade to transparent
+        yield return FadeUI(0f, 0.5f);
 
-        // 1. Mờ đen, hiện ra ở vị trí lệch, rồi pan vào trung tâm của grid team địch
         Vector3 enemyGridCenter = Vector3.zero;
         int validSlotCount = 0;
         if (enemyGridSlots != null && enemyGridSlots.Length > 0)
@@ -368,7 +326,6 @@ public class CombatManager : MonoBehaviour
         if (validSlotCount > 0)
         {
             enemyGridCenter /= validSlotCount;
-            // Camera pan từ trái qua, nhanh hơn và xa hơn
             yield return cameraManager.FadeInAndSetPosition(enemyGridCenter, 7.5f, Vector3.left * 20f, 1.0f);
         }
         else
@@ -377,42 +334,32 @@ public class CombatManager : MonoBehaviour
             yield return cameraManager.FadeInAndSetPosition(Vector3.zero, 10f, Vector3.zero, 0f);
         }
 
-        // --- KỊCH BẢN NÂNG CẤP ---
-
-        // Thêm một khoảng lặng ngắn để camera "đứng" tại vị trí địch
         yield return new WaitForSeconds(0.75f);
 
-        // 2. Bắt đầu di chuyển camera lùi ra (dolly out) và cho địch lao ra CÙNG LÚC.
         float dollyOutDuration = 2.0f;
         StartCoroutine(cameraManager.ZoomOutToFinalView(dollyOutDuration));
 
         var enemyViews = unitViews.Where(v => v.LinkedUnit != null && !v.LinkedUnit.IsPlayer).ToList();
         if (enemyViews.Count > 0)
         {
-            // 3. "Tướng địch" (chọn tên ở giữa) lao ra trước tiên.
             var leader = enemyViews[enemyViews.Count / 2];
-            enemyViews.Remove(leader); // Xóa khỏi danh sách để không xử lý lại
+            enemyViews.Remove(leader);
             StartCoroutine(MoveUnitToPosition(leader, leader.GetOriginalPosition(), 0.5f));
 
-            // 4. Sau một khoảng trễ ngắn, những tên còn lại lao ra.
             yield return new WaitForSeconds(0.2f);
 
             foreach (var follower in enemyViews)
             {
-                // Cho chúng lao ra với tốc độ và thời gian trễ ngẫu nhiên nhẹ để tạo sự hỗn loạn có tổ chức
                 float randomSpeed = Random.Range(0.4f, 0.6f);
                 StartCoroutine(MoveUnitToPosition(follower, follower.GetOriginalPosition(), randomSpeed));
                 yield return new WaitForSeconds(Random.Range(0.05f, 0.15f));
             }
         }
 
-        // 5. Đợi cho camera hoàn thành việc lùi ra.
         yield return new WaitForSeconds(dollyOutDuration);
 
-        // 6. Show UI again
-        yield return FadeUI(1f, 0.5f); // Fade to opaque
+        yield return FadeUI(1f, 0.5f);
 
-        // 7. Trận đấu bắt đầu
         Debug.Log("[Intro] Intro sequence finished. Starting combat.");
         cameraManager.EndIntroSequence();
         stateMachine.TransitionTo(CombatPhase.EnemyPlan);
@@ -438,7 +385,6 @@ public class CombatManager : MonoBehaviour
 
     private IEnumerator MoveUnitToPosition(UnitView unitView, Vector3 targetPosition, float duration)
     {
-        // Kích hoạt animation chạy (nếu có)
         unitView.SetAnimationTrigger("Rush");
 
         Vector3 startPosition = unitView.transform.position;
@@ -448,14 +394,12 @@ public class CombatManager : MonoBehaviour
         {
             elapsed += Time.deltaTime;
             float t = elapsed / duration;
-            // Sử dụng EaseOutQuad để di chuyển mượt hơn
             unitView.transform.position = Vector3.Lerp(startPosition, targetPosition, t * t);
             yield return null;
         }
 
         unitView.transform.position = targetPosition;
         
-        // Đảm bảo unit chuyển về trạng thái Idle sau khi di chuyển xong
         unitView.SetAnimationTrigger("Idle");
     }
 
@@ -484,10 +428,9 @@ public class CombatManager : MonoBehaviour
     private void SetupRound()
     {
         CurrentRound++;
-        isFirstPlayerTurnOfRound = true; // Reset lại cờ mỗi đầu round
+        isFirstPlayerTurnOfRound = true;
         Debug.Log($"\n=== ROUND {CurrentRound} ===");
 
-        // Tạo danh sách lượt đánh dựa trên Speed, ngẫu nhiên hóa các unit có cùng speed
         var allUnits = PlayerUnits.Where(u => u.IsAlive).Concat(EnemyUnits.Where(u => u.IsAlive));
         ActionOrder = allUnits.OrderByDescending(u => u.Speed).ThenBy(u => Random.value).ToList();
 
@@ -499,14 +442,12 @@ public class CombatManager : MonoBehaviour
 
         OnRoundSetup?.Invoke(ActionOrder);
 
-        // Gọi thủ công UI để đảm bảo nó được vẽ sau khi ActionOrder đã hoàn chỉnh
         var turnOrderUI = FindFirstObjectByType<TurnOrderUIController>();
         if (turnOrderUI != null)
         {
             turnOrderUI.RebuildTurnOrderUI(ActionOrder);
         }
 
-        // AI planning will be done in ExecuteRound, turn-by-turn
         OnEnemyPlanDone?.Invoke();
         stateMachine.TransitionTo(CombatPhase.Execute);
     }
@@ -516,8 +457,6 @@ public class CombatManager : MonoBehaviour
 
     private void StartPlayerPlan()
     {
-        // This phase is now deprecated and replaced by turn-by-turn input.
-        // The logic has been moved to ExecuteRound.
         Debug.LogWarning("[CombatManager] StartPlayerPlan is deprecated.");
     }
 
@@ -532,7 +471,6 @@ public class CombatManager : MonoBehaviour
         if (skill.apCost > CurrentPlayerAP)
         {
             Debug.LogWarning($"[AP] Không đủ AP để dùng {skill.skillName}. Cần {skill.apCost}, có {CurrentPlayerAP}.");
-            // Có thể thêm một event ở đây để báo cho UI biết là hành động không thành công
             return;
         }
 
@@ -543,17 +481,14 @@ public class CombatManager : MonoBehaviour
             return;
         }
 
-        // Trừ AP và kích hoạt sự kiện
         CurrentPlayerAP -= skill.apCost;
         OnAPChanged?.Invoke(CurrentPlayerAP);
         currentUnit.SpendAP(skill.apCost);
         Debug.Log($"[AP] Đã dùng {skill.apCost} AP. Còn lại {CurrentPlayerAP}.");
 
-        // Gán hành động cho unit
         currentUnit.SelectSkill(skill, targets);
         Debug.Log($"[Player Input] {currentUnit.UnitName} đã chọn dùng {skill.skillName} lên {string.Join(", ", targets.Select(t => t.UnitName))}.");
 
-        // Báo cho coroutine ExecuteRound biết là có thể tiếp tục
         isWaitingForPlayerInput = false;
     }
 
@@ -564,9 +499,8 @@ public class CombatManager : MonoBehaviour
         {
             int burnDamage = Mathf.RoundToInt(burnStatus.Value);
             Debug.Log($"<color=red>[ThieuDot] {unit.UnitName} nhận {burnDamage} sát thương thiêu đốt.</color>");
-            unit.TakeDamage(null, burnDamage); // Sát thương không có caster
+            unit.TakeDamage(null, burnDamage);
             
-            // Có thể thêm animation/VFX ở đây
             var view = unitViews.FirstOrDefault(v => v.LinkedUnit == unit);
             if (view != null)
             {
@@ -579,38 +513,7 @@ public class CombatManager : MonoBehaviour
 
     private IEnumerator DoRetargetCheck()
     {
-        // VÔ HIỆU HÓA TẠM THỜI THEO YÊU CẦU
-        // Logic này tự động buộc người chơi phải target kẻ địch đang tấn công mình.
-        // Bằng cách vô hiệu hóa nó, lựa chọn thủ công của người chơi sẽ được tôn trọng 100%.
-        /*
-        bool retargetHappened = false;
-
-        // Logic mới: Người chơi bị buộc phải đối đầu
-        foreach (var player in PlayerUnits.Where(p => p.IsAlive))
-        {
-            var attacker = EnemyUnits.FirstOrDefault(e => e.IsAlive && e.SelectedTargets.Contains(player));
-
-            if (attacker != null)
-            {
-                // Nếu người chơi đã chọn skill và mục tiêu không phải là kẻ đang tấn công mình
-                if (player.SelectedSkill != null && !player.SelectedTargets.Contains(attacker))
-                {
-                    string prevTargetName = player.SelectedTargets.Any() ? player.SelectedTargets[0].UnitName : "none";
-                    Debug.Log($"[Retarget] {player.UnitName} was targeting {prevTargetName}, but is being attacked by {attacker.UnitName}. Forcing retarget.");
-                    player.SelectSkill(player.SelectedSkill, new List<CombatUnit> { attacker });
-                    retargetHappened = true;
-                }
-            }
-        }
-
-        if (retargetHappened)
-        {
-            Debug.Log("[Retarget] Targets were changed. Redrawing arrows and waiting.");
-            arrowController.DrawAllArrows();
-            yield return new WaitForSeconds(1.0f); 
-        }
-        */
-        yield return null; // Đảm bảo coroutine luôn yield
+        yield return null;
         stateMachine.TransitionTo(CombatPhase.Execute);
     }
 
@@ -620,36 +523,63 @@ public class CombatManager : MonoBehaviour
         var result = actionResolver.Resolve(action.Caster, action.Skill, action.Targets);
         OnActionResolved?.Invoke(result);
 
-        // DATA-DRIVEN: Apply tất cả skill effects
-        bool hasAppliedEffects = false;
+        // DATA-DRIVEN: Apply non-damage effects NGAY (heal, buff, status)
+        // Damage effects được apply qua animation per-hit
+        bool hasDamageEffects = false;
         if (action.Skill.effects != null && action.Skill.effects.Length > 0)
         {
             foreach (var effect in action.Skill.effects)
             {
-                if (effect != null)
+                if (effect == null) continue;
+                
+                // Detect damage effects: kế thừa DamageEffect HOẶC tên effect có chứa "Damage" 
+                bool isDamageEffect = (effect is DamageEffect) || effect.GetType().Name.ToLower().Contains("damage");
+                if (isDamageEffect)
                 {
-                    Debug.Log($"[Resolve] Applying effect: {effect.GetType().Name}");
+                    // Damage effect: sẽ được xử lý trong animation per-hit
+                    hasDamageEffects = true;
+                    Debug.Log($"[Resolve] DamageEffect '{effect.GetType().Name}' deferred to animation.");
+                }
+                else
+                {
+                    // Non-damage effect: apply ngay (heal, buff, status)
+                    Debug.Log($"[Resolve] Applying non-damage effect: {effect.GetType().Name}");
                     effect.Apply(action.Caster, action.Targets.ToArray());
-                    hasAppliedEffects = true;
                 }
             }
         }
 
-        // Fallback: nếu skill không có effects hoặc effects rỗng, dùng ActionResolver outcomes làm damage thật
-        if (!hasAppliedEffects)
+        // Fallback: nếu skill không có damage effects, dùng ActionResolver outcomes
+        // NHƯNG vẫn defer vào animation per-hit (không apply ngay)
+        if (!hasDamageEffects)
         {
             if (result.Outcomes.Count > 0)
             {
-                Debug.LogWarning($"Skill '{action.Skill.skillName}' data-driven fallback: dùng ActionResolver outcomes.");
-                result.ApplyOutcomes();
+                // Gán outcomes vào pending để animation per-hit apply
+                int hitCount = action.Skill != null ? Mathf.Max(1, action.Skill.hitCount) : 1;
+                var actorView = GetUnitView(action.Caster);
+                if (actorView != null)
+                {
+                    actorView.SetPendingOutcomes(result.Outcomes, action.Caster, hitCount);
+                    Debug.Log($"[Resolve] Fallback outcomes deferred to animation: {result.Outcomes.Count} outcomes, {hitCount} hits.");
+                }
             }
             else
             {
                 Debug.LogWarning($"Skill '{action.Skill.skillName}' không có effects và không có fallback outcomes!");
             }
         }
+        else
+        {
+            // Có damage effects: gán pending hits vào actorView để animation per-hit apply
+            var actorView = GetUnitView(action.Caster);
+            if (actorView != null)
+            {
+                actorView.SetPendingOutcomes(result.Outcomes, action.Caster, action.Skill != null ? Mathf.Max(1, action.Skill.hitCount) : 1);
+                Debug.Log($"[Resolve] Set pending outcomes cho {action.Caster.UnitName}: {result.Outcomes.Count} outcomes, {Mathf.Max(1, action.Skill != null ? action.Skill.hitCount : 1)} hits.");
+            }
+        }
 
-        // Animation CHỈ để visual - không apply damage (tránh double damage)
         if (clashSequence != null)
         {
             yield return StartCoroutine(clashSequence.PlayAction(result));
@@ -661,7 +591,6 @@ public class CombatManager : MonoBehaviour
         }
 
         // Kích hoạt sự kiện sau khi hành động đã được giải quyết hoàn toàn
-        // để các nội tại (như của Aleus) có thể phản ứng.
         Debug.Log($"[EVENT] Chuẩn bị kích hoạt OnActionConfirmed cho {action.Caster.UnitName} với kỹ năng {action.Skill.skillName}.");
         action.Caster.RaiseActionConfirmed(action.Skill, action.Targets);
 
@@ -678,10 +607,6 @@ public class CombatManager : MonoBehaviour
         OnExecuteStarted?.Invoke();
         Debug.Log("\n--- EXECUTE ---");
 
-        // Tạm thời vô hiệu hóa Fade UI để TurnOrder luôn hiển thị
-        // yield return FadeUI(0f, 0.2f); 
-
-        // Vòng lặp chính thực thi theo lượt
         for (turnIndex = 0; turnIndex < ActionOrder.Count; turnIndex++)
         {
             var currentUnit = ActionOrder[turnIndex];
@@ -691,32 +616,27 @@ public class CombatManager : MonoBehaviour
                 continue;
             }
 
-            // Xử lý hiệu ứng đầu lượt (ví dụ: Burn)
             yield return StartCoroutine(HandleStartOfTurnEffects(currentUnit));
             if (!currentUnit.IsAlive)
             {
                 Debug.Log($"[Execute] {currentUnit.UnitName} đã chết do hiệu ứng đầu lượt.");
-                // 3. Kiểm tra điều kiện kết thúc trận đấu sau mỗi hành động
                 if (CheckForCombatEnd())
                 {
-                    yield break; // Kết thúc coroutine ExecuteRound
+                    yield break;
                 }
-                continue; // Bỏ qua phần còn lại của lượt
+                continue;
             }
 
             Debug.Log($"--- Lượt của: {currentUnit.UnitName} ---");
             OnUnitTurnStart?.Invoke(currentUnit);
             currentUnit.TriggerTurnStart();
 
-            // 1. Lên kế hoạch hành động (AI hoặc Player)
             if (!currentUnit.IsPlayer)
             {
-                // AI tự lên kế hoạch
                 enemyAI.PlanTurn(currentUnit, PlayerUnits);
             }
             else
             {
-                // Hồi AP nếu đây không phải là lượt đầu tiên của người chơi trong round
                 if (!isFirstPlayerTurnOfRound)
                 {
                     if (CurrentPlayerAP < MAX_PLAYER_AP)
@@ -726,22 +646,17 @@ public class CombatManager : MonoBehaviour
                         Debug.Log($"[AP] Hồi 1 AP. Hiện có: {CurrentPlayerAP}");
                     }
                 }
-                isFirstPlayerTurnOfRound = false; // Đánh dấu đã qua lượt người chơi đầu tiên
+                isFirstPlayerTurnOfRound = false;
 
-                // Đến lượt người chơi -> Đợi input
                 Debug.Log($"[Execute] {currentUnit.UnitName} is a player. Waiting for input...");
                 isWaitingForPlayerInput = true;
                 OnPlayerTurnStart?.Invoke(currentUnit);
 
-                // Tạm dừng coroutine cho đến khi người chơi chọn hành động và isWaitingForPlayerInput được set về false
                 yield return new WaitUntil(() => !isWaitingForPlayerInput);
             }
 
-            // 2. Thực thi hành động
             if (currentUnit.SelectedSkill != null && currentUnit.SelectedTargets.Any())
             {
-                // The instruction implies a PlannedAction and ResolveAction method exist.
-                // This change restores that logic.
                 var action = new PlannedAction(currentUnit, currentUnit.SelectedSkill, currentUnit.SelectedTargets);
                 yield return StartCoroutine(ResolveAction(action));
             }
@@ -750,10 +665,8 @@ public class CombatManager : MonoBehaviour
                 Debug.LogWarning($"[Execute] {currentUnit.UnitName} không có hành động nào được chọn.");
             }
 
-            // Tick status effects at the end of the turn
             currentUnit.TickStatuses();
 
-            // Nội tại của NoName: Hồi 5% HP tối đa vào cuối lượt
             if (currentUnit.UnitName == "NoName")
             {
                 int healAmount = Mathf.RoundToInt(currentUnit.MaxHP * 0.05f);
@@ -761,22 +674,17 @@ public class CombatManager : MonoBehaviour
                 Debug.Log($"[Passive] NoName recovered {healAmount} HP.");
             }
 
-            // 3. Kiểm tra điều kiện kết thúc trận đấu sau mỗi hành động
             if (CheckForCombatEnd())
             {
-                yield break; // Thoát khỏi coroutine
+                yield break;
             }
         }
 
-        // 4. Khi tất cả đã hành động, xóa lựa chọn của tất cả các unit và chuyển sang kết thúc vòng
         foreach (var unit in PlayerUnits.Concat(EnemyUnits))
         {
             unit.ClearSelection();
         }
         Debug.Log("--- Tất cả các lượt đã thực hiện ---");
-
-        // Tạm thời vô hiệu hóa Fade UI
-        // yield return FadeUI(1f, 0.2f);
 
         stateMachine.TransitionTo(CombatPhase.RoundEnd);
     }
@@ -806,31 +714,18 @@ public class CombatManager : MonoBehaviour
     {
         OnRoundEnded?.Invoke();
         Debug.Log("--- ROUND END ---\n");
-        // The state transition is now handled by the EnemyPlan phase start.
         stateMachine.TransitionTo(CombatPhase.EnemyPlan);
-    }
-
-    private void CleanupPassives()
-    {
-        var allUnits = PlayerUnits.Concat(EnemyUnits);
-        foreach (var unit in allUnits)
-        {
-            unit.Passive?.Cleanup();
-        }
-        Debug.Log("[Passive] All passives cleaned up.");
     }
 
     private void DoVictory()
     {
         Debug.Log("=== VICTORY ===");
-        CleanupPassives(); // Dọn dẹp nội tại
         OnVictory?.Invoke();
     }
 
     private void DoDefeat()
     {
         Debug.Log("=== DEFEAT ===");
-        CleanupPassives(); // Dọn dẹp nội tại
         OnDefeat?.Invoke();
     }
 

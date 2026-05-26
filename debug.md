@@ -1,6 +1,6 @@
 [CombatManager] Tự động thêm CanvasGroup vào planningCanvas.
 UnityEngine.Debug:Log (object)
-CombatManager:Awake () (at Assets/Scripts/Combat/CombatManager.cs:134)
+CombatManager:Awake () (at Assets/Scripts/Combat/CombatManager.cs:133)
 
 [CombatSceneStarter] PendingFormation: NULL
 UnityEngine.Debug:Log (object)
@@ -10,304 +10,108 @@ Không có đội hình. Hãy bắt đầu từ Map Scene.
 UnityEngine.Debug:LogError (object)
 CombatSceneStarter:Start () (at Assets/Scripts/Combat/Formation/CombatSceneStarter.cs:14)
 
-[Passive] Attempting to initialize passive for Aleus. Script name: 'AleusPassive'.
+[Spawn] Vergil slot0 at (9.18, 6.50, 1.11). Final grid pos: (9.18, 6.50, 1.11)
 UnityEngine.Debug:Log (object)
-CombatManager:InitializePassives (CombatUnit) (at Assets/Scripts/Combat/CombatManager.cs:269)
-CombatManager:SpawnSide (System.Collections.Generic.List`1<CombatUnit>,UnityEngine.Transform[]) (at Assets/Scripts/Combat/CombatManager.cs:254)
-CombatManager:SpawnUnitViews () (at Assets/Scripts/Combat/CombatManager.cs:222)
-CombatManager:StartCombat (FormationData,EnemyGroupData) (at Assets/Scripts/Combat/CombatManager.cs:187)
-CombatManager:StartCombat (System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>,System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>) (at Assets/Scripts/Combat/CombatManager.cs:214)
+CombatManager:SpawnSide (System.Collections.Generic.List`1<CombatUnit>,UnityEngine.Transform[]) (at Assets/Scripts/Combat/CombatManager.cs:256)
+CombatManager:SpawnUnitViews () (at Assets/Scripts/Combat/CombatManager.cs:221)
+CombatManager:StartCombat (FormationData,EnemyGroupData) (at Assets/Scripts/Combat/CombatManager.cs:186)
+CombatManager:StartCombat (System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>,System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>) (at Assets/Scripts/Combat/CombatManager.cs:213)
 CombatTestStarter:StartTestCombat () (at Assets/Scripts/Combat/CombatTestStarter.cs:68)
 CombatTestStarter:Start () (at Assets/Scripts/Combat/CombatTestStarter.cs:36)
 
-[Passive] Found type 'AleusPassive' in assembly 'Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null'.
+[Spawn] Eugeo slot1 at (9.18, 6.50, -6.89). Final grid pos: (9.18, 6.50, -6.89)
 UnityEngine.Debug:Log (object)
-CombatManager:InitializePassives (CombatUnit) (at Assets/Scripts/Combat/CombatManager.cs:281)
-CombatManager:SpawnSide (System.Collections.Generic.List`1<CombatUnit>,UnityEngine.Transform[]) (at Assets/Scripts/Combat/CombatManager.cs:254)
-CombatManager:SpawnUnitViews () (at Assets/Scripts/Combat/CombatManager.cs:222)
-CombatManager:StartCombat (FormationData,EnemyGroupData) (at Assets/Scripts/Combat/CombatManager.cs:187)
-CombatManager:StartCombat (System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>,System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>) (at Assets/Scripts/Combat/CombatManager.cs:214)
+CombatManager:SpawnSide (System.Collections.Generic.List`1<CombatUnit>,UnityEngine.Transform[]) (at Assets/Scripts/Combat/CombatManager.cs:256)
+CombatManager:SpawnUnitViews () (at Assets/Scripts/Combat/CombatManager.cs:221)
+CombatManager:StartCombat (FormationData,EnemyGroupData) (at Assets/Scripts/Combat/CombatManager.cs:186)
+CombatManager:StartCombat (System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>,System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>) (at Assets/Scripts/Combat/CombatManager.cs:213)
 CombatTestStarter:StartTestCombat () (at Assets/Scripts/Combat/CombatTestStarter.cs:68)
 CombatTestStarter:Start () (at Assets/Scripts/Combat/CombatTestStarter.cs:36)
 
-[Aleus's Passive] Đã đăng ký vào sự kiện OnActionConfirmed.
+[Spawn] Rin slot2 at (9.18, 6.50, -14.89). Final grid pos: (9.18, 6.50, -14.89)
 UnityEngine.Debug:Log (object)
-AleusPassive:Initialize (CombatUnit) (at Assets/Scripts/Data/Passives/AleusPassive.cs:16)
-CombatUnit:SetPassive (PassiveAbility) (at Assets/Scripts/Combat/CombatUnit.cs:303)
-CombatManager:InitializePassives (CombatUnit) (at Assets/Scripts/Combat/CombatManager.cs:292)
-CombatManager:SpawnSide (System.Collections.Generic.List`1<CombatUnit>,UnityEngine.Transform[]) (at Assets/Scripts/Combat/CombatManager.cs:254)
-CombatManager:SpawnUnitViews () (at Assets/Scripts/Combat/CombatManager.cs:222)
-CombatManager:StartCombat (FormationData,EnemyGroupData) (at Assets/Scripts/Combat/CombatManager.cs:187)
-CombatManager:StartCombat (System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>,System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>) (at Assets/Scripts/Combat/CombatManager.cs:214)
+CombatManager:SpawnSide (System.Collections.Generic.List`1<CombatUnit>,UnityEngine.Transform[]) (at Assets/Scripts/Combat/CombatManager.cs:256)
+CombatManager:SpawnUnitViews () (at Assets/Scripts/Combat/CombatManager.cs:221)
+CombatManager:StartCombat (FormationData,EnemyGroupData) (at Assets/Scripts/Combat/CombatManager.cs:186)
+CombatManager:StartCombat (System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>,System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>) (at Assets/Scripts/Combat/CombatManager.cs:213)
 CombatTestStarter:StartTestCombat () (at Assets/Scripts/Combat/CombatTestStarter.cs:68)
 CombatTestStarter:Start () (at Assets/Scripts/Combat/CombatTestStarter.cs:36)
 
-[Aleus's Passive] Đã đăng ký vào sự kiện OnActionConfirmed.
+[Spawn] Sakura slot6 at (-6.82, 6.50, 1.11). Final grid pos: (-6.82, 6.50, 1.11)
 UnityEngine.Debug:Log (object)
-AleusPassive:Initialize (CombatUnit) (at Assets/Scripts/Data/Passives/AleusPassive.cs:16)
-CombatManager:InitializePassives (CombatUnit) (at Assets/Scripts/Combat/CombatManager.cs:293)
-CombatManager:SpawnSide (System.Collections.Generic.List`1<CombatUnit>,UnityEngine.Transform[]) (at Assets/Scripts/Combat/CombatManager.cs:254)
-CombatManager:SpawnUnitViews () (at Assets/Scripts/Combat/CombatManager.cs:222)
-CombatManager:StartCombat (FormationData,EnemyGroupData) (at Assets/Scripts/Combat/CombatManager.cs:187)
-CombatManager:StartCombat (System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>,System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>) (at Assets/Scripts/Combat/CombatManager.cs:214)
+CombatManager:SpawnSide (System.Collections.Generic.List`1<CombatUnit>,UnityEngine.Transform[]) (at Assets/Scripts/Combat/CombatManager.cs:256)
+CombatManager:SpawnUnitViews () (at Assets/Scripts/Combat/CombatManager.cs:221)
+CombatManager:StartCombat (FormationData,EnemyGroupData) (at Assets/Scripts/Combat/CombatManager.cs:186)
+CombatManager:StartCombat (System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>,System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>) (at Assets/Scripts/Combat/CombatManager.cs:213)
 CombatTestStarter:StartTestCombat () (at Assets/Scripts/Combat/CombatTestStarter.cs:68)
 CombatTestStarter:Start () (at Assets/Scripts/Combat/CombatTestStarter.cs:36)
 
-[Passive] SUCCESS: Initialized and Subscribed passive 'AleusPassive' for Aleus.
+[Spawn] Vergil slot8 at (-6.82, 6.50, -14.89). Final grid pos: (-6.82, 6.50, -14.89)
 UnityEngine.Debug:Log (object)
-CombatManager:InitializePassives (CombatUnit) (at Assets/Scripts/Combat/CombatManager.cs:294)
-CombatManager:SpawnSide (System.Collections.Generic.List`1<CombatUnit>,UnityEngine.Transform[]) (at Assets/Scripts/Combat/CombatManager.cs:254)
-CombatManager:SpawnUnitViews () (at Assets/Scripts/Combat/CombatManager.cs:222)
-CombatManager:StartCombat (FormationData,EnemyGroupData) (at Assets/Scripts/Combat/CombatManager.cs:187)
-CombatManager:StartCombat (System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>,System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>) (at Assets/Scripts/Combat/CombatManager.cs:214)
-CombatTestStarter:StartTestCombat () (at Assets/Scripts/Combat/CombatTestStarter.cs:68)
-CombatTestStarter:Start () (at Assets/Scripts/Combat/CombatTestStarter.cs:36)
-
-[Spawn] Aleus slot0 at (9.18, 6.50, 1.11). Final grid pos: (9.18, 6.50, 1.11)
-UnityEngine.Debug:Log (object)
-CombatManager:SpawnSide (System.Collections.Generic.List`1<CombatUnit>,UnityEngine.Transform[]) (at Assets/Scripts/Combat/CombatManager.cs:260)
-CombatManager:SpawnUnitViews () (at Assets/Scripts/Combat/CombatManager.cs:222)
-CombatManager:StartCombat (FormationData,EnemyGroupData) (at Assets/Scripts/Combat/CombatManager.cs:187)
-CombatManager:StartCombat (System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>,System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>) (at Assets/Scripts/Combat/CombatManager.cs:214)
-CombatTestStarter:StartTestCombat () (at Assets/Scripts/Combat/CombatTestStarter.cs:68)
-CombatTestStarter:Start () (at Assets/Scripts/Combat/CombatTestStarter.cs:36)
-
-[Passive] Attempting to initialize passive for Lucio. Script name: 'LucioPassive'.
-UnityEngine.Debug:Log (object)
-CombatManager:InitializePassives (CombatUnit) (at Assets/Scripts/Combat/CombatManager.cs:269)
-CombatManager:SpawnSide (System.Collections.Generic.List`1<CombatUnit>,UnityEngine.Transform[]) (at Assets/Scripts/Combat/CombatManager.cs:254)
-CombatManager:SpawnUnitViews () (at Assets/Scripts/Combat/CombatManager.cs:222)
-CombatManager:StartCombat (FormationData,EnemyGroupData) (at Assets/Scripts/Combat/CombatManager.cs:187)
-CombatManager:StartCombat (System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>,System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>) (at Assets/Scripts/Combat/CombatManager.cs:214)
-CombatTestStarter:StartTestCombat () (at Assets/Scripts/Combat/CombatTestStarter.cs:68)
-CombatTestStarter:Start () (at Assets/Scripts/Combat/CombatTestStarter.cs:36)
-
-[Passive] Found type 'LucioPassive' in assembly 'Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null'.
-UnityEngine.Debug:Log (object)
-CombatManager:InitializePassives (CombatUnit) (at Assets/Scripts/Combat/CombatManager.cs:281)
-CombatManager:SpawnSide (System.Collections.Generic.List`1<CombatUnit>,UnityEngine.Transform[]) (at Assets/Scripts/Combat/CombatManager.cs:254)
-CombatManager:SpawnUnitViews () (at Assets/Scripts/Combat/CombatManager.cs:222)
-CombatManager:StartCombat (FormationData,EnemyGroupData) (at Assets/Scripts/Combat/CombatManager.cs:187)
-CombatManager:StartCombat (System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>,System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>) (at Assets/Scripts/Combat/CombatManager.cs:214)
-CombatTestStarter:StartTestCombat () (at Assets/Scripts/Combat/CombatTestStarter.cs:68)
-CombatTestStarter:Start () (at Assets/Scripts/Combat/CombatTestStarter.cs:36)
-
-[Passive] SUCCESS: Initialized and Subscribed passive 'LucioPassive' for Lucio.
-UnityEngine.Debug:Log (object)
-CombatManager:InitializePassives (CombatUnit) (at Assets/Scripts/Combat/CombatManager.cs:294)
-CombatManager:SpawnSide (System.Collections.Generic.List`1<CombatUnit>,UnityEngine.Transform[]) (at Assets/Scripts/Combat/CombatManager.cs:254)
-CombatManager:SpawnUnitViews () (at Assets/Scripts/Combat/CombatManager.cs:222)
-CombatManager:StartCombat (FormationData,EnemyGroupData) (at Assets/Scripts/Combat/CombatManager.cs:187)
-CombatManager:StartCombat (System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>,System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>) (at Assets/Scripts/Combat/CombatManager.cs:214)
-CombatTestStarter:StartTestCombat () (at Assets/Scripts/Combat/CombatTestStarter.cs:68)
-CombatTestStarter:Start () (at Assets/Scripts/Combat/CombatTestStarter.cs:36)
-
-[Spawn] Lucio slot1 at (9.18, 6.50, -6.89). Final grid pos: (9.18, 6.50, -6.89)
-UnityEngine.Debug:Log (object)
-CombatManager:SpawnSide (System.Collections.Generic.List`1<CombatUnit>,UnityEngine.Transform[]) (at Assets/Scripts/Combat/CombatManager.cs:260)
-CombatManager:SpawnUnitViews () (at Assets/Scripts/Combat/CombatManager.cs:222)
-CombatManager:StartCombat (FormationData,EnemyGroupData) (at Assets/Scripts/Combat/CombatManager.cs:187)
-CombatManager:StartCombat (System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>,System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>) (at Assets/Scripts/Combat/CombatManager.cs:214)
-CombatTestStarter:StartTestCombat () (at Assets/Scripts/Combat/CombatTestStarter.cs:68)
-CombatTestStarter:Start () (at Assets/Scripts/Combat/CombatTestStarter.cs:36)
-
-[Passive] Attempting to initialize passive for Celine. Script name: 'CelinePassive'.
-UnityEngine.Debug:Log (object)
-CombatManager:InitializePassives (CombatUnit) (at Assets/Scripts/Combat/CombatManager.cs:269)
-CombatManager:SpawnSide (System.Collections.Generic.List`1<CombatUnit>,UnityEngine.Transform[]) (at Assets/Scripts/Combat/CombatManager.cs:254)
-CombatManager:SpawnUnitViews () (at Assets/Scripts/Combat/CombatManager.cs:222)
-CombatManager:StartCombat (FormationData,EnemyGroupData) (at Assets/Scripts/Combat/CombatManager.cs:187)
-CombatManager:StartCombat (System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>,System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>) (at Assets/Scripts/Combat/CombatManager.cs:214)
-CombatTestStarter:StartTestCombat () (at Assets/Scripts/Combat/CombatTestStarter.cs:68)
-CombatTestStarter:Start () (at Assets/Scripts/Combat/CombatTestStarter.cs:36)
-
-[Passive] Found type 'CelinePassive' in assembly 'Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null'.
-UnityEngine.Debug:Log (object)
-CombatManager:InitializePassives (CombatUnit) (at Assets/Scripts/Combat/CombatManager.cs:281)
-CombatManager:SpawnSide (System.Collections.Generic.List`1<CombatUnit>,UnityEngine.Transform[]) (at Assets/Scripts/Combat/CombatManager.cs:254)
-CombatManager:SpawnUnitViews () (at Assets/Scripts/Combat/CombatManager.cs:222)
-CombatManager:StartCombat (FormationData,EnemyGroupData) (at Assets/Scripts/Combat/CombatManager.cs:187)
-CombatManager:StartCombat (System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>,System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>) (at Assets/Scripts/Combat/CombatManager.cs:214)
-CombatTestStarter:StartTestCombat () (at Assets/Scripts/Combat/CombatTestStarter.cs:68)
-CombatTestStarter:Start () (at Assets/Scripts/Combat/CombatTestStarter.cs:36)
-
-[Passive] SUCCESS: Initialized and Subscribed passive 'CelinePassive' for Celine.
-UnityEngine.Debug:Log (object)
-CombatManager:InitializePassives (CombatUnit) (at Assets/Scripts/Combat/CombatManager.cs:294)
-CombatManager:SpawnSide (System.Collections.Generic.List`1<CombatUnit>,UnityEngine.Transform[]) (at Assets/Scripts/Combat/CombatManager.cs:254)
-CombatManager:SpawnUnitViews () (at Assets/Scripts/Combat/CombatManager.cs:222)
-CombatManager:StartCombat (FormationData,EnemyGroupData) (at Assets/Scripts/Combat/CombatManager.cs:187)
-CombatManager:StartCombat (System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>,System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>) (at Assets/Scripts/Combat/CombatManager.cs:214)
-CombatTestStarter:StartTestCombat () (at Assets/Scripts/Combat/CombatTestStarter.cs:68)
-CombatTestStarter:Start () (at Assets/Scripts/Combat/CombatTestStarter.cs:36)
-
-[Spawn] Celine slot2 at (9.18, 6.50, -14.89). Final grid pos: (9.18, 6.50, -14.89)
-UnityEngine.Debug:Log (object)
-CombatManager:SpawnSide (System.Collections.Generic.List`1<CombatUnit>,UnityEngine.Transform[]) (at Assets/Scripts/Combat/CombatManager.cs:260)
-CombatManager:SpawnUnitViews () (at Assets/Scripts/Combat/CombatManager.cs:222)
-CombatManager:StartCombat (FormationData,EnemyGroupData) (at Assets/Scripts/Combat/CombatManager.cs:187)
-CombatManager:StartCombat (System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>,System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>) (at Assets/Scripts/Combat/CombatManager.cs:214)
-CombatTestStarter:StartTestCombat () (at Assets/Scripts/Combat/CombatTestStarter.cs:68)
-CombatTestStarter:Start () (at Assets/Scripts/Combat/CombatTestStarter.cs:36)
-
-[Passive] Attempting to initialize passive for Aleus. Script name: 'AleusPassive'.
-UnityEngine.Debug:Log (object)
-CombatManager:InitializePassives (CombatUnit) (at Assets/Scripts/Combat/CombatManager.cs:269)
-CombatManager:SpawnSide (System.Collections.Generic.List`1<CombatUnit>,UnityEngine.Transform[]) (at Assets/Scripts/Combat/CombatManager.cs:254)
-CombatManager:SpawnUnitViews () (at Assets/Scripts/Combat/CombatManager.cs:222)
-CombatManager:StartCombat (FormationData,EnemyGroupData) (at Assets/Scripts/Combat/CombatManager.cs:187)
-CombatManager:StartCombat (System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>,System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>) (at Assets/Scripts/Combat/CombatManager.cs:214)
-CombatTestStarter:StartTestCombat () (at Assets/Scripts/Combat/CombatTestStarter.cs:68)
-CombatTestStarter:Start () (at Assets/Scripts/Combat/CombatTestStarter.cs:36)
-
-[Passive] Found type 'AleusPassive' in assembly 'Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null'.
-UnityEngine.Debug:Log (object)
-CombatManager:InitializePassives (CombatUnit) (at Assets/Scripts/Combat/CombatManager.cs:281)
-CombatManager:SpawnSide (System.Collections.Generic.List`1<CombatUnit>,UnityEngine.Transform[]) (at Assets/Scripts/Combat/CombatManager.cs:254)
-CombatManager:SpawnUnitViews () (at Assets/Scripts/Combat/CombatManager.cs:222)
-CombatManager:StartCombat (FormationData,EnemyGroupData) (at Assets/Scripts/Combat/CombatManager.cs:187)
-CombatManager:StartCombat (System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>,System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>) (at Assets/Scripts/Combat/CombatManager.cs:214)
-CombatTestStarter:StartTestCombat () (at Assets/Scripts/Combat/CombatTestStarter.cs:68)
-CombatTestStarter:Start () (at Assets/Scripts/Combat/CombatTestStarter.cs:36)
-
-[Aleus's Passive] Đã đăng ký vào sự kiện OnActionConfirmed.
-UnityEngine.Debug:Log (object)
-AleusPassive:Initialize (CombatUnit) (at Assets/Scripts/Data/Passives/AleusPassive.cs:16)
-CombatUnit:SetPassive (PassiveAbility) (at Assets/Scripts/Combat/CombatUnit.cs:303)
-CombatManager:InitializePassives (CombatUnit) (at Assets/Scripts/Combat/CombatManager.cs:292)
-CombatManager:SpawnSide (System.Collections.Generic.List`1<CombatUnit>,UnityEngine.Transform[]) (at Assets/Scripts/Combat/CombatManager.cs:254)
-CombatManager:SpawnUnitViews () (at Assets/Scripts/Combat/CombatManager.cs:222)
-CombatManager:StartCombat (FormationData,EnemyGroupData) (at Assets/Scripts/Combat/CombatManager.cs:187)
-CombatManager:StartCombat (System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>,System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>) (at Assets/Scripts/Combat/CombatManager.cs:214)
-CombatTestStarter:StartTestCombat () (at Assets/Scripts/Combat/CombatTestStarter.cs:68)
-CombatTestStarter:Start () (at Assets/Scripts/Combat/CombatTestStarter.cs:36)
-
-[Aleus's Passive] Đã đăng ký vào sự kiện OnActionConfirmed.
-UnityEngine.Debug:Log (object)
-AleusPassive:Initialize (CombatUnit) (at Assets/Scripts/Data/Passives/AleusPassive.cs:16)
-CombatManager:InitializePassives (CombatUnit) (at Assets/Scripts/Combat/CombatManager.cs:293)
-CombatManager:SpawnSide (System.Collections.Generic.List`1<CombatUnit>,UnityEngine.Transform[]) (at Assets/Scripts/Combat/CombatManager.cs:254)
-CombatManager:SpawnUnitViews () (at Assets/Scripts/Combat/CombatManager.cs:222)
-CombatManager:StartCombat (FormationData,EnemyGroupData) (at Assets/Scripts/Combat/CombatManager.cs:187)
-CombatManager:StartCombat (System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>,System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>) (at Assets/Scripts/Combat/CombatManager.cs:214)
-CombatTestStarter:StartTestCombat () (at Assets/Scripts/Combat/CombatTestStarter.cs:68)
-CombatTestStarter:Start () (at Assets/Scripts/Combat/CombatTestStarter.cs:36)
-
-[Passive] SUCCESS: Initialized and Subscribed passive 'AleusPassive' for Aleus.
-UnityEngine.Debug:Log (object)
-CombatManager:InitializePassives (CombatUnit) (at Assets/Scripts/Combat/CombatManager.cs:294)
-CombatManager:SpawnSide (System.Collections.Generic.List`1<CombatUnit>,UnityEngine.Transform[]) (at Assets/Scripts/Combat/CombatManager.cs:254)
-CombatManager:SpawnUnitViews () (at Assets/Scripts/Combat/CombatManager.cs:222)
-CombatManager:StartCombat (FormationData,EnemyGroupData) (at Assets/Scripts/Combat/CombatManager.cs:187)
-CombatManager:StartCombat (System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>,System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>) (at Assets/Scripts/Combat/CombatManager.cs:214)
-CombatTestStarter:StartTestCombat () (at Assets/Scripts/Combat/CombatTestStarter.cs:68)
-CombatTestStarter:Start () (at Assets/Scripts/Combat/CombatTestStarter.cs:36)
-
-[Spawn] Aleus slot6 at (-6.82, 6.50, 1.11). Final grid pos: (-6.82, 6.50, 1.11)
-UnityEngine.Debug:Log (object)
-CombatManager:SpawnSide (System.Collections.Generic.List`1<CombatUnit>,UnityEngine.Transform[]) (at Assets/Scripts/Combat/CombatManager.cs:260)
-CombatManager:SpawnUnitViews () (at Assets/Scripts/Combat/CombatManager.cs:222)
-CombatManager:StartCombat (FormationData,EnemyGroupData) (at Assets/Scripts/Combat/CombatManager.cs:187)
-CombatManager:StartCombat (System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>,System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>) (at Assets/Scripts/Combat/CombatManager.cs:214)
-CombatTestStarter:StartTestCombat () (at Assets/Scripts/Combat/CombatTestStarter.cs:68)
-CombatTestStarter:Start () (at Assets/Scripts/Combat/CombatTestStarter.cs:36)
-
-[Passive] Attempting to initialize passive for Celine. Script name: 'CelinePassive'.
-UnityEngine.Debug:Log (object)
-CombatManager:InitializePassives (CombatUnit) (at Assets/Scripts/Combat/CombatManager.cs:269)
-CombatManager:SpawnSide (System.Collections.Generic.List`1<CombatUnit>,UnityEngine.Transform[]) (at Assets/Scripts/Combat/CombatManager.cs:254)
-CombatManager:SpawnUnitViews () (at Assets/Scripts/Combat/CombatManager.cs:222)
-CombatManager:StartCombat (FormationData,EnemyGroupData) (at Assets/Scripts/Combat/CombatManager.cs:187)
-CombatManager:StartCombat (System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>,System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>) (at Assets/Scripts/Combat/CombatManager.cs:214)
-CombatTestStarter:StartTestCombat () (at Assets/Scripts/Combat/CombatTestStarter.cs:68)
-CombatTestStarter:Start () (at Assets/Scripts/Combat/CombatTestStarter.cs:36)
-
-[Passive] Found type 'CelinePassive' in assembly 'Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null'.
-UnityEngine.Debug:Log (object)
-CombatManager:InitializePassives (CombatUnit) (at Assets/Scripts/Combat/CombatManager.cs:281)
-CombatManager:SpawnSide (System.Collections.Generic.List`1<CombatUnit>,UnityEngine.Transform[]) (at Assets/Scripts/Combat/CombatManager.cs:254)
-CombatManager:SpawnUnitViews () (at Assets/Scripts/Combat/CombatManager.cs:222)
-CombatManager:StartCombat (FormationData,EnemyGroupData) (at Assets/Scripts/Combat/CombatManager.cs:187)
-CombatManager:StartCombat (System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>,System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>) (at Assets/Scripts/Combat/CombatManager.cs:214)
-CombatTestStarter:StartTestCombat () (at Assets/Scripts/Combat/CombatTestStarter.cs:68)
-CombatTestStarter:Start () (at Assets/Scripts/Combat/CombatTestStarter.cs:36)
-
-[Passive] SUCCESS: Initialized and Subscribed passive 'CelinePassive' for Celine.
-UnityEngine.Debug:Log (object)
-CombatManager:InitializePassives (CombatUnit) (at Assets/Scripts/Combat/CombatManager.cs:294)
-CombatManager:SpawnSide (System.Collections.Generic.List`1<CombatUnit>,UnityEngine.Transform[]) (at Assets/Scripts/Combat/CombatManager.cs:254)
-CombatManager:SpawnUnitViews () (at Assets/Scripts/Combat/CombatManager.cs:222)
-CombatManager:StartCombat (FormationData,EnemyGroupData) (at Assets/Scripts/Combat/CombatManager.cs:187)
-CombatManager:StartCombat (System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>,System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>) (at Assets/Scripts/Combat/CombatManager.cs:214)
-CombatTestStarter:StartTestCombat () (at Assets/Scripts/Combat/CombatTestStarter.cs:68)
-CombatTestStarter:Start () (at Assets/Scripts/Combat/CombatTestStarter.cs:36)
-
-[Spawn] Celine slot8 at (-6.82, 6.50, -14.89). Final grid pos: (-6.82, 6.50, -14.89)
-UnityEngine.Debug:Log (object)
-CombatManager:SpawnSide (System.Collections.Generic.List`1<CombatUnit>,UnityEngine.Transform[]) (at Assets/Scripts/Combat/CombatManager.cs:260)
-CombatManager:SpawnUnitViews () (at Assets/Scripts/Combat/CombatManager.cs:222)
-CombatManager:StartCombat (FormationData,EnemyGroupData) (at Assets/Scripts/Combat/CombatManager.cs:187)
-CombatManager:StartCombat (System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>,System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>) (at Assets/Scripts/Combat/CombatManager.cs:214)
+CombatManager:SpawnSide (System.Collections.Generic.List`1<CombatUnit>,UnityEngine.Transform[]) (at Assets/Scripts/Combat/CombatManager.cs:256)
+CombatManager:SpawnUnitViews () (at Assets/Scripts/Combat/CombatManager.cs:221)
+CombatManager:StartCombat (FormationData,EnemyGroupData) (at Assets/Scripts/Combat/CombatManager.cs:186)
+CombatManager:StartCombat (System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>,System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>) (at Assets/Scripts/Combat/CombatManager.cs:213)
 CombatTestStarter:StartTestCombat () (at Assets/Scripts/Combat/CombatTestStarter.cs:68)
 CombatTestStarter:Start () (at Assets/Scripts/Combat/CombatTestStarter.cs:36)
 
 [Spawn] Goblin Warrior slot1 at (42.06, 6.50, -6.89). Final grid pos: (21.18, 6.50, -6.89)
 UnityEngine.Debug:Log (object)
-CombatManager:SpawnSide (System.Collections.Generic.List`1<CombatUnit>,UnityEngine.Transform[]) (at Assets/Scripts/Combat/CombatManager.cs:260)
-CombatManager:SpawnUnitViews () (at Assets/Scripts/Combat/CombatManager.cs:223)
-CombatManager:StartCombat (FormationData,EnemyGroupData) (at Assets/Scripts/Combat/CombatManager.cs:187)
-CombatManager:StartCombat (System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>,System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>) (at Assets/Scripts/Combat/CombatManager.cs:214)
+CombatManager:SpawnSide (System.Collections.Generic.List`1<CombatUnit>,UnityEngine.Transform[]) (at Assets/Scripts/Combat/CombatManager.cs:256)
+CombatManager:SpawnUnitViews () (at Assets/Scripts/Combat/CombatManager.cs:222)
+CombatManager:StartCombat (FormationData,EnemyGroupData) (at Assets/Scripts/Combat/CombatManager.cs:186)
+CombatManager:StartCombat (System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>,System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>) (at Assets/Scripts/Combat/CombatManager.cs:213)
 CombatTestStarter:StartTestCombat () (at Assets/Scripts/Combat/CombatTestStarter.cs:68)
 CombatTestStarter:Start () (at Assets/Scripts/Combat/CombatTestStarter.cs:36)
 
 [Spawn] Goblin Warrior slot3 at (42.06, 6.50, -6.89). Final grid pos: (29.18, 6.50, 1.11)
 UnityEngine.Debug:Log (object)
-CombatManager:SpawnSide (System.Collections.Generic.List`1<CombatUnit>,UnityEngine.Transform[]) (at Assets/Scripts/Combat/CombatManager.cs:260)
-CombatManager:SpawnUnitViews () (at Assets/Scripts/Combat/CombatManager.cs:223)
-CombatManager:StartCombat (FormationData,EnemyGroupData) (at Assets/Scripts/Combat/CombatManager.cs:187)
-CombatManager:StartCombat (System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>,System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>) (at Assets/Scripts/Combat/CombatManager.cs:214)
+CombatManager:SpawnSide (System.Collections.Generic.List`1<CombatUnit>,UnityEngine.Transform[]) (at Assets/Scripts/Combat/CombatManager.cs:256)
+CombatManager:SpawnUnitViews () (at Assets/Scripts/Combat/CombatManager.cs:222)
+CombatManager:StartCombat (FormationData,EnemyGroupData) (at Assets/Scripts/Combat/CombatManager.cs:186)
+CombatManager:StartCombat (System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>,System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>) (at Assets/Scripts/Combat/CombatManager.cs:213)
 CombatTestStarter:StartTestCombat () (at Assets/Scripts/Combat/CombatTestStarter.cs:68)
 CombatTestStarter:Start () (at Assets/Scripts/Combat/CombatTestStarter.cs:36)
 
 [Spawn] Goblin Warrior slot4 at (42.06, 6.50, -6.89). Final grid pos: (29.18, 6.50, -6.89)
 UnityEngine.Debug:Log (object)
-CombatManager:SpawnSide (System.Collections.Generic.List`1<CombatUnit>,UnityEngine.Transform[]) (at Assets/Scripts/Combat/CombatManager.cs:260)
-CombatManager:SpawnUnitViews () (at Assets/Scripts/Combat/CombatManager.cs:223)
-CombatManager:StartCombat (FormationData,EnemyGroupData) (at Assets/Scripts/Combat/CombatManager.cs:187)
-CombatManager:StartCombat (System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>,System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>) (at Assets/Scripts/Combat/CombatManager.cs:214)
+CombatManager:SpawnSide (System.Collections.Generic.List`1<CombatUnit>,UnityEngine.Transform[]) (at Assets/Scripts/Combat/CombatManager.cs:256)
+CombatManager:SpawnUnitViews () (at Assets/Scripts/Combat/CombatManager.cs:222)
+CombatManager:StartCombat (FormationData,EnemyGroupData) (at Assets/Scripts/Combat/CombatManager.cs:186)
+CombatManager:StartCombat (System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>,System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>) (at Assets/Scripts/Combat/CombatManager.cs:213)
 CombatTestStarter:StartTestCombat () (at Assets/Scripts/Combat/CombatTestStarter.cs:68)
 CombatTestStarter:Start () (at Assets/Scripts/Combat/CombatTestStarter.cs:36)
 
 [Spawn] Goblin Warrior slot5 at (42.06, 6.50, -6.89). Final grid pos: (29.18, 6.50, -14.89)
 UnityEngine.Debug:Log (object)
-CombatManager:SpawnSide (System.Collections.Generic.List`1<CombatUnit>,UnityEngine.Transform[]) (at Assets/Scripts/Combat/CombatManager.cs:260)
-CombatManager:SpawnUnitViews () (at Assets/Scripts/Combat/CombatManager.cs:223)
-CombatManager:StartCombat (FormationData,EnemyGroupData) (at Assets/Scripts/Combat/CombatManager.cs:187)
-CombatManager:StartCombat (System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>,System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>) (at Assets/Scripts/Combat/CombatManager.cs:214)
+CombatManager:SpawnSide (System.Collections.Generic.List`1<CombatUnit>,UnityEngine.Transform[]) (at Assets/Scripts/Combat/CombatManager.cs:256)
+CombatManager:SpawnUnitViews () (at Assets/Scripts/Combat/CombatManager.cs:222)
+CombatManager:StartCombat (FormationData,EnemyGroupData) (at Assets/Scripts/Combat/CombatManager.cs:186)
+CombatManager:StartCombat (System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>,System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>) (at Assets/Scripts/Combat/CombatManager.cs:213)
 CombatTestStarter:StartTestCombat () (at Assets/Scripts/Combat/CombatTestStarter.cs:68)
 CombatTestStarter:Start () (at Assets/Scripts/Combat/CombatTestStarter.cs:36)
 
 [Spawn] Goblin Warrior slot7 at (42.06, 6.50, -6.89). Final grid pos: (37.18, 6.50, -6.89)
 UnityEngine.Debug:Log (object)
-CombatManager:SpawnSide (System.Collections.Generic.List`1<CombatUnit>,UnityEngine.Transform[]) (at Assets/Scripts/Combat/CombatManager.cs:260)
-CombatManager:SpawnUnitViews () (at Assets/Scripts/Combat/CombatManager.cs:223)
-CombatManager:StartCombat (FormationData,EnemyGroupData) (at Assets/Scripts/Combat/CombatManager.cs:187)
-CombatManager:StartCombat (System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>,System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>) (at Assets/Scripts/Combat/CombatManager.cs:214)
+CombatManager:SpawnSide (System.Collections.Generic.List`1<CombatUnit>,UnityEngine.Transform[]) (at Assets/Scripts/Combat/CombatManager.cs:256)
+CombatManager:SpawnUnitViews () (at Assets/Scripts/Combat/CombatManager.cs:222)
+CombatManager:StartCombat (FormationData,EnemyGroupData) (at Assets/Scripts/Combat/CombatManager.cs:186)
+CombatManager:StartCombat (System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>,System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>) (at Assets/Scripts/Combat/CombatManager.cs:213)
 CombatTestStarter:StartTestCombat () (at Assets/Scripts/Combat/CombatTestStarter.cs:68)
 CombatTestStarter:Start () (at Assets/Scripts/Combat/CombatTestStarter.cs:36)
 
 === COMBAT STARTED === Player:5 vs Enemy:5
 UnityEngine.Debug:Log (object)
-CombatManager:StartCombat (FormationData,EnemyGroupData) (at Assets/Scripts/Combat/CombatManager.cs:188)
-CombatManager:StartCombat (System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>,System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>) (at Assets/Scripts/Combat/CombatManager.cs:214)
+CombatManager:StartCombat (FormationData,EnemyGroupData) (at Assets/Scripts/Combat/CombatManager.cs:187)
+CombatManager:StartCombat (System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>,System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>) (at Assets/Scripts/Combat/CombatManager.cs:213)
 CombatTestStarter:StartTestCombat () (at Assets/Scripts/Combat/CombatTestStarter.cs:68)
 CombatTestStarter:Start () (at Assets/Scripts/Combat/CombatTestStarter.cs:36)
 
 [UnitStatusManager] OnCombatStarted called
 UnityEngine.Debug:Log (object)
 UnitStatusManager:OnCombatStarted () (at Assets/Scripts/UI/UnitStatusManager.cs:51)
-CombatManager:StartCombat (FormationData,EnemyGroupData) (at Assets/Scripts/Combat/CombatManager.cs:189)
-CombatManager:StartCombat (System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>,System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>) (at Assets/Scripts/Combat/CombatManager.cs:214)
+CombatManager:StartCombat (FormationData,EnemyGroupData) (at Assets/Scripts/Combat/CombatManager.cs:188)
+CombatManager:StartCombat (System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>,System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>) (at Assets/Scripts/Combat/CombatManager.cs:213)
 CombatTestStarter:StartTestCombat () (at Assets/Scripts/Combat/CombatTestStarter.cs:68)
 CombatTestStarter:Start () (at Assets/Scripts/Combat/CombatTestStarter.cs:36)
 
@@ -315,28 +119,28 @@ CombatTestStarter:Start () (at Assets/Scripts/Combat/CombatTestStarter.cs:36)
 UnityEngine.Debug:Log (object)
 CombatCameraManager:AutoFitUnitsInView () (at Assets/Scripts/Camera/CombatCameraManager.cs:244)
 CombatCameraManager:HandleCombatStarted () (at Assets/Scripts/Camera/CombatCameraManager.cs:358)
-CombatManager:StartCombat (FormationData,EnemyGroupData) (at Assets/Scripts/Combat/CombatManager.cs:189)
-CombatManager:StartCombat (System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>,System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>) (at Assets/Scripts/Combat/CombatManager.cs:214)
+CombatManager:StartCombat (FormationData,EnemyGroupData) (at Assets/Scripts/Combat/CombatManager.cs:188)
+CombatManager:StartCombat (System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>,System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>) (at Assets/Scripts/Combat/CombatManager.cs:213)
 CombatTestStarter:StartTestCombat () (at Assets/Scripts/Combat/CombatTestStarter.cs:68)
 CombatTestStarter:Start () (at Assets/Scripts/Combat/CombatTestStarter.cs:36)
 
 [Phase] None → Intro
 UnityEngine.Debug:Log (object)
 CombatStateMachine:TransitionTo (CombatPhase) (at Assets/Scripts/Combat/CombatStateMachine.cs:22)
-CombatManager:StartCombat (FormationData,EnemyGroupData) (at Assets/Scripts/Combat/CombatManager.cs:191)
-CombatManager:StartCombat (System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>,System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>) (at Assets/Scripts/Combat/CombatManager.cs:214)
+CombatManager:StartCombat (FormationData,EnemyGroupData) (at Assets/Scripts/Combat/CombatManager.cs:190)
+CombatManager:StartCombat (System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>,System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>) (at Assets/Scripts/Combat/CombatManager.cs:213)
 CombatTestStarter:StartTestCombat () (at Assets/Scripts/Combat/CombatTestStarter.cs:68)
 CombatTestStarter:Start () (at Assets/Scripts/Combat/CombatTestStarter.cs:36)
 
 [IntroCamera] Intro sequence BEGAN. Camera control is now locked.
 UnityEngine.Debug:Log (object)
 CombatCameraManager:BeginIntroSequence () (at Assets/Scripts/Camera/CombatCameraManager.cs:467)
-CombatManager/<DoIntro>d__102:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:327)
+CombatManager/<DoIntro>d__102:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:308)
 UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager:HandlePhaseChanged (CombatPhase,CombatPhase) (at Assets/Scripts/Combat/CombatManager.cs:314)
+CombatManager:HandlePhaseChanged (CombatPhase,CombatPhase) (at Assets/Scripts/Combat/CombatManager.cs:295)
 CombatStateMachine:TransitionTo (CombatPhase) (at Assets/Scripts/Combat/CombatStateMachine.cs:25)
-CombatManager:StartCombat (FormationData,EnemyGroupData) (at Assets/Scripts/Combat/CombatManager.cs:191)
-CombatManager:StartCombat (System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>,System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>) (at Assets/Scripts/Combat/CombatManager.cs:214)
+CombatManager:StartCombat (FormationData,EnemyGroupData) (at Assets/Scripts/Combat/CombatManager.cs:190)
+CombatManager:StartCombat (System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>,System.Collections.Generic.List`1<System.ValueTuple`3<CharacterData, int, int>>) (at Assets/Scripts/Combat/CombatManager.cs:213)
 CombatTestStarter:StartTestCombat () (at Assets/Scripts/Combat/CombatTestStarter.cs:68)
 CombatTestStarter:Start () (at Assets/Scripts/Combat/CombatTestStarter.cs:36)
 
@@ -375,7 +179,7 @@ UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr
 UnityEngine.Debug:Log (object)
 CombatCameraManager/<ZoomOutToFinalView>d__70:MoveNext () (at Assets/Scripts/Camera/CombatCameraManager.cs:440)
 UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<DoIntro>d__102:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:366)
+CombatManager/<DoIntro>d__102:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:340)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
 [CombatCamera] Auto-fit: Size=32.26, Center=(17.62, 6.50, -6.89), Units=10
@@ -383,7 +187,7 @@ UnityEngine.Debug:Log (object)
 CombatCameraManager:AutoFitUnitsInView () (at Assets/Scripts/Camera/CombatCameraManager.cs:244)
 CombatCameraManager/<ZoomOutToFinalView>d__70:MoveNext () (at Assets/Scripts/Camera/CombatCameraManager.cs:446)
 UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<DoIntro>d__102:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:366)
+CombatManager/<DoIntro>d__102:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:340)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
 [IntroCamera] Final zoom-out complete.
@@ -393,219 +197,224 @@ UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr
 
 [Intro] Intro sequence finished. Starting combat.
 UnityEngine.Debug:Log (object)
-CombatManager/<DoIntro>d__102:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:395)
+CombatManager/<DoIntro>d__102:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:363)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
 [IntroCamera] Intro sequence ENDED. Camera control is now unlocked.
 UnityEngine.Debug:Log (object)
 CombatCameraManager:EndIntroSequence () (at Assets/Scripts/Camera/CombatCameraManager.cs:473)
-CombatManager/<DoIntro>d__102:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:396)
+CombatManager/<DoIntro>d__102:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:364)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
 [Phase] Intro → EnemyPlan
 UnityEngine.Debug:Log (object)
 CombatStateMachine:TransitionTo (CombatPhase) (at Assets/Scripts/Combat/CombatStateMachine.cs:22)
-CombatManager/<DoIntro>d__102:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:397)
+CombatManager/<DoIntro>d__102:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:365)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
 
 === ROUND 1 ===
 UnityEngine.Debug:Log (object)
-CombatManager:SetupRound () (at Assets/Scripts/Combat/CombatManager.cs:467)
-CombatManager:HandlePhaseChanged (CombatPhase,CombatPhase) (at Assets/Scripts/Combat/CombatManager.cs:315)
+CombatManager:SetupRound () (at Assets/Scripts/Combat/CombatManager.cs:432)
+CombatManager:HandlePhaseChanged (CombatPhase,CombatPhase) (at Assets/Scripts/Combat/CombatManager.cs:296)
 CombatStateMachine:TransitionTo (CombatPhase) (at Assets/Scripts/Combat/CombatStateMachine.cs:25)
-CombatManager/<DoIntro>d__102:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:397)
+CombatManager/<DoIntro>d__102:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:365)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
 --- Turn Order ---
 UnityEngine.Debug:Log (object)
-CombatManager:SetupRound () (at Assets/Scripts/Combat/CombatManager.cs:473)
-CombatManager:HandlePhaseChanged (CombatPhase,CombatPhase) (at Assets/Scripts/Combat/CombatManager.cs:315)
+CombatManager:SetupRound () (at Assets/Scripts/Combat/CombatManager.cs:437)
+CombatManager:HandlePhaseChanged (CombatPhase,CombatPhase) (at Assets/Scripts/Combat/CombatManager.cs:296)
 CombatStateMachine:TransitionTo (CombatPhase) (at Assets/Scripts/Combat/CombatStateMachine.cs:25)
-CombatManager/<DoIntro>d__102:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:397)
+CombatManager/<DoIntro>d__102:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:365)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
-1. Goblin Warrior (Speed: 10)
+1. Rin (Speed: 10)
 UnityEngine.Debug:Log (object)
-CombatManager:SetupRound () (at Assets/Scripts/Combat/CombatManager.cs:476)
-CombatManager:HandlePhaseChanged (CombatPhase,CombatPhase) (at Assets/Scripts/Combat/CombatManager.cs:315)
+CombatManager:SetupRound () (at Assets/Scripts/Combat/CombatManager.cs:440)
+CombatManager:HandlePhaseChanged (CombatPhase,CombatPhase) (at Assets/Scripts/Combat/CombatManager.cs:296)
 CombatStateMachine:TransitionTo (CombatPhase) (at Assets/Scripts/Combat/CombatStateMachine.cs:25)
-CombatManager/<DoIntro>d__102:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:397)
+CombatManager/<DoIntro>d__102:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:365)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
 2. Goblin Warrior (Speed: 10)
 UnityEngine.Debug:Log (object)
-CombatManager:SetupRound () (at Assets/Scripts/Combat/CombatManager.cs:476)
-CombatManager:HandlePhaseChanged (CombatPhase,CombatPhase) (at Assets/Scripts/Combat/CombatManager.cs:315)
+CombatManager:SetupRound () (at Assets/Scripts/Combat/CombatManager.cs:440)
+CombatManager:HandlePhaseChanged (CombatPhase,CombatPhase) (at Assets/Scripts/Combat/CombatManager.cs:296)
 CombatStateMachine:TransitionTo (CombatPhase) (at Assets/Scripts/Combat/CombatStateMachine.cs:25)
-CombatManager/<DoIntro>d__102:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:397)
+CombatManager/<DoIntro>d__102:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:365)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
-3. Celine (Speed: 10)
+3. Eugeo (Speed: 10)
 UnityEngine.Debug:Log (object)
-CombatManager:SetupRound () (at Assets/Scripts/Combat/CombatManager.cs:476)
-CombatManager:HandlePhaseChanged (CombatPhase,CombatPhase) (at Assets/Scripts/Combat/CombatManager.cs:315)
+CombatManager:SetupRound () (at Assets/Scripts/Combat/CombatManager.cs:440)
+CombatManager:HandlePhaseChanged (CombatPhase,CombatPhase) (at Assets/Scripts/Combat/CombatManager.cs:296)
 CombatStateMachine:TransitionTo (CombatPhase) (at Assets/Scripts/Combat/CombatStateMachine.cs:25)
-CombatManager/<DoIntro>d__102:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:397)
+CombatManager/<DoIntro>d__102:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:365)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
-4. Goblin Warrior (Speed: 10)
+4. Vergil (Speed: 10)
 UnityEngine.Debug:Log (object)
-CombatManager:SetupRound () (at Assets/Scripts/Combat/CombatManager.cs:476)
-CombatManager:HandlePhaseChanged (CombatPhase,CombatPhase) (at Assets/Scripts/Combat/CombatManager.cs:315)
+CombatManager:SetupRound () (at Assets/Scripts/Combat/CombatManager.cs:440)
+CombatManager:HandlePhaseChanged (CombatPhase,CombatPhase) (at Assets/Scripts/Combat/CombatManager.cs:296)
 CombatStateMachine:TransitionTo (CombatPhase) (at Assets/Scripts/Combat/CombatStateMachine.cs:25)
-CombatManager/<DoIntro>d__102:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:397)
+CombatManager/<DoIntro>d__102:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:365)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
 5. Goblin Warrior (Speed: 10)
 UnityEngine.Debug:Log (object)
-CombatManager:SetupRound () (at Assets/Scripts/Combat/CombatManager.cs:476)
-CombatManager:HandlePhaseChanged (CombatPhase,CombatPhase) (at Assets/Scripts/Combat/CombatManager.cs:315)
+CombatManager:SetupRound () (at Assets/Scripts/Combat/CombatManager.cs:440)
+CombatManager:HandlePhaseChanged (CombatPhase,CombatPhase) (at Assets/Scripts/Combat/CombatManager.cs:296)
 CombatStateMachine:TransitionTo (CombatPhase) (at Assets/Scripts/Combat/CombatStateMachine.cs:25)
-CombatManager/<DoIntro>d__102:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:397)
+CombatManager/<DoIntro>d__102:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:365)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
-6. Celine (Speed: 10)
+6. Vergil (Speed: 10)
 UnityEngine.Debug:Log (object)
-CombatManager:SetupRound () (at Assets/Scripts/Combat/CombatManager.cs:476)
-CombatManager:HandlePhaseChanged (CombatPhase,CombatPhase) (at Assets/Scripts/Combat/CombatManager.cs:315)
+CombatManager:SetupRound () (at Assets/Scripts/Combat/CombatManager.cs:440)
+CombatManager:HandlePhaseChanged (CombatPhase,CombatPhase) (at Assets/Scripts/Combat/CombatManager.cs:296)
 CombatStateMachine:TransitionTo (CombatPhase) (at Assets/Scripts/Combat/CombatStateMachine.cs:25)
-CombatManager/<DoIntro>d__102:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:397)
+CombatManager/<DoIntro>d__102:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:365)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
-7. Aleus (Speed: 10)
+7. Sakura (Speed: 10)
 UnityEngine.Debug:Log (object)
-CombatManager:SetupRound () (at Assets/Scripts/Combat/CombatManager.cs:476)
-CombatManager:HandlePhaseChanged (CombatPhase,CombatPhase) (at Assets/Scripts/Combat/CombatManager.cs:315)
+CombatManager:SetupRound () (at Assets/Scripts/Combat/CombatManager.cs:440)
+CombatManager:HandlePhaseChanged (CombatPhase,CombatPhase) (at Assets/Scripts/Combat/CombatManager.cs:296)
 CombatStateMachine:TransitionTo (CombatPhase) (at Assets/Scripts/Combat/CombatStateMachine.cs:25)
-CombatManager/<DoIntro>d__102:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:397)
+CombatManager/<DoIntro>d__102:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:365)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
-8. Lucio (Speed: 10)
+8. Goblin Warrior (Speed: 10)
 UnityEngine.Debug:Log (object)
-CombatManager:SetupRound () (at Assets/Scripts/Combat/CombatManager.cs:476)
-CombatManager:HandlePhaseChanged (CombatPhase,CombatPhase) (at Assets/Scripts/Combat/CombatManager.cs:315)
+CombatManager:SetupRound () (at Assets/Scripts/Combat/CombatManager.cs:440)
+CombatManager:HandlePhaseChanged (CombatPhase,CombatPhase) (at Assets/Scripts/Combat/CombatManager.cs:296)
 CombatStateMachine:TransitionTo (CombatPhase) (at Assets/Scripts/Combat/CombatStateMachine.cs:25)
-CombatManager/<DoIntro>d__102:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:397)
+CombatManager/<DoIntro>d__102:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:365)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
-9. Aleus (Speed: 10)
+9. Goblin Warrior (Speed: 10)
 UnityEngine.Debug:Log (object)
-CombatManager:SetupRound () (at Assets/Scripts/Combat/CombatManager.cs:476)
-CombatManager:HandlePhaseChanged (CombatPhase,CombatPhase) (at Assets/Scripts/Combat/CombatManager.cs:315)
+CombatManager:SetupRound () (at Assets/Scripts/Combat/CombatManager.cs:440)
+CombatManager:HandlePhaseChanged (CombatPhase,CombatPhase) (at Assets/Scripts/Combat/CombatManager.cs:296)
 CombatStateMachine:TransitionTo (CombatPhase) (at Assets/Scripts/Combat/CombatStateMachine.cs:25)
-CombatManager/<DoIntro>d__102:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:397)
+CombatManager/<DoIntro>d__102:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:365)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
 10. Goblin Warrior (Speed: 10)
 UnityEngine.Debug:Log (object)
-CombatManager:SetupRound () (at Assets/Scripts/Combat/CombatManager.cs:476)
-CombatManager:HandlePhaseChanged (CombatPhase,CombatPhase) (at Assets/Scripts/Combat/CombatManager.cs:315)
+CombatManager:SetupRound () (at Assets/Scripts/Combat/CombatManager.cs:440)
+CombatManager:HandlePhaseChanged (CombatPhase,CombatPhase) (at Assets/Scripts/Combat/CombatManager.cs:296)
 CombatStateMachine:TransitionTo (CombatPhase) (at Assets/Scripts/Combat/CombatStateMachine.cs:25)
-CombatManager/<DoIntro>d__102:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:397)
+CombatManager/<DoIntro>d__102:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:365)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
 [Phase] EnemyPlan → Execute
 UnityEngine.Debug:Log (object)
 CombatStateMachine:TransitionTo (CombatPhase) (at Assets/Scripts/Combat/CombatStateMachine.cs:22)
-CombatManager:SetupRound () (at Assets/Scripts/Combat/CombatManager.cs:490)
-CombatManager:HandlePhaseChanged (CombatPhase,CombatPhase) (at Assets/Scripts/Combat/CombatManager.cs:315)
+CombatManager:SetupRound () (at Assets/Scripts/Combat/CombatManager.cs:452)
+CombatManager:HandlePhaseChanged (CombatPhase,CombatPhase) (at Assets/Scripts/Combat/CombatManager.cs:296)
 CombatStateMachine:TransitionTo (CombatPhase) (at Assets/Scripts/Combat/CombatStateMachine.cs:25)
-CombatManager/<DoIntro>d__102:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:397)
+CombatManager/<DoIntro>d__102:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:365)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
 
 --- EXECUTE ---
 UnityEngine.Debug:Log (object)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:658)
+CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:606)
 UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager:HandlePhaseChanged (CombatPhase,CombatPhase) (at Assets/Scripts/Combat/CombatManager.cs:318)
+CombatManager:HandlePhaseChanged (CombatPhase,CombatPhase) (at Assets/Scripts/Combat/CombatManager.cs:299)
 CombatStateMachine:TransitionTo (CombatPhase) (at Assets/Scripts/Combat/CombatStateMachine.cs:25)
-CombatManager:SetupRound () (at Assets/Scripts/Combat/CombatManager.cs:490)
-CombatManager:HandlePhaseChanged (CombatPhase,CombatPhase) (at Assets/Scripts/Combat/CombatManager.cs:315)
+CombatManager:SetupRound () (at Assets/Scripts/Combat/CombatManager.cs:452)
+CombatManager:HandlePhaseChanged (CombatPhase,CombatPhase) (at Assets/Scripts/Combat/CombatManager.cs:296)
 CombatStateMachine:TransitionTo (CombatPhase) (at Assets/Scripts/Combat/CombatStateMachine.cs:25)
-CombatManager/<DoIntro>d__102:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:397)
+CombatManager/<DoIntro>d__102:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:365)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
---- Lượt của: Goblin Warrior ---
+--- Lượt của: Rin ---
 UnityEngine.Debug:Log (object)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:686)
+CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:628)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
-[AI] Goblin Warrior chuẩn bị [Heavy Strike] → [Celine]
+[Execute] Rin is a player. Waiting for input...
 UnityEngine.Debug:Log (object)
-EnemyAI:PlanTurn (CombatUnit,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Combat/EnemyAI.cs:21)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:694)
+CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:649)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
-[Resolve] Goblin Warrior dùng Heavy Strike
+[PlanUI] OnPlayerTurn event received for Rin.
 UnityEngine.Debug:Log (object)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:598)
+CombatPlanningUI:OnPlayerTurn (CombatUnit) (at Assets/Scripts/Combat/CombatPlanningUI.cs:113)
+CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:651)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
+
+[PlanUI] Found UnitView for Rin. Opening skill wheel.
+UnityEngine.Debug:Log (object)
+CombatPlanningUI:OnPlayerTurn (CombatUnit) (at Assets/Scripts/Combat/CombatPlanningUI.cs:125)
+CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:651)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
+
+[AP] Đã dùng 1 AP. Còn lại 2.
+UnityEngine.Debug:Log (object)
+CombatManager:SubmitPlayerTurnAction (SkillData,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Combat/CombatManager.cs:487)
+CombatPlanningUI:OnTargetSelected (UnitView) (at Assets/Scripts/Combat/CombatPlanningUI.cs:345)
+CombatPlanningUI:HandleWorldClick (UnityEngine.Vector3) (at Assets/Scripts/Combat/CombatPlanningUI.cs:200)
+CombatPlanningUI:Update () (at Assets/Scripts/Combat/CombatPlanningUI.cs:100)
+
+[Player Input] Rin đã chọn dùng  lên Vergil.
+UnityEngine.Debug:Log (object)
+CombatManager:SubmitPlayerTurnAction (SkillData,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Combat/CombatManager.cs:490)
+CombatPlanningUI:OnTargetSelected (UnitView) (at Assets/Scripts/Combat/CombatPlanningUI.cs:345)
+CombatPlanningUI:HandleWorldClick (UnityEngine.Vector3) (at Assets/Scripts/Combat/CombatPlanningUI.cs:200)
+CombatPlanningUI:Update () (at Assets/Scripts/Combat/CombatPlanningUI.cs:100)
+
+[Resolve] Rin dùng 
+UnityEngine.Debug:Log (object)
+CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:522)
 UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
+CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:659)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
-[ActionResolver] Goblin Warrior uses 'Heavy Strike' on 1 target(s).
+[ActionResolver] Rin uses '' on 1 target(s).
 UnityEngine.Debug:Log (object)
-ActionResolver:Resolve (CombatUnit,SkillData,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Combat/ClashResolver.cs:56)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:599)
+ActionResolver:Resolve (CombatUnit,SkillData,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Combat/ClashResolver.cs:55)
+CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:523)
 UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
+CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:659)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
-[Resolve] Applying effect: DamageEffect
+[Resolve] Applying non-damage effect: HealEffect
 UnityEngine.Debug:Log (object)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:610)
+CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:544)
 UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
+CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:659)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
-  [Celine] nhận trạng thái GiamSatThuong (999 lượt, 1 stacks, value: 0.05)
+  Vergil hồi 0 HP → HP 100/100
+UnityEngine.Debug:Log (object)
+CombatUnit:Heal (int) (at Assets/Scripts/Combat/CombatUnit.cs:143)
+HealEffect:Apply (CombatUnit,CombatUnit[]) (at Assets/Scripts/Data/Effects/HealEffect.cs:13)
+CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:545)
+UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
+CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:659)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
+
+[Resolve] Applying non-damage effect: BuffStackEffect
+UnityEngine.Debug:Log (object)
+CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:544)
+UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
+CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:659)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
+
+  [Vergil] nhận trạng thái SieuViet (1 lượt, 3 stacks, value: 0.1)
 UnityEngine.Debug:Log (object)
 CombatUnit:ApplyStatus (StatusEffectType,int,single,int) (at Assets/Scripts/Combat/CombatUnit.cs:211)
-CelinePassive:ApplyStack () (at Assets/Scripts/Data/Passives/CelinePassive.cs:33)
-CelinePassive:OnOwnerTakeDamage (CombatUnit,int) (at Assets/Scripts/Data/Passives/CelinePassive.cs:20)
-CombatUnit:TakeDamage (CombatUnit,int,int) (at Assets/Scripts/Combat/CombatUnit.cs:108)
-DamageEffect:Apply (CombatUnit,CombatUnit[]) (at Assets/Scripts/Data/Effects/DamageEffect.cs:19)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:611)
+BuffStackEffect:Apply (CombatUnit,CombatUnit[]) (at Assets/Scripts/Data/Effects/BuffStackEffect.cs:15)
+CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:545)
 UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-  [Celine] trạng thái GiamSatThuong cộng dồn lên 2 stacks
-UnityEngine.Debug:Log (object)
-CombatUnit:ApplyStatus (StatusEffectType,int,single,int) (at Assets/Scripts/Combat/CombatUnit.cs:206)
-CelinePassive:ApplyStack () (at Assets/Scripts/Data/Passives/CelinePassive.cs:33)
-CelinePassive:OnOwnerTakeDamage (CombatUnit,int) (at Assets/Scripts/Data/Passives/CelinePassive.cs:20)
-CombatUnit:TakeDamage (CombatUnit,int,int) (at Assets/Scripts/Combat/CombatUnit.cs:108)
-DamageEffect:Apply (CombatUnit,CombatUnit[]) (at Assets/Scripts/Data/Effects/DamageEffect.cs:19)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:611)
-UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-  Celine nhận 12 dmg → HP 188/200
-UnityEngine.Debug:Log (object)
-CombatUnit:TakeDamage (CombatUnit,int,int) (at Assets/Scripts/Combat/CombatUnit.cs:113)
-DamageEffect:Apply (CombatUnit,CombatUnit[]) (at Assets/Scripts/Data/Effects/DamageEffect.cs:19)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:611)
-UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
+CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:659)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
 [AnimEvent] Hit frame: 0
-UnityEngine.Debug:Log (object)
-HitEventReceiver:OnHit (int) (at Assets/Scripts/Combat/HitEventReceiver.cs:18)
-
-[AnimEvent] Hit frame: 1
-UnityEngine.Debug:Log (object)
-HitEventReceiver:OnHit (int) (at Assets/Scripts/Combat/HitEventReceiver.cs:18)
-
-[AnimEvent] Hit frame: 2
-UnityEngine.Debug:Log (object)
-HitEventReceiver:OnHit (int) (at Assets/Scripts/Combat/HitEventReceiver.cs:18)
-
-[AnimEvent] Hit frame: 3
 UnityEngine.Debug:Log (object)
 HitEventReceiver:OnHit (int) (at Assets/Scripts/Combat/HitEventReceiver.cs:18)
 
@@ -616,97 +425,86 @@ HitEventReceiver:OnSkillAnimationEnd () (at Assets/Scripts/Combat/HitEventReceiv
 [CombatCamera] Reset: size=32.26, pos=(17.62, 6.50, -16.99)
 UnityEngine.Debug:Log (object)
 CombatCameraManager:ResetCamera () (at Assets/Scripts/Camera/CombatCameraManager.cs:214)
-ClashAnimationSequence/<CleanupPhase>d__13:MoveNext () (at Assets/Scripts/Combat/ClashAnimationSequence.cs:185)
+ClashAnimationSequence/<CleanupPhase>d__13:MoveNext () (at Assets/Scripts/Combat/ClashAnimationSequence.cs:191)
 UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
 ClashAnimationSequence/<PlayAction>d__8:MoveNext () (at Assets/Scripts/Combat/ClashAnimationSequence.cs:73)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
-[EVENT] Chuẩn bị kích hoạt OnActionConfirmed cho Goblin Warrior với kỹ năng Heavy Strike.
+[EVENT] Chuẩn bị kích hoạt OnActionConfirmed cho Rin với kỹ năng .
 UnityEngine.Debug:Log (object)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:644)
+CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:592)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
 --- Lượt của: Goblin Warrior ---
 UnityEngine.Debug:Log (object)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:686)
+CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:628)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
-[AI] Goblin Warrior chuẩn bị [Heavy Strike] → [Celine]
+[AI] Goblin Warrior chuẩn bị [Skill 1] → [Sakura]
 UnityEngine.Debug:Log (object)
 EnemyAI:PlanTurn (CombatUnit,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Combat/EnemyAI.cs:21)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:694)
+CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:634)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
-[Resolve] Goblin Warrior dùng Heavy Strike
+[Resolve] Goblin Warrior dùng Skill 1
 UnityEngine.Debug:Log (object)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:598)
+CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:522)
 UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
+CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:659)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
-[ActionResolver] Goblin Warrior uses 'Heavy Strike' on 1 target(s).
+[ActionResolver] Goblin Warrior uses 'Skill 1' on 1 target(s).
 UnityEngine.Debug:Log (object)
-ActionResolver:Resolve (CombatUnit,SkillData,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Combat/ClashResolver.cs:56)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:599)
+ActionResolver:Resolve (CombatUnit,SkillData,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Combat/ClashResolver.cs:55)
+CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:523)
 UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
+CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:659)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
-[Resolve] Applying effect: DamageEffect
+[Resolve] DamageEffect 'DamageEffect' deferred to animation.
 UnityEngine.Debug:Log (object)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:610)
+CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:539)
 UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
+CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:659)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
-  [Celine] nhận trạng thái GiamSatThuong (999 lượt, 1 stacks, value: 0.05)
+[Resolve] Applying non-damage effect: BuffStatEffect
 UnityEngine.Debug:Log (object)
-CombatUnit:ApplyStatus (StatusEffectType,int,single,int) (at Assets/Scripts/Combat/CombatUnit.cs:211)
-CelinePassive:ApplyStack () (at Assets/Scripts/Data/Passives/CelinePassive.cs:33)
-CelinePassive:OnOwnerTakeDamage (CombatUnit,int) (at Assets/Scripts/Data/Passives/CelinePassive.cs:20)
-CombatUnit:TakeDamage (CombatUnit,int,int) (at Assets/Scripts/Combat/CombatUnit.cs:108)
-DamageEffect:Apply (CombatUnit,CombatUnit[]) (at Assets/Scripts/Data/Effects/DamageEffect.cs:19)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:611)
+CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:544)
 UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
+CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:659)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
-  [Celine] trạng thái GiamSatThuong cộng dồn lên 2 stacks
+  Sakura nhận buff ATK x1.05 (1 lượt)
 UnityEngine.Debug:Log (object)
-CombatUnit:ApplyStatus (StatusEffectType,int,single,int) (at Assets/Scripts/Combat/CombatUnit.cs:206)
-CelinePassive:ApplyStack () (at Assets/Scripts/Data/Passives/CelinePassive.cs:33)
-CelinePassive:OnOwnerTakeDamage (CombatUnit,int) (at Assets/Scripts/Data/Passives/CelinePassive.cs:20)
-CombatUnit:TakeDamage (CombatUnit,int,int) (at Assets/Scripts/Combat/CombatUnit.cs:108)
-DamageEffect:Apply (CombatUnit,CombatUnit[]) (at Assets/Scripts/Data/Effects/DamageEffect.cs:19)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:611)
+CombatUnit:ApplyBuff (StatType,single,int) (at Assets/Scripts/Combat/CombatUnit.cs:195)
+BuffStatEffect:Apply (CombatUnit,CombatUnit[]) (at Assets/Scripts/Data/Effects/BuffStatEffect.cs:14)
+CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:545)
 UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
+CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:659)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
-  Celine nhận 12 dmg → HP 188/200
+[Resolve] Set pending outcomes cho Goblin Warrior: 1 outcomes, 1 hits.
 UnityEngine.Debug:Log (object)
-CombatUnit:TakeDamage (CombatUnit,int,int) (at Assets/Scripts/Combat/CombatUnit.cs:113)
-DamageEffect:Apply (CombatUnit,CombatUnit[]) (at Assets/Scripts/Data/Effects/DamageEffect.cs:19)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:611)
+CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:577)
 UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
+CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:659)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
 [AnimEvent] Hit frame: 0
 UnityEngine.Debug:Log (object)
 HitEventReceiver:OnHit (int) (at Assets/Scripts/Combat/HitEventReceiver.cs:18)
 
-[AnimEvent] Hit frame: 1
+  Sakura nhận 8 dmg → HP 92/100
 UnityEngine.Debug:Log (object)
-HitEventReceiver:OnHit (int) (at Assets/Scripts/Combat/HitEventReceiver.cs:18)
+CombatUnit:TakeDamage (CombatUnit,int,int) (at Assets/Scripts/Combat/CombatUnit.cs:113)
+UnitView:ProcessHitAtFrame (int) (at Assets/Scripts/Combat/UnitView.cs:251)
+HitEventReceiver:OnHit (int) (at Assets/Scripts/Combat/HitEventReceiver.cs:19)
 
-[AnimEvent] Hit frame: 2
+[Hit 0] Sakura nhận 8 damage. HP: 92
 UnityEngine.Debug:Log (object)
-HitEventReceiver:OnHit (int) (at Assets/Scripts/Combat/HitEventReceiver.cs:18)
-
-[AnimEvent] Hit frame: 3
-UnityEngine.Debug:Log (object)
-HitEventReceiver:OnHit (int) (at Assets/Scripts/Combat/HitEventReceiver.cs:18)
+UnitView:ProcessHitAtFrame (int) (at Assets/Scripts/Combat/UnitView.cs:252)
+HitEventReceiver:OnHit (int) (at Assets/Scripts/Combat/HitEventReceiver.cs:19)
 
 [AnimEvent] Skill animation end
 UnityEngine.Debug:Log (object)
@@ -715,1280 +513,365 @@ HitEventReceiver:OnSkillAnimationEnd () (at Assets/Scripts/Combat/HitEventReceiv
 [CombatCamera] Reset: size=32.26, pos=(17.62, 6.50, -16.99)
 UnityEngine.Debug:Log (object)
 CombatCameraManager:ResetCamera () (at Assets/Scripts/Camera/CombatCameraManager.cs:214)
-ClashAnimationSequence/<CleanupPhase>d__13:MoveNext () (at Assets/Scripts/Combat/ClashAnimationSequence.cs:185)
+ClashAnimationSequence/<CleanupPhase>d__13:MoveNext () (at Assets/Scripts/Combat/ClashAnimationSequence.cs:191)
 UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
 ClashAnimationSequence/<PlayAction>d__8:MoveNext () (at Assets/Scripts/Combat/ClashAnimationSequence.cs:73)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
-[EVENT] Chuẩn bị kích hoạt OnActionConfirmed cho Goblin Warrior với kỹ năng Heavy Strike.
+[EVENT] Chuẩn bị kích hoạt OnActionConfirmed cho Goblin Warrior với kỹ năng Skill 1.
 UnityEngine.Debug:Log (object)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:644)
+CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:592)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
---- Lượt của: Celine ---
+--- Lượt của: Eugeo ---
 UnityEngine.Debug:Log (object)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:686)
+CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:628)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
-[Execute] Celine is a player. Waiting for input...
+[AP] Hồi 1 AP. Hiện có: 3
 UnityEngine.Debug:Log (object)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:711)
+CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:644)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
-[PlanUI] OnPlayerTurn event received for Celine.
+[Execute] Eugeo is a player. Waiting for input...
+UnityEngine.Debug:Log (object)
+CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:649)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
+
+[PlanUI] OnPlayerTurn event received for Eugeo.
 UnityEngine.Debug:Log (object)
 CombatPlanningUI:OnPlayerTurn (CombatUnit) (at Assets/Scripts/Combat/CombatPlanningUI.cs:113)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:713)
+CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:651)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
-[PlanUI] Found UnitView for Celine. Opening skill wheel.
+[PlanUI] Found UnitView for Eugeo. Opening skill wheel.
 UnityEngine.Debug:Log (object)
 CombatPlanningUI:OnPlayerTurn (CombatUnit) (at Assets/Scripts/Combat/CombatPlanningUI.cs:125)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:713)
+CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:651)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
-[AP] Đã dùng 0 AP. Còn lại 3.
+[AP] Đã dùng 1 AP. Còn lại 2.
 UnityEngine.Debug:Log (object)
-CombatManager:SubmitPlayerTurnAction (SkillData,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Combat/CombatManager.cs:529)
+CombatManager:SubmitPlayerTurnAction (SkillData,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Combat/CombatManager.cs:487)
 CombatPlanningUI:OnTargetSelected (UnitView) (at Assets/Scripts/Combat/CombatPlanningUI.cs:345)
 CombatPlanningUI:HandleWorldClick (UnityEngine.Vector3) (at Assets/Scripts/Combat/CombatPlanningUI.cs:200)
 CombatPlanningUI:Update () (at Assets/Scripts/Combat/CombatPlanningUI.cs:100)
 
-[Player Input] Celine đã chọn dùng  lên Goblin Warrior.
+[Player Input] Eugeo đã chọn dùng Skill 3 lên Vergil.
 UnityEngine.Debug:Log (object)
-CombatManager:SubmitPlayerTurnAction (SkillData,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Combat/CombatManager.cs:533)
+CombatManager:SubmitPlayerTurnAction (SkillData,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Combat/CombatManager.cs:490)
 CombatPlanningUI:OnTargetSelected (UnitView) (at Assets/Scripts/Combat/CombatPlanningUI.cs:345)
 CombatPlanningUI:HandleWorldClick (UnityEngine.Vector3) (at Assets/Scripts/Combat/CombatPlanningUI.cs:200)
 CombatPlanningUI:Update () (at Assets/Scripts/Combat/CombatPlanningUI.cs:100)
 
-[Resolve] Celine dùng 
+[Resolve] Eugeo dùng Skill 3
 UnityEngine.Debug:Log (object)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:598)
+CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:522)
 UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
+CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:659)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
-[ActionResolver] Celine uses '' on 1 target(s).
+[ActionResolver] Eugeo uses 'Skill 3' on 1 target(s).
 UnityEngine.Debug:Log (object)
-ActionResolver:Resolve (CombatUnit,SkillData,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Combat/ClashResolver.cs:56)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:599)
+ActionResolver:Resolve (CombatUnit,SkillData,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Combat/ClashResolver.cs:55)
+CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:523)
 UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
+CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:659)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
-[Resolve] Applying effect: DamageEffect
+[Resolve] Applying non-damage effect: DamageReductionEffect
 UnityEngine.Debug:Log (object)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:610)
+CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:544)
 UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
+CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:659)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
-  [Celine] trạng thái GiamSatThuong cộng dồn lên 3 stacks
-UnityEngine.Debug:Log (object)
-CombatUnit:ApplyStatus (StatusEffectType,int,single,int) (at Assets/Scripts/Combat/CombatUnit.cs:206)
-CelinePassive:ApplyStack () (at Assets/Scripts/Data/Passives/CelinePassive.cs:33)
-CelinePassive:OnOwnerDealDamage (CombatUnit,int) (at Assets/Scripts/Data/Passives/CelinePassive.cs:25)
-CombatUnit:TakeDamage (CombatUnit,int,int) (at Assets/Scripts/Combat/CombatUnit.cs:109)
-DamageEffect:Apply (CombatUnit,CombatUnit[]) (at Assets/Scripts/Data/Effects/DamageEffect.cs:19)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:611)
-UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-  [Celine] trạng thái GiamSatThuong cộng dồn lên 4 stacks
-UnityEngine.Debug:Log (object)
-CombatUnit:ApplyStatus (StatusEffectType,int,single,int) (at Assets/Scripts/Combat/CombatUnit.cs:206)
-CelinePassive:ApplyStack () (at Assets/Scripts/Data/Passives/CelinePassive.cs:33)
-CelinePassive:OnOwnerDealDamage (CombatUnit,int) (at Assets/Scripts/Data/Passives/CelinePassive.cs:25)
-CombatUnit:TakeDamage (CombatUnit,int,int) (at Assets/Scripts/Combat/CombatUnit.cs:109)
-DamageEffect:Apply (CombatUnit,CombatUnit[]) (at Assets/Scripts/Data/Effects/DamageEffect.cs:19)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:611)
-UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-  Goblin Warrior nhận 24 dmg → HP 56/80
-UnityEngine.Debug:Log (object)
-CombatUnit:TakeDamage (CombatUnit,int,int) (at Assets/Scripts/Combat/CombatUnit.cs:113)
-DamageEffect:Apply (CombatUnit,CombatUnit[]) (at Assets/Scripts/Data/Effects/DamageEffect.cs:19)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:611)
-UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[CombatCamera] Reset: size=32.26, pos=(17.62, 6.50, -16.99)
-UnityEngine.Debug:Log (object)
-CombatCameraManager:ResetCamera () (at Assets/Scripts/Camera/CombatCameraManager.cs:214)
-ClashAnimationSequence/<CleanupPhase>d__13:MoveNext () (at Assets/Scripts/Combat/ClashAnimationSequence.cs:185)
-UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-ClashAnimationSequence/<PlayAction>d__8:MoveNext () (at Assets/Scripts/Combat/ClashAnimationSequence.cs:73)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[EVENT] Chuẩn bị kích hoạt OnActionConfirmed cho Celine với kỹ năng .
-UnityEngine.Debug:Log (object)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:644)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
---- Lượt của: Goblin Warrior ---
-UnityEngine.Debug:Log (object)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:686)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[AI] Goblin Warrior chuẩn bị [Heavy Strike] → [Lucio]
-UnityEngine.Debug:Log (object)
-EnemyAI:PlanTurn (CombatUnit,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Combat/EnemyAI.cs:21)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:694)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[Resolve] Goblin Warrior dùng Heavy Strike
-UnityEngine.Debug:Log (object)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:598)
-UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[ActionResolver] Goblin Warrior uses 'Heavy Strike' on 1 target(s).
-UnityEngine.Debug:Log (object)
-ActionResolver:Resolve (CombatUnit,SkillData,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Combat/ClashResolver.cs:56)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:599)
-UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[Resolve] Applying effect: DamageEffect
-UnityEngine.Debug:Log (object)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:610)
-UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-  Lucio nhận 3 dmg → HP 147/150
-UnityEngine.Debug:Log (object)
-CombatUnit:TakeDamage (CombatUnit,int,int) (at Assets/Scripts/Combat/CombatUnit.cs:113)
-DamageEffect:Apply (CombatUnit,CombatUnit[]) (at Assets/Scripts/Data/Effects/DamageEffect.cs:19)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:611)
-UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[AnimEvent] Hit frame: 0
-UnityEngine.Debug:Log (object)
-HitEventReceiver:OnHit (int) (at Assets/Scripts/Combat/HitEventReceiver.cs:18)
-
-[AnimEvent] Hit frame: 1
-UnityEngine.Debug:Log (object)
-HitEventReceiver:OnHit (int) (at Assets/Scripts/Combat/HitEventReceiver.cs:18)
-
-[AnimEvent] Hit frame: 2
-UnityEngine.Debug:Log (object)
-HitEventReceiver:OnHit (int) (at Assets/Scripts/Combat/HitEventReceiver.cs:18)
-
-[AnimEvent] Hit frame: 3
-UnityEngine.Debug:Log (object)
-HitEventReceiver:OnHit (int) (at Assets/Scripts/Combat/HitEventReceiver.cs:18)
-
-[AnimEvent] Skill animation end
-UnityEngine.Debug:Log (object)
-HitEventReceiver:OnSkillAnimationEnd () (at Assets/Scripts/Combat/HitEventReceiver.cs:33)
-
-[CombatCamera] Reset: size=32.26, pos=(17.62, 6.50, -16.99)
-UnityEngine.Debug:Log (object)
-CombatCameraManager:ResetCamera () (at Assets/Scripts/Camera/CombatCameraManager.cs:214)
-ClashAnimationSequence/<CleanupPhase>d__13:MoveNext () (at Assets/Scripts/Combat/ClashAnimationSequence.cs:185)
-UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-ClashAnimationSequence/<PlayAction>d__8:MoveNext () (at Assets/Scripts/Combat/ClashAnimationSequence.cs:73)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[EVENT] Chuẩn bị kích hoạt OnActionConfirmed cho Goblin Warrior với kỹ năng Heavy Strike.
-UnityEngine.Debug:Log (object)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:644)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
---- Lượt của: Goblin Warrior ---
-UnityEngine.Debug:Log (object)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:686)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[AI] Goblin Warrior chuẩn bị [Heavy Strike] → [Aleus]
-UnityEngine.Debug:Log (object)
-EnemyAI:PlanTurn (CombatUnit,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Combat/EnemyAI.cs:21)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:694)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[Resolve] Goblin Warrior dùng Heavy Strike
-UnityEngine.Debug:Log (object)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:598)
-UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[ActionResolver] Goblin Warrior uses 'Heavy Strike' on 1 target(s).
-UnityEngine.Debug:Log (object)
-ActionResolver:Resolve (CombatUnit,SkillData,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Combat/ClashResolver.cs:56)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:599)
-UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[Resolve] Applying effect: DamageEffect
-UnityEngine.Debug:Log (object)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:610)
-UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-  Aleus nhận 8 dmg → HP 142/150
-UnityEngine.Debug:Log (object)
-CombatUnit:TakeDamage (CombatUnit,int,int) (at Assets/Scripts/Combat/CombatUnit.cs:113)
-DamageEffect:Apply (CombatUnit,CombatUnit[]) (at Assets/Scripts/Data/Effects/DamageEffect.cs:19)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:611)
-UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[AnimEvent] Hit frame: 0
-UnityEngine.Debug:Log (object)
-HitEventReceiver:OnHit (int) (at Assets/Scripts/Combat/HitEventReceiver.cs:18)
-
-[AnimEvent] Hit frame: 1
-UnityEngine.Debug:Log (object)
-HitEventReceiver:OnHit (int) (at Assets/Scripts/Combat/HitEventReceiver.cs:18)
-
-[AnimEvent] Hit frame: 2
-UnityEngine.Debug:Log (object)
-HitEventReceiver:OnHit (int) (at Assets/Scripts/Combat/HitEventReceiver.cs:18)
-
-[AnimEvent] Hit frame: 3
-UnityEngine.Debug:Log (object)
-HitEventReceiver:OnHit (int) (at Assets/Scripts/Combat/HitEventReceiver.cs:18)
-
-[AnimEvent] Skill animation end
-UnityEngine.Debug:Log (object)
-HitEventReceiver:OnSkillAnimationEnd () (at Assets/Scripts/Combat/HitEventReceiver.cs:33)
-
-[CombatCamera] Reset: size=32.26, pos=(17.62, 6.50, -16.99)
-UnityEngine.Debug:Log (object)
-CombatCameraManager:ResetCamera () (at Assets/Scripts/Camera/CombatCameraManager.cs:214)
-ClashAnimationSequence/<CleanupPhase>d__13:MoveNext () (at Assets/Scripts/Combat/ClashAnimationSequence.cs:185)
-UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-ClashAnimationSequence/<PlayAction>d__8:MoveNext () (at Assets/Scripts/Combat/ClashAnimationSequence.cs:73)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[EVENT] Chuẩn bị kích hoạt OnActionConfirmed cho Goblin Warrior với kỹ năng Heavy Strike.
-UnityEngine.Debug:Log (object)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:644)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
---- Lượt của: Celine ---
-UnityEngine.Debug:Log (object)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:686)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[AP] Hồi 1 AP. Hiện có: 4
-UnityEngine.Debug:Log (object)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:705)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[Execute] Celine is a player. Waiting for input...
-UnityEngine.Debug:Log (object)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:711)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[PlanUI] OnPlayerTurn event received for Celine.
-UnityEngine.Debug:Log (object)
-CombatPlanningUI:OnPlayerTurn (CombatUnit) (at Assets/Scripts/Combat/CombatPlanningUI.cs:113)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:713)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[PlanUI] Found UnitView for Celine. Opening skill wheel.
-UnityEngine.Debug:Log (object)
-CombatPlanningUI:OnPlayerTurn (CombatUnit) (at Assets/Scripts/Combat/CombatPlanningUI.cs:125)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:713)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[AP] Đã dùng 0 AP. Còn lại 4.
-UnityEngine.Debug:Log (object)
-CombatManager:SubmitPlayerTurnAction (SkillData,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Combat/CombatManager.cs:529)
-CombatPlanningUI:OnTargetSelected (UnitView) (at Assets/Scripts/Combat/CombatPlanningUI.cs:345)
-CombatPlanningUI:HandleWorldClick (UnityEngine.Vector3) (at Assets/Scripts/Combat/CombatPlanningUI.cs:200)
-CombatPlanningUI:Update () (at Assets/Scripts/Combat/CombatPlanningUI.cs:100)
-
-[Player Input] Celine đã chọn dùng  lên Goblin Warrior.
-UnityEngine.Debug:Log (object)
-CombatManager:SubmitPlayerTurnAction (SkillData,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Combat/CombatManager.cs:533)
-CombatPlanningUI:OnTargetSelected (UnitView) (at Assets/Scripts/Combat/CombatPlanningUI.cs:345)
-CombatPlanningUI:HandleWorldClick (UnityEngine.Vector3) (at Assets/Scripts/Combat/CombatPlanningUI.cs:200)
-CombatPlanningUI:Update () (at Assets/Scripts/Combat/CombatPlanningUI.cs:100)
-
-[Resolve] Celine dùng 
-UnityEngine.Debug:Log (object)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:598)
-UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[ActionResolver] Celine uses '' on 1 target(s).
-UnityEngine.Debug:Log (object)
-ActionResolver:Resolve (CombatUnit,SkillData,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Combat/ClashResolver.cs:56)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:599)
-UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[Resolve] Applying effect: DamageEffect
-UnityEngine.Debug:Log (object)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:610)
-UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-  [Celine] trạng thái GiamSatThuong cộng dồn lên 3 stacks
-UnityEngine.Debug:Log (object)
-CombatUnit:ApplyStatus (StatusEffectType,int,single,int) (at Assets/Scripts/Combat/CombatUnit.cs:206)
-CelinePassive:ApplyStack () (at Assets/Scripts/Data/Passives/CelinePassive.cs:33)
-CelinePassive:OnOwnerDealDamage (CombatUnit,int) (at Assets/Scripts/Data/Passives/CelinePassive.cs:25)
-CombatUnit:TakeDamage (CombatUnit,int,int) (at Assets/Scripts/Combat/CombatUnit.cs:109)
-DamageEffect:Apply (CombatUnit,CombatUnit[]) (at Assets/Scripts/Data/Effects/DamageEffect.cs:19)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:611)
-UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-  [Celine] trạng thái GiamSatThuong cộng dồn lên 4 stacks
-UnityEngine.Debug:Log (object)
-CombatUnit:ApplyStatus (StatusEffectType,int,single,int) (at Assets/Scripts/Combat/CombatUnit.cs:206)
-CelinePassive:ApplyStack () (at Assets/Scripts/Data/Passives/CelinePassive.cs:33)
-CelinePassive:OnOwnerDealDamage (CombatUnit,int) (at Assets/Scripts/Data/Passives/CelinePassive.cs:25)
-CombatUnit:TakeDamage (CombatUnit,int,int) (at Assets/Scripts/Combat/CombatUnit.cs:109)
-DamageEffect:Apply (CombatUnit,CombatUnit[]) (at Assets/Scripts/Data/Effects/DamageEffect.cs:19)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:611)
-UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-  Goblin Warrior nhận 24 dmg → HP 32/80
-UnityEngine.Debug:Log (object)
-CombatUnit:TakeDamage (CombatUnit,int,int) (at Assets/Scripts/Combat/CombatUnit.cs:113)
-DamageEffect:Apply (CombatUnit,CombatUnit[]) (at Assets/Scripts/Data/Effects/DamageEffect.cs:19)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:611)
-UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[CombatCamera] Reset: size=32.26, pos=(17.62, 6.50, -16.99)
-UnityEngine.Debug:Log (object)
-CombatCameraManager:ResetCamera () (at Assets/Scripts/Camera/CombatCameraManager.cs:214)
-ClashAnimationSequence/<CleanupPhase>d__13:MoveNext () (at Assets/Scripts/Combat/ClashAnimationSequence.cs:185)
-UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-ClashAnimationSequence/<PlayAction>d__8:MoveNext () (at Assets/Scripts/Combat/ClashAnimationSequence.cs:73)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[EVENT] Chuẩn bị kích hoạt OnActionConfirmed cho Celine với kỹ năng .
-UnityEngine.Debug:Log (object)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:644)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
---- Lượt của: Aleus ---
-UnityEngine.Debug:Log (object)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:686)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[AP] Hồi 1 AP. Hiện có: 5
-UnityEngine.Debug:Log (object)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:705)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[Execute] Aleus is a player. Waiting for input...
-UnityEngine.Debug:Log (object)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:711)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[PlanUI] OnPlayerTurn event received for Aleus.
-UnityEngine.Debug:Log (object)
-CombatPlanningUI:OnPlayerTurn (CombatUnit) (at Assets/Scripts/Combat/CombatPlanningUI.cs:113)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:713)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[PlanUI] Found UnitView for Aleus. Opening skill wheel.
-UnityEngine.Debug:Log (object)
-CombatPlanningUI:OnPlayerTurn (CombatUnit) (at Assets/Scripts/Combat/CombatPlanningUI.cs:125)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:713)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[AP] Đã dùng 1 AP. Còn lại 4.
-UnityEngine.Debug:Log (object)
-CombatManager:SubmitPlayerTurnAction (SkillData,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Combat/CombatManager.cs:529)
-CombatPlanningUI:OnTargetSelected (UnitView) (at Assets/Scripts/Combat/CombatPlanningUI.cs:345)
-CombatPlanningUI:HandleWorldClick (UnityEngine.Vector3) (at Assets/Scripts/Combat/CombatPlanningUI.cs:200)
-CombatPlanningUI:Update () (at Assets/Scripts/Combat/CombatPlanningUI.cs:100)
-
-[Player Input] Aleus đã chọn dùng Aleus_Skill1 lên Aleus.
-UnityEngine.Debug:Log (object)
-CombatManager:SubmitPlayerTurnAction (SkillData,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Combat/CombatManager.cs:533)
-CombatPlanningUI:OnTargetSelected (UnitView) (at Assets/Scripts/Combat/CombatPlanningUI.cs:345)
-CombatPlanningUI:HandleWorldClick (UnityEngine.Vector3) (at Assets/Scripts/Combat/CombatPlanningUI.cs:200)
-CombatPlanningUI:Update () (at Assets/Scripts/Combat/CombatPlanningUI.cs:100)
-
-[Resolve] Aleus dùng Aleus_Skill1
-UnityEngine.Debug:Log (object)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:598)
-UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[ActionResolver] Aleus uses 'Aleus_Skill1' on 1 target(s).
-UnityEngine.Debug:Log (object)
-ActionResolver:Resolve (CombatUnit,SkillData,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Combat/ClashResolver.cs:56)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:599)
-UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[Resolve] Applying effect: DamageReductionEffect
-UnityEngine.Debug:Log (object)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:610)
-UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-  [Aleus] nhận trạng thái GiamSatThuong (2 lượt, 1 stacks, value: 0.2)
+  [Vergil] nhận trạng thái GiamSatThuong (2 lượt, 1 stacks, value: 0.2)
 UnityEngine.Debug:Log (object)
 CombatUnit:ApplyStatus (StatusEffectType,int,single,int) (at Assets/Scripts/Combat/CombatUnit.cs:211)
 DamageReductionEffect:Apply (CombatUnit,CombatUnit[]) (at Assets/Scripts/Data/Effects/DamageReductionEffect.cs:13)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:611)
+CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:545)
 UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
+CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:659)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
-[Resolve] Applying effect: HoTHealEffect
+[Resolve] Applying non-damage effect: HoTHealEffect
 UnityEngine.Debug:Log (object)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:610)
+CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:544)
 UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
+CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:659)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
-  Aleus hồi 0 HP → HP 150/150
+  Vergil hồi 0 HP → HP 100/100
 UnityEngine.Debug:Log (object)
 CombatUnit:Heal (int) (at Assets/Scripts/Combat/CombatUnit.cs:143)
 HoTHealEffect:Apply (CombatUnit,CombatUnit[]) (at Assets/Scripts/Data/Effects/HoTHealEffect.cs:13)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:611)
+CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:545)
 UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
+CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:659)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
+
+[AnimEvent] Skill animation end
+UnityEngine.Debug:Log (object)
+HitEventReceiver:OnSkillAnimationEnd () (at Assets/Scripts/Combat/HitEventReceiver.cs:33)
 
 [CombatCamera] Reset: size=32.26, pos=(17.62, 6.50, -16.99)
 UnityEngine.Debug:Log (object)
 CombatCameraManager:ResetCamera () (at Assets/Scripts/Camera/CombatCameraManager.cs:214)
-ClashAnimationSequence/<CleanupPhase>d__13:MoveNext () (at Assets/Scripts/Combat/ClashAnimationSequence.cs:185)
+ClashAnimationSequence/<CleanupPhase>d__13:MoveNext () (at Assets/Scripts/Combat/ClashAnimationSequence.cs:191)
 UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
 ClashAnimationSequence/<PlayAction>d__8:MoveNext () (at Assets/Scripts/Combat/ClashAnimationSequence.cs:73)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
-[EVENT] Chuẩn bị kích hoạt OnActionConfirmed cho Aleus với kỹ năng Aleus_Skill1.
+[EVENT] Chuẩn bị kích hoạt OnActionConfirmed cho Eugeo với kỹ năng Skill 3.
 UnityEngine.Debug:Log (object)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:644)
+CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:592)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
-[Aleus's Passive] Nhận được sự kiện OnActionConfirmed! Đang xử lý kỹ năng: Aleus_Skill1.
+--- Lượt của: Vergil ---
 UnityEngine.Debug:Log (object)
-AleusPassive:OnOwnerActionConfirmed (SkillData,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Data/Passives/AleusPassive.cs:31)
-CombatUnit:RaiseActionConfirmed (SkillData,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Combat/CombatUnit.cs:57)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:645)
+CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:628)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
-[Aleus's Passive] Kỹ năng hỗ trợ được sử dụng. Hồi 4 HP cho đồng minh thấp máu nhất: Celine.
+[AP] Hồi 1 AP. Hiện có: 3
 UnityEngine.Debug:Log (object)
-AleusPassive:OnOwnerActionConfirmed (SkillData,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Data/Passives/AleusPassive.cs:57)
-CombatUnit:RaiseActionConfirmed (SkillData,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Combat/CombatUnit.cs:57)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:645)
+CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:644)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
-  Celine hồi 4 HP → HP 192/200
+[Execute] Vergil is a player. Waiting for input...
 UnityEngine.Debug:Log (object)
-CombatUnit:Heal (int) (at Assets/Scripts/Combat/CombatUnit.cs:143)
-AleusPassive:OnOwnerActionConfirmed (SkillData,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Data/Passives/AleusPassive.cs:58)
-CombatUnit:RaiseActionConfirmed (SkillData,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Combat/CombatUnit.cs:57)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:645)
+CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:649)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
-[Aleus's Passive] Nhận được sự kiện OnActionConfirmed! Đang xử lý kỹ năng: Aleus_Skill1.
-UnityEngine.Debug:Log (object)
-AleusPassive:OnOwnerActionConfirmed (SkillData,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Data/Passives/AleusPassive.cs:31)
-CombatUnit:RaiseActionConfirmed (SkillData,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Combat/CombatUnit.cs:57)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:645)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[Aleus's Passive] Kỹ năng hỗ trợ được sử dụng. Hồi 4 HP cho đồng minh thấp máu nhất: Celine.
-UnityEngine.Debug:Log (object)
-AleusPassive:OnOwnerActionConfirmed (SkillData,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Data/Passives/AleusPassive.cs:57)
-CombatUnit:RaiseActionConfirmed (SkillData,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Combat/CombatUnit.cs:57)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:645)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-  Celine hồi 4 HP → HP 192/200
-UnityEngine.Debug:Log (object)
-CombatUnit:Heal (int) (at Assets/Scripts/Combat/CombatUnit.cs:143)
-AleusPassive:OnOwnerActionConfirmed (SkillData,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Data/Passives/AleusPassive.cs:58)
-CombatUnit:RaiseActionConfirmed (SkillData,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Combat/CombatUnit.cs:57)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:645)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
---- Lượt của: Lucio ---
-UnityEngine.Debug:Log (object)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:686)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[AP] Hồi 1 AP. Hiện có: 5
-UnityEngine.Debug:Log (object)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:705)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[Execute] Lucio is a player. Waiting for input...
-UnityEngine.Debug:Log (object)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:711)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[PlanUI] OnPlayerTurn event received for Lucio.
+[PlanUI] OnPlayerTurn event received for Vergil.
 UnityEngine.Debug:Log (object)
 CombatPlanningUI:OnPlayerTurn (CombatUnit) (at Assets/Scripts/Combat/CombatPlanningUI.cs:113)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:713)
+CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:651)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
-[PlanUI] Found UnitView for Lucio. Opening skill wheel.
+[PlanUI] Found UnitView for Vergil. Opening skill wheel.
 UnityEngine.Debug:Log (object)
 CombatPlanningUI:OnPlayerTurn (CombatUnit) (at Assets/Scripts/Combat/CombatPlanningUI.cs:125)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:713)
+CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:651)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
-[AP] Đã dùng 0 AP. Còn lại 5.
+[AP] Đã dùng 1 AP. Còn lại 2.
 UnityEngine.Debug:Log (object)
-CombatManager:SubmitPlayerTurnAction (SkillData,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Combat/CombatManager.cs:529)
+CombatManager:SubmitPlayerTurnAction (SkillData,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Combat/CombatManager.cs:487)
 CombatPlanningUI:OnTargetSelected (UnitView) (at Assets/Scripts/Combat/CombatPlanningUI.cs:345)
 CombatPlanningUI:HandleWorldClick (UnityEngine.Vector3) (at Assets/Scripts/Combat/CombatPlanningUI.cs:200)
 CombatPlanningUI:Update () (at Assets/Scripts/Combat/CombatPlanningUI.cs:100)
 
-[Player Input] Lucio đã chọn dùng  lên Goblin Warrior.
+[Player Input] Vergil đã chọn dùng Skill 3 lên Goblin Warrior.
 UnityEngine.Debug:Log (object)
-CombatManager:SubmitPlayerTurnAction (SkillData,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Combat/CombatManager.cs:533)
+CombatManager:SubmitPlayerTurnAction (SkillData,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Combat/CombatManager.cs:490)
 CombatPlanningUI:OnTargetSelected (UnitView) (at Assets/Scripts/Combat/CombatPlanningUI.cs:345)
 CombatPlanningUI:HandleWorldClick (UnityEngine.Vector3) (at Assets/Scripts/Combat/CombatPlanningUI.cs:200)
 CombatPlanningUI:Update () (at Assets/Scripts/Combat/CombatPlanningUI.cs:100)
 
-[Resolve] Lucio dùng 
+[Resolve] Vergil dùng Skill 3
 UnityEngine.Debug:Log (object)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:598)
+CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:522)
 UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
+CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:659)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
-[ActionResolver] Lucio uses '' on 1 target(s).
+[ActionResolver] Vergil uses 'Skill 3' on 1 target(s).
 UnityEngine.Debug:Log (object)
-ActionResolver:Resolve (CombatUnit,SkillData,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Combat/ClashResolver.cs:56)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:599)
+ActionResolver:Resolve (CombatUnit,SkillData,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Combat/ClashResolver.cs:55)
+CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:523)
 UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
+CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:659)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
-[Resolve] Applying effect: DamageEffect
+[Resolve] Applying non-damage effect: MissingHPDamageEffect
 UnityEngine.Debug:Log (object)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:610)
+CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:544)
 UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
+CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:659)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
-  Goblin Warrior nhận 24 dmg → HP 8/80
+  Goblin Warrior nhận 12 dmg → HP 68/80
 UnityEngine.Debug:Log (object)
 CombatUnit:TakeDamage (CombatUnit,int,int) (at Assets/Scripts/Combat/CombatUnit.cs:113)
-DamageEffect:Apply (CombatUnit,CombatUnit[]) (at Assets/Scripts/Data/Effects/DamageEffect.cs:19)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:611)
+MissingHPDamageEffect:Apply (CombatUnit,CombatUnit[]) (at Assets/Scripts/Data/Effects/MissingHPDamageEffect.cs:18)
+CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:545)
 UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
+CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:659)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
+
+[Resolve] Applying non-damage effect: BuffStatEffect
+UnityEngine.Debug:Log (object)
+CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:544)
+UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
+CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:659)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
+
+  Goblin Warrior nhận buff Speed x1.2 (2 lượt)
+UnityEngine.Debug:Log (object)
+CombatUnit:ApplyBuff (StatType,single,int) (at Assets/Scripts/Combat/CombatUnit.cs:195)
+BuffStatEffect:Apply (CombatUnit,CombatUnit[]) (at Assets/Scripts/Data/Effects/BuffStatEffect.cs:14)
+CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:545)
+UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
+CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:659)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
+
+[Resolve] Applying non-damage effect: IncreaseAPEffect
+UnityEngine.Debug:Log (object)
+CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:544)
+UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
+CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:659)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
+
+[IncreaseAP] Vergil would gain 1 AP, but not implemented yet.
+UnityEngine.Debug:Log (object)
+IncreaseAPEffect:Apply (CombatUnit,CombatUnit[]) (at Assets/Scripts/Data/Effects/IncreaseAPEffect.cs:11)
+CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:545)
+UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
+CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:659)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
+
+[AnimEvent] Hit frame: 0
+UnityEngine.Debug:Log (object)
+HitEventReceiver:OnHit (int) (at Assets/Scripts/Combat/HitEventReceiver.cs:18)
+
+[AnimEvent] Hit frame: 0
+UnityEngine.Debug:Log (object)
+HitEventReceiver:OnHit (int) (at Assets/Scripts/Combat/HitEventReceiver.cs:18)
+
+[AnimEvent] Hit frame: 0
+UnityEngine.Debug:Log (object)
+HitEventReceiver:OnHit (int) (at Assets/Scripts/Combat/HitEventReceiver.cs:18)
+
+[AnimEvent] Skill animation end
+UnityEngine.Debug:Log (object)
+HitEventReceiver:OnSkillAnimationEnd () (at Assets/Scripts/Combat/HitEventReceiver.cs:33)
 
 [CombatCamera] Reset: size=32.26, pos=(17.62, 6.50, -16.99)
 UnityEngine.Debug:Log (object)
 CombatCameraManager:ResetCamera () (at Assets/Scripts/Camera/CombatCameraManager.cs:214)
-ClashAnimationSequence/<CleanupPhase>d__13:MoveNext () (at Assets/Scripts/Combat/ClashAnimationSequence.cs:185)
+ClashAnimationSequence/<CleanupPhase>d__13:MoveNext () (at Assets/Scripts/Combat/ClashAnimationSequence.cs:191)
 UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
 ClashAnimationSequence/<PlayAction>d__8:MoveNext () (at Assets/Scripts/Combat/ClashAnimationSequence.cs:73)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
-[EVENT] Chuẩn bị kích hoạt OnActionConfirmed cho Lucio với kỹ năng .
+[EVENT] Chuẩn bị kích hoạt OnActionConfirmed cho Vergil với kỹ năng Skill 3.
 UnityEngine.Debug:Log (object)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:644)
+CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:592)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
---- Lượt của: Aleus ---
+--- Lượt của: Goblin Warrior ---
 UnityEngine.Debug:Log (object)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:686)
+CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:628)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
-[Execute] Aleus is a player. Waiting for input...
+[AI] Goblin Warrior chuẩn bị [Skill 1] → [Rin]
 UnityEngine.Debug:Log (object)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:711)
+EnemyAI:PlanTurn (CombatUnit,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Combat/EnemyAI.cs:21)
+CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:634)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
-[PlanUI] OnPlayerTurn event received for Aleus.
+[Resolve] Goblin Warrior dùng Skill 1
+UnityEngine.Debug:Log (object)
+CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:522)
+UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
+CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:659)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
+
+[ActionResolver] Goblin Warrior uses 'Skill 1' on 1 target(s).
+UnityEngine.Debug:Log (object)
+ActionResolver:Resolve (CombatUnit,SkillData,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Combat/ClashResolver.cs:55)
+CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:523)
+UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
+CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:659)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
+
+[Resolve] DamageEffect 'DamageEffect' deferred to animation.
+UnityEngine.Debug:Log (object)
+CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:539)
+UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
+CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:659)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
+
+[Resolve] Applying non-damage effect: BuffStatEffect
+UnityEngine.Debug:Log (object)
+CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:544)
+UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
+CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:659)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
+
+  Rin nhận buff ATK x1.05 (1 lượt)
+UnityEngine.Debug:Log (object)
+CombatUnit:ApplyBuff (StatType,single,int) (at Assets/Scripts/Combat/CombatUnit.cs:195)
+BuffStatEffect:Apply (CombatUnit,CombatUnit[]) (at Assets/Scripts/Data/Effects/BuffStatEffect.cs:14)
+CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:545)
+UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
+CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:659)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
+
+[Resolve] Set pending outcomes cho Goblin Warrior: 1 outcomes, 1 hits.
+UnityEngine.Debug:Log (object)
+CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:577)
+UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
+CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:659)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
+
+[AnimEvent] Hit frame: 0
+UnityEngine.Debug:Log (object)
+HitEventReceiver:OnHit (int) (at Assets/Scripts/Combat/HitEventReceiver.cs:18)
+
+  Rin nhận 8 dmg → HP 92/100
+UnityEngine.Debug:Log (object)
+CombatUnit:TakeDamage (CombatUnit,int,int) (at Assets/Scripts/Combat/CombatUnit.cs:113)
+UnitView:ProcessHitAtFrame (int) (at Assets/Scripts/Combat/UnitView.cs:251)
+HitEventReceiver:OnHit (int) (at Assets/Scripts/Combat/HitEventReceiver.cs:19)
+
+[Hit 0] Rin nhận 8 damage. HP: 92
+UnityEngine.Debug:Log (object)
+UnitView:ProcessHitAtFrame (int) (at Assets/Scripts/Combat/UnitView.cs:252)
+HitEventReceiver:OnHit (int) (at Assets/Scripts/Combat/HitEventReceiver.cs:19)
+
+[AnimEvent] Skill animation end
+UnityEngine.Debug:Log (object)
+HitEventReceiver:OnSkillAnimationEnd () (at Assets/Scripts/Combat/HitEventReceiver.cs:33)
+
+[CombatCamera] Reset: size=32.26, pos=(17.62, 6.50, -16.99)
+UnityEngine.Debug:Log (object)
+CombatCameraManager:ResetCamera () (at Assets/Scripts/Camera/CombatCameraManager.cs:214)
+ClashAnimationSequence/<CleanupPhase>d__13:MoveNext () (at Assets/Scripts/Combat/ClashAnimationSequence.cs:191)
+UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
+ClashAnimationSequence/<PlayAction>d__8:MoveNext () (at Assets/Scripts/Combat/ClashAnimationSequence.cs:73)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
+
+[EVENT] Chuẩn bị kích hoạt OnActionConfirmed cho Goblin Warrior với kỹ năng Skill 1.
+UnityEngine.Debug:Log (object)
+CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:592)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
+
+--- Lượt của: Vergil ---
+UnityEngine.Debug:Log (object)
+CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:628)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
+
+[AP] Hồi 1 AP. Hiện có: 3
+UnityEngine.Debug:Log (object)
+CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:644)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
+
+[Execute] Vergil is a player. Waiting for input...
+UnityEngine.Debug:Log (object)
+CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:649)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
+
+[PlanUI] OnPlayerTurn event received for Vergil.
 UnityEngine.Debug:Log (object)
 CombatPlanningUI:OnPlayerTurn (CombatUnit) (at Assets/Scripts/Combat/CombatPlanningUI.cs:113)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:713)
+CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:651)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
-[PlanUI] Found UnitView for Aleus. Opening skill wheel.
+[PlanUI] Found UnitView for Vergil. Opening skill wheel.
 UnityEngine.Debug:Log (object)
 CombatPlanningUI:OnPlayerTurn (CombatUnit) (at Assets/Scripts/Combat/CombatPlanningUI.cs:125)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:713)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[AP] Đã dùng 1 AP. Còn lại 4.
-UnityEngine.Debug:Log (object)
-CombatManager:SubmitPlayerTurnAction (SkillData,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Combat/CombatManager.cs:529)
-CombatPlanningUI:OnTargetSelected (UnitView) (at Assets/Scripts/Combat/CombatPlanningUI.cs:345)
-CombatPlanningUI:HandleWorldClick (UnityEngine.Vector3) (at Assets/Scripts/Combat/CombatPlanningUI.cs:200)
-CombatPlanningUI:Update () (at Assets/Scripts/Combat/CombatPlanningUI.cs:100)
-
-[Player Input] Aleus đã chọn dùng Aleus_Skill1 lên Aleus.
-UnityEngine.Debug:Log (object)
-CombatManager:SubmitPlayerTurnAction (SkillData,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Combat/CombatManager.cs:533)
-CombatPlanningUI:OnTargetSelected (UnitView) (at Assets/Scripts/Combat/CombatPlanningUI.cs:345)
-CombatPlanningUI:HandleWorldClick (UnityEngine.Vector3) (at Assets/Scripts/Combat/CombatPlanningUI.cs:200)
-CombatPlanningUI:Update () (at Assets/Scripts/Combat/CombatPlanningUI.cs:100)
-
-[Resolve] Aleus dùng Aleus_Skill1
-UnityEngine.Debug:Log (object)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:598)
-UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[ActionResolver] Aleus uses 'Aleus_Skill1' on 1 target(s).
-UnityEngine.Debug:Log (object)
-ActionResolver:Resolve (CombatUnit,SkillData,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Combat/ClashResolver.cs:56)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:599)
-UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[Resolve] Applying effect: DamageReductionEffect
-UnityEngine.Debug:Log (object)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:610)
-UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-  [Aleus] trạng thái GiamSatThuong cộng dồn lên 2 stacks
-UnityEngine.Debug:Log (object)
-CombatUnit:ApplyStatus (StatusEffectType,int,single,int) (at Assets/Scripts/Combat/CombatUnit.cs:206)
-DamageReductionEffect:Apply (CombatUnit,CombatUnit[]) (at Assets/Scripts/Data/Effects/DamageReductionEffect.cs:13)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:611)
-UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[Resolve] Applying effect: HoTHealEffect
-UnityEngine.Debug:Log (object)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:610)
-UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-  Aleus hồi 0 HP → HP 150/150
-UnityEngine.Debug:Log (object)
-CombatUnit:Heal (int) (at Assets/Scripts/Combat/CombatUnit.cs:143)
-HoTHealEffect:Apply (CombatUnit,CombatUnit[]) (at Assets/Scripts/Data/Effects/HoTHealEffect.cs:13)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:611)
-UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[CombatCamera] Reset: size=32.26, pos=(17.62, 6.50, -16.99)
-UnityEngine.Debug:Log (object)
-CombatCameraManager:ResetCamera () (at Assets/Scripts/Camera/CombatCameraManager.cs:214)
-ClashAnimationSequence/<CleanupPhase>d__13:MoveNext () (at Assets/Scripts/Combat/ClashAnimationSequence.cs:185)
-UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-ClashAnimationSequence/<PlayAction>d__8:MoveNext () (at Assets/Scripts/Combat/ClashAnimationSequence.cs:73)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[EVENT] Chuẩn bị kích hoạt OnActionConfirmed cho Aleus với kỹ năng Aleus_Skill1.
-UnityEngine.Debug:Log (object)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:644)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[Aleus's Passive] Nhận được sự kiện OnActionConfirmed! Đang xử lý kỹ năng: Aleus_Skill1.
-UnityEngine.Debug:Log (object)
-AleusPassive:OnOwnerActionConfirmed (SkillData,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Data/Passives/AleusPassive.cs:31)
-CombatUnit:RaiseActionConfirmed (SkillData,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Combat/CombatUnit.cs:57)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:645)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[Aleus's Passive] Kỹ năng hỗ trợ được sử dụng. Hồi 3 HP cho đồng minh thấp máu nhất: Aleus.
-UnityEngine.Debug:Log (object)
-AleusPassive:OnOwnerActionConfirmed (SkillData,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Data/Passives/AleusPassive.cs:57)
-CombatUnit:RaiseActionConfirmed (SkillData,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Combat/CombatUnit.cs:57)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:645)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-  Aleus hồi 3 HP → HP 145/150
-UnityEngine.Debug:Log (object)
-CombatUnit:Heal (int) (at Assets/Scripts/Combat/CombatUnit.cs:143)
-AleusPassive:OnOwnerActionConfirmed (SkillData,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Data/Passives/AleusPassive.cs:58)
-CombatUnit:RaiseActionConfirmed (SkillData,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Combat/CombatUnit.cs:57)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:645)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[Aleus's Passive] Nhận được sự kiện OnActionConfirmed! Đang xử lý kỹ năng: Aleus_Skill1.
-UnityEngine.Debug:Log (object)
-AleusPassive:OnOwnerActionConfirmed (SkillData,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Data/Passives/AleusPassive.cs:31)
-CombatUnit:RaiseActionConfirmed (SkillData,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Combat/CombatUnit.cs:57)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:645)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[Aleus's Passive] Kỹ năng hỗ trợ được sử dụng. Hồi 4 HP cho đồng minh thấp máu nhất: Celine.
-UnityEngine.Debug:Log (object)
-AleusPassive:OnOwnerActionConfirmed (SkillData,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Data/Passives/AleusPassive.cs:57)
-CombatUnit:RaiseActionConfirmed (SkillData,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Combat/CombatUnit.cs:57)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:645)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-  Celine hồi 4 HP → HP 196/200
-UnityEngine.Debug:Log (object)
-CombatUnit:Heal (int) (at Assets/Scripts/Combat/CombatUnit.cs:143)
-AleusPassive:OnOwnerActionConfirmed (SkillData,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Data/Passives/AleusPassive.cs:58)
-CombatUnit:RaiseActionConfirmed (SkillData,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Combat/CombatUnit.cs:57)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:645)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
---- Lượt của: Goblin Warrior ---
-UnityEngine.Debug:Log (object)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:686)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[AI] Goblin Warrior chuẩn bị [Heavy Strike] → [Lucio]
-UnityEngine.Debug:Log (object)
-EnemyAI:PlanTurn (CombatUnit,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Combat/EnemyAI.cs:21)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:694)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[Resolve] Goblin Warrior dùng Heavy Strike
-UnityEngine.Debug:Log (object)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:598)
-UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[ActionResolver] Goblin Warrior uses 'Heavy Strike' on 1 target(s).
-UnityEngine.Debug:Log (object)
-ActionResolver:Resolve (CombatUnit,SkillData,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Combat/ClashResolver.cs:56)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:599)
-UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[Resolve] Applying effect: DamageEffect
-UnityEngine.Debug:Log (object)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:610)
-UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-  Lucio nhận 3 dmg → HP 144/150
-UnityEngine.Debug:Log (object)
-CombatUnit:TakeDamage (CombatUnit,int,int) (at Assets/Scripts/Combat/CombatUnit.cs:113)
-DamageEffect:Apply (CombatUnit,CombatUnit[]) (at Assets/Scripts/Data/Effects/DamageEffect.cs:19)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:611)
-UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[AnimEvent] Hit frame: 0
-UnityEngine.Debug:Log (object)
-HitEventReceiver:OnHit (int) (at Assets/Scripts/Combat/HitEventReceiver.cs:18)
-
-[AnimEvent] Hit frame: 1
-UnityEngine.Debug:Log (object)
-HitEventReceiver:OnHit (int) (at Assets/Scripts/Combat/HitEventReceiver.cs:18)
-
-[AnimEvent] Hit frame: 2
-UnityEngine.Debug:Log (object)
-HitEventReceiver:OnHit (int) (at Assets/Scripts/Combat/HitEventReceiver.cs:18)
-
-[AnimEvent] Hit frame: 3
-UnityEngine.Debug:Log (object)
-HitEventReceiver:OnHit (int) (at Assets/Scripts/Combat/HitEventReceiver.cs:18)
-
-[AnimEvent] Skill animation end
-UnityEngine.Debug:Log (object)
-HitEventReceiver:OnSkillAnimationEnd () (at Assets/Scripts/Combat/HitEventReceiver.cs:33)
-
-[CombatCamera] Reset: size=32.26, pos=(17.62, 6.50, -16.99)
-UnityEngine.Debug:Log (object)
-CombatCameraManager:ResetCamera () (at Assets/Scripts/Camera/CombatCameraManager.cs:214)
-ClashAnimationSequence/<CleanupPhase>d__13:MoveNext () (at Assets/Scripts/Combat/ClashAnimationSequence.cs:185)
-UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-ClashAnimationSequence/<PlayAction>d__8:MoveNext () (at Assets/Scripts/Combat/ClashAnimationSequence.cs:73)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[EVENT] Chuẩn bị kích hoạt OnActionConfirmed cho Goblin Warrior với kỹ năng Heavy Strike.
-UnityEngine.Debug:Log (object)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:644)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
---- Tất cả các lượt đã thực hiện ---
-UnityEngine.Debug:Log (object)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:755)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[Phase] Execute → RoundEnd
-UnityEngine.Debug:Log (object)
-CombatStateMachine:TransitionTo (CombatPhase) (at Assets/Scripts/Combat/CombatStateMachine.cs:22)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:760)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[CombatCamera] Reset: size=32.26, pos=(17.62, 6.50, -16.99)
-UnityEngine.Debug:Log (object)
-CombatCameraManager:ResetCamera () (at Assets/Scripts/Camera/CombatCameraManager.cs:214)
-CombatCameraManager:HandleRoundEnded () (at Assets/Scripts/Camera/CombatCameraManager.cs:363)
-CombatManager:DoRoundEnd () (at Assets/Scripts/Combat/CombatManager.cs:786)
-CombatManager:HandlePhaseChanged (CombatPhase,CombatPhase) (at Assets/Scripts/Combat/CombatManager.cs:319)
-CombatStateMachine:TransitionTo (CombatPhase) (at Assets/Scripts/Combat/CombatStateMachine.cs:25)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:760)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
---- ROUND END ---
-
-UnityEngine.Debug:Log (object)
-CombatManager:DoRoundEnd () (at Assets/Scripts/Combat/CombatManager.cs:787)
-CombatManager:HandlePhaseChanged (CombatPhase,CombatPhase) (at Assets/Scripts/Combat/CombatManager.cs:319)
-CombatStateMachine:TransitionTo (CombatPhase) (at Assets/Scripts/Combat/CombatStateMachine.cs:25)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:760)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[Phase] RoundEnd → EnemyPlan
-UnityEngine.Debug:Log (object)
-CombatStateMachine:TransitionTo (CombatPhase) (at Assets/Scripts/Combat/CombatStateMachine.cs:22)
-CombatManager:DoRoundEnd () (at Assets/Scripts/Combat/CombatManager.cs:789)
-CombatManager:HandlePhaseChanged (CombatPhase,CombatPhase) (at Assets/Scripts/Combat/CombatManager.cs:319)
-CombatStateMachine:TransitionTo (CombatPhase) (at Assets/Scripts/Combat/CombatStateMachine.cs:25)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:760)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-
-=== ROUND 2 ===
-UnityEngine.Debug:Log (object)
-CombatManager:SetupRound () (at Assets/Scripts/Combat/CombatManager.cs:467)
-CombatManager:HandlePhaseChanged (CombatPhase,CombatPhase) (at Assets/Scripts/Combat/CombatManager.cs:315)
-CombatStateMachine:TransitionTo (CombatPhase) (at Assets/Scripts/Combat/CombatStateMachine.cs:25)
-CombatManager:DoRoundEnd () (at Assets/Scripts/Combat/CombatManager.cs:789)
-CombatManager:HandlePhaseChanged (CombatPhase,CombatPhase) (at Assets/Scripts/Combat/CombatManager.cs:319)
-CombatStateMachine:TransitionTo (CombatPhase) (at Assets/Scripts/Combat/CombatStateMachine.cs:25)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:760)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
---- Turn Order ---
-UnityEngine.Debug:Log (object)
-CombatManager:SetupRound () (at Assets/Scripts/Combat/CombatManager.cs:473)
-CombatManager:HandlePhaseChanged (CombatPhase,CombatPhase) (at Assets/Scripts/Combat/CombatManager.cs:315)
-CombatStateMachine:TransitionTo (CombatPhase) (at Assets/Scripts/Combat/CombatStateMachine.cs:25)
-CombatManager:DoRoundEnd () (at Assets/Scripts/Combat/CombatManager.cs:789)
-CombatManager:HandlePhaseChanged (CombatPhase,CombatPhase) (at Assets/Scripts/Combat/CombatManager.cs:319)
-CombatStateMachine:TransitionTo (CombatPhase) (at Assets/Scripts/Combat/CombatStateMachine.cs:25)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:760)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-1. Goblin Warrior (Speed: 10)
-UnityEngine.Debug:Log (object)
-CombatManager:SetupRound () (at Assets/Scripts/Combat/CombatManager.cs:476)
-CombatManager:HandlePhaseChanged (CombatPhase,CombatPhase) (at Assets/Scripts/Combat/CombatManager.cs:315)
-CombatStateMachine:TransitionTo (CombatPhase) (at Assets/Scripts/Combat/CombatStateMachine.cs:25)
-CombatManager:DoRoundEnd () (at Assets/Scripts/Combat/CombatManager.cs:789)
-CombatManager:HandlePhaseChanged (CombatPhase,CombatPhase) (at Assets/Scripts/Combat/CombatManager.cs:319)
-CombatStateMachine:TransitionTo (CombatPhase) (at Assets/Scripts/Combat/CombatStateMachine.cs:25)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:760)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-2. Goblin Warrior (Speed: 10)
-UnityEngine.Debug:Log (object)
-CombatManager:SetupRound () (at Assets/Scripts/Combat/CombatManager.cs:476)
-CombatManager:HandlePhaseChanged (CombatPhase,CombatPhase) (at Assets/Scripts/Combat/CombatManager.cs:315)
-CombatStateMachine:TransitionTo (CombatPhase) (at Assets/Scripts/Combat/CombatStateMachine.cs:25)
-CombatManager:DoRoundEnd () (at Assets/Scripts/Combat/CombatManager.cs:789)
-CombatManager:HandlePhaseChanged (CombatPhase,CombatPhase) (at Assets/Scripts/Combat/CombatManager.cs:319)
-CombatStateMachine:TransitionTo (CombatPhase) (at Assets/Scripts/Combat/CombatStateMachine.cs:25)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:760)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-3. Goblin Warrior (Speed: 10)
-UnityEngine.Debug:Log (object)
-CombatManager:SetupRound () (at Assets/Scripts/Combat/CombatManager.cs:476)
-CombatManager:HandlePhaseChanged (CombatPhase,CombatPhase) (at Assets/Scripts/Combat/CombatManager.cs:315)
-CombatStateMachine:TransitionTo (CombatPhase) (at Assets/Scripts/Combat/CombatStateMachine.cs:25)
-CombatManager:DoRoundEnd () (at Assets/Scripts/Combat/CombatManager.cs:789)
-CombatManager:HandlePhaseChanged (CombatPhase,CombatPhase) (at Assets/Scripts/Combat/CombatManager.cs:319)
-CombatStateMachine:TransitionTo (CombatPhase) (at Assets/Scripts/Combat/CombatStateMachine.cs:25)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:760)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-4. Celine (Speed: 10)
-UnityEngine.Debug:Log (object)
-CombatManager:SetupRound () (at Assets/Scripts/Combat/CombatManager.cs:476)
-CombatManager:HandlePhaseChanged (CombatPhase,CombatPhase) (at Assets/Scripts/Combat/CombatManager.cs:315)
-CombatStateMachine:TransitionTo (CombatPhase) (at Assets/Scripts/Combat/CombatStateMachine.cs:25)
-CombatManager:DoRoundEnd () (at Assets/Scripts/Combat/CombatManager.cs:789)
-CombatManager:HandlePhaseChanged (CombatPhase,CombatPhase) (at Assets/Scripts/Combat/CombatManager.cs:319)
-CombatStateMachine:TransitionTo (CombatPhase) (at Assets/Scripts/Combat/CombatStateMachine.cs:25)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:760)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-5. Aleus (Speed: 10)
-UnityEngine.Debug:Log (object)
-CombatManager:SetupRound () (at Assets/Scripts/Combat/CombatManager.cs:476)
-CombatManager:HandlePhaseChanged (CombatPhase,CombatPhase) (at Assets/Scripts/Combat/CombatManager.cs:315)
-CombatStateMachine:TransitionTo (CombatPhase) (at Assets/Scripts/Combat/CombatStateMachine.cs:25)
-CombatManager:DoRoundEnd () (at Assets/Scripts/Combat/CombatManager.cs:789)
-CombatManager:HandlePhaseChanged (CombatPhase,CombatPhase) (at Assets/Scripts/Combat/CombatManager.cs:319)
-CombatStateMachine:TransitionTo (CombatPhase) (at Assets/Scripts/Combat/CombatStateMachine.cs:25)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:760)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-6. Goblin Warrior (Speed: 10)
-UnityEngine.Debug:Log (object)
-CombatManager:SetupRound () (at Assets/Scripts/Combat/CombatManager.cs:476)
-CombatManager:HandlePhaseChanged (CombatPhase,CombatPhase) (at Assets/Scripts/Combat/CombatManager.cs:315)
-CombatStateMachine:TransitionTo (CombatPhase) (at Assets/Scripts/Combat/CombatStateMachine.cs:25)
-CombatManager:DoRoundEnd () (at Assets/Scripts/Combat/CombatManager.cs:789)
-CombatManager:HandlePhaseChanged (CombatPhase,CombatPhase) (at Assets/Scripts/Combat/CombatManager.cs:319)
-CombatStateMachine:TransitionTo (CombatPhase) (at Assets/Scripts/Combat/CombatStateMachine.cs:25)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:760)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-7. Lucio (Speed: 10)
-UnityEngine.Debug:Log (object)
-CombatManager:SetupRound () (at Assets/Scripts/Combat/CombatManager.cs:476)
-CombatManager:HandlePhaseChanged (CombatPhase,CombatPhase) (at Assets/Scripts/Combat/CombatManager.cs:315)
-CombatStateMachine:TransitionTo (CombatPhase) (at Assets/Scripts/Combat/CombatStateMachine.cs:25)
-CombatManager:DoRoundEnd () (at Assets/Scripts/Combat/CombatManager.cs:789)
-CombatManager:HandlePhaseChanged (CombatPhase,CombatPhase) (at Assets/Scripts/Combat/CombatManager.cs:319)
-CombatStateMachine:TransitionTo (CombatPhase) (at Assets/Scripts/Combat/CombatStateMachine.cs:25)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:760)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-8. Aleus (Speed: 10)
-UnityEngine.Debug:Log (object)
-CombatManager:SetupRound () (at Assets/Scripts/Combat/CombatManager.cs:476)
-CombatManager:HandlePhaseChanged (CombatPhase,CombatPhase) (at Assets/Scripts/Combat/CombatManager.cs:315)
-CombatStateMachine:TransitionTo (CombatPhase) (at Assets/Scripts/Combat/CombatStateMachine.cs:25)
-CombatManager:DoRoundEnd () (at Assets/Scripts/Combat/CombatManager.cs:789)
-CombatManager:HandlePhaseChanged (CombatPhase,CombatPhase) (at Assets/Scripts/Combat/CombatManager.cs:319)
-CombatStateMachine:TransitionTo (CombatPhase) (at Assets/Scripts/Combat/CombatStateMachine.cs:25)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:760)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-9. Celine (Speed: 10)
-UnityEngine.Debug:Log (object)
-CombatManager:SetupRound () (at Assets/Scripts/Combat/CombatManager.cs:476)
-CombatManager:HandlePhaseChanged (CombatPhase,CombatPhase) (at Assets/Scripts/Combat/CombatManager.cs:315)
-CombatStateMachine:TransitionTo (CombatPhase) (at Assets/Scripts/Combat/CombatStateMachine.cs:25)
-CombatManager:DoRoundEnd () (at Assets/Scripts/Combat/CombatManager.cs:789)
-CombatManager:HandlePhaseChanged (CombatPhase,CombatPhase) (at Assets/Scripts/Combat/CombatManager.cs:319)
-CombatStateMachine:TransitionTo (CombatPhase) (at Assets/Scripts/Combat/CombatStateMachine.cs:25)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:760)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-10. Goblin Warrior (Speed: 10)
-UnityEngine.Debug:Log (object)
-CombatManager:SetupRound () (at Assets/Scripts/Combat/CombatManager.cs:476)
-CombatManager:HandlePhaseChanged (CombatPhase,CombatPhase) (at Assets/Scripts/Combat/CombatManager.cs:315)
-CombatStateMachine:TransitionTo (CombatPhase) (at Assets/Scripts/Combat/CombatStateMachine.cs:25)
-CombatManager:DoRoundEnd () (at Assets/Scripts/Combat/CombatManager.cs:789)
-CombatManager:HandlePhaseChanged (CombatPhase,CombatPhase) (at Assets/Scripts/Combat/CombatManager.cs:319)
-CombatStateMachine:TransitionTo (CombatPhase) (at Assets/Scripts/Combat/CombatStateMachine.cs:25)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:760)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[Phase] EnemyPlan → Execute
-UnityEngine.Debug:Log (object)
-CombatStateMachine:TransitionTo (CombatPhase) (at Assets/Scripts/Combat/CombatStateMachine.cs:22)
-CombatManager:SetupRound () (at Assets/Scripts/Combat/CombatManager.cs:490)
-CombatManager:HandlePhaseChanged (CombatPhase,CombatPhase) (at Assets/Scripts/Combat/CombatManager.cs:315)
-CombatStateMachine:TransitionTo (CombatPhase) (at Assets/Scripts/Combat/CombatStateMachine.cs:25)
-CombatManager:DoRoundEnd () (at Assets/Scripts/Combat/CombatManager.cs:789)
-CombatManager:HandlePhaseChanged (CombatPhase,CombatPhase) (at Assets/Scripts/Combat/CombatManager.cs:319)
-CombatStateMachine:TransitionTo (CombatPhase) (at Assets/Scripts/Combat/CombatStateMachine.cs:25)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:760)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-
---- EXECUTE ---
-UnityEngine.Debug:Log (object)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:658)
-UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager:HandlePhaseChanged (CombatPhase,CombatPhase) (at Assets/Scripts/Combat/CombatManager.cs:318)
-CombatStateMachine:TransitionTo (CombatPhase) (at Assets/Scripts/Combat/CombatStateMachine.cs:25)
-CombatManager:SetupRound () (at Assets/Scripts/Combat/CombatManager.cs:490)
-CombatManager:HandlePhaseChanged (CombatPhase,CombatPhase) (at Assets/Scripts/Combat/CombatManager.cs:315)
-CombatStateMachine:TransitionTo (CombatPhase) (at Assets/Scripts/Combat/CombatStateMachine.cs:25)
-CombatManager:DoRoundEnd () (at Assets/Scripts/Combat/CombatManager.cs:789)
-CombatManager:HandlePhaseChanged (CombatPhase,CombatPhase) (at Assets/Scripts/Combat/CombatManager.cs:319)
-CombatStateMachine:TransitionTo (CombatPhase) (at Assets/Scripts/Combat/CombatStateMachine.cs:25)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:760)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
---- Lượt của: Goblin Warrior ---
-UnityEngine.Debug:Log (object)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:686)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[AI] Goblin Warrior chuẩn bị [Heavy Strike] → [Lucio]
-UnityEngine.Debug:Log (object)
-EnemyAI:PlanTurn (CombatUnit,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Combat/EnemyAI.cs:21)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:694)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[Resolve] Goblin Warrior dùng Heavy Strike
-UnityEngine.Debug:Log (object)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:598)
-UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[ActionResolver] Goblin Warrior uses 'Heavy Strike' on 1 target(s).
-UnityEngine.Debug:Log (object)
-ActionResolver:Resolve (CombatUnit,SkillData,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Combat/ClashResolver.cs:56)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:599)
-UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[Resolve] Applying effect: DamageEffect
-UnityEngine.Debug:Log (object)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:610)
-UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-  Lucio nhận 3 dmg → HP 141/150
-UnityEngine.Debug:Log (object)
-CombatUnit:TakeDamage (CombatUnit,int,int) (at Assets/Scripts/Combat/CombatUnit.cs:113)
-DamageEffect:Apply (CombatUnit,CombatUnit[]) (at Assets/Scripts/Data/Effects/DamageEffect.cs:19)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:611)
-UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[AnimEvent] Hit frame: 0
-UnityEngine.Debug:Log (object)
-HitEventReceiver:OnHit (int) (at Assets/Scripts/Combat/HitEventReceiver.cs:18)
-
-[AnimEvent] Hit frame: 1
-UnityEngine.Debug:Log (object)
-HitEventReceiver:OnHit (int) (at Assets/Scripts/Combat/HitEventReceiver.cs:18)
-
-[AnimEvent] Hit frame: 2
-UnityEngine.Debug:Log (object)
-HitEventReceiver:OnHit (int) (at Assets/Scripts/Combat/HitEventReceiver.cs:18)
-
-[AnimEvent] Hit frame: 3
-UnityEngine.Debug:Log (object)
-HitEventReceiver:OnHit (int) (at Assets/Scripts/Combat/HitEventReceiver.cs:18)
-
-[AnimEvent] Skill animation end
-UnityEngine.Debug:Log (object)
-HitEventReceiver:OnSkillAnimationEnd () (at Assets/Scripts/Combat/HitEventReceiver.cs:33)
-
-[CombatCamera] Reset: size=32.26, pos=(17.62, 6.50, -16.99)
-UnityEngine.Debug:Log (object)
-CombatCameraManager:ResetCamera () (at Assets/Scripts/Camera/CombatCameraManager.cs:214)
-ClashAnimationSequence/<CleanupPhase>d__13:MoveNext () (at Assets/Scripts/Combat/ClashAnimationSequence.cs:185)
-UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-ClashAnimationSequence/<PlayAction>d__8:MoveNext () (at Assets/Scripts/Combat/ClashAnimationSequence.cs:73)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[EVENT] Chuẩn bị kích hoạt OnActionConfirmed cho Goblin Warrior với kỹ năng Heavy Strike.
-UnityEngine.Debug:Log (object)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:644)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
---- Lượt của: Goblin Warrior ---
-UnityEngine.Debug:Log (object)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:686)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[AI] Goblin Warrior chuẩn bị [Heavy Strike] → [Celine]
-UnityEngine.Debug:Log (object)
-EnemyAI:PlanTurn (CombatUnit,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Combat/EnemyAI.cs:21)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:694)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[Resolve] Goblin Warrior dùng Heavy Strike
-UnityEngine.Debug:Log (object)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:598)
-UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[ActionResolver] Goblin Warrior uses 'Heavy Strike' on 1 target(s).
-UnityEngine.Debug:Log (object)
-ActionResolver:Resolve (CombatUnit,SkillData,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Combat/ClashResolver.cs:56)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:599)
-UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[Resolve] Applying effect: DamageEffect
-UnityEngine.Debug:Log (object)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:610)
-UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-  [Celine] trạng thái GiamSatThuong cộng dồn lên 5 stacks
-UnityEngine.Debug:Log (object)
-CombatUnit:ApplyStatus (StatusEffectType,int,single,int) (at Assets/Scripts/Combat/CombatUnit.cs:206)
-CelinePassive:ApplyStack () (at Assets/Scripts/Data/Passives/CelinePassive.cs:33)
-CelinePassive:OnOwnerTakeDamage (CombatUnit,int) (at Assets/Scripts/Data/Passives/CelinePassive.cs:20)
-CombatUnit:TakeDamage (CombatUnit,int,int) (at Assets/Scripts/Combat/CombatUnit.cs:108)
-DamageEffect:Apply (CombatUnit,CombatUnit[]) (at Assets/Scripts/Data/Effects/DamageEffect.cs:19)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:611)
-UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-  Celine nhận 10 dmg → HP 186/200
-UnityEngine.Debug:Log (object)
-CombatUnit:TakeDamage (CombatUnit,int,int) (at Assets/Scripts/Combat/CombatUnit.cs:113)
-DamageEffect:Apply (CombatUnit,CombatUnit[]) (at Assets/Scripts/Data/Effects/DamageEffect.cs:19)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:611)
-UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[AnimEvent] Hit frame: 0
-UnityEngine.Debug:Log (object)
-HitEventReceiver:OnHit (int) (at Assets/Scripts/Combat/HitEventReceiver.cs:18)
-
-[AnimEvent] Hit frame: 1
-UnityEngine.Debug:Log (object)
-HitEventReceiver:OnHit (int) (at Assets/Scripts/Combat/HitEventReceiver.cs:18)
-
-[AnimEvent] Hit frame: 2
-UnityEngine.Debug:Log (object)
-HitEventReceiver:OnHit (int) (at Assets/Scripts/Combat/HitEventReceiver.cs:18)
-
-[AnimEvent] Hit frame: 3
-UnityEngine.Debug:Log (object)
-HitEventReceiver:OnHit (int) (at Assets/Scripts/Combat/HitEventReceiver.cs:18)
-
-[AnimEvent] Skill animation end
-UnityEngine.Debug:Log (object)
-HitEventReceiver:OnSkillAnimationEnd () (at Assets/Scripts/Combat/HitEventReceiver.cs:33)
-
-[CombatCamera] Reset: size=32.26, pos=(17.62, 6.50, -16.99)
-UnityEngine.Debug:Log (object)
-CombatCameraManager:ResetCamera () (at Assets/Scripts/Camera/CombatCameraManager.cs:214)
-ClashAnimationSequence/<CleanupPhase>d__13:MoveNext () (at Assets/Scripts/Combat/ClashAnimationSequence.cs:185)
-UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-ClashAnimationSequence/<PlayAction>d__8:MoveNext () (at Assets/Scripts/Combat/ClashAnimationSequence.cs:73)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[EVENT] Chuẩn bị kích hoạt OnActionConfirmed cho Goblin Warrior với kỹ năng Heavy Strike.
-UnityEngine.Debug:Log (object)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:644)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
---- Lượt của: Goblin Warrior ---
-UnityEngine.Debug:Log (object)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:686)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[AI] Goblin Warrior chuẩn bị [Heavy Strike] → [Celine]
-UnityEngine.Debug:Log (object)
-EnemyAI:PlanTurn (CombatUnit,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Combat/EnemyAI.cs:21)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:694)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[Resolve] Goblin Warrior dùng Heavy Strike
-UnityEngine.Debug:Log (object)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:598)
-UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[ActionResolver] Goblin Warrior uses 'Heavy Strike' on 1 target(s).
-UnityEngine.Debug:Log (object)
-ActionResolver:Resolve (CombatUnit,SkillData,System.Collections.Generic.List`1<CombatUnit>) (at Assets/Scripts/Combat/ClashResolver.cs:56)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:599)
-UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[Resolve] Applying effect: DamageEffect
-UnityEngine.Debug:Log (object)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:610)
-UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-  Celine nhận 9 dmg → HP 177/200
-UnityEngine.Debug:Log (object)
-CombatUnit:TakeDamage (CombatUnit,int,int) (at Assets/Scripts/Combat/CombatUnit.cs:113)
-DamageEffect:Apply (CombatUnit,CombatUnit[]) (at Assets/Scripts/Data/Effects/DamageEffect.cs:19)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:611)
-UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:725)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[AnimEvent] Hit frame: 0
-UnityEngine.Debug:Log (object)
-HitEventReceiver:OnHit (int) (at Assets/Scripts/Combat/HitEventReceiver.cs:18)
-
-[AnimEvent] Hit frame: 1
-UnityEngine.Debug:Log (object)
-HitEventReceiver:OnHit (int) (at Assets/Scripts/Combat/HitEventReceiver.cs:18)
-
-[AnimEvent] Hit frame: 2
-UnityEngine.Debug:Log (object)
-HitEventReceiver:OnHit (int) (at Assets/Scripts/Combat/HitEventReceiver.cs:18)
-
-[AnimEvent] Hit frame: 3
-UnityEngine.Debug:Log (object)
-HitEventReceiver:OnHit (int) (at Assets/Scripts/Combat/HitEventReceiver.cs:18)
-
-[AnimEvent] Skill animation end
-UnityEngine.Debug:Log (object)
-HitEventReceiver:OnSkillAnimationEnd () (at Assets/Scripts/Combat/HitEventReceiver.cs:33)
-
-[CombatCamera] Reset: size=32.26, pos=(17.62, 6.50, -16.99)
-UnityEngine.Debug:Log (object)
-CombatCameraManager:ResetCamera () (at Assets/Scripts/Camera/CombatCameraManager.cs:214)
-ClashAnimationSequence/<CleanupPhase>d__13:MoveNext () (at Assets/Scripts/Combat/ClashAnimationSequence.cs:185)
-UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
-ClashAnimationSequence/<PlayAction>d__8:MoveNext () (at Assets/Scripts/Combat/ClashAnimationSequence.cs:73)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[EVENT] Chuẩn bị kích hoạt OnActionConfirmed cho Goblin Warrior với kỹ năng Heavy Strike.
-UnityEngine.Debug:Log (object)
-CombatManager/<ResolveAction>d__111:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:644)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
---- Lượt của: Celine ---
-UnityEngine.Debug:Log (object)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:686)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[Execute] Celine is a player. Waiting for input...
-UnityEngine.Debug:Log (object)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:711)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[PlanUI] OnPlayerTurn event received for Celine.
-UnityEngine.Debug:Log (object)
-CombatPlanningUI:OnPlayerTurn (CombatUnit) (at Assets/Scripts/Combat/CombatPlanningUI.cs:113)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:713)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-[PlanUI] Found UnitView for Celine. Opening skill wheel.
-UnityEngine.Debug:Log (object)
-CombatPlanningUI:OnPlayerTurn (CombatUnit) (at Assets/Scripts/Combat/CombatPlanningUI.cs:125)
-CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:713)
+CombatManager/<ExecuteRound>d__112:MoveNext () (at Assets/Scripts/Combat/CombatManager.cs:651)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
