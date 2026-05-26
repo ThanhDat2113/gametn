@@ -20,6 +20,9 @@ public class DialogueBubbleUI : MonoBehaviour
     private Camera _cam;
     private bool _isShowing;
     private System.Action _onHide;
+    private System.Action _onComplete;
+
+    public bool IsShowing => _isShowing;
 
     void Awake()
     {
@@ -32,20 +35,14 @@ public class DialogueBubbleUI : MonoBehaviour
     void Update()
     {
         if (!_isShowing) return;
-
         bubbleRoot.transform.rotation = _cam.transform.rotation;
-
         bool keyPressed = Input.GetKeyDown(continueKey) || (clickToContinue && Input.GetMouseButtonDown(0));
-        if (keyPressed)
-        {
-            Hide();
-        }
+        if (keyPressed) Hide();
     }
 
-    // Hiển thị một dòng và gán callback khi ẩn
     public void Show(DialogueLineData line, Transform target, System.Action onHide = null)
     {
-        if (_isShowing) Hide(); // ẩn dòng hiện tại (sẽ gọi callback cũ trước khi set cái mới)
+        if (_isShowing) Hide();
         Vector2 offset = line.offset == Vector2.zero ? defaultOffset : line.offset;
         bubbleRoot.transform.position = target.position + (Vector3)offset;
         speakerText.text = line.speakerName;
@@ -55,14 +52,15 @@ public class DialogueBubbleUI : MonoBehaviour
         _onHide = onHide;
     }
 
-    public void ShowSequential(DialogueLineData[] lines, Transform target, int startIndex = 0)
+    public void ShowSequential(DialogueLineData[] lines, Transform target, System.Action onComplete = null, int startIndex = 0)
     {
         if (startIndex >= lines.Length)
         {
             Hide();
+            onComplete?.Invoke();
             return;
         }
-        Show(lines[startIndex], target, () => ShowSequential(lines, target, startIndex + 1));
+        Show(lines[startIndex], target, () => ShowSequential(lines, target, onComplete, startIndex + 1));
     }
 
     private void Hide()

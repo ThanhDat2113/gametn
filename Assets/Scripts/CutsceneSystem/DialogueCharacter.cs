@@ -19,9 +19,7 @@ public class DialogueCharacter : ScriptableObject
                 if (!string.IsNullOrEmpty(entry.emotionKey))
                     _portraitDict[entry.emotionKey] = entry.sprite;
         }
-        return _portraitDict.TryGetValue(emotionKey, out Sprite s)
-            ? s
-            : (portraits.Count > 0 ? portraits[0].sprite : null);
+        return _portraitDict.TryGetValue(emotionKey, out Sprite s) ? s : (portraits.Count > 0 ? portraits[0].sprite : null);
     }
 }
 
