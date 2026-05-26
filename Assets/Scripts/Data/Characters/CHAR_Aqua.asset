@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f9330979f02ddf43a415e7748b42aae, type: 3}
+  m_Name: CHAR_Aqua
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterData
+  prefab: {fileID: 1592895977249800688, guid: 7c83cee0cc810e64ca95e904c25e1b97, type: 3}
+  characterName: Aqua
+  portrait: {fileID: 894663561, guid: 3e527fd045b441e4f83037f4ee69a087, type: 3}
+  battleSprite: {fileID: 894663561, guid: 3e527fd045b441e4f83037f4ee69a087, type: 3}
+  lore: 
+  baseHP: 100
+  baseATK: 20
+  basePDEF: 10
+  baseMDEF: 10
+  baseSpeed: 10
+  hpPerLevel: 5
+  atkPerLevel: 2
+  pdefPerLevel: 1
+  mdefPerLevel: 1
+  speedPerLevel: 1
+  skills:
+  - {fileID: 11400000, guid: 186218cb3be55684f931f13d6fd8ff34, type: 2}
+  - {fileID: 11400000, guid: 3dde0ab00a5e5534099382a528507667, type: 2}
+  - {fileID: 11400000, guid: 435570801266a0845a6a04e0b6d2cfd4, type: 2}
+  passiveScript: {fileID: 11400000, guid: 9a3e19810a96a754b8a692446cf3f55c, type: 2}
