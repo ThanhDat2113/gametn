@@ -1,0 +1,86 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-5803313817816667304
+MonoBehaviour:
+  m_ObjectHideFlags: 11
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0353a89b1f911e48b9e16bdc9f2e058, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Editor::UnityEditor.Rendering.Universal.AssetVersion
+  version: 10
+--- !u!114 &-3918627311170325281
+MonoBehaviour:
+  m_ObjectHideFlags: 11
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: da692e001514ec24dbc4cca1949ff7e8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  version: 11
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Chestnut
+  m_Shader: {fileID: -6465566751694194690, guid: 348bd9f3b5930a9438098fcf840343c4, type: 3}
+  m_Parent: {fileID: 2100000, guid: f5a604e18538a7744aeab459c61bdadf, type: 2}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords:
+  - _DISABLE_SSR_TRANSPARENT
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap:
+    MotionVector: User
+  disabledShaderPasses:
+  - MOTIONVECTORS
+  - TransparentDepthPrepass
+  - TransparentDepthPostpass
+  - TransparentBackface
+  - RayTracingPrepass
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - Texture2D_0849f000bf184f02b7d8759fb31f82fb:
+        m_Texture: {fileID: 2800000, guid: 661adfe1daaf31a4c862de76e5c0456c, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - Texture2D_36c526d0e2c54cc183d740888f6f8c01:
+        m_Texture: {fileID: 2800000, guid: d512da52e0368ae4b878e5f36c17ceed, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - Texture2D_cbb76ab1a4654e3198e3497297f67f4f:
+        m_Texture: {fileID: 2800000, guid: 661adfe1daaf31a4c862de76e5c0456c, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - Texture2D_d7aaffda7b064d9d9ffe55ff95a3957f:
+        m_Texture: {fileID: 2800000, guid: 3a25842b279d606418b7b55ca974fc1e, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - Vector1_041dbfd44b224f45a56b499a25f22002: 0
+    - Vector1_0f9e10e6496d4f1c9e93101085c8aaa0: 10
+    - Vector1_15425b8b103a4e46acb8796d0a7d47b9: 14
+    - Vector1_9b49beae98e445ed8f4a2ea58eb68758: 0
+    - Vector1_dcce7dbb5698433798c05674599c1b3a: 0
+    - Vector1_e7c88edc66a54b8094f546682b7e480b: 1
+    m_Colors:
+    - Vector2_aa51ae370e3449739929bba860de5390: {r: 0.75, g: 0, b: 0, a: 0}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1
