@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using TMPro; // Thêm dòng này
+using TMPro;
 
 public class FormationManager : MonoBehaviour
 {
@@ -22,7 +22,7 @@ public class FormationManager : MonoBehaviour
     public int[] uiToCombatSlot = new int[9] { 6, 3, 0, 7, 4, 1, 8, 5, 2 };
 
     [Header("Counter")]
-    public TextMeshProUGUI counterText; // Kéo Text vào đây
+    public TextMeshProUGUI counterText;
 
     private SlotUI[] slots = new SlotUI[9];
     private FormationData currentFormation = new FormationData { slots = new FormationSlot[9] };
@@ -37,7 +37,7 @@ public class FormationManager : MonoBehaviour
         BuildGrid();
         BuildRoster();
         formationPanel.SetActive(false);
-        UpdateCounter(); // Khởi tạo hiển thị 0/5
+        UpdateCounter();
     }
 
     void Update()
@@ -118,14 +118,14 @@ public class FormationManager : MonoBehaviour
         };
         slots[uiSlotIndex].SetCharacter(character);
         SetRosterVisible(character, false);
-        UpdateCounter(); // Cập nhật sau khi thêm
+        UpdateCounter();
         return true;
     }
 
     public void RemoveCharacter(int uiSlotIndex)
     {
         ClearSlot(uiSlotIndex);
-        UpdateCounter(); // Cập nhật sau khi xóa
+        UpdateCounter();
     }
 
     public void TrySwapCharacters(int fromSlot, int toSlot)
@@ -146,7 +146,7 @@ public class FormationManager : MonoBehaviour
                 };
                 ClearSlotInternal(fromSlot);
                 slots[toSlot].SetCharacter(charFrom);
-                UpdateCounter(); // Số lượng không đổi nhưng gọi để đồng bộ (nếu cần)
+                UpdateCounter();
             }
         }
         else
@@ -197,7 +197,11 @@ public class FormationManager : MonoBehaviour
         return currentFormation.slots.Any(s => s != null && s.data == character);
     }
 
-    void SaveAndStartCombat()
+    /// <summary>
+    /// Map UI slots sang combat slots rồi lưu vào FormationDataStorage.
+    /// Gọi hàm này trước khi bắt đầu combat từ bất kỳ nguồn nào (T key, dialogue, v.v.)
+    /// </summary>
+    public void SaveFormation()
     {
         var mappedFormation = new FormationData { slots = new FormationSlot[9] };
         for (int uiIdx = 0; uiIdx < currentFormation.slots.Length; uiIdx++)
@@ -214,6 +218,12 @@ public class FormationManager : MonoBehaviour
             }
         }
         FormationDataStorage.PendingFormation = mappedFormation;
+        Debug.Log($"[FormationManager] SaveFormation: đã lưu {currentFormation.slots.Count(s => s != null && s.data != null)} nhân vật.");
+    }
+
+    void SaveAndStartCombat()
+    {
+        SaveFormation();
         SceneManager.LoadScene("CombatScene");
     }
 

@@ -56,7 +56,7 @@ public class DialogueTrigger : MonoBehaviour
 
         if (switchCamera && dialogueCameraObject == null)
             Debug.LogError("DialogueTrigger: Chưa gán dialogueCameraObject!");
-        
+
         if (teleportPlayer && playerToTeleport == null)
             Debug.LogError("DialogueTrigger: Bật teleportPlayer nhưng chưa gán playerToTeleport!");
 
@@ -104,20 +104,38 @@ public class DialogueTrigger : MonoBehaviour
         }
         yield return new WaitForSeconds(blackScreenDelay);
         yield return FadeController.Instance.FadeFromBlack();
-        
+
         if (startCombatAfterDialogue)
             StartCombat();
     }
 
     private void StartCombat()
     {
-        Debug.Log("Starting combat after dialogue");
+        Debug.Log("[DialogueTrigger] Starting combat after dialogue.");
+
+        // Nếu PendingFormation chưa được set (người chơi chưa nhấn T),
+        // thử lấy từ FormationManager đang có trong scene.
+        if (FormationDataStorage.PendingFormation == null)
+        {
+            var formationManager = FindFirstObjectByType<FormationManager>();
+            if (formationManager != null)
+            {
+                formationManager.SaveFormation();
+                Debug.Log("[DialogueTrigger] Lấy đội hình từ FormationManager.");
+            }
+            else
+            {
+                Debug.LogWarning("[DialogueTrigger] Không tìm thấy FormationManager trong scene.");
+            }
+        }
+
         var formation = FormationDataStorage.PendingFormation;
         if (formation == null)
         {
-            Debug.LogError("Không có đội hình để bắt đầu combat!");
+            Debug.LogError("[DialogueTrigger] Không có đội hình để bắt đầu combat! Hãy xếp đội hình trước.");
             return;
         }
+
         if (CombatManager.Instance != null)
         {
             CombatManager.Instance.StartCombat(formation, enemyGroup);
@@ -133,7 +151,7 @@ public class DialogueTrigger : MonoBehaviour
         if (teleportPlayer && playerToTeleport != null)
         {
             if (_playerController != null) _playerController.enabled = false;
-            
+
             var cc = playerToTeleport.GetComponent<CharacterController>();
             bool ccWasEnabled = false;
             if (cc != null && cc.enabled)
@@ -141,7 +159,7 @@ public class DialogueTrigger : MonoBehaviour
                 ccWasEnabled = true;
                 cc.enabled = false;
             }
-            
+
             var rb = playerToTeleport.GetComponent<Rigidbody>();
             bool rbWasKinematic = false;
             if (rb != null)
@@ -151,9 +169,9 @@ public class DialogueTrigger : MonoBehaviour
                 rb.linearVelocity = Vector3.zero;
                 rb.angularVelocity = Vector3.zero;
             }
-            
+
             playerToTeleport.position = targetPlayerPosition;
-            
+
             if (cc != null && ccWasEnabled)
             {
                 cc.enabled = true;
