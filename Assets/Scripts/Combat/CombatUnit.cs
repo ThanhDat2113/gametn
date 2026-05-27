@@ -175,7 +175,11 @@ public class CombatUnit
         if (apCost > 0) OnSpendAP?.Invoke(apCost);
         Debug.Log($"[{UnitName}] dùng [{SelectedSkill.skillName}]");
         foreach (var effect in SelectedSkill.effects)
+        {
+            Debug.Log($"[{UnitName}] Chuẩn bị áp dụng hiệu ứng: {effect.GetType().Name}");
             effect.Apply(this, SelectedTargets.ToArray());
+            Debug.Log($"[{UnitName}] Đã áp dụng hiệu ứng: {effect.GetType().Name}");
+        }
     }
 
     // ── Buff & Status Management ──────────────────────────────
@@ -301,6 +305,34 @@ public class CombatUnit
         if (Passive != null)
         {
             Passive.Initialize(this);
+        }
+    }
+
+    /// <summary>
+    /// Lấy hệ số nhân sát thương từ Empowered stacks mà KHÔNG tiêu thụ chúng.
+    /// </summary>
+    public float GetEmpowerMultiplier()
+    {
+        var empowerStatus = GetActiveStatus(StatusEffectType.Empowered);
+        if (empowerStatus != null)
+        {
+            int stacks = empowerStatus.Stacks;
+            float bonusPerStack = empowerStatus.Value;
+            return 1f + (stacks * bonusPerStack);
+        }
+        return 1f;
+    }
+
+    /// <summary>
+    /// Xóa tất cả các stack Empowered.
+    /// </summary>
+    public void ClearEmpowerStacks()
+    {
+        var empowerStatus = GetActiveStatus(StatusEffectType.Empowered);
+        if (empowerStatus != null)
+        {
+            activeStatuses.Remove(empowerStatus);
+            Debug.Log($"[{UnitName}] đã xóa {empowerStatus.Stacks} stack Empowered sau khi tấn công.");
         }
     }
 }

@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1e652bd9dd81c6c48a0d625c3dbd9ff3, type: 3}
   m_Name: Aleus_Skill2
   m_EditorClassIdentifier: Assembly-CSharp::SkillData
+  movementOverride: 2
   skillName: Skill 2
   description: "Gi\u01B0\u01A1ng ki\u1EBFm v\xE0 chi\u1EBFu s\xE1ng v\xE0o 1 \u0111\u1ED3ng
     minh buff cho \u0111\u1ED3ng minh \u0111\u1EA5y 10% t\u1ED1c \u0111\u1ED9 v\xE0
@@ -19,6 +20,8 @@ MonoBehaviour:
   icon: {fileID: 0}
   type: 0
   targetType: 1
+  isChargeable: 0
+  doesNotEndTurn: 0
   apCost: 1
   hitCount: 0
   animationTrigger: Skill2

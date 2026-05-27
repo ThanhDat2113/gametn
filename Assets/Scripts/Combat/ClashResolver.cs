@@ -20,7 +20,13 @@ public class ActionResult
             if (outcome.Target.IsAlive)
             {
                 outcome.Target.TakeDamage(Actor, outcome.Damage);
-                Debug.Log($"{outcome.Target.UnitName} takes {outcome.Damage} damage. HP left: {outcome.Target.CurrentHP}");
+                string logMessage = $"{outcome.Target.UnitName} takes {outcome.Damage} damage.";
+                if (outcome.EmpowerMultiplier > 1f)
+                {
+                    logMessage += $" ({outcome.EmpowerMultiplier:F1}x)";
+                }
+                logMessage += $" HP left: {outcome.Target.CurrentHP}";
+                Debug.Log(logMessage);
             }
         }
     }
@@ -36,6 +42,7 @@ public class ActionOutcome
 {
     public CombatUnit Target { get; set; }
     public int Damage { get; set; }
+    public float EmpowerMultiplier { get; set; } = 1f;
 }
 
 /// <summary>
@@ -54,6 +61,13 @@ public class ActionResolver
 
         Debug.Log($"[ActionResolver] {actor.UnitName} uses '{skill.skillName}' on {targets.Count} target(s).");
 
+        // Lấy hệ số nhân sát thương từ Empowered stacks
+        float empowerMultiplier = actor.GetEmpowerMultiplier();
+        if (empowerMultiplier > 1f)
+        {
+            Debug.Log($"[{actor.UnitName}] được cường hóa! Sát thương x{empowerMultiplier}.");
+        }
+
         // Populate Outcomes từ skill effects
         bool hasEffects = skill.effects != null && skill.effects.Length > 0;
         if (hasEffects)
@@ -69,11 +83,17 @@ public class ActionResolver
                         var hits = damageEffect.CalculateHits(actor, target, 1);
                         foreach (var hit in hits)
                         {
+                            int finalDamage = Mathf.RoundToInt(hit.Damage * empowerMultiplier);
                             result.Outcomes.Add(new ActionOutcome
                             {
                                 Target = target,
-                                Damage = hit.Damage
+                                Damage = finalDamage,
+                                EmpowerMultiplier = empowerMultiplier
                             });
+                            if (empowerMultiplier > 1f)
+                            {
+                                Debug.Log($"  -> Sát thương gốc: {hit.Damage}, Sát thương cường hóa: {finalDamage}");
+                            }
                         }
                     }
                 }
@@ -87,12 +107,23 @@ public class ActionResolver
             {
                 if (!target.IsAlive) continue;
                 int damage = Mathf.Max(1, actor.ATK - target.PDEF);
+                int finalDamage = Mathf.RoundToInt(damage * empowerMultiplier);
                 result.Outcomes.Add(new ActionOutcome
                 {
                     Target = target,
-                    Damage = damage
+                    Damage = finalDamage
                 });
+                if (empowerMultiplier > 1f)
+                {
+                    Debug.Log($"  -> Sát thương gốc: {damage}, Sát thương cường hóa: {finalDamage}");
+                }
             }
+        }
+
+        // Tiêu thụ Empowered stacks sau khi tính toán xong
+        if (empowerMultiplier > 1f)
+        {
+            actor.ClearEmpowerStacks();
         }
 
         return result;

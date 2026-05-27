@@ -13,6 +13,7 @@ public class UnitView : MonoBehaviour
     public Slider healthBar;
 
     public event System.Action OnHitAnimationEvent;
+    public event System.Action OnAnimationEndEvent;
 
     public CombatUnit LinkedUnit { get; private set; }
 
@@ -29,6 +30,9 @@ public class UnitView : MonoBehaviour
     private CombatUnit pendingCaster;
     private int pendingHitCount = 1;
     private int currentHitIndex = 0;
+
+    // Wird von Animation Events aufgerufen
+    public void OnAnimationEnd() { OnAnimationEndEvent?.Invoke(); }
 
     public Vector3 GetOriginalPosition()
     {
@@ -209,7 +213,12 @@ public class UnitView : MonoBehaviour
                 if (damageThisHit > 0)
                 {
                     outcome.Target.TakeDamage(pendingCaster, damageThisHit, currentHitIndex);
-                    Debug.Log($"[Flush Hit {currentHitIndex}] {outcome.Target.UnitName} nhận {damageThisHit} damage (fallback).");
+                    string logMessage = $"[Flush Hit {currentHitIndex}] {outcome.Target.UnitName} nhận {damageThisHit} damage (fallback).";
+                    if (outcome.EmpowerMultiplier > 1f)
+                    {
+                        logMessage += $" ({outcome.EmpowerMultiplier:F1}x)";
+                    }
+                    Debug.Log(logMessage);
                 }
             }
             currentHitIndex++;
@@ -252,7 +261,12 @@ public class UnitView : MonoBehaviour
             if (damageThisHit > 0)
             {
                 outcome.Target.TakeDamage(pendingCaster, damageThisHit, currentHitIndex);
-                Debug.Log($"[Hit {currentHitIndex}] {outcome.Target.UnitName} nhận {damageThisHit} damage. HP: {outcome.Target.CurrentHP}");
+                string logMessage = $"[Hit {currentHitIndex}] {outcome.Target.UnitName} nhận {damageThisHit} damage.";
+                if (outcome.EmpowerMultiplier > 1f)
+                {
+                    logMessage += $" ({outcome.EmpowerMultiplier:F1}x)";
+                }
+                Debug.Log(logMessage + $" HP: {outcome.Target.CurrentHP}");
             }
         }
 

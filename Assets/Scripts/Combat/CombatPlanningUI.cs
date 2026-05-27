@@ -39,6 +39,7 @@ public class CombatPlanningUI : MonoBehaviour
     private CanvasGroup planningCanvasGroup;
 
     private CombatUnit currentUnit;
+    private List<Coroutine> skillButtonAnimations = new List<Coroutine>();
     private SkillData selectedSkill;
     private bool isChoosingTarget;
 
@@ -113,7 +114,7 @@ public class CombatPlanningUI : MonoBehaviour
         Debug.Log($"[PlanUI] OnPlayerTurn event received for {unit.UnitName}.");
         currentUnit = unit;
         isChoosingTarget = false;
-        selectedSkill = null;
+
 
         var view = combat.GetAllUnitViews().FirstOrDefault(v => v.LinkedUnit == unit);
         if (view == null)
@@ -160,6 +161,7 @@ public class CombatPlanningUI : MonoBehaviour
         selectedSkill = null;
         isChoosingTarget = false;
         SetInstruction("");
+        UpdateUnitEmphasis(); // Reset độ mờ khi UI ẩn
     }
     
     private void HideUI()
@@ -234,10 +236,12 @@ public class CombatPlanningUI : MonoBehaviour
             if (prefab == null) continue;
 
             var go = Instantiate(prefab, container);
+            go.name = $"SkillButton_{skill.skillName}"; // Đặt tên để dễ tìm
             var rect = go.GetComponent<RectTransform>();
             rect.anchoredPosition = new Vector2(0f, -localIdx * skillRowSpacing);
 
-            StartCoroutine(AnimateSkillButton(rect, localIdx * 0.05f));
+            Coroutine anim = StartCoroutine(AnimateSkillButton(rect, localIdx * 0.05f));
+            skillButtonAnimations.Add(anim);
 
             bool canAfford = skill.apCost <= combat.CurrentPlayerAP;
 
@@ -270,6 +274,13 @@ public class CombatPlanningUI : MonoBehaviour
 
     private void CloseSkillWheel()
     {
+        // Dừng và xóa các animation cũ
+        foreach (var anim in skillButtonAnimations)
+        {
+            if (anim != null) StopCoroutine(anim);
+        }
+        skillButtonAnimations.Clear();
+
         foreach (var go in activeSkillButtons) if (go != null) Destroy(go);
         activeSkillButtons.Clear();
         if (leftSkillContainer != null) leftSkillContainer.gameObject.SetActive(false);
@@ -310,39 +321,80 @@ public class CombatPlanningUI : MonoBehaviour
 
     private void OnSkillSelected(SkillData skill)
     {
-        if (skill.targetType == TargetType.AllEnemies)
+        // Kiểm tra đủ AP trước tiên
+        if (combat.CurrentPlayerAP < skill.apCost)
         {
-            var targets = combat.EnemyUnits.Where(e => e.IsAlive).ToList();
-            combat.SubmitPlayerTurnAction(skill, targets);
-            return;
-        }
-        if (skill.targetType == TargetType.AllAllies)
-        {
-            var targets = combat.PlayerUnits.Where(p => p.IsAlive).ToList();
-            combat.SubmitPlayerTurnAction(skill, targets);
+            Debug.LogWarning($"[AP] Không đủ AP để dùng {skill.skillName}.");
             return;
         }
 
-        selectedSkill = skill;
-        isChoosingTarget = true;
-        HighlightValidTargets(skill);
-        SetInstruction($"Choose a target for [{skill.skillName}] (Right-click to cancel)");
-        CloseSkillWheel();
+        // Xử lý các skill được đánh dấu là tự động xác nhận
+        if (skill.autoConfirmOnSelect)
+        {
+            // Giả định mục tiêu là bản thân người dùng
+            combat.SubmitPlayerTurnAction(skill, new List<CombatUnit> { currentUnit });
+        }
+        else // Đối với các skill cần chọn mục tiêu
+        {
+            selectedSkill = skill;
+            isChoosingTarget = true;
+            HighlightValidTargets(skill);
+            SetInstruction($"Choose a target for [{skill.skillName}] (Right-click to cancel)");
+            CloseSkillWheel();
+        }
     }
 
     private void OnTargetSelected(UnitView view)
     {
         if (!isChoosingTarget || view == null || selectedSkill == null) return;
 
-        var targetUnit = view.LinkedUnit;
-        if (!targetUnit.IsAlive) return;
+        var clickedUnit = view.LinkedUnit;
+        if (!clickedUnit.IsAlive) return;
 
-        bool isEnemyTarget = selectedSkill.targetType == TargetType.SingleEnemy;
-        bool isAllyTarget = selectedSkill.targetType == TargetType.SingleAlly;
-
-        if ((isEnemyTarget && !targetUnit.IsPlayer) || (isAllyTarget && targetUnit.IsPlayer))
+        // Xác định xem mục tiêu được nhấp có hợp lệ để *xác nhận* hành động hay không
+        bool isConfirmClickValid = false;
+        switch (selectedSkill.targetType)
         {
-            combat.SubmitPlayerTurnAction(selectedSkill, new List<CombatUnit> { targetUnit });
+            case TargetType.SingleEnemy:
+            case TargetType.AllEnemies:
+                isConfirmClickValid = !clickedUnit.IsPlayer;
+                break;
+            case TargetType.SingleAlly:
+            case TargetType.AllAllies:
+                isConfirmClickValid = clickedUnit.IsPlayer;
+                break;
+            case TargetType.Self:
+                isConfirmClickValid = (clickedUnit == currentUnit);
+                break;
+        }
+
+        if (isConfirmClickValid)
+        {
+            // Bây giờ, xác định danh sách mục tiêu *thực sự* cho kỹ năng
+            List<CombatUnit> finalTargets = new List<CombatUnit>();
+            switch (selectedSkill.targetType)
+            {
+                case TargetType.SingleEnemy:
+                case TargetType.SingleAlly:
+                case TargetType.Self:
+                    finalTargets.Add(clickedUnit); // Chỉ mục tiêu đã nhấp
+                    break;
+                case TargetType.AllEnemies:
+                    finalTargets = combat.EnemyUnits.Where(e => e.IsAlive).ToList(); // Tất cả kẻ địch
+                    break;
+                case TargetType.AllAllies:
+                    finalTargets = combat.PlayerUnits.Where(p => p.IsAlive).ToList(); // Tất cả đồng minh
+                    break;
+            }
+            
+            if (finalTargets.Count > 0)
+            {
+                combat.SubmitPlayerTurnAction(selectedSkill, finalTargets);
+                // Nếu skill không kết thúc lượt, UI sẽ được refresh bởi CombatManager,
+                // nên chúng ta không cần làm gì thêm ở đây.
+                // Nếu skill kết thúc lượt, CombatManager sẽ KHÔNG gửi lại OnPlayerTurnStart,
+                // và UI sẽ được ẩn đi bởi OnActionResolved.
+            }
         }
     }
 
@@ -353,6 +405,7 @@ public class CombatPlanningUI : MonoBehaviour
             isChoosingTarget = false;
             selectedSkill = null;
             ClearTargetHighlights();
+            UpdateUnitEmphasis(); // Reset độ mờ khi hủy
             var view = combat.GetAllUnitViews().FirstOrDefault(v => v.LinkedUnit == currentUnit);
             if(view != null) OpenSkillWheel(currentUnit, view);
             else SetInstruction("Action canceled. Select a unit.");
@@ -362,26 +415,37 @@ public class CombatPlanningUI : MonoBehaviour
     private void HighlightValidTargets(SkillData skill)
     {
         ClearTargetHighlights();
+
+        // This call ensures that any previous emphasis is cleared before applying a new one.
+        UpdateUnitEmphasis();
+
         if (targetHighlightPrefab == null) return;
 
         IEnumerable<CombatUnit> pool;
         switch (skill.targetType)
         {
             case TargetType.SingleEnemy:
+            case TargetType.AllEnemies:
                 pool = combat.EnemyUnits.Where(e => e.IsAlive);
                 break;
             case TargetType.SingleAlly:
+            case TargetType.AllAllies:
                 pool = combat.PlayerUnits.Where(p => p.IsAlive);
                 break;
+            case TargetType.Self:
+                pool = new List<CombatUnit> { currentUnit };
+                break;
             default:
-                return;
+                pool = Enumerable.Empty<CombatUnit>();
+                break;
         }
 
         foreach (var unit in pool)
         {
             var view = combat.GetAllUnitViews().FirstOrDefault(v => v.LinkedUnit == unit);
             if (view == null) continue;
-            var go = Instantiate(targetHighlightPrefab, view.transform.position, Quaternion.identity);
+            // Parent the highlight to the view's transform so it moves with the unit.
+            var go = Instantiate(targetHighlightPrefab, view.transform);
             targetHighlights.Add(go);
         }
     }
@@ -420,5 +484,37 @@ public class CombatPlanningUI : MonoBehaviour
             }
         });
         trigger.triggers.Add(exitEntry);
+    }
+
+    private void UpdateUnitEmphasis()
+    {
+        var allViews = combat.GetAllUnitViews();
+        float unfocusedAlpha = 0.5f;
+
+        if (!isChoosingTarget || selectedSkill == null)
+        {
+            foreach (var view in allViews)
+            {
+                view.SetAlpha(1f);
+            }
+            return;
+        }
+
+        bool isTargetingEnemies = (selectedSkill.targetType == TargetType.SingleEnemy || selectedSkill.targetType == TargetType.AllEnemies);
+
+        foreach (var view in allViews)
+        {
+            bool isTargetGroup = (isTargetingEnemies && !view.LinkedUnit.IsPlayer) || (!isTargetingEnemies && view.LinkedUnit.IsPlayer);
+            bool isCaster = (view.LinkedUnit == currentUnit);
+
+            if (isTargetGroup || isCaster)
+            {
+                view.SetAlpha(1f); // Rõ nét
+            }
+            else
+            {
+                view.SetAlpha(unfocusedAlpha); // Làm mờ
+            }
+        }
     }
 }

@@ -1,7 +1,7 @@
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "LilithPassive", menuName = "RPG/Passives/LilithPassive")]
-public class LilithPassive : PassiveAbility
+public class Lilith_Passive : PassiveAbility
 {
     private const StatusEffectType EFFECT_TYPE = StatusEffectType.BuiSao;
     private const float VALUE_PER_STACK = 0.05f;

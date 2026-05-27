@@ -1,8 +1,22 @@
 using UnityEngine;
 
+public enum SkillMovementOverride
+{
+    InheritFromCharacter, // Dùng cài đặt của CharacterData
+    ForceRushToTarget,    // Luôn lao đến mục tiêu
+    ForceStationary       // Luôn đứng yên
+}
+
 [CreateAssetMenu(fileName = "NewSkill", menuName = "RPG/Skill")]
 public class SkillData : ScriptableObject
 {
+    [Tooltip("Kỹ năng này có tự động xác nhận ngay khi được chọn không? (Hữu ích cho các skill buff không cần chọn mục tiêu)")]
+    public bool autoConfirmOnSelect = false;
+
+    [Header("Behavior")]
+    [Tooltip("Ghi đè hành vi di chuyển mặc định của nhân vật.")]
+    public SkillMovementOverride movementOverride = SkillMovementOverride.InheritFromCharacter;
+
     [Header("Identity")]
     public string skillName;
     [TextArea]
@@ -12,6 +26,8 @@ public class SkillData : ScriptableObject
     [Header("Type")]
     public SkillType type = SkillType.Auto;     // Không còn clash, mặc định Auto
     public TargetType targetType = TargetType.SingleEnemy;
+    public bool isChargeable = false;
+    public bool doesNotEndTurn = false;
 
     [Header("Cost")]
     [Tooltip("Chi phí Action Point để sử dụng skill này.")]

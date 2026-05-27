@@ -1,13 +1,14 @@
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "EmpowerNextAttackEffect", menuName = "RPG/Effects/Empower Next Attack")]
+[CreateAssetMenu(fileName = "EmpowerNextAttackEffect", menuName = "RPG/SkillEffect/Empower Next Attack")]
 public class EmpowerNextAttackEffect : SkillEffect
 {
-    public float damageBonus = 0.1f;
-    public int duration = 1;
+    [Tooltip("Lượng sát thương cộng thêm cho mỗi stack. 0.1 = 10%")]
+    public float damageBonusPerStack = 0.1f;
 
     public override void Apply(CombatUnit caster, CombatUnit[] targets)
     {
-        caster.ApplyStatus(StatusEffectType.Empowered, duration, damageBonus);
+        // Skill này chỉ áp dụng cho người cast
+        caster.ApplyStatus(StatusEffectType.Empowered, 99, damageBonusPerStack, 1); // duration 99, 1 stack
     }
 }

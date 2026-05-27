@@ -24,6 +24,7 @@ public enum TargetType
 public enum StatType 
 { 
     HP, 
+    MaxHP,
     ATK, 
     PDEF, 
     MDEF, 

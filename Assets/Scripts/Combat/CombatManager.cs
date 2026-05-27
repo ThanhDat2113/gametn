@@ -130,13 +130,13 @@ public class CombatManager : MonoBehaviour
                 combatUICanvasGroup = planningUI.planningCanvas.GetComponent<CanvasGroup>();
                 if (combatUICanvasGroup == null)
                 {
-                    Debug.Log("[CombatManager] Tự động thêm CanvasGroup vào planningCanvas.");
+                    Debug.Log("[CombatManager] Automatically adding CanvasGroup to planningCanvas.");
                     combatUICanvasGroup = planningUI.planningCanvas.gameObject.AddComponent<CanvasGroup>();
                 }
             }
             else
             {
-                Debug.LogWarning("[CombatManager] Không thể tự động tìm thấy UI Canvas. Fade UI sẽ không hoạt động.");
+                Debug.LogWarning("[CombatManager] Could not automatically find UI Canvas. UI fade will not work.");
             }
         }
 
@@ -489,7 +489,67 @@ public class CombatManager : MonoBehaviour
         currentUnit.SelectSkill(skill, targets);
         Debug.Log($"[Player Input] {currentUnit.UnitName} đã chọn dùng {skill.skillName} lên {string.Join(", ", targets.Select(t => t.UnitName))}.");
 
-        isWaitingForPlayerInput = false;
+        // KIỂM TRA NẾU SKILL KHÔNG KẾT THÚC LƯỢT
+        if (skill.doesNotEndTurn)
+        {
+            Debug.Log($"[CombatManager] {currentUnit.UnitName} dùng kỹ năng không kết thúc lượt. Bắt đầu ExecuteAndRequestNewAction.");
+            // Thực thi ngay lập tức và yêu cầu input mới
+            StartCoroutine(ExecuteAndRequestNewAction(currentUnit));
+        }
+        else
+        {
+            Debug.Log($"[CombatManager] {currentUnit.UnitName} dùng kỹ năng kết thúc lượt. Chờ ExecuteRound tiếp tục.");
+            // Logic cũ: kết thúc lượt
+            isWaitingForPlayerInput = false;
+        }
+    }
+
+    private IEnumerator ExecuteAndRequestNewAction(CombatUnit unit)
+    {
+        bool executionSuccessful = false;
+        try
+        {
+            Debug.Log($"[Action] Attempting to execute skill for {unit.UnitName}.");
+            unit.ExecuteSelectedSkill(0); // AP has been deducted previously
+            unit.ClearSelection();
+            Debug.Log($"[Action] Skill execution completed for {unit.UnitName}.");
+            executionSuccessful = true;
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"[FATAL ERROR] in skill execution for {unit.UnitName}: {e.Message}\n{e.StackTrace}");
+            isWaitingForPlayerInput = false; // Stop the turn to prevent getting stuck
+        }
+
+        if (executionSuccessful)
+        {
+            // Wait a moment for the effects to apply and be seen by the user
+            yield return new WaitForSeconds(0.5f);
+
+            // Request a new action from the same unit
+            isWaitingForPlayerInput = true;
+            OnPlayerTurnStart?.Invoke(unit); // Resend the event to reopen the UI
+            Debug.Log($"[Action] {unit.UnitName} continues their turn.");
+        }
+    }
+
+    public void SpendPlayerAP(int amount)
+    {
+        if (amount > CurrentPlayerAP)
+        {
+            Debug.LogError($"[AP] Attempted to spend {amount} AP, but only have {CurrentPlayerAP}.");
+            return;
+        }
+        CurrentPlayerAP -= amount;
+        OnAPChanged?.Invoke(CurrentPlayerAP);
+        Debug.Log($"[AP] Spent {amount} AP. Remaining: {CurrentPlayerAP}.");
+    }
+
+    public void GainPlayerAP(int amount)
+    {
+        CurrentPlayerAP = Mathf.Min(CurrentPlayerAP + amount, MAX_PLAYER_AP);
+        OnAPChanged?.Invoke(CurrentPlayerAP);
+        Debug.Log($"[AP] Gained {amount} AP. Remaining: {CurrentPlayerAP}.");
     }
 
     private IEnumerator HandleStartOfTurnEffects(CombatUnit unit)
@@ -648,7 +708,7 @@ public class CombatManager : MonoBehaviour
                 }
                 isFirstPlayerTurnOfRound = false;
 
-                Debug.Log($"[Execute] {currentUnit.UnitName} is a player. Waiting for input...");
+                Debug.Log($"[Execute] Unit {currentUnit.UnitName} is a player. Waiting for input...");
                 isWaitingForPlayerInput = true;
                 OnPlayerTurnStart?.Invoke(currentUnit);
 

@@ -12,12 +12,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1e652bd9dd81c6c48a0d625c3dbd9ff3, type: 3}
   m_Name: Lilith_Skill1
   m_EditorClassIdentifier: Assembly-CSharp::SkillData
+  movementOverride: 0
   skillName: 
   description: "T\u1EA1o 1 ng\xE2n h\xE0 nh\u1ECF t\u1EA1i v\u1ECB tr\xED k\u1EBB
     \u0111\u1ECBch g\xE2y s\xE1t th\u01B0\u01A1ng ph\xE9p "
   icon: {fileID: 0}
   type: 0
   targetType: 0
+  isChargeable: 0
+  doesNotEndTurn: 0
   apCost: 0
   hitCount: 1
   animationTrigger: Skill1
@@ -25,3 +28,4 @@ MonoBehaviour:
   vfxOffset: 0
   effects:
   - {fileID: 11400000, guid: 45783c93343bff44bb33132e99a07100, type: 2}
+  - {fileID: 11400000, guid: 9b3d4c29ae2bdc84083ab094c5808794, type: 2}

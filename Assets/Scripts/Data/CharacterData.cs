@@ -1,8 +1,17 @@
 using UnityEngine;
 
+public enum CombatStyle
+{
+    Melee, // Lao vào tấn công
+    Ranged // Đứng từ xa
+}
+
 [CreateAssetMenu(fileName = "NewCharacter", menuName = "RPG/Character")]
 public class CharacterData : ScriptableObject
 {
+    [Header("Behavior")]
+    public CombatStyle defaultCombatStyle = CombatStyle.Melee;
+
     [Header("Prefab")]
     public GameObject prefab;
 
