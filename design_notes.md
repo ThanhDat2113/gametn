@@ -71,3 +71,31 @@ skill 3 (2ap): nhảy lên cao và đập mạnh xuống gây lượng sát thư
 thiêu đốt: nhận 0.5% sát thương dựa vào máu tối đa ở cuối lượt với mỗi tầng (max 50) 
 
 
+hana
+nội tại: mỗi khi một đồng minh sử dụng kỹ năng tiêu tốn từ 2AP trở lên họ nhận thêm 10% sát thương
+
+skill 1: tấn công kẻ địch bằng 1 quả cầu ma pháp
+skill 2 (1ap): cường hóa cho 1 đồng minh +20% sát thương +10% tốc độ trong 2 lượt và tăng cho chính hana thêm 30% tốc độ trong 3 lượt
+skill 3 (1ap): chọn 1 đồng minh cho phép đồng minh ấy hành động ngay lập tức 
+
+klaris
+nội tại: mỗi khi một đồng minh nhận sát thương Klaris chịu thay cho họ 30% số sát thương đấy
+
+skill 1: tấn công bằng cách bổ kiếm gây sát thương vật lý
+skill 2 (1ap): cô tăng cho bản thân 30% phòng thủ và tăng cho toàn đồng minh 10% phòng thủ
+skill 3 (1ap): vào trạng thái thủ thế trong 1 lượt sau khi cô nhận sát thương khi đang trong trạng thái thủ thế gây choáng cho kẻ địch gây sát thương trong 1 lượt (choáng chỉ hoạt động mỗi 3 lượt 1 lần) ngay sau đó bỏ trạng thái thủ thế của bản thân
+
+
+luluka
+nội tại: mọi đòn đánh từ nhân vật này sẽ hồi phục cho bản thân bằng 20% sát thương gây ra
+
+skill 1: tấn công kẻ địch bằng gậy phép
+skill 2 (1ap): gây sát thương cho 1 kẻ địch giảm giáp của chúng đi 20% và tăng tốc cho 1 đồng minh bất kì 10%
+skill 3 (3ap): gây sát thương cho toàn bộ kẻ địch với sát thương tăng theo lượng HP đã mất của cô (tối đa 20%) và tăng phòng thủ của bàn thân thêm 30% trong 2 lượt
+
+aeos
+nội tại: Aeos bỏ qua 30% phòng thủ của toàn bộ kẻ địch và mỗi khi tiêu diệt được 1 kẻ địch anh nhận thêm 10% xuyên kháng (tối đa 20% cộng thêm)
+
+skill 1: tấn công thẳng vào 1 kẻ địch
+skill 2 (1ap): tấn công 3 đòn liên tiếp vào 1 kẻ địch làm giảm sát thương kẻ địch đó gây ra trong 2 lượt nếu kỹ năng này tấn công mục tiêu đã bị suy yếu tăng sát thương thêm 20%
+skill 3 (2ap): tấn công cực mạnh vào 1 kẻ địch với lượng sát thương lớn nếu kẻ địch đã bị suy yếu tăng sát thương cho kỹ năng này thêm 20% và thêm 10% với mỗi hiệu ứng xấu trên kẻ địch (ối đa 20%)

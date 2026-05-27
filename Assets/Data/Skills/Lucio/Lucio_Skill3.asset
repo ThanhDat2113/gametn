@@ -12,13 +12,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1e652bd9dd81c6c48a0d625c3dbd9ff3, type: 3}
   m_Name: Lucio_Skill3
   m_EditorClassIdentifier: Assembly-CSharp::SkillData
-  skillName: 
+  autoConfirmOnSelect: 0
+  movementOverride: 0
+  skillName: debuff tactic
   description: "Cast ph\xE9p v\xE0 b\u1EAFn v\xE0o 1 k\u1EBB \u0111\u1ECBch g\xE2y
     s\xE1t th\u01B0\u01A1ng ph\xE9p v\xE0 g\xE1n cho ch\xFAng hi\u1EC7u \u1EE9ng
     \u0111i\u1EC3m y\u1EBFu k\xE9o d\xE0i 1 l\u01B0\u1EE3t"
   icon: {fileID: 0}
   type: 0
   targetType: 0
+  isChargeable: 0
+  doesNotEndTurn: 0
   apCost: 2
   hitCount: 1
   animationTrigger: Skill3

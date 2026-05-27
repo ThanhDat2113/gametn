@@ -20,4 +20,5 @@ public enum StatusEffectType
     BuiSao,         // Bụi sao: tăng sát thương gây ra, cộng dồn (Lilith)
     GiamSatThuong,  // Giảm sát thương nhận vào, cộng dồn (Celine)
     Empowered,      // Cường hóa đòn đánh tiếp theo (Lilith skill2)
+    ThuThe,         // Trạng thái thủ thế của Klaris
 }

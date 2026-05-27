@@ -84,12 +84,18 @@ public class ActionResolver
                         foreach (var hit in hits)
                         {
                             int finalDamage = Mathf.RoundToInt(hit.Damage * empowerMultiplier);
-                            result.Outcomes.Add(new ActionOutcome
+                            var outcome = new ActionOutcome
                             {
                                 Target = target,
                                 Damage = finalDamage,
                                 EmpowerMultiplier = empowerMultiplier
-                            });
+                            };
+                            
+                            // --- Damage Modification Hook ---
+                            CombatManager.Instance.TriggerDamageCalculation(outcome, actor);
+                            // -----------------------------
+
+                            result.Outcomes.Add(outcome);
                             if (empowerMultiplier > 1f)
                             {
                                 Debug.Log($"  -> Sát thương gốc: {hit.Damage}, Sát thương cường hóa: {finalDamage}");

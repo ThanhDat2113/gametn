@@ -26,6 +26,7 @@ public class CombatUnit
 
     public float CritChance { get; set; } = 0f;
     public float CritDamage { get; set; } = 1.5f;
+    public float ArmorPenetration { get; set; } = 0f;
 
     public bool IsAlive => CurrentHP > 0;
 
@@ -50,11 +51,11 @@ public class CombatUnit
     public event System.Action OnDied;
     public event System.Action<CombatUnit> OnKill; // (target)
     public event System.Action<int> OnSpendAP; // (amount)
-    public event System.Action<SkillData, List<CombatUnit>> OnActionConfirmed; // (skill, targets)
+    public event System.Action<CombatUnit, SkillData, List<CombatUnit>> OnActionConfirmed; // (caster, skill, targets)
 
     public void RaiseActionConfirmed(SkillData skill, List<CombatUnit> targets)
     {
-        OnActionConfirmed?.Invoke(skill, targets);
+        OnActionConfirmed?.Invoke(this, skill, targets);
     }
 
     public event System.Action OnTurnStart;
@@ -94,33 +95,42 @@ public class CombatUnit
     // ── Damage ────────────────────────────────────────────────
     public void TakeDamage(int amount)
     {
-        TakeDamage(null, amount, 0);
+        TakeDamage(null, amount);
     }
 
-    public void TakeDamage(CombatUnit caster, int amount, int hitIndex = 0)
+    public void TakeDamage(CombatUnit caster, int amount, bool isTrueDamage = false)
     {
-        // Áp dụng giảm sát thương
-        int modifiedAmount = Mathf.RoundToInt(amount * GetDamageReductionMultiplier());
-        int actual = Mathf.Max(1, modifiedAmount);
-        CurrentHP = Mathf.Max(0, CurrentHP - actual);
+        int actualDamage = amount;
+
+        // Nếu không phải true damage, tính toán giảm trừ
+        if (!isTrueDamage)
+        {
+            actualDamage = Mathf.RoundToInt(amount * GetDamageReductionMultiplier());
+        }
+
+        actualDamage = Mathf.Max(1, actualDamage);
+        CurrentHP = Mathf.Max(0, CurrentHP - actualDamage);
 
         // Kích hoạt sự kiện
-        OnDamageTaken?.Invoke(caster, actual);
-        caster?.OnDealDamage?.Invoke(this, actual);
-        Passive?.OnTakeDamage(caster, actual);
-        caster?.Passive?.OnDealDamage(this, actual);
+        OnDamageTaken?.Invoke(caster, actualDamage);
+        caster?.OnDealDamage?.Invoke(this, actualDamage);
+        Passive?.OnTakeDamage(caster, actualDamage);
+        caster?.Passive?.OnDealDamage(this, actualDamage);
 
-        Debug.Log($"  {UnitName} nhận {actual} dmg → HP {CurrentHP}/{MaxHP}");
+        Debug.Log($"  {UnitName} nhận {actualDamage} dmg (True: {isTrueDamage}) → HP {CurrentHP}/{MaxHP}");
 
-        // Xử lý phản sát thương
-        var reflectStatus = GetActiveStatus(StatusEffectType.ReflectDamage);
-        if (caster != null && caster.IsAlive && reflectStatus != null)
+        // Xử lý phản sát thương (chỉ với sát thương không phải true damage)
+        if (!isTrueDamage)
         {
-            int reflectDamage = Mathf.RoundToInt(actual * reflectStatus.Value);
-            if (reflectDamage > 0)
+            var reflectStatus = GetActiveStatus(StatusEffectType.ReflectDamage);
+            if (caster != null && caster.IsAlive && reflectStatus != null)
             {
-                Debug.Log($"  [{UnitName}] phản {reflectDamage} dmg lại cho [{caster.UnitName}]!");
-                caster.TakeDamage(null, reflectDamage);
+                int reflectDamage = Mathf.RoundToInt(actualDamage * reflectStatus.Value);
+                if (reflectDamage > 0)
+                {
+                    Debug.Log($"  [{UnitName}] phản {reflectDamage} dmg lại cho [{caster.UnitName}]!");
+                    caster.TakeDamage(null, reflectDamage, isTrueDamage: true); // Phản sát thương luôn là true damage
+                }
             }
         }
 
@@ -131,6 +141,11 @@ public class CombatUnit
             OnDied?.Invoke();
             Passive?.OnDied();
         }
+    }
+
+    public bool IsAlly(CombatUnit other)
+    {
+        return this.IsPlayer == other.IsPlayer;
     }
 
     // ── Heal ──────────────────────────────────────────────────
@@ -221,9 +236,28 @@ public class CombatUnit
         return activeStatuses.Find(s => s.Type == type);
     }
 
+    public void ClearStatus(StatusEffectType type)
+    {
+        activeStatuses.RemoveAll(s => s.Type == type);
+    }
+
     public bool HasStatus(StatusEffectType type)
     {
         return activeStatuses.Exists(s => s.Type == type);
+    }
+
+    public bool HasAnyDebuff()
+    {
+        // Định nghĩa các loại được coi là debuff
+        var debuffTypes = new HashSet<StatusEffectType>
+        {
+            StatusEffectType.Stun,
+            StatusEffectType.Taunt,
+            StatusEffectType.ThieuDot,
+            StatusEffectType.DiemYeu
+        };
+
+        return activeStatuses.Any(s => debuffTypes.Contains(s.Type));
     }
 
     public float GetStatMultiplier(StatType stat)

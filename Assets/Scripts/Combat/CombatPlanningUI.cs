@@ -34,6 +34,9 @@ public class CombatPlanningUI : MonoBehaviour
     [Header("Instruction Text")]
     public TextMeshProUGUI instructionText;
 
+    [Header("AP Display")]
+    public TextMeshProUGUI apDisplay;
+
     private CombatManager combat;
     private Camera mainCam;
     private CanvasGroup planningCanvasGroup;
@@ -125,11 +128,12 @@ public class CombatPlanningUI : MonoBehaviour
         
         Debug.Log($"[PlanUI] Found UnitView for {unit.UnitName}. Opening skill wheel.");
         // Đã xóa hiển thị round text theo yêu cầu
-        // if (roundText != null) roundText.text = $"Round {combat.CurrentRound}";
+    // if (roundText != null) roundText.text = $"Round {combat.CurrentRound}";
 
-        ShowUI();
-        OpenSkillWheel(unit, view);
-    }
+    ShowUI();
+    OpenSkillWheel(unit, view);
+    UpdateAPDisplay();
+}
     
     private void OnActionResolved(ActionResult result)
     {
@@ -333,6 +337,7 @@ public class CombatPlanningUI : MonoBehaviour
         {
             // Giả định mục tiêu là bản thân người dùng
             combat.SubmitPlayerTurnAction(skill, new List<CombatUnit> { currentUnit });
+            UpdateAPDisplay();
         }
         else // Đối với các skill cần chọn mục tiêu
         {
@@ -388,13 +393,14 @@ public class CombatPlanningUI : MonoBehaviour
             }
             
             if (finalTargets.Count > 0)
-            {
-                combat.SubmitPlayerTurnAction(selectedSkill, finalTargets);
-                // Nếu skill không kết thúc lượt, UI sẽ được refresh bởi CombatManager,
-                // nên chúng ta không cần làm gì thêm ở đây.
-                // Nếu skill kết thúc lượt, CombatManager sẽ KHÔNG gửi lại OnPlayerTurnStart,
-                // và UI sẽ được ẩn đi bởi OnActionResolved.
-            }
+                {
+                    combat.SubmitPlayerTurnAction(selectedSkill, finalTargets);
+                    UpdateAPDisplay();
+                    // Nếu skill không kết thúc lượt, UI sẽ được refresh bởi CombatManager,
+                    // nên chúng ta không cần làm gì thêm ở đây.
+                    // Nếu skill kết thúc lượt, CombatManager sẽ KHÔNG gửi lại OnPlayerTurnStart,
+                    // và UI sẽ được ẩn đi bởi OnActionResolved.
+                }
         }
     }
 
@@ -515,6 +521,14 @@ public class CombatPlanningUI : MonoBehaviour
             {
                 view.SetAlpha(unfocusedAlpha); // Làm mờ
             }
+        }
+    }
+
+    private void UpdateAPDisplay()
+    {
+        if (apDisplay != null)
+        {
+            apDisplay.text = $"AP: {combat.CurrentPlayerAP}";
         }
     }
 }

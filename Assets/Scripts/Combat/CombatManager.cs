@@ -54,6 +54,36 @@ public class CombatManager : MonoBehaviour
         return unitViews;
     }
 
+    public void GrantExtraTurn(CombatUnit unit)
+    {
+        Debug.Log($"[CombatManager] Cấp thêm lượt cho {unit.UnitName}");
+        // Logic để thêm lượt sẽ được triển khai ở đây
+        // Ví dụ: thêm unit vào một hàng đợi ưu tiên
+    }
+
+    public void GrantImmediateTurn(CombatUnit unit)
+    {
+        Debug.Log($"[CombatManager] Cấp lượt hành động ngay lập tức cho {unit.UnitName}");
+        // Đây là một logic phức tạp, cần phải chèn unit vào vị trí tiếp theo trong ActionOrder
+        // và có thể cần phải cấu trúc lại vòng lặp ExecuteRound.
+        // Tạm thời, chúng ta sẽ chèn vào vị trí tiếp theo.
+        if (ActionOrder.Contains(unit))
+        {
+            ActionOrder.Remove(unit);
+        }
+        ActionOrder.Insert(turnIndex + 1, unit);
+    }
+
+    public List<CombatUnit> GetTeam(bool isPlayer)
+    {
+        return isPlayer ? PlayerUnits : EnemyUnits;
+    }
+
+    public List<CombatUnit> GetOpposingTeam(bool isPlayer)
+    {
+        return isPlayer ? EnemyUnits : PlayerUnits;
+    }
+
     private static int SlotToRow(int slot) => 2 - (slot / 3);
 
     private int planningIndex = 0;
@@ -110,6 +140,11 @@ public class CombatManager : MonoBehaviour
     public event System.Action OnDefeat;
     public event System.Action OnPlanChanged;
     public event System.Action<int> OnAPChanged;
+
+    // Damage modification hook
+    public delegate void DamageModificationHandler(ActionOutcome outcome, CombatUnit actor);
+    public event DamageModificationHandler OnDamageCalculation;
+    public void TriggerDamageCalculation(ActionOutcome outcome, CombatUnit actor) => OnDamageCalculation?.Invoke(outcome, actor);
 
     public CombatPhase CurrentPhase => stateMachine.Current;
 
@@ -342,17 +377,25 @@ public class CombatManager : MonoBehaviour
         var enemyViews = unitViews.Where(v => v.LinkedUnit != null && !v.LinkedUnit.IsPlayer).ToList();
         if (enemyViews.Count > 0)
         {
+            List<Coroutine> movementCoroutines = new List<Coroutine>();
+
             var leader = enemyViews[enemyViews.Count / 2];
             enemyViews.Remove(leader);
-            StartCoroutine(MoveUnitToPosition(leader, leader.GetOriginalPosition(), 0.5f));
+            movementCoroutines.Add(StartCoroutine(MoveUnitToPosition(leader, leader.GetOriginalPosition(), 0.5f)));
 
             yield return new WaitForSeconds(0.2f);
 
             foreach (var follower in enemyViews)
             {
                 float randomSpeed = Random.Range(0.4f, 0.6f);
-                StartCoroutine(MoveUnitToPosition(follower, follower.GetOriginalPosition(), randomSpeed));
+                movementCoroutines.Add(StartCoroutine(MoveUnitToPosition(follower, follower.GetOriginalPosition(), randomSpeed)));
                 yield return new WaitForSeconds(Random.Range(0.05f, 0.15f));
+            }
+
+            // Chờ tất cả các coroutine di chuyển hoàn thành
+            foreach (var coroutine in movementCoroutines)
+            {
+                yield return coroutine;
             }
         }
 

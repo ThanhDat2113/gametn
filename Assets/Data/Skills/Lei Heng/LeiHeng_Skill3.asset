@@ -12,7 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1e652bd9dd81c6c48a0d625c3dbd9ff3, type: 3}
   m_Name: LeiHeng_Skill3
   m_EditorClassIdentifier: Assembly-CSharp::SkillData
-  skillName: 
+  autoConfirmOnSelect: 0
+  movementOverride: 0
+  skillName: "Savage Tigerslayer's Perfected Flurry of Blades [\u8D85\u7D55\u731B\u864E\u6BBA\u64CA\u4E82\u65AC]"
   description: "Nh\u1EA3y l\xEAn cao v\xE0 \u0111\u1EADp m\u1EA1nh xu\u1ED1ng g\xE2y
     l\u01B0\u1EE3ng s\xE1t th\u01B0\u01A1ng si\xEAu l\u1EDBn v\xE0o 1 k\u1EBB \u0111\u1ECBch
     \u0111\u1ED3ng th\u1EDDi k\xEDch n\u1ED5 to\xE0n b\u1ED9 hi\u1EC7u \u1EE9ng thi\xEAu
@@ -20,6 +22,8 @@ MonoBehaviour:
   icon: {fileID: 0}
   type: 0
   targetType: 0
+  isChargeable: 0
+  doesNotEndTurn: 0
   apCost: 2
   hitCount: 1
   animationTrigger: 

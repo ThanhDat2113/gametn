@@ -16,7 +16,7 @@ public class DamageEffect : SkillEffect
         {
             var hits = CalculateHits(caster, target, 1);
             foreach (var hit in hits)
-                target.TakeDamage(caster, hit.Damage, hit.HitIndex);
+                target.TakeDamage(caster, hit.Damage);
         }
     }
 
@@ -29,8 +29,11 @@ public class DamageEffect : SkillEffect
                        * caster.GetStatMultiplier(StatType.ATK)
                        * caster.GetDamageMultiplier());
 
-        int defend = damageType == DamageType.Physical ? target.PDEF : target.MDEF;
-        int baseDamage = Mathf.Max(1, raw - defend);
+        // Tính toán phòng thủ hiệu quả sau khi trừ đi xuyên giáp
+        float defenseStat = damageType == DamageType.Physical ? target.PDEF : target.MDEF;
+        float effectiveDefense = defenseStat * (1f - caster.ArmorPenetration);
+        
+        int baseDamage = Mathf.Max(1, raw - Mathf.RoundToInt(effectiveDefense));
 
         bool isCritical = Random.value < caster.CritChance;
         if (isCritical)

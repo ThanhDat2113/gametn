@@ -12,17 +12,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1e652bd9dd81c6c48a0d625c3dbd9ff3, type: 3}
   m_Name: Lilith_Skill2
   m_EditorClassIdentifier: Assembly-CSharp::SkillData
+  autoConfirmOnSelect: 1
+  movementOverride: 2
   skillName: Empower
   description: "Ti\xEAu hao AP v\xE0 c\u01B0\u1EDDng h\xF3a \u0111\xF2n \u0111\xE1nh
     ti\u1EBFp theo c\u1EE7a nh\xE2n v\u1EADt n\xE0y th\xEAm 10%"
   icon: {fileID: 0}
   type: 1
   targetType: 4
+  isChargeable: 1
+  doesNotEndTurn: 1
   apCost: 1
   hitCount: 0
   animationTrigger: Skill2
-  autoConfirmOnSelect: 1
-  movementOverride: 2
   vfxPrefab: {fileID: 0}
   vfxOffset: 0
   effects:

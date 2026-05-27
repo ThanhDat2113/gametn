@@ -26,8 +26,11 @@ public class AleusPassive : PassiveAbility
             base.Cleanup();
         }
 
-        private void OnOwnerActionConfirmed(SkillData skill, List<CombatUnit> targets)
+        private void OnOwnerActionConfirmed(CombatUnit caster, SkillData skill, List<CombatUnit> targets)
         {
+            // Chỉ kích hoạt khi chính Aleus thực hiện hành động
+            if (caster != Owner) return;
+
             Debug.Log($"[{Owner.UnitName}'s Passive] Nhận được sự kiện OnActionConfirmed! Đang xử lý kỹ năng: {skill.skillName}.");
 
             // 1. Kiểm tra xem kỹ năng có mục tiêu là đồng đội không

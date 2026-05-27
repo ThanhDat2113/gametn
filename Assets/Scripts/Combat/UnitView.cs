@@ -212,7 +212,7 @@ public class UnitView : MonoBehaviour
 
                 if (damageThisHit > 0)
                 {
-                    outcome.Target.TakeDamage(pendingCaster, damageThisHit, currentHitIndex);
+                    outcome.Target.TakeDamage(pendingCaster, damageThisHit);
                     string logMessage = $"[Flush Hit {currentHitIndex}] {outcome.Target.UnitName} nhận {damageThisHit} damage (fallback).";
                     if (outcome.EmpowerMultiplier > 1f)
                     {
@@ -260,7 +260,7 @@ public class UnitView : MonoBehaviour
 
             if (damageThisHit > 0)
             {
-                outcome.Target.TakeDamage(pendingCaster, damageThisHit, currentHitIndex);
+                outcome.Target.TakeDamage(pendingCaster, damageThisHit);
                 string logMessage = $"[Hit {currentHitIndex}] {outcome.Target.UnitName} nhận {damageThisHit} damage.";
                 if (outcome.EmpowerMultiplier > 1f)
                 {

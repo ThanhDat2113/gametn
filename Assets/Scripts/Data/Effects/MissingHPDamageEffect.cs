@@ -10,9 +10,9 @@ public class MissingHPDamageEffect : DamageEffect
     {
         foreach (var target in targets)
         {
-            var hits = CalculateHits(caster, target, 1);
-            foreach (var hit in hits)
-                target.TakeDamage(caster, hit.Damage, hit.HitIndex);
+            int missingHP = target.MaxHP - target.CurrentHP;
+            int damage = Mathf.RoundToInt(missingHP * multiplier);
+            target.TakeDamage(caster, damage);
         }
     }
 

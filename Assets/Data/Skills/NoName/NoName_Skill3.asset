@@ -12,7 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1e652bd9dd81c6c48a0d625c3dbd9ff3, type: 3}
   m_Name: NoName_Skill3
   m_EditorClassIdentifier: Assembly-CSharp::SkillData
-  skillName: 
+  autoConfirmOnSelect: 0
+  movementOverride: 0
+  skillName: Sorry Little one
   description: "T\u1EA5n c\xF4ng 1 m\u1EE5c ti\xEAu g\xE2y s\xE1t th\u01B0\u01A1ng
     ph\xE9p n\u1EBFu k\u1EF9 n\u0103ng n\xE0y ti\xEAu di\u1EC7t 1 k\u1EBB \u0111\u1ECBch
     ngay l\u1EADp t\u1EE9c h\u1ED3i m\xE1u cho nh\xE2n v\u1EADt n\xE0y b\u1EB1ng
@@ -20,6 +22,8 @@ MonoBehaviour:
   icon: {fileID: 0}
   type: 0
   targetType: 0
+  isChargeable: 0
+  doesNotEndTurn: 0
   apCost: 2
   hitCount: 1
   animationTrigger: Skill3
