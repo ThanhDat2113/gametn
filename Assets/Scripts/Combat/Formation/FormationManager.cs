@@ -224,4 +224,9 @@ public class FormationManager : MonoBehaviour
                 return i;
         return -1;
     }
+
+    public FormationData GetCurrentFormationData()
+    {
+        return currentFormation;
+    }
 }

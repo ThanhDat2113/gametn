@@ -10,7 +10,7 @@ public class DialogueTrigger : MonoBehaviour
     public bool sequential = true;
     public bool useBlackScreen = false;
     public bool useBlackScreenOnEnd = false;
-    public float blackScreenDelay = 0.3f;  // Tăng lên để che kín
+    public float blackScreenDelay = 0.3f;
 
     [Header("Teleport Settings (during black screen)")]
     public bool teleportPlayer = false;
@@ -25,6 +25,11 @@ public class DialogueTrigger : MonoBehaviour
     public bool switchCamera = false;
     public GameObject dialogueCameraObject;
     public GameObject mainCameraObject;
+
+    [Header("Combat After Dialogue")]
+    public bool startCombatAfterDialogue = false;
+    public EnemyGroupData enemyGroup;
+    public string combatSceneName = "CombatScene";
 
     private Vector3 _originalMainCamPos;
     private Quaternion _originalMainCamRot;
@@ -91,7 +96,6 @@ public class DialogueTrigger : MonoBehaviour
             if (mainCameraObject != null)
             {
                 mainCameraObject.SetActive(true);
-                // Đặt trực tiếp vị trí/rotation để không bị trễ
                 if (_mainCamera != null)
                     _mainCamera.transform.SetPositionAndRotation(_originalMainCamPos, _originalMainCamRot);
                 else
@@ -100,6 +104,28 @@ public class DialogueTrigger : MonoBehaviour
         }
         yield return new WaitForSeconds(blackScreenDelay);
         yield return FadeController.Instance.FadeFromBlack();
+        
+        if (startCombatAfterDialogue)
+            StartCombat();
+    }
+
+    private void StartCombat()
+    {
+        Debug.Log("Starting combat after dialogue");
+        var formation = FormationDataStorage.PendingFormation;
+        if (formation == null)
+        {
+            Debug.LogError("Không có đội hình để bắt đầu combat!");
+            return;
+        }
+        if (CombatManager.Instance != null)
+        {
+            CombatManager.Instance.StartCombat(formation, enemyGroup);
+        }
+        else
+        {
+            UnityEngine.SceneManagement.SceneManager.LoadScene(combatSceneName);
+        }
     }
 
     private void ApplyTeleportAndCamera()
@@ -168,7 +194,6 @@ public class DialogueTrigger : MonoBehaviour
             StartCoroutine(EndWithBlackScreen());
         else if (switchCamera)
         {
-            // Khôi phục ngay nếu không dùng black screen
             if (dialogueCameraObject != null) dialogueCameraObject.SetActive(false);
             if (mainCameraObject != null)
             {
@@ -176,6 +201,10 @@ public class DialogueTrigger : MonoBehaviour
                 if (_mainCamera != null)
                     _mainCamera.transform.SetPositionAndRotation(_originalMainCamPos, _originalMainCamRot);
             }
+        }
+        else if (startCombatAfterDialogue)
+        {
+            StartCombat();
         }
     }
 

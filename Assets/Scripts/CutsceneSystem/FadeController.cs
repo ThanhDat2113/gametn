@@ -17,14 +17,16 @@ public class FadeController : MonoBehaviour
         if (Instance != null) Destroy(gameObject);
         else Instance = this;
 
-        if (fadeImage == null) Debug.LogError("FadeController: fadeImage chưa được gán!");
-        else
+        if (fadeImage == null)
         {
-            fadeImage.gameObject.SetActive(true);
-            Color c = fadeImage.color;
-            c.a = 0f;
-            fadeImage.color = c;
+            Debug.LogError("FadeController: fadeImage chưa được gán!");
+            return;
         }
+        fadeImage.gameObject.SetActive(true);
+        Color c = fadeImage.color;
+        c.a = 0f;
+        fadeImage.color = c;
+        fadeImage.raycastTarget = false; // Không chặn click khi màn hình trong suốt
     }
 
     public void SetAlpha(float alpha)
@@ -33,10 +35,13 @@ public class FadeController : MonoBehaviour
         Color c = fadeImage.color;
         c.a = alpha;
         fadeImage.color = c;
+        // Chỉ chặn click khi màn hình có độ mờ > 0 (đang fade)
+        fadeImage.raycastTarget = alpha > 0.01f;
     }
 
     public IEnumerator FadeToBlack(System.Action onComplete = null)
     {
+        fadeImage.raycastTarget = true; // Bắt đầu chặn click
         float elapsed = 0f;
         while (elapsed < fadeDuration)
         {
@@ -60,6 +65,7 @@ public class FadeController : MonoBehaviour
             yield return null;
         }
         SetAlpha(0f);
+        fadeImage.raycastTarget = false; // Kết thúc, không chặn click nữa
         onComplete?.Invoke();
     }
 }
