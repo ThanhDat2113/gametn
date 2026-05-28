@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using Game.Combat;
 
 namespace Game.Combat
@@ -280,6 +281,7 @@ public class CombatManager : MonoBehaviour
             Vector3 spawnPos = isEnemy && enemyRallyPoint != null ? enemyRallyPoint.position : finalGridPosition;
 
             var go = Instantiate(prefab, spawnPos, Quaternion.identity);
+            SceneManager.MoveGameObjectToScene(go, gameObject.scene);
             var view = go.GetComponent<UnitView>();
             if (view == null) { Debug.LogError($"Prefab {prefab.name} thiếu UnitView!"); continue; }
             view.Setup(unit);
