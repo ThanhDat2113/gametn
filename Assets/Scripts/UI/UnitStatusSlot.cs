@@ -22,6 +22,7 @@ public class UnitStatusSlot : MonoBehaviour
 
         // Đăng ký sự kiện
         linkedUnit.OnDamageTaken += OnUnitDamaged;
+        linkedUnit.OnHealed += OnUnitHealed;
         linkedUnit.OnDied += OnUnitDied;
     }
 
@@ -30,11 +31,17 @@ public class UnitStatusSlot : MonoBehaviour
         if (linkedUnit != null)
         {
             linkedUnit.OnDamageTaken -= OnUnitDamaged;
+            linkedUnit.OnHealed -= OnUnitHealed;
             linkedUnit.OnDied -= OnUnitDied;
         }
     }
 
-    private void OnUnitDamaged(CombatUnit caster, int damage, int hitIndex)
+    private void OnUnitHealed(int amount)
+    {
+        UpdateHealth();
+    }
+
+    private void OnUnitDamaged(CombatUnit caster, int damage)
     {
         UpdateHealth();
     }

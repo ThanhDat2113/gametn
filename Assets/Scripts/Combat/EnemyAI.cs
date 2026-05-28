@@ -24,19 +24,11 @@ public class EnemyAI
     // ── Chọn skill sẵn sàng ───────────────────────────────────
     private SkillData ChooseSkill(CombatUnit enemy)
     {
-        var ready = new List<(int index, SkillData skill)>();
+        // AI giờ sẽ chọn ngẫu nhiên từ tất cả các skill có sẵn
+        if (enemy.Data.skills.Length == 0) return null;
 
-        for (int i = 0; i < enemy.Data.skills.Length; i++)
-        {
-            if (enemy.IsSkillReady(i))
-                ready.Add((i, enemy.Data.skills[i]));
-        }
-
-        if (ready.Count == 0) return null;
-
-        // Random trong các skill sẵn sàng
-        var chosen = ready[Random.Range(0, ready.Count)];
-        return chosen.skill;
+        int chosenIndex = Random.Range(0, enemy.Data.skills.Length);
+        return enemy.Data.skills[chosenIndex];
     }
 
     // ── Chọn target theo trọng số hàng ───────────────────────
@@ -47,6 +39,15 @@ public class EnemyAI
         var alive = players.Where(p => p.IsAlive).ToList();
         if (alive.Count == 0) return new List<CombatUnit>();
 
+        // 1. Ưu tiên mục tiêu bị Taunt
+        var tauntingUnits = alive.Where(p => p.HasStatus(StatusEffectType.Taunt)).ToList();
+        if (tauntingUnits.Count > 0)
+        {
+            // Nếu có nhiều mục tiêu Taunt, chọn ngẫu nhiên trong số đó
+            return new List<CombatUnit> { tauntingUnits[Random.Range(0, tauntingUnits.Count)] };
+        }
+
+        // 2. Nếu không có ai Taunt, chọn như bình thường
         switch (skill.targetType)
         {
             case TargetType.AllEnemies:  // từ góc nhìn AI, "enemy" = player

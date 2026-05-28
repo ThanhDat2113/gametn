@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-// Lớp chứa kết quả của một hành động, thay thế cho ClashResult
+// Lớp chứa kết quả của một hành động
 public class ActionResult
 {
     public CombatUnit Actor { get; set; }
@@ -10,7 +10,9 @@ public class ActionResult
     public List<CombatUnit> InitialTargets { get; set; }
     public List<ActionOutcome> Outcomes { get; set; } = new List<ActionOutcome>();
 
-    // Phương thức này sẽ áp dụng tất cả các kết quả đã được tính toán
+    /// <summary>
+    /// Áp dụng outcomes damage vào target (fallback khi không có animation)
+    /// </summary>
     public void ApplyOutcomes()
     {
         foreach (var outcome in Outcomes)
@@ -18,15 +20,19 @@ public class ActionResult
             if (outcome.Target.IsAlive)
             {
                 outcome.Target.TakeDamage(Actor, outcome.Damage);
-                Debug.Log($"{outcome.Target.UnitName} takes {outcome.Damage} damage. HP left: {outcome.Target.CurrentHP}");
+                string logMessage = $"{outcome.Target.UnitName} takes {outcome.Damage} damage.";
+                if (outcome.EmpowerMultiplier > 1f)
+                {
+                    logMessage += $" ({outcome.EmpowerMultiplier:F1}x)";
+                }
+                logMessage += $" HP left: {outcome.Target.CurrentHP}";
+                Debug.Log(logMessage);
             }
         }
     }
 
-    // Áp dụng các hiệu ứng không phải sát thương (ví dụ: buff, debuff)
     public void ApplyNonDamageOutcomes()
     {
-        // Hiện tại chưa có logic này, nhưng để sẵn cấu trúc
         Debug.Log("[ActionResult] Applying non-damage outcomes (Not Implemented).");
     }
 }
@@ -36,14 +42,14 @@ public class ActionOutcome
 {
     public CombatUnit Target { get; set; }
     public int Damage { get; set; }
-    // Có thể thêm các hiệu ứng, hồi máu, v.v. ở đây
+    public float EmpowerMultiplier { get; set; } = 1f;
 }
 
-
-// Đổi tên từ ClashResolver thành ActionResolver
+/// <summary>
+/// ActionResolver: tính toán damage preview và lưu vào Outcomes.
+/// </summary>
 public class ActionResolver
 {
-    // Viết lại phương thức Resolve để phù hợp với turn-based
     public ActionResult Resolve(CombatUnit actor, SkillData skill, List<CombatUnit> targets)
     {
         var result = new ActionResult
@@ -55,19 +61,75 @@ public class ActionResolver
 
         Debug.Log($"[ActionResolver] {actor.UnitName} uses '{skill.skillName}' on {targets.Count} target(s).");
 
-        foreach (var target in targets)
+        // Lấy hệ số nhân sát thương từ Empowered stacks
+        float empowerMultiplier = actor.GetEmpowerMultiplier();
+        if (empowerMultiplier > 1f)
         {
-            if (!target.IsAlive) continue;
+            Debug.Log($"[{actor.UnitName}] được cường hóa! Sát thương x{empowerMultiplier}.");
+        }
 
-            // Logic tính sát thương cơ bản
-            // TODO: Mở rộng với các loại sát thương, hiệu ứng, v.v.
-            int damage = Mathf.Max(1, actor.ATK - target.PDEF);
-
-            result.Outcomes.Add(new ActionOutcome
+        // Populate Outcomes từ skill effects
+        bool hasEffects = skill.effects != null && skill.effects.Length > 0;
+        if (hasEffects)
+        {
+            foreach (var effect in skill.effects)
             {
-                Target = target,
-                Damage = damage
-            });
+                if (effect is DamageEffect damageEffect)
+                {
+                    foreach (var target in targets)
+                    {
+                        if (!target.IsAlive) continue;
+                        // Tính tổng damage (hitCount = 1 để lấy tổng)
+                        var hits = damageEffect.CalculateHits(actor, target, 1);
+                        foreach (var hit in hits)
+                        {
+                            int finalDamage = Mathf.RoundToInt(hit.Damage * empowerMultiplier);
+                            var outcome = new ActionOutcome
+                            {
+                                Target = target,
+                                Damage = finalDamage,
+                                EmpowerMultiplier = empowerMultiplier
+                            };
+                            
+                            // --- Damage Modification Hook ---
+                            CombatManager.Instance.TriggerDamageCalculation(outcome, actor);
+                            // -----------------------------
+
+                            result.Outcomes.Add(outcome);
+                            if (empowerMultiplier > 1f)
+                            {
+                                Debug.Log($"  -> Sát thương gốc: {hit.Damage}, Sát thương cường hóa: {finalDamage}");
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        else
+        {
+            // Fallback: nếu skill không có effects, dùng công thức ATK - PDEF
+            Debug.LogWarning($"[ActionResolver] Skill '{skill.skillName}' không có effects! Dùng công thức fallback.");
+            foreach (var target in targets)
+            {
+                if (!target.IsAlive) continue;
+                int damage = Mathf.Max(1, actor.ATK - target.PDEF);
+                int finalDamage = Mathf.RoundToInt(damage * empowerMultiplier);
+                result.Outcomes.Add(new ActionOutcome
+                {
+                    Target = target,
+                    Damage = finalDamage
+                });
+                if (empowerMultiplier > 1f)
+                {
+                    Debug.Log($"  -> Sát thương gốc: {damage}, Sát thương cường hóa: {finalDamage}");
+                }
+            }
+        }
+
+        // Tiêu thụ Empowered stacks sau khi tính toán xong
+        if (empowerMultiplier > 1f)
+        {
+            actor.ClearEmpowerStacks();
         }
 
         return result;

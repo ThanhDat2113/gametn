@@ -1,8 +1,17 @@
 using UnityEngine;
 
+public enum CombatStyle
+{
+    Melee, // Lao vào tấn công
+    Ranged // Đứng từ xa
+}
+
 [CreateAssetMenu(fileName = "NewCharacter", menuName = "RPG/Character")]
 public class CharacterData : ScriptableObject
 {
+    [Header("Behavior")]
+    public CombatStyle defaultCombatStyle = CombatStyle.Melee;
+
     [Header("Prefab")]
     public GameObject prefab;
 
@@ -30,6 +39,10 @@ public class CharacterData : ScriptableObject
     [Header("Skills (tối đa 5)")]
     [Tooltip("Kéo SkillData vào đây")]
     public SkillData[] skills;
+
+    [Header("Passive Script")]
+    [Tooltip("Kéo file .cs của passive vào đây (VD: AleusPassive.cs)")]
+    public Object passiveScript;
 
     // Tính stat theo level
     public int GetHP(int level) => baseHP + hpPerLevel * (level - 1);

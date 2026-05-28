@@ -65,6 +65,7 @@ public class CombatCameraManager : MonoBehaviour
     private Coroutine followCoroutine;
     private Coroutine shakeCoroutine;
     private Coroutine slowMoCoroutine;
+    private Coroutine frameTargetsCoroutine;
     private bool isSlowingDown = false;
     private List<Behaviour> disabledBehaviours = new List<Behaviour>();
     private bool isIntroSequenceActive = false;
@@ -206,6 +207,7 @@ public class CombatCameraManager : MonoBehaviour
     {
         StopCoroutineIfRunning(zoomCoroutine);
         StopCoroutineIfRunning(followCoroutine);
+        StopCoroutineIfRunning(frameTargetsCoroutine);
         followTarget = null;
         shakeOffset = Vector3.zero;
         isShaking = false;
@@ -471,6 +473,45 @@ public class CombatCameraManager : MonoBehaviour
     {
         isIntroSequenceActive = false;
         Debug.Log("[IntroCamera] Intro sequence ENDED. Camera control is now unlocked.");
+    }
+
+    public void FrameTargets(List<UnitView> targets, float padding = 1.2f)
+    {
+        StopCoroutineIfRunning(frameTargetsCoroutine);
+        frameTargetsCoroutine = StartCoroutine(FrameTargetsCoroutine(targets, padding));
+    }
+
+    private IEnumerator FrameTargetsCoroutine(List<UnitView> targets, float padding)
+    {
+        if (targets == null || targets.Count == 0)
+        {
+            yield break;
+        }
+
+        // Tạo một bounding box bao quanh tất cả các mục tiêu
+        var bounds = new Bounds(targets[0].transform.position, Vector3.zero);
+        for (int i = 1; i < targets.Count; i++)
+        {
+            if(targets[i] != null)
+                bounds.Encapsulate(targets[i].transform.position);
+        }
+
+        // Thêm khoảng đệm
+        bounds.size *= padding;
+
+        // Tính toán kích thước camera cần thiết
+        float requiredSizeX = bounds.size.x * Screen.height / Screen.width * 0.5f;
+        float requiredSizeY = bounds.size.y * 0.5f;
+        float targetSize = Mathf.Max(requiredSizeX, requiredSizeY, 5f); // 5f là kích thước tối thiểu
+
+        // Di chuyển và zoom camera
+        Vector3 targetPos = bounds.center + new Vector3(0, 0, cameraHeight);
+        
+        StopCoroutineIfRunning(zoomCoroutine);
+        followTarget = null;
+        targetPosition = targetPos;
+        zoomCoroutine = StartCoroutine(ZoomInCoroutine(targetSize));
+        yield return zoomCoroutine;
     }
 
     #endregion
