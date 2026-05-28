@@ -1,10 +1,8 @@
-// UnitView.cs
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.VFX; // Thêm để dùng VisualEffect
 
 public class UnitView : MonoBehaviour
 {
@@ -264,12 +262,13 @@ public class UnitView : MonoBehaviour
         currentHitIndex++;
     }
 
+    // ================== SỬA HÀM NÀY ĐỂ SPAWN VFX VỚI OFFSET XYZ ==================
     private void ProcessVFXAtFrame(int vfxIndex)
     {
         if (currentSkill == null) return;
 
         GameObject prefabToSpawn = null;
-        float offsetY = 1.5f;
+        Vector3 offset = Vector3.up * 1.5f;
         bool attachToCaster = false;
 
         // Lấy từ mảng vfxEvents mới
@@ -279,43 +278,36 @@ public class UnitView : MonoBehaviour
             if (evt != null && evt.vfxPrefab != null)
             {
                 prefabToSpawn = evt.vfxPrefab;
-                offsetY = evt.offsetY;
+                offset = evt.offset;
                 attachToCaster = evt.attachToCaster;
             }
         }
 
-        // Fallback cho skill cũ (chỉ spawn ở index 0)
+        // Fallback cho skill cũ (vfxPrefab, chỉ dùng offsetY)
         if (prefabToSpawn == null && currentSkill.vfxPrefab != null && vfxIndex == 0)
         {
             prefabToSpawn = currentSkill.vfxPrefab;
-            offsetY = currentSkill.vfxOffset;
+            offset = new Vector3(0, currentSkill.vfxOffset, 0);
         }
 
         if (prefabToSpawn == null) return;
 
-        // Spawn trên caster
-        Vector3 spawnPos = transform.position + Vector3.up * offsetY;
-        Quaternion spawnRot = transform.rotation;
-        GameObject vfxInstance = Instantiate(prefabToSpawn, spawnPos, spawnRot);
-        
-        // Nếu là Visual Effect Graph
-        var visualEffect = vfxInstance.GetComponent<VisualEffect>();
-        if (visualEffect != null)
-        {
-            visualEffect.Play();
-        }
-        // Nếu là Particle System thông thường
-        var particleSystem = vfxInstance.GetComponent<ParticleSystem>();
-        if (particleSystem != null)
-        {
-            particleSystem.Play();
-        }
+        // Spawn trên caster với offset
+        Vector3 spawnPos = transform.position + offset;
+        Quaternion spawnRot = Quaternion.identity;
+        // Nếu muốn VFX xoay theo hướng caster (tùy ý)
+        // spawnRot = transform.rotation;
 
-        if (attachToCaster)
-            vfxInstance.transform.SetParent(transform);
+        GameObject vfx = Instantiate(prefabToSpawn, spawnPos, spawnRot);
+        if (attachToCaster) vfx.transform.SetParent(transform);
         
-        Destroy(vfxInstance, 2f);
+        // Hỗ trợ Visual Effect Graph
+        var visualEffect = vfx.GetComponent<UnityEngine.VFX.VisualEffect>();
+        if (visualEffect != null) visualEffect.Play();
+
+        Destroy(vfx, 2f);
     }
+    // =====================================================================
 
     public float GetClipLength(string clipName)
     {

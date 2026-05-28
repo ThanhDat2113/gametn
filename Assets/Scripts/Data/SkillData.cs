@@ -1,12 +1,11 @@
-// SkillData.cs
 using UnityEngine;
 
 [System.Serializable]
 public class VFXEvent
 {
-    public GameObject vfxPrefab;        // Prefab chứa VisualEffect hoặc ParticleSystem
-    public float offsetY = 1.5f;        // Độ cao so với caster
-    public bool attachToCaster = false; // Gắn vào caster như con
+    public GameObject vfxPrefab;
+    public Vector3 offset = Vector3.up * 1.5f; // offset x,y,z so với caster
+    public bool attachToCaster = false;
 }
 
 public enum SkillMovementOverride
@@ -44,10 +43,10 @@ public class SkillData : ScriptableObject
     [Header("Animation")]
     public string animationTrigger;
 
-    [Header("VFX Events - Animation Event OnSpawnVFX(int index)")]
+    [Header("VFX Events - Gắn Animation Event OnSpawnVFX với Int = index")]
     public VFXEvent[] vfxEvents;
 
-    // Backward compatibility
+    // backward compatibility (vẫn giữ để không lỗi skill cũ)
     [HideInInspector] public GameObject vfxPrefab;
     [HideInInspector] public float vfxOffset = 0f;
 
