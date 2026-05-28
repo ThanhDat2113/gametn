@@ -17,6 +17,9 @@ public class FadeController : MonoBehaviour
         if (Instance != null) Destroy(gameObject);
         else Instance = this;
 
+        // ✅ Giữ FadeController tồn tại xuyên suốt các scene
+        DontDestroyOnLoad(gameObject);
+
         if (fadeImage == null)
         {
             Debug.LogError("FadeController: fadeImage chưa được gán!");

@@ -199,7 +199,7 @@ public class FormationManager : MonoBehaviour
 
     /// <summary>
     /// Map UI slots sang combat slots rồi lưu vào FormationDataStorage.
-    /// Gọi hàm này trước khi bắt đầu combat từ bất kỳ nguồn nào (T key, dialogue, v.v.)
+    /// Hàm này được gọi từ bên ngoài (MapEnemy) trước khi chuyển scene.
     /// </summary>
     public void SaveFormation()
     {

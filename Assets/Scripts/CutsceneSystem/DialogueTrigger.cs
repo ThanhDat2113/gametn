@@ -3,6 +3,9 @@ using System.Collections;
 
 public class DialogueTrigger : MonoBehaviour
 {
+    [Header("Trigger Identity")]
+    public string triggerID;
+
     public DialogueLineData[] lines;
     public KeyCode interactKey = KeyCode.E;
     public GameObject interactionPrompt;
@@ -26,14 +29,8 @@ public class DialogueTrigger : MonoBehaviour
     public GameObject dialogueCameraObject;
     public GameObject mainCameraObject;
 
-    [Header("Combat After Dialogue")]
-    public bool startCombatAfterDialogue = false;
-    public EnemyGroupData enemyGroup;
-    public string combatSceneName = "CombatScene";
-
     private Vector3 _originalMainCamPos;
     private Quaternion _originalMainCamRot;
-    private bool _mainCamWasActive;
 
     private bool _playerInRange;
     private bool _hasPlayed;
@@ -49,32 +46,39 @@ public class DialogueTrigger : MonoBehaviour
 
         if (mainCameraObject != null)
         {
-            _mainCamWasActive = mainCameraObject.activeSelf;
             _originalMainCamPos = mainCameraObject.transform.position;
             _originalMainCamRot = mainCameraObject.transform.rotation;
         }
 
         if (switchCamera && dialogueCameraObject == null)
             Debug.LogError("DialogueTrigger: Chưa gán dialogueCameraObject!");
-
         if (teleportPlayer && playerToTeleport == null)
             Debug.LogError("DialogueTrigger: Bật teleportPlayer nhưng chưa gán playerToTeleport!");
-
         if (playerToTeleport != null)
             _playerController = playerToTeleport.GetComponent<MonoBehaviour>();
     }
 
     void Update()
     {
-        if (_playerInRange && Input.GetKeyDown(interactKey))
-        {
-            if (playOnce && _hasPlayed) return;
-            _hasPlayed = true;
-            if (useBlackScreen)
-                StartCoroutine(PlayWithBlackScreenTransition());
-            else
-                StartDialogue();
-        }
+        if (!_playerInRange) return;
+        if (!Input.GetKeyDown(interactKey)) return;
+        if (playOnce && _hasPlayed) return;
+
+        _hasPlayed = true;
+        if (useBlackScreen)
+            StartCoroutine(PlayWithBlackScreenTransition());
+        else
+            StartDialogue();
+    }
+
+    public void PlayDialogueAuto()
+    {
+        if (_isPlaying) return;
+        _hasPlayed = true;
+        if (useBlackScreen)
+            StartCoroutine(PlayWithBlackScreenTransition());
+        else
+            StartDialogue();
     }
 
     private IEnumerator PlayWithBlackScreenTransition()
@@ -90,6 +94,7 @@ public class DialogueTrigger : MonoBehaviour
     private IEnumerator EndWithBlackScreen()
     {
         yield return FadeController.Instance.FadeToBlack();
+
         if (switchCamera)
         {
             if (dialogueCameraObject != null) dialogueCameraObject.SetActive(false);
@@ -102,48 +107,9 @@ public class DialogueTrigger : MonoBehaviour
                     mainCameraObject.transform.SetPositionAndRotation(_originalMainCamPos, _originalMainCamRot);
             }
         }
+
         yield return new WaitForSeconds(blackScreenDelay);
         yield return FadeController.Instance.FadeFromBlack();
-
-        if (startCombatAfterDialogue)
-            StartCombat();
-    }
-
-    private void StartCombat()
-    {
-        Debug.Log("[DialogueTrigger] Starting combat after dialogue.");
-
-        // Nếu PendingFormation chưa được set (người chơi chưa nhấn T),
-        // thử lấy từ FormationManager đang có trong scene.
-        if (FormationDataStorage.PendingFormation == null)
-        {
-            var formationManager = FindFirstObjectByType<FormationManager>();
-            if (formationManager != null)
-            {
-                formationManager.SaveFormation();
-                Debug.Log("[DialogueTrigger] Lấy đội hình từ FormationManager.");
-            }
-            else
-            {
-                Debug.LogWarning("[DialogueTrigger] Không tìm thấy FormationManager trong scene.");
-            }
-        }
-
-        var formation = FormationDataStorage.PendingFormation;
-        if (formation == null)
-        {
-            Debug.LogError("[DialogueTrigger] Không có đội hình để bắt đầu combat! Hãy xếp đội hình trước.");
-            return;
-        }
-
-        if (CombatManager.Instance != null)
-        {
-            CombatManager.Instance.StartCombat(formation, enemyGroup);
-        }
-        else
-        {
-            UnityEngine.SceneManagement.SceneManager.LoadScene(combatSceneName);
-        }
     }
 
     private void ApplyTeleportAndCamera()
@@ -154,11 +120,7 @@ public class DialogueTrigger : MonoBehaviour
 
             var cc = playerToTeleport.GetComponent<CharacterController>();
             bool ccWasEnabled = false;
-            if (cc != null && cc.enabled)
-            {
-                ccWasEnabled = true;
-                cc.enabled = false;
-            }
+            if (cc != null && cc.enabled) { ccWasEnabled = true; cc.enabled = false; }
 
             var rb = playerToTeleport.GetComponent<Rigidbody>();
             bool rbWasKinematic = false;
@@ -172,11 +134,7 @@ public class DialogueTrigger : MonoBehaviour
 
             playerToTeleport.position = targetPlayerPosition;
 
-            if (cc != null && ccWasEnabled)
-            {
-                cc.enabled = true;
-                cc.Move(Vector3.zero);
-            }
+            if (cc != null && ccWasEnabled) { cc.enabled = true; cc.Move(Vector3.zero); }
             if (rb != null) rb.isKinematic = rbWasKinematic;
             if (_playerController != null) _playerController.enabled = true;
         }
@@ -208,9 +166,14 @@ public class DialogueTrigger : MonoBehaviour
     private void OnDialogueComplete()
     {
         _isPlaying = false;
+
         if (useBlackScreenOnEnd)
+        {
             StartCoroutine(EndWithBlackScreen());
-        else if (switchCamera)
+            return;
+        }
+
+        if (switchCamera)
         {
             if (dialogueCameraObject != null) dialogueCameraObject.SetActive(false);
             if (mainCameraObject != null)
@@ -219,10 +182,6 @@ public class DialogueTrigger : MonoBehaviour
                 if (_mainCamera != null)
                     _mainCamera.transform.SetPositionAndRotation(_originalMainCamPos, _originalMainCamRot);
             }
-        }
-        else if (startCombatAfterDialogue)
-        {
-            StartCombat();
         }
     }
 
