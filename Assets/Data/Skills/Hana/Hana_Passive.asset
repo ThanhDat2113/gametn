@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Hana_Passive
   m_EditorClassIdentifier: Assembly-CSharp::SkillData
   skillName: "Starlight Veil"
-  description: "Mỗi khi một đồng minh sử dụng kỹ năng tiêu tốn từ 2AP trở lên, họ nhận thêm 10% sát thương."
+  description: "Khi một đồng minh hành động, hồi 10% máu cho đồng minh có HP thấp nhất."
   icon: {fileID: 0}
   type: 1
   targetType: 0
@@ -22,4 +22,5 @@ MonoBehaviour:
   animationTrigger: 
   vfxPrefab: {fileID: 0}
   vfxOffset: 0
-  effects: []
+  effects:
+  - {fileID: 11400000, guid: c9fad3066ae428746b34f7b74fcabe7f, type: 2}
