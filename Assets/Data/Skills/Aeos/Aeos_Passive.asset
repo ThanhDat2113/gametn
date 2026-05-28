@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Aeos_Passive
   m_EditorClassIdentifier: Assembly-CSharp::SkillData
   skillName: "Executioner"
-  description: "Aeos bỏ qua 30% phòng thủ của toàn bộ kẻ địch và mỗi khi tiêu diệt được 1 kẻ địch anh nhận thêm 10% xuyên kháng (tối đa 20% cộng thêm)."
+  description: "Aeos bỏ qua 30% phòng thủ của toàn bộ kẻ địch và mỗi khi tiêu diệt được 1 kẻ địch anh nhận thêm 10% xuyên giáp (tối đa 20% cộng thêm)."
   icon: {fileID: 0}
   type: 1
   targetType: 0
@@ -22,4 +22,5 @@ MonoBehaviour:
   animationTrigger: 
   vfxPrefab: {fileID: 0}
   vfxOffset: 0
-  effects: []
+  effects:
+  - {fileID: 11400000, guid: 8f305f2fcbbaecd4fb5468453f0ee225, type: 2}
