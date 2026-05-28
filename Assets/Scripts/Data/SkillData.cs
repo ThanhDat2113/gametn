@@ -1,46 +1,55 @@
+// SkillData.cs
 using UnityEngine;
+
+[System.Serializable]
+public class VFXEvent
+{
+    public GameObject vfxPrefab;        // Prefab chứa VisualEffect hoặc ParticleSystem
+    public float offsetY = 1.5f;        // Độ cao so với caster
+    public bool attachToCaster = false; // Gắn vào caster như con
+}
 
 public enum SkillMovementOverride
 {
-    InheritFromCharacter, // Dùng cài đặt của CharacterData
-    ForceRushToTarget,    // Luôn lao đến mục tiêu
-    ForceStationary       // Luôn đứng yên
+    InheritFromCharacter,
+    ForceRushToTarget,
+    ForceStationary
 }
 
 [CreateAssetMenu(fileName = "NewSkill", menuName = "RPG/Skill")]
 public class SkillData : ScriptableObject
 {
-    [Tooltip("Kỹ năng này có tự động xác nhận ngay khi được chọn không? (Hữu ích cho các skill buff không cần chọn mục tiêu)")]
     public bool autoConfirmOnSelect = false;
 
     [Header("Behavior")]
-    [Tooltip("Ghi đè hành vi di chuyển mặc định của nhân vật.")]
     public SkillMovementOverride movementOverride = SkillMovementOverride.InheritFromCharacter;
 
     [Header("Identity")]
     public string skillName;
-    [TextArea]
-    public string description;
+    [TextArea] public string description;
     public Sprite icon;
 
     [Header("Type")]
-    public SkillType type = SkillType.Auto;     // Không còn clash, mặc định Auto
+    public SkillType type = SkillType.Auto;
     public TargetType targetType = TargetType.SingleEnemy;
     public bool isChargeable = false;
     public bool doesNotEndTurn = false;
 
     [Header("Cost")]
-    [Tooltip("Chi phí Action Point để sử dụng skill này.")]
     public int apCost = 1;
 
     [Header("Hit Settings")]
-    [Tooltip("Số lần gây sát thương (hiển thị nhiều số)")]
     public int hitCount = 1;
 
     [Header("Animation")]
     public string animationTrigger;
-    public GameObject vfxPrefab;
-    public float vfxOffset = 0f;
+
+    [Header("VFX Events - Animation Event OnSpawnVFX(int index)")]
+    public VFXEvent[] vfxEvents;
+
+    // Backward compatibility
+    [HideInInspector] public GameObject vfxPrefab;
+    [HideInInspector] public float vfxOffset = 0f;
 
     [Header("Effects")]
     public SkillEffect[] effects;

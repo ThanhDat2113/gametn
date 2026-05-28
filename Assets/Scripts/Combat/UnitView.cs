@@ -1,8 +1,10 @@
+// UnitView.cs
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.VFX; // Thêm để dùng VisualEffect
 
 public class UnitView : MonoBehaviour
 {
@@ -133,6 +135,8 @@ public class UnitView : MonoBehaviour
     }
 
     public void SetCurrentSkill(SkillData skill) { currentSkill = skill; }
+    public void SetCurrentTarget(CombatUnit target) { currentTarget = target; }
+    
     public void SetPendingHits(List<HitData> hits, CombatUnit target)
     {
         pendingHits = new List<HitData>(hits);
@@ -177,9 +181,6 @@ public class UnitView : MonoBehaviour
         yield return new WaitForSeconds(ns.length - ns.normalizedTime * ns.length);
     }
 
-    /// <summary>
-    /// Gán danh sách outcomes và hitCount để animation per-hit có thể apply damage
-    /// </summary>
     public void SetPendingOutcomes(List<ActionOutcome> outcomes, CombatUnit caster, int hitCount)
     {
         pendingOutcomes = outcomes;
@@ -188,14 +189,10 @@ public class UnitView : MonoBehaviour
         currentHitIndex = 0;
     }
 
-    /// <summary>
-    /// Force apply tất cả pending outcomes còn lại (fallback khi animation không có hit events)
-    /// </summary>
     public void FlushPendingOutcomes()
     {
         if (pendingOutcomes.Count == 0 || pendingCaster == null) return;
 
-        // Apply damage còn lại cho tất cả outcomes chưa được process
         while (currentHitIndex < pendingHitCount)
         {
             foreach (var outcome in pendingOutcomes)
@@ -234,10 +231,7 @@ public class UnitView : MonoBehaviour
 
     private void ProcessHitAtFrame(int hitIndex)
     {
-        // Apply damage per-hit từ pendingOutcomes
         if (pendingOutcomes.Count == 0 || pendingCaster == null) return;
-
-        // Skip nếu đã xử lý hết hit count rồi (tránh duplicate từ animation)
         if (currentHitIndex >= pendingHitCount) return;
 
         int damageThisHit = 0;
@@ -245,9 +239,7 @@ public class UnitView : MonoBehaviour
         {
             if (outcome.Target == null || !outcome.Target.IsAlive) continue;
 
-            // Chia damage đều cho các hit
             int baseDamage = outcome.Damage / pendingHitCount;
-            // Hit cuối nhận phần dư
             if (currentHitIndex == pendingHitCount - 1)
             {
                 int remainder = outcome.Damage - baseDamage * (pendingHitCount - 1);
@@ -269,17 +261,60 @@ public class UnitView : MonoBehaviour
                 Debug.Log(logMessage + $" HP: {outcome.Target.CurrentHP}");
             }
         }
-
         currentHitIndex++;
     }
+
     private void ProcessVFXAtFrame(int vfxIndex)
     {
-        if (currentSkill?.vfxPrefab == null || currentTarget == null) return;
-        var targetView = FindObjectsByType<UnitView>(FindObjectsSortMode.None).FirstOrDefault(v => v.LinkedUnit == currentTarget);
-        Vector3 pos = targetView != null ? targetView.transform.position : Vector3.zero;
-        pos += Vector3.up * currentSkill.vfxOffset;
-        var vfx = Instantiate(currentSkill.vfxPrefab, pos, Quaternion.identity);
-        Destroy(vfx, 2f);
+        if (currentSkill == null) return;
+
+        GameObject prefabToSpawn = null;
+        float offsetY = 1.5f;
+        bool attachToCaster = false;
+
+        // Lấy từ mảng vfxEvents mới
+        if (currentSkill.vfxEvents != null && vfxIndex >= 0 && vfxIndex < currentSkill.vfxEvents.Length)
+        {
+            var evt = currentSkill.vfxEvents[vfxIndex];
+            if (evt != null && evt.vfxPrefab != null)
+            {
+                prefabToSpawn = evt.vfxPrefab;
+                offsetY = evt.offsetY;
+                attachToCaster = evt.attachToCaster;
+            }
+        }
+
+        // Fallback cho skill cũ (chỉ spawn ở index 0)
+        if (prefabToSpawn == null && currentSkill.vfxPrefab != null && vfxIndex == 0)
+        {
+            prefabToSpawn = currentSkill.vfxPrefab;
+            offsetY = currentSkill.vfxOffset;
+        }
+
+        if (prefabToSpawn == null) return;
+
+        // Spawn trên caster
+        Vector3 spawnPos = transform.position + Vector3.up * offsetY;
+        Quaternion spawnRot = transform.rotation;
+        GameObject vfxInstance = Instantiate(prefabToSpawn, spawnPos, spawnRot);
+        
+        // Nếu là Visual Effect Graph
+        var visualEffect = vfxInstance.GetComponent<VisualEffect>();
+        if (visualEffect != null)
+        {
+            visualEffect.Play();
+        }
+        // Nếu là Particle System thông thường
+        var particleSystem = vfxInstance.GetComponent<ParticleSystem>();
+        if (particleSystem != null)
+        {
+            particleSystem.Play();
+        }
+
+        if (attachToCaster)
+            vfxInstance.transform.SetParent(transform);
+        
+        Destroy(vfxInstance, 2f);
     }
 
     public float GetClipLength(string clipName)
