@@ -3,9 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
-using System;
-
-using UnityEngine.UI;
 
 public class CombatCameraManager : MonoBehaviour
 {
@@ -16,18 +13,16 @@ public class CombatCameraManager : MonoBehaviour
     public float enemyRushDelay = 0.5f;
     public float finalZoomOutDuration = 1.0f;
 
-
-
     [Header("Default State")]
     [Tooltip("Default camera size khi không zoom")]
-    public float defaultOrthoSize = 10f;
+    public float defaultOrthoSize = 12f; // FIX: tăng từ 10 lên 12 để bao quát hơn
     public Vector3 defaultPosition = Vector3.zero;
     [Tooltip("Z position của camera")]
     public float cameraHeight = 8f;
 
     [Header("Zoom Settings")]
-    public float clashZoomSize = 7f;
-    public float damageZoomSize = 8f;
+    public float clashZoomSize = 8.5f;   // FIX: tăng lên 8.5 để không zoom quá gần
+    public float damageZoomSize = 9f;    // FIX: tăng lên 9
     public float zoomInDuration = 0.15f;
     public float zoomOutDuration = 0.2f;
 
@@ -143,7 +138,7 @@ public class CombatCameraManager : MonoBehaviour
 
     private void LateUpdate()
     {
-        if (isIntroSequenceActive) return; // Bỏ qua nếu intro đang chạy
+        if (isIntroSequenceActive) return;
 
         if (followTarget != null)
         {
@@ -171,7 +166,10 @@ public class CombatCameraManager : MonoBehaviour
     public void ZoomToUnit(Transform unit, float zoomSize = 0)
     {
         if (unit == null) return;
-        if (zoomSize <= 0) zoomSize = damageZoomSize;
+        // FIX: giới hạn zoomSize không được nhỏ hơn 8.5f để tránh crop
+        if (zoomSize <= 0) zoomSize = Mathf.Max(damageZoomSize, 8.5f);
+        else zoomSize = Mathf.Max(zoomSize, 8.5f);
+        
         StopCoroutineIfRunning(zoomCoroutine);
         StopCoroutineIfRunning(followCoroutine);
         followTarget = unit;
@@ -194,7 +192,6 @@ public class CombatCameraManager : MonoBehaviour
     {
         targetPosition = position + new Vector3(0, 0, cameraHeight);
         currentOrthoSize = size;
-        // Di chuyển trực tiếp camera khi intro đang chạy hoặc không có mục tiêu theo dõi
         if (isIntroSequenceActive || followTarget == null)
         {
             cameraTransform.position = targetPosition;
@@ -235,8 +232,12 @@ public class CombatCameraManager : MonoBehaviour
         Vector3 center = (min + max) * 0.5f;
         float width = Mathf.Abs(max.x - min.x);
         float height = Mathf.Abs(max.y - min.y);
-        float requiredSize = Mathf.Max(Mathf.Max(width, height) * 0.6f, 10f);
-        float bufferSize = Mathf.Max(requiredSize * 1.1f, 8f);
+        
+        // FIX: thêm padding dọc rõ ràng (tăng thêm 30% chiều cao)
+        float verticalPadding = height * 0.3f;
+        float requiredSize = Mathf.Max((height + verticalPadding) * 0.6f, width * 0.6f, 8f);
+        float bufferSize = Mathf.Max(requiredSize * 1.2f, 10f); // FIX: tăng buffer
+        
         defaultOrthoSize = bufferSize;
         defaultPosition = center;
         currentOrthoSize = bufferSize;
@@ -256,7 +257,7 @@ public class CombatCameraManager : MonoBehaviour
 
     public void ScamAdjustDistance(float factor)
     {
-        defaultOrthoSize = Mathf.Max(defaultOrthoSize * Mathf.Clamp(factor, 0.5f, 2f), 8f);
+        defaultOrthoSize = Mathf.Max(defaultOrthoSize * Mathf.Clamp(factor, 0.5f, 2f), 10f);
         Debug.Log($"[CombatCamera] Distance adjusted: {defaultOrthoSize:F2}");
     }
 
@@ -265,8 +266,6 @@ public class CombatCameraManager : MonoBehaviour
         StopCoroutineIfRunning(shakeCoroutine);
         shakeCoroutine = StartCoroutine(PlayerImpactCoroutine(target));
     }
-
-
 
     private IEnumerator PlayerImpactCoroutine(Transform target)
     {
@@ -400,16 +399,13 @@ public class CombatCameraManager : MonoBehaviour
             yield break;
         }
 
-        // 1. Start with black screen
         fadePanel.color = Color.black;
         fadePanel.gameObject.SetActive(true);
 
-        // 2. Instantly set camera to the starting PAN position (off-screen)
         Vector3 startPanPos = focusPoint + panFromOffset;
         SetCameraPositionAndSize(startPanPos, targetSize);
-        yield return new WaitForSeconds(0.1f); 
+        yield return new WaitForSeconds(0.1f);
 
-        // 3. Fade in (alpha from 1 to 0)
         float elapsed = 0f;
         while (elapsed < fadeDuration)
         {
@@ -421,7 +417,6 @@ public class CombatCameraManager : MonoBehaviour
         fadePanel.gameObject.SetActive(false);
         Debug.Log("[IntroCamera] Fade-in complete.");
 
-        // 4. Pan camera to the focus point
         elapsed = 0f;
         Vector3 currentPos = cameraTransform.position;
         Vector3 targetPanPos = focusPoint + new Vector3(0, 0, cameraHeight);
@@ -444,7 +439,6 @@ public class CombatCameraManager : MonoBehaviour
         float startSize = mainCamera.orthographicSize;
         Vector3 startPos = cameraTransform.position;
 
-        // Calculate final framing based on all units in their correct positions
         AutoFitUnitsInView();
         float finalSize = defaultOrthoSize;
         Vector3 finalPos = defaultPosition + new Vector3(0, 0, cameraHeight);
@@ -475,7 +469,7 @@ public class CombatCameraManager : MonoBehaviour
         Debug.Log("[IntroCamera] Intro sequence ENDED. Camera control is now unlocked.");
     }
 
-    public void FrameTargets(List<UnitView> targets, float padding = 1.2f)
+    public void FrameTargets(List<UnitView> targets, float padding = 1.5f) // FIX: tăng padding mặc định từ 1.2 -> 1.5
     {
         StopCoroutineIfRunning(frameTargetsCoroutine);
         frameTargetsCoroutine = StartCoroutine(FrameTargetsCoroutine(targets, padding));
@@ -484,29 +478,22 @@ public class CombatCameraManager : MonoBehaviour
     private IEnumerator FrameTargetsCoroutine(List<UnitView> targets, float padding)
     {
         if (targets == null || targets.Count == 0)
-        {
             yield break;
-        }
 
-        // Tạo một bounding box bao quanh tất cả các mục tiêu
         var bounds = new Bounds(targets[0].transform.position, Vector3.zero);
         for (int i = 1; i < targets.Count; i++)
         {
-            if(targets[i] != null)
+            if (targets[i] != null)
                 bounds.Encapsulate(targets[i].transform.position);
         }
-
-        // Thêm khoảng đệm
         bounds.size *= padding;
 
-        // Tính toán kích thước camera cần thiết
         float requiredSizeX = bounds.size.x * Screen.height / Screen.width * 0.5f;
         float requiredSizeY = bounds.size.y * 0.5f;
-        float targetSize = Mathf.Max(requiredSizeX, requiredSizeY, 5f); // 5f là kích thước tối thiểu
+        float targetSize = Mathf.Max(requiredSizeX, requiredSizeY, 7f); // FIX: tăng min lên 7
 
-        // Di chuyển và zoom camera
         Vector3 targetPos = bounds.center + new Vector3(0, 0, cameraHeight);
-        
+
         StopCoroutineIfRunning(zoomCoroutine);
         followTarget = null;
         targetPosition = targetPos;
