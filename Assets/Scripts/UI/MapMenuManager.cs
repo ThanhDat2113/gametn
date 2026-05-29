@@ -1,19 +1,25 @@
 using UnityEngine;
 using System.Collections;
 using UnityEngine.UI;
-using UnityEngine.SceneManagement; // thêm để load scene
+using UnityEngine.SceneManagement;
+using System.Collections.Generic;
 
 public class MapMenuManager : MonoBehaviour
 {
     [Header("Main Panel")]
     public GameObject mainPanel;
+
     [Header("Sub Panels")]
     public GameObject characterPanel;
     public GameObject formationPanel;
     public GameObject inventoryPanel;
     public GameObject savePanel;
     public GameObject loadPanel;
-    public GameObject quitPanel;  // Panel nhỏ xác nhận thoát
+    public GameObject quitPanel;
+
+    [Header("Character Container trên Main Panel")]
+    public Transform characterContainer;
+    public GameObject characterSlotPrefab;
 
     [Header("Animation Settings (chỉ cho main panel)")]
     public float animationDuration = 0.5f;
@@ -37,6 +43,8 @@ public class MapMenuManager : MonoBehaviour
     private enum MenuState { Closed, Main, Character, Formation, Inventory, Save, Load, Quit }
     private MenuState currentState = MenuState.Closed;
     private Coroutine currentAnim;
+
+    private List<CharacterSlotUI> characterSlots = new List<CharacterSlotUI>();
 
     void Awake()
     {
@@ -72,6 +80,22 @@ public class MapMenuManager : MonoBehaviour
         savePanel.SetActive(false);
         loadPanel.SetActive(false);
         quitPanel.SetActive(false);
+
+        // Đăng ký sự kiện thay đổi đội hình
+        var formationMgr = FindFirstObjectByType<FormationManager>();
+        if (formationMgr != null)
+        {
+            formationMgr.OnFormationChanged += RefreshCharacterContainer;
+        }
+    }
+
+    private void OnDestroy()
+    {
+        var formationMgr = FindFirstObjectByType<FormationManager>();
+        if (formationMgr != null)
+        {
+            formationMgr.OnFormationChanged -= RefreshCharacterContainer;
+        }
     }
 
     void Update()
@@ -101,7 +125,7 @@ public class MapMenuManager : MonoBehaviour
                     GoBackToMainWithoutEffect();
                 break;
             case MenuState.Quit:
-                CloseQuitPanel(); // Chỉ đóng quit panel, không ẩn main
+                CloseQuitPanel();
                 break;
             default:
                 GoBackToMainWithoutEffect();
@@ -119,6 +143,7 @@ public class MapMenuManager : MonoBehaviour
     {
         if (currentAnim != null) StopCoroutine(currentAnim);
         mainPanel.SetActive(true);
+        RefreshCharacterContainer(); // Cập nhật danh sách nhân vật
         mainRect.localScale = Vector3.one * startScale;
         if (useFade && mainCG != null) mainCG.alpha = 0f;
         currentAnim = StartCoroutine(AnimateMainPanel(startScale, 1f, 0f, 1f, false));
@@ -133,8 +158,9 @@ public class MapMenuManager : MonoBehaviour
 
     void GoBackToMainWithoutEffect()
     {
-        CloseCurrentSubPanel(); // sẽ đóng các panel con bình thường (trừ quit)
+        CloseCurrentSubPanel();
         mainPanel.SetActive(true);
+        RefreshCharacterContainer(); // Cập nhật lại khi quay về main
         mainRect.localScale = Vector3.one;
         if (useFade && mainCG != null) mainCG.alpha = 1f;
         currentState = MenuState.Main;
@@ -149,7 +175,6 @@ public class MapMenuManager : MonoBehaviour
             case MenuState.Inventory: inventoryPanel.SetActive(false); break;
             case MenuState.Save: savePanel.SetActive(false); break;
             case MenuState.Load: loadPanel.SetActive(false); break;
-            // Không đóng quit panel ở đây vì nó được xử lý riêng
         }
     }
 
@@ -160,7 +185,7 @@ public class MapMenuManager : MonoBehaviour
             mainPanel.SetActive(false);
         else
             CloseCurrentSubPanel();
-        
+
         panel.SetActive(true);
         currentState = nextState;
         Canvas.ForceUpdateCanvases();
@@ -168,7 +193,6 @@ public class MapMenuManager : MonoBehaviour
             LayoutRebuilder.ForceRebuildLayoutImmediate(panel.GetComponent<RectTransform>());
     }
 
-    // Quit panel đặc biệt: không ẩn main panel
     void OpenQuitPanel()
     {
         if (quitPanel != null)
@@ -185,14 +209,11 @@ public class MapMenuManager : MonoBehaviour
         currentState = MenuState.Main;
     }
 
-    // Hàm gọi khi chọn Yes (xác nhận quit)
     public void QuitToMainMenu()
     {
-        // Load scene main menu (tên scene của bạn)
         SceneManager.LoadScene("Main Menu");
     }
 
-    // Hàm gọi khi chọn No (hủy)
     public void CancelQuit()
     {
         CloseQuitPanel();
@@ -224,11 +245,66 @@ public class MapMenuManager : MonoBehaviour
         currentAnim = null;
     }
 
-    // Các hàm public để gọi từ button
+    // Public methods for buttons
     public void OpenCharacterPanel() => OpenSubPanel(characterPanel, MenuState.Character);
     public void OpenFormationPanel() => OpenSubPanel(formationPanel, MenuState.Formation);
     public void OpenInventoryPanel() => OpenSubPanel(inventoryPanel, MenuState.Inventory);
     public void OpenSavePanel() => OpenSubPanel(savePanel, MenuState.Save);
     public void OpenLoadPanel() => OpenSubPanel(loadPanel, MenuState.Load);
-    public void OpenQuit() => OpenQuitPanel(); // gán cho nút Quit
+    public void OpenQuit() => OpenQuitPanel();
+
+    // ─── Character Container ─────────────────────────────────
+    private void RefreshCharacterContainer()
+    {
+        // Xóa các slot cũ
+        foreach (var slot in characterSlots)
+        {
+            if (slot != null) Destroy(slot.gameObject);
+        }
+        characterSlots.Clear();
+
+        if (characterContainer == null || characterSlotPrefab == null)
+        {
+            Debug.LogWarning("[MapMenuManager] characterContainer hoặc characterSlotPrefab chưa được gán!");
+            return;
+        }
+
+        var formationMgr = FindFirstObjectByType<FormationManager>();
+        if (formationMgr == null) return;
+
+        var formationData = formationMgr.GetCurrentFormationData();
+        if (formationData == null || formationData.slots == null) return;
+
+        // Lọc các ô có nhân vật, sắp xếp theo gridSlot
+        var activeSlots = new List<(int gridSlot, FormationSlot slot)>();
+        for (int i = 0; i < formationData.slots.Length; i++)
+        {
+            if (formationData.slots[i] != null && formationData.slots[i].data != null)
+            {
+                activeSlots.Add((i, formationData.slots[i]));
+            }
+        }
+        activeSlots.Sort((a, b) => a.gridSlot.CompareTo(b.gridSlot));
+
+        // Tạo UI slot
+        for (int idx = 0; idx < activeSlots.Count; idx++)
+        {
+            var slotData = activeSlots[idx];
+            var character = slotData.slot.data;
+            int level = slotData.slot.level;
+
+            GameObject slotGO = Instantiate(characterSlotPrefab, characterContainer);
+            var slotUI = slotGO.GetComponent<CharacterSlotUI>();
+            if (slotUI != null)
+            {
+                slotUI.Setup(character, level, idx + 1);
+                characterSlots.Add(slotUI);
+            }
+            else
+            {
+                Debug.LogError("CharacterSlotPrefab thiếu component CharacterSlotUI!");
+                Destroy(slotGO);
+            }
+        }
+    }
 }

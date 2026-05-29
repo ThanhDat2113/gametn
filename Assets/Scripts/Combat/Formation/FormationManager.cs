@@ -6,6 +6,9 @@ using TMPro;
 
 public class FormationManager : MonoBehaviour
 {
+    // ─── Event ────────────────────────────────────────────────
+    public event System.Action OnFormationChanged;
+
     [Header("Formation UI Panel (sẽ hiện khi nhấn F)")]
     public GameObject formationPanel;
 
@@ -19,7 +22,7 @@ public class FormationManager : MonoBehaviour
     public CharacterData[] availableCharacters;
 
     [Header("Default Character (must always be present if formation would be empty)")]
-    public CharacterData defaultCharacter;   // Kéo vào Inspector – nếu để trống sẽ dùng availableCharacters[0]
+    public CharacterData defaultCharacter;
 
     [Header("Mapping: UI slot index -> Combat slot index (0-8)")]
     public int[] uiToCombatSlot = new int[9] { 6, 3, 0, 7, 4, 1, 8, 5, 2 };
@@ -40,7 +43,6 @@ public class FormationManager : MonoBehaviour
         BuildGrid();
         BuildRoster();
 
-        // Đảm bảo đội hình có ít nhất 1 nhân vật (nhân vật mặc định)
         EnsureAtLeastOneCharacter();
 
         formationPanel.SetActive(false);
@@ -106,16 +108,11 @@ public class FormationManager : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Đảm bảo đội hình luôn có ít nhất 1 nhân vật.
-    /// Nếu đội hình trống, tự động đặt defaultCharacter vào ô trống đầu tiên.
-    /// </summary>
     private void EnsureAtLeastOneCharacter()
     {
         int currentCount = currentFormation.slots.Count(s => s != null && s.data != null);
         if (currentCount > 0) return;
 
-        // Chọn default character – nếu chưa gán thì dùng nhân vật đầu tiên trong danh sách có sẵn
         CharacterData defaultChar = defaultCharacter;
         if (defaultChar == null && availableCharacters.Length > 0)
             defaultChar = availableCharacters[0];
@@ -126,7 +123,6 @@ public class FormationManager : MonoBehaviour
             return;
         }
 
-        // Tìm ô trống đầu tiên
         int emptySlotIndex = -1;
         for (int i = 0; i < slots.Length; i++)
         {
@@ -139,11 +135,10 @@ public class FormationManager : MonoBehaviour
 
         if (emptySlotIndex == -1)
         {
-            Debug.LogWarning("[FormationManager] Không tìm thấy ô trống để đặt nhân vật mặc định! (lưới 3x3 đầy?)");
+            Debug.LogWarning("[FormationManager] Không tìm thấy ô trống để đặt nhân vật mặc định!");
             return;
         }
 
-        // Đặt nhân vật mặc định
         currentFormation.slots[emptySlotIndex] = new FormationSlot
         {
             data = defaultChar,
@@ -152,13 +147,10 @@ public class FormationManager : MonoBehaviour
         };
         slots[emptySlotIndex].SetCharacter(defaultChar);
         SetRosterVisible(defaultChar, false);
+        OnFormationChanged?.Invoke();
         Debug.Log($"[FormationManager] Đã tự động thêm nhân vật mặc định '{defaultChar.characterName}' vào ô {emptySlotIndex}");
     }
 
-    /// <summary>
-    /// Kiểm tra xem có thể gỡ nhân vật khỏi ô uiSlotIndex hay không.
-    /// Không cho gỡ nếu sau khi gỡ đội hình sẽ trống (0 nhân vật).
-    /// </summary>
     private bool CanRemoveCharacter(int uiSlotIndex)
     {
         int currentCount = currentFormation.slots.Count(s => s != null && s.data != null);
@@ -190,6 +182,7 @@ public class FormationManager : MonoBehaviour
         slots[uiSlotIndex].SetCharacter(character);
         SetRosterVisible(character, false);
         UpdateCounter();
+        OnFormationChanged?.Invoke();
         return true;
     }
 
@@ -199,6 +192,7 @@ public class FormationManager : MonoBehaviour
 
         ClearSlot(uiSlotIndex);
         UpdateCounter();
+        OnFormationChanged?.Invoke();
     }
 
     public void TrySwapCharacters(int fromSlot, int toSlot)
@@ -220,6 +214,7 @@ public class FormationManager : MonoBehaviour
                 ClearSlotInternal(fromSlot);
                 slots[toSlot].SetCharacter(charFrom);
                 UpdateCounter();
+                OnFormationChanged?.Invoke();
             }
         }
         else
@@ -242,6 +237,7 @@ public class FormationManager : MonoBehaviour
             slots[fromSlot].SetCharacter(charTo);
             slots[toSlot].SetCharacter(charFrom);
             UpdateCounter();
+            OnFormationChanged?.Invoke();
         }
     }
 
@@ -270,10 +266,6 @@ public class FormationManager : MonoBehaviour
         return currentFormation.slots.Any(s => s != null && s.data == character);
     }
 
-    /// <summary>
-    /// Map UI slots sang combat slots rồi lưu vào FormationDataStorage.
-    /// Hàm này được gọi từ bên ngoài (MapEnemy) trước khi chuyển scene.
-    /// </summary>
     public void SaveFormation()
     {
         var mappedFormation = new FormationData { slots = new FormationSlot[9] };
@@ -311,5 +303,26 @@ public class FormationManager : MonoBehaviour
     public FormationData GetCurrentFormationData()
     {
         return currentFormation;
+    }
+
+    public void UnlockCharacter(CharacterData character)
+    {
+        if (character == null) return;
+
+        if (rosterItemMap.ContainsKey(character))
+        {
+            Debug.LogWarning($"[FormationManager] '{character.characterName}' đã có trong roster.");
+            return;
+        }
+
+        var go = Instantiate(characterIconPrefab, rosterContainer);
+        var drag = go.GetComponent<CharacterDragItem>();
+        drag.Initialize(character, this);
+        rosterItemMap[character] = drag;
+
+        var list = new List<CharacterData>(availableCharacters) { character };
+        availableCharacters = list.ToArray();
+
+        Debug.Log($"[FormationManager] Đã mở khóa nhân vật mới: '{character.characterName}'");
     }
 }
