@@ -18,6 +18,12 @@ public class QuestUI : MonoBehaviour
         objectiveText.text = description;
     }
 
+    public void Show()
+    {
+        if (panel != null) panel.SetActive(true);
+        else gameObject.SetActive(true);
+    }
+
     public void Hide()
     {
         objectiveText.text = "";
