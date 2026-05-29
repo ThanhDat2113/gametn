@@ -637,17 +637,16 @@ public class CombatManager : MonoBehaviour
             {
                 if (effect == null) continue;
                 
-                // Detect damage effects: kế thừa DamageEffect HOẶC tên effect có chứa "Damage" 
-                bool isDamageEffect = (effect is DamageEffect) || effect.GetType().Name.ToLower().Contains("damage");
+                // Chỉ deferred damage effects (kế thừa DamageEffect như MissingHPDamageEffect)
+                // Non-damage effects (buff, heal, stat, status) apply ngay
+                bool isDamageEffect = (effect is DamageEffect);
                 if (isDamageEffect)
                 {
-                    // Damage effect: sẽ được xử lý trong animation per-hit
                     hasDamageEffects = true;
                     Debug.Log($"[Resolve] DamageEffect '{effect.GetType().Name}' deferred to animation.");
                 }
                 else
                 {
-                    // Non-damage effect: apply ngay (heal, buff, status)
                     Debug.Log($"[Resolve] Applying non-damage effect: {effect.GetType().Name}");
                     effect.Apply(action.Caster, action.Targets.ToArray());
                 }
@@ -742,16 +741,12 @@ public class CombatManager : MonoBehaviour
             }
             else
             {
-                if (!isFirstPlayerTurnOfRound)
+                if (CurrentPlayerAP < MAX_PLAYER_AP)
                 {
-                    if (CurrentPlayerAP < MAX_PLAYER_AP)
-                    {
-                        CurrentPlayerAP++;
-                        OnAPChanged?.Invoke(CurrentPlayerAP);
-                        Debug.Log($"[AP] Hồi 1 AP. Hiện có: {CurrentPlayerAP}");
-                    }
+                    CurrentPlayerAP++;
+                    OnAPChanged?.Invoke(CurrentPlayerAP);
+                    Debug.Log($"[AP] Hồi 1 AP. Hiện có: {CurrentPlayerAP}");
                 }
-                isFirstPlayerTurnOfRound = false;
 
                 Debug.Log($"[Execute] Unit {currentUnit.UnitName} is a player. Waiting for input...");
                 isWaitingForPlayerInput = true;

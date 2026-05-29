@@ -72,36 +72,44 @@ public class ActionResolver
         bool hasEffects = skill.effects != null && skill.effects.Length > 0;
         if (hasEffects)
         {
-            foreach (var effect in skill.effects)
+            // Lặp qua mỗi mục tiêu được chọn
+            foreach (var target in targets)
             {
-                if (effect is DamageEffect damageEffect)
+                if (!target.IsAlive) continue;
+
+                int totalDamageForTarget = 0;
+
+                // Tính tổng damage từ tất cả các DamageEffect trong skill lên mục tiêu này
+                foreach (var effect in skill.effects)
                 {
-                    foreach (var target in targets)
+                    if (effect is DamageEffect damageEffect)
                     {
-                        if (!target.IsAlive) continue;
-                        // Tính tổng damage (hitCount = 1 để lấy tổng)
-                        var hits = damageEffect.CalculateHits(actor, target, 1);
+                        var hits = damageEffect.CalculateHits(actor, target, 1); // hitCount = 1 để lấy tổng damage
                         foreach (var hit in hits)
                         {
-                            int finalDamage = Mathf.RoundToInt(hit.Damage * empowerMultiplier);
-                            var outcome = new ActionOutcome
-                            {
-                                Target = target,
-                                Damage = finalDamage,
-                                EmpowerMultiplier = empowerMultiplier
-                            };
-                            
-                            // --- Damage Modification Hook ---
-                            CombatManager.Instance.TriggerDamageCalculation(outcome, actor);
-                            // -----------------------------
-
-                            result.Outcomes.Add(outcome);
-                            if (empowerMultiplier > 1f)
-                            {
-                                Debug.Log($"  -> Sát thương gốc: {hit.Damage}, Sát thương cường hóa: {finalDamage}");
-                            }
+                            totalDamageForTarget += Mathf.RoundToInt(hit.Damage * empowerMultiplier);
                         }
                     }
+                }
+
+                var outcome = new ActionOutcome
+                {
+                    Target = target,
+                    Damage = totalDamageForTarget,
+                    EmpowerMultiplier = empowerMultiplier
+                };
+
+                // --- Damage Modification Hook ---
+                if (totalDamageForTarget > 0)
+                {
+                    CombatManager.Instance.TriggerDamageCalculation(outcome, actor);
+                }
+                
+                result.Outcomes.Add(outcome);
+
+                if (totalDamageForTarget > 0 && empowerMultiplier > 1f)
+                {
+                    Debug.Log($"  -> Sát thương cường hóa lên {target.UnitName}: {outcome.Damage}");
                 }
             }
         }
@@ -114,14 +122,17 @@ public class ActionResolver
                 if (!target.IsAlive) continue;
                 int damage = Mathf.Max(1, actor.ATK - target.PDEF);
                 int finalDamage = Mathf.RoundToInt(damage * empowerMultiplier);
-                result.Outcomes.Add(new ActionOutcome
+                var outcome = new ActionOutcome
                 {
                     Target = target,
-                    Damage = finalDamage
-                });
+                    Damage = finalDamage,
+                    EmpowerMultiplier = empowerMultiplier
+                };
+                result.Outcomes.Add(outcome);
+
                 if (empowerMultiplier > 1f)
                 {
-                    Debug.Log($"  -> Sát thương gốc: {damage}, Sát thương cường hóa: {finalDamage}");
+                    Debug.Log($"  -> Sát thương gốc: {damage}, Sát thương cường hóa: {finalDamage} lên {target.UnitName}");
                 }
             }
         }

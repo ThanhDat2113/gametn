@@ -34,11 +34,17 @@ public class ClashAnimationSequence : MonoBehaviour
         var actorView = GetViewForUnit(result.Actor);
         var primaryTargetView = GetViewForUnit(result.InitialTargets.FirstOrDefault());
 
-        if (actorView == null || primaryTargetView == null)
+        if (actorView == null)
         {
-            Debug.LogWarning("[ActionAnimation] Actor hoặc Target View không tồn tại. Bỏ qua animation.");
+            Debug.LogWarning("[ActionAnimation] Actor View không tồn tại. Bỏ qua animation.");
             result.ApplyOutcomes();
             yield break;
+        }
+
+        // Cho phép animation chạy ngay cả khi không có target (ví dụ: kỹ năng tự buff)
+        if (primaryTargetView == null)
+        {
+            Debug.Log("[ActionAnimation] Không có Target View (có thể là kỹ năng tự buff). Vẫn tiếp tục animation.");
         }
 
         bool shouldMove = ShouldCharacterMove(result.Actor, result.Skill);
@@ -62,6 +68,10 @@ public class ClashAnimationSequence : MonoBehaviour
         {
             yield return StartCoroutine(ReturnPhase(actorView, actorOrigin, result));
         }
+
+        // KHÔNG apply non-damage effects ở đây! ResolveAction() đã apply chúng rồi.
+        // Nếu apply lại sẽ gây double buff/heal.
+        Debug.Log($"[ActionAnimation] Non-damage effects were already applied in ResolveAction. Skipping.");
 
         yield return StartCoroutine(CleanupPhase());
     }
@@ -123,7 +133,62 @@ public class ClashAnimationSequence : MonoBehaviour
         // ⭐ GÁN SKILL VÀ TARGET ĐỂ UNITVIEW CÓ THỂ SPAWN VFX ⭐
         actorView.SetCurrentSkill(skill);
         if (primaryTarget != null)
-            actorView.SetCurrentTarget(primaryTarget); // dù không dùng target cho VFX nhưng vẫn giữ
+            actorView.SetCurrentTarget(primaryTarget);
+
+        // Spawn VFX ngay khi bắt đầu ExecutePhase (cho cả buff/heal/damage skills)
+        // Ưu tiên vfxEvents[0] (vì [HideInInspector] vfxPrefab không gán được trong Inspector)
+        GameObject vfxToSpawn = null;
+        Vector3 vfxSpawnOffset = Vector3.up * 1.5f;
+        bool vfxAttachToCaster = false;
+
+        if (skill != null)
+        {
+            // Check vfxEvents array first (mới, có Inspector UI)
+            if (skill.vfxEvents != null && skill.vfxEvents.Length > 0 && skill.vfxEvents[0] != null && skill.vfxEvents[0].vfxPrefab != null)
+            {
+                vfxToSpawn = skill.vfxEvents[0].vfxPrefab;
+                vfxSpawnOffset = skill.vfxEvents[0].offset;
+                vfxAttachToCaster = skill.vfxEvents[0].attachToCaster;
+            }
+            // Fallback to legacy vfxPrefab
+            else if (skill.vfxPrefab != null)
+            {
+                vfxToSpawn = skill.vfxPrefab;
+                vfxSpawnOffset = new Vector3(0, skill.vfxOffset, 0);
+            }
+        }
+
+        if (vfxToSpawn != null)
+        {
+            // Determine spawn position: target if exists, else actor (self-buff)
+            Vector3 spawnPos;
+            Transform parent = null;
+            if (primaryTarget != null)
+            {
+                var targetView = GetViewForUnit(primaryTarget);
+                if (targetView != null)
+                {
+                    spawnPos = targetView.transform.position + vfxSpawnOffset;
+                    parent = targetView.transform;
+                }
+                else
+                {
+                    spawnPos = actorView.transform.position + vfxSpawnOffset;
+                    parent = actorView.transform;
+                }
+            }
+            else
+            {
+                spawnPos = actorView.transform.position + vfxSpawnOffset;
+                parent = actorView.transform;
+            }
+
+            var vfx = UnityEngine.Object.Instantiate(vfxToSpawn, spawnPos, Quaternion.identity);
+            if (vfxAttachToCaster && parent != null)
+                vfx.transform.SetParent(parent);
+            UnityEngine.Object.Destroy(vfx, 2f);
+            Debug.Log($"[ActionAnimation] Spawned VFX '{vfxToSpawn.name}' at {spawnPos}");
+        }
 
         Action onHitHandler = () => {
             foreach (var outcome in result.Outcomes)
