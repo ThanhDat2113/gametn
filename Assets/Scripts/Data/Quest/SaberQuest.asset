@@ -12,13 +12,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 01f94a06348b47f49b05724510167e6c, type: 3}
   m_Name: SaberQuest
   m_EditorClassIdentifier: Assembly-CSharp::QuestData
-  questId: 1
-  questName: "T\u01B0\u01A1ng tr\u1EE3"
+  questId: 2
+  questName: "M\u1EA1nh m\u1EBD"
   steps:
   - stepId: 0
+    type: 0
+    targetId: 2
+    description: "T\xECm v\xE0 tr\xF2 chuy\u1EC7n v\u1EDBi Saber"
+    isCompleted: 0
+  - stepId: 1
     type: 1
-    targetId: Tutorial
-    description: "\u0110\xE1nh b\u1EA1i Slime"
+    targetId: Wolf
+    description: "\u0110\xE1nh b\u1EA1i s\xF3i"
+    isCompleted: 0
+  - stepId: 2
+    type: 0
+    targetId: 2
+    description: "Tr\xF2 chuy\u1EC7n v\u1EDBi Saber"
     isCompleted: 0
   isRepeatable: 0
   rewards:

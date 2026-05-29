@@ -2,19 +2,17 @@ using UnityEngine;
 
 public class Billboard : MonoBehaviour
 {
-    private Camera mainCamera;
-
-    void Start()
-    {
-        mainCamera = Camera.main;
-    }
+    private Camera currentCamera;
 
     void LateUpdate()
     {
-        if (mainCamera == null) return;
-        
-        // Làm cho đối tượng nhìn thẳng vào camera
-        transform.LookAt(transform.position + mainCamera.transform.rotation * Vector3.forward,
-                         mainCamera.transform.rotation * Vector3.up);
+        currentCamera = Camera.main;
+
+        if (currentCamera == null) return;
+
+        transform.LookAt(
+            transform.position + currentCamera.transform.rotation * Vector3.forward,
+            currentCamera.transform.rotation * Vector3.up
+        );
     }
 }

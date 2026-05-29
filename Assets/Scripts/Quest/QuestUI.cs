@@ -10,7 +10,7 @@ public class QuestUI : MonoBehaviour
     {
         if (panel != null) panel.SetActive(true);
         else gameObject.SetActive(true);
-        objectiveText.text = "";
+        // ❌ Xóa dòng này: objectiveText.text = "";
     }
 
     public void SetObjective(string description)

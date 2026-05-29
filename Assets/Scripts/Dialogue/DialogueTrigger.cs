@@ -5,11 +5,11 @@ using System.Linq;
 [System.Serializable]
 public class DialogueEntry
 {
-    public string questId;          // ID của quest (so sánh với QuestManager.currentQuest.questId)
-    public int requiredStepIndex;   // Yêu cầu step index hiện tại phải bằng giá trị này (-1: không cần)
-    public bool requiredCompleted;  // Yêu cầu step đó đã hoàn thành hay chưa? (true=completed, false=not completed)
+    public string questId;
+    public int requiredStepIndex = -1;
+    public bool requiredCompleted;
     public DialogueLineData[] lines;
-    public bool playOnce = true;    // Ghi đè playOnce cho entry này
+    public bool playOnce = true;
 }
 
 public class DialogueTrigger : MonoBehaviour
@@ -17,45 +17,53 @@ public class DialogueTrigger : MonoBehaviour
     [Header("Trigger Identity")]
     public string triggerID;
 
-    [Header("Multiple Dialogue Entries (checked in order)")]
+    [Header("Dialogue Entries")]
     public DialogueEntry[] dialogueEntries;
 
-    // Fallback nếu không có entry nào phù hợp
+    [Header("Fallback Dialogue")]
     public DialogueLineData[] defaultLines;
 
     [Header("Visual")]
     public KeyCode interactKey = KeyCode.E;
     public GameObject interactionPrompt;
+
+    [Header("Black Screen")]
     public bool useBlackScreen = false;
     public bool useBlackScreenOnEnd = false;
     public float blackScreenDelay = 0.3f;
 
-    [Header("Teleport / Camera (optional)")]
+    [Header("Teleport")]
     public bool teleportPlayer = false;
     public Transform playerToTeleport;
     public Vector3 targetPlayerPosition;
-    public bool setCameraPosition = false;
-    public Transform targetCameraTransform;
-    public Vector3 targetCameraPosition;
-    public Vector3 targetCameraRotation;
+
+    [Header("Dialogue Camera")]
     public bool switchCamera = false;
-    public GameObject dialogueCameraObject;
+
     public GameObject mainCameraObject;
+    public GameObject dialogueCameraObject;
+
+    // Empty GameObject dùng để đánh dấu vị trí camera
+    public Transform dialogueCameraPoint;
 
     private Vector3 _originalMainCamPos;
     private Quaternion _originalMainCamRot;
+
     private bool _playerInRange;
-    private bool _hasPlayedForCurrentEntry = false; // Reset khi entry thay đổi
+    private bool _hasPlayedForCurrentEntry;
     private bool _isPlaying;
+
     private Camera _mainCamera;
     private MonoBehaviour _playerController;
 
-    // Lưu entry đang được chọn để biết có nên reset _hasPlayedForCurrentEntry hay không
     private DialogueEntry _currentEntry;
+
+    private bool sequential = true;
 
     void Start()
     {
         _mainCamera = Camera.main;
+
         if (mainCameraObject == null && _mainCamera != null)
             mainCameraObject = _mainCamera.gameObject;
 
@@ -66,9 +74,14 @@ public class DialogueTrigger : MonoBehaviour
         }
 
         if (switchCamera && dialogueCameraObject == null)
-            Debug.LogError("DialogueTrigger: Chưa gán dialogueCameraObject!");
+            Debug.LogError("DialogueTrigger: Dialogue Camera chưa được gán!");
+
+        if (switchCamera && dialogueCameraPoint == null)
+            Debug.LogError("DialogueTrigger: Dialogue Camera Point chưa được gán!");
+
         if (teleportPlayer && playerToTeleport == null)
-            Debug.LogError("DialogueTrigger: Bật teleportPlayer nhưng chưa gán playerToTeleport!");
+            Debug.LogError("DialogueTrigger: Player chưa được gán!");
+
         if (playerToTeleport != null)
             _playerController = playerToTeleport.GetComponent<MonoBehaviour>();
     }
@@ -76,23 +89,25 @@ public class DialogueTrigger : MonoBehaviour
     void Update()
     {
         if (!_playerInRange) return;
+
         if (!Input.GetKeyDown(interactKey)) return;
 
         var entry = GetAppropriateEntry();
+
         if (entry == null)
         {
-            Debug.Log($"[DialogueTrigger] No matching dialogue entry for current quest state.");
+            Debug.Log("[DialogueTrigger] Không có dialogue phù hợp.");
             return;
         }
 
-        // Kiểm tra playOnce riêng cho entry này
-        bool playOnceForEntry = entry.playOnce;
-        if (playOnceForEntry && _hasPlayedForCurrentEntry) return;
+        if (entry.playOnce && _hasPlayedForCurrentEntry)
+            return;
 
         _hasPlayedForCurrentEntry = true;
         _currentEntry = entry;
 
-        if (interactionPrompt != null) interactionPrompt.SetActive(false);
+        if (interactionPrompt != null)
+            interactionPrompt.SetActive(false);
 
         if (useBlackScreen)
             StartCoroutine(PlayWithBlackScreenTransition(entry.lines));
@@ -108,42 +123,43 @@ public class DialogueTrigger : MonoBehaviour
         var qm = QuestManager.Instance;
         var currentQuest = qm?.CurrentQuest;
 
-        // Duyệt theo thứ tự — entry đầu tiên thỏa mãn tất cả điều kiện sẽ được chọn
         foreach (var entry in dialogueEntries)
         {
-            // ── Điều kiện 1: questId ──────────────────────────────
-            // Nếu entry yêu cầu questId cụ thể, phải có quest đang chạy với đúng ID đó
+            // Quest ID check
             if (!string.IsNullOrEmpty(entry.questId))
             {
-                if (currentQuest == null || currentQuest.questId != entry.questId)
+                if (currentQuest == null)
+                    continue;
+
+                if (currentQuest.questId != entry.questId)
                     continue;
             }
 
-            // ── Điều kiện 2: requiredStepIndex & requiredCompleted ─
-            // requiredStepIndex == -1  →  không quan tâm step nào
+            // Step check
             if (entry.requiredStepIndex >= 0)
             {
-                if (qm == null) continue;
-
-                // Kiểm tra step đó có tồn tại không
-                if (currentQuest == null || entry.requiredStepIndex >= currentQuest.steps.Length)
+                if (qm == null || currentQuest == null)
                     continue;
 
-                bool stepCompleted = currentQuest.steps[entry.requiredStepIndex].isCompleted;
+                if (entry.requiredStepIndex >= currentQuest.steps.Length)
+                    continue;
 
-                // requiredCompleted == true  → cần step đó ĐÃ hoàn thành
-                // requiredCompleted == false → cần step đó CHƯA hoàn thành (đang là step hiện tại)
+                bool stepCompleted =
+                    currentQuest.steps[entry.requiredStepIndex].isCompleted;
+
                 if (entry.requiredCompleted != stepCompleted)
                     continue;
 
-                // Nếu yêu cầu step chưa hoàn thành (requiredCompleted=false),
-                // step đó phải đúng là step HIỆN TẠI đang chờ
-                if (!entry.requiredCompleted && qm.CurrentStepIndex != entry.requiredStepIndex)
-                    continue;
+                // Nếu step chưa completed
+                // thì phải là current step
+                if (!entry.requiredCompleted)
+                {
+                    if (qm.CurrentStepIndex != entry.requiredStepIndex)
+                        continue;
+                }
             }
 
-            // ── Tất cả điều kiện thỏa mãn ────────────────────────
-            // Reset playOnce nếu đây là entry mới (entry vừa thay đổi)
+            // Reset playOnce nếu đổi entry
             if (_currentEntry != entry)
             {
                 _hasPlayedForCurrentEntry = false;
@@ -159,14 +175,20 @@ public class DialogueTrigger : MonoBehaviour
     public void PlayDialogueAuto()
     {
         if (_isPlaying) return;
+
         var entry = GetAppropriateEntry();
+
         if (entry == null) return;
-        bool playOnceForEntry = entry.playOnce;
-        if (playOnceForEntry && _hasPlayedForCurrentEntry) return;
+
+        if (entry.playOnce && _hasPlayedForCurrentEntry)
+            return;
 
         _hasPlayedForCurrentEntry = true;
         _currentEntry = entry;
-        if (interactionPrompt != null) interactionPrompt.SetActive(false);
+
+        if (interactionPrompt != null)
+            interactionPrompt.SetActive(false);
+
         if (useBlackScreen)
             StartCoroutine(PlayWithBlackScreenTransition(entry.lines));
         else
@@ -176,134 +198,218 @@ public class DialogueTrigger : MonoBehaviour
     private IEnumerator PlayWithBlackScreenTransition(DialogueLineData[] lines)
     {
         yield return FadeController.Instance.FadeToBlack();
-        ApplyTeleportAndCamera();
-        if (switchCamera) SwitchToDialogueCamera();
+
+        ApplyTeleport();
+
+        if (switchCamera)
+            SwitchToDialogueCamera();
+
         yield return new WaitForSeconds(blackScreenDelay);
+
         yield return FadeController.Instance.FadeFromBlack();
-        StartDialogue(lines);
+
+        StartDialogueInternal(lines);
     }
 
     private IEnumerator EndWithBlackScreen()
     {
         yield return FadeController.Instance.FadeToBlack();
-        if (switchCamera)
-        {
-            if (dialogueCameraObject != null) dialogueCameraObject.SetActive(false);
-            if (mainCameraObject != null)
-            {
-                mainCameraObject.SetActive(true);
-                if (_mainCamera != null)
-                    _mainCamera.transform.SetPositionAndRotation(_originalMainCamPos, _originalMainCamRot);
-                else
-                    mainCameraObject.transform.SetPositionAndRotation(_originalMainCamPos, _originalMainCamRot);
-            }
-        }
+
+        RestoreCameraState();
+
         yield return new WaitForSeconds(blackScreenDelay);
+
         yield return FadeController.Instance.FadeFromBlack();
     }
 
-    private void ApplyTeleportAndCamera()
+    private void ApplyTeleport()
     {
-        if (teleportPlayer && playerToTeleport != null)
+        if (!teleportPlayer || playerToTeleport == null)
+            return;
+
+        if (_playerController != null)
+            _playerController.enabled = false;
+
+        CharacterController cc =
+            playerToTeleport.GetComponent<CharacterController>();
+
+        bool ccWasEnabled = false;
+
+        if (cc != null && cc.enabled)
         {
-            if (_playerController != null) _playerController.enabled = false;
-            var cc = playerToTeleport.GetComponent<CharacterController>();
-            bool ccWasEnabled = false;
-            if (cc != null && cc.enabled) { ccWasEnabled = true; cc.enabled = false; }
-            var rb = playerToTeleport.GetComponent<Rigidbody>();
-            bool rbWasKinematic = false;
-            if (rb != null)
-            {
-                rbWasKinematic = rb.isKinematic;
-                rb.isKinematic = true;
-                rb.linearVelocity = Vector3.zero;
-                rb.angularVelocity = Vector3.zero;
-            }
-            playerToTeleport.position = targetPlayerPosition;
-            if (cc != null && ccWasEnabled) { cc.enabled = true; cc.Move(Vector3.zero); }
-            if (rb != null) rb.isKinematic = rbWasKinematic;
-            if (_playerController != null) _playerController.enabled = true;
+            ccWasEnabled = true;
+            cc.enabled = false;
         }
-        if (setCameraPosition && _mainCamera != null)
+
+        Rigidbody rb = playerToTeleport.GetComponent<Rigidbody>();
+
+        bool rbWasKinematic = false;
+
+        if (rb != null)
         {
-            if (targetCameraTransform != null)
-                _mainCamera.transform.SetPositionAndRotation(targetCameraTransform.position, targetCameraTransform.rotation);
-            else
-                _mainCamera.transform.SetPositionAndRotation(targetCameraPosition, Quaternion.Euler(targetCameraRotation));
+            rbWasKinematic = rb.isKinematic;
+
+            rb.isKinematic = true;
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
         }
+
+        playerToTeleport.position = targetPlayerPosition;
+
+        if (cc != null && ccWasEnabled)
+        {
+            cc.enabled = true;
+            cc.Move(Vector3.zero);
+        }
+
+        if (rb != null)
+            rb.isKinematic = rbWasKinematic;
+
+        if (_playerController != null)
+            _playerController.enabled = true;
     }
 
     private void SwitchToDialogueCamera()
     {
-        if (mainCameraObject != null) mainCameraObject.SetActive(false);
-        if (dialogueCameraObject != null) dialogueCameraObject.SetActive(true);
+        if (mainCameraObject != null)
+        {
+            _originalMainCamPos = mainCameraObject.transform.position;
+            _originalMainCamRot = mainCameraObject.transform.rotation;
+
+            mainCameraObject.SetActive(false);
+        }
+
+        if (dialogueCameraObject != null)
+        {
+            Transform rig = dialogueCameraObject.transform.parent;
+
+            if (rig == null)
+            {
+                Debug.LogError("Dialogue Camera cần có parent rig!");
+                return;
+            }
+
+            if (dialogueCameraPoint != null)
+            {
+                rig.SetPositionAndRotation(
+                    dialogueCameraPoint.position,
+                    dialogueCameraPoint.rotation
+                );
+            }
+
+            dialogueCameraObject.SetActive(true);
+        }
+    }
+
+    private void RestoreCameraState()
+    {
+        if (!switchCamera) return;
+
+        if (dialogueCameraObject != null)
+            dialogueCameraObject.SetActive(false);
+
+        if (mainCameraObject != null)
+        {
+            mainCameraObject.SetActive(true);
+
+            mainCameraObject.transform.SetPositionAndRotation(
+                _originalMainCamPos,
+                _originalMainCamRot
+            );
+        }
     }
 
     private void StartDialogue(DialogueLineData[] lines)
     {
-        _isPlaying = true;
-        if (interactionPrompt != null) interactionPrompt.SetActive(false);
-        if (sequential)
-            DialogueBubbleUI.Instance.ShowSequential(lines, transform, OnDialogueComplete);
-        else
-            DialogueBubbleUI.Instance.Show(lines[0], transform, OnDialogueComplete);
+        ApplyTeleport();
+
+        if (switchCamera)
+            SwitchToDialogueCamera();
+
+        StartDialogueInternal(lines);
     }
 
-    private bool sequential = true; // Giữ sequential mặc định true, có thể thêm vào DialogueEntry nếu muốn
+    private void StartDialogueInternal(DialogueLineData[] lines)
+    {
+        _isPlaying = true;
+
+        if (interactionPrompt != null)
+            interactionPrompt.SetActive(false);
+
+        if (sequential)
+        {
+            DialogueBubbleUI.Instance.ShowSequential(
+                lines,
+                transform,
+                OnDialogueComplete
+            );
+        }
+        else
+        {
+            DialogueBubbleUI.Instance.Show(
+                lines[0],
+                transform,
+                OnDialogueComplete
+            );
+        }
+    }
 
     private void OnDialogueComplete()
     {
         _isPlaying = false;
-        if (QuestManager.Instance != null && !string.IsNullOrEmpty(triggerID))
-            QuestManager.Instance.OnDialogueEnded(triggerID);
 
-        // Hiện lại prompt nếu vẫn trong vùng và entry vẫn còn hiệu lực (chưa hoàn thành vĩnh viễn)
-        if (_playerInRange)
+        if (QuestManager.Instance != null &&
+            !string.IsNullOrEmpty(triggerID))
         {
-            var entry = GetAppropriateEntry();
-            if (entry != null && (!entry.playOnce || !_hasPlayedForCurrentEntry))
-            {
-                if (interactionPrompt != null) interactionPrompt.SetActive(true);
-            }
+            QuestManager.Instance.OnDialogueEnded(triggerID);
         }
 
         if (useBlackScreenOnEnd)
         {
             StartCoroutine(EndWithBlackScreen());
-            return;
+        }
+        else
+        {
+            RestoreCameraState();
         }
 
-        if (switchCamera)
+        if (_playerInRange)
         {
-            if (dialogueCameraObject != null) dialogueCameraObject.SetActive(false);
-            if (mainCameraObject != null)
+            var entry = GetAppropriateEntry();
+
+            if (entry != null &&
+                (!entry.playOnce || !_hasPlayedForCurrentEntry))
             {
-                mainCameraObject.SetActive(true);
-                if (_mainCamera != null)
-                    _mainCamera.transform.SetPositionAndRotation(_originalMainCamPos, _originalMainCamRot);
+                if (interactionPrompt != null)
+                    interactionPrompt.SetActive(true);
             }
         }
     }
 
     void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("Player"))
+        if (!other.CompareTag("Player")) return;
+
+        _playerInRange = true;
+
+        var entry = GetAppropriateEntry();
+
+        if (entry != null &&
+            (!entry.playOnce || !_hasPlayedForCurrentEntry) &&
+            !_isPlaying)
         {
-            _playerInRange = true;
-            var entry = GetAppropriateEntry();
-            if (entry != null && (!entry.playOnce || !_hasPlayedForCurrentEntry) && !_isPlaying)
-            {
-                if (interactionPrompt != null) interactionPrompt.SetActive(true);
-            }
+            if (interactionPrompt != null)
+                interactionPrompt.SetActive(true);
         }
     }
 
     void OnTriggerExit(Collider other)
     {
-        if (other.CompareTag("Player"))
-        {
-            _playerInRange = false;
-            if (interactionPrompt != null) interactionPrompt.SetActive(false);
-        }
+        if (!other.CompareTag("Player")) return;
+
+        _playerInRange = false;
+
+        if (interactionPrompt != null)
+            interactionPrompt.SetActive(false);
     }
 }
