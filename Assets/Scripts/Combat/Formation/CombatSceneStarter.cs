@@ -47,10 +47,15 @@ public class CombatSceneStarter : MonoBehaviour
         if (FadeController.Instance != null)
             yield return FadeController.Instance.FadeToBlack();
 
-        // Nếu thắng, báo cho enemy đã kích hoạt (nếu còn nhớ reference)
-        // Có thể dùng static variable để lưu MapEnemy đã chạm
+        // Nếu thắng, báo cho enemy đã kích hoạt và cho QuestManager
         if (isVictory && LastTouchedEnemy != null)
+        {
+            // Báo QuestManager
+            if (QuestManager.Instance != null && LastTouchedEnemy.enemyGroup != null)
+                QuestManager.Instance.OnEnemyGroupDefeated(LastTouchedEnemy.enemyGroup);
+            
             LastTouchedEnemy.MarkAsDefeated();
+        }
 
         // Unload combat scene (sẽ tự động kích hoạt lại MapRoot và fade từ đen bên trong SceneLoaderManager)
         SceneLoaderManager.UnloadCombatScene();

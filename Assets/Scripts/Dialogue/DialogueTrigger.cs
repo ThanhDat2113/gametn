@@ -65,6 +65,9 @@ public class DialogueTrigger : MonoBehaviour
         if (playOnce && _hasPlayed) return;
 
         _hasPlayed = true;
+        // Ẩn prompt ngay khi nhấn nút
+        if (interactionPrompt != null) interactionPrompt.SetActive(false);
+
         if (useBlackScreen)
             StartCoroutine(PlayWithBlackScreenTransition());
         else
@@ -75,6 +78,8 @@ public class DialogueTrigger : MonoBehaviour
     {
         if (_isPlaying) return;
         _hasPlayed = true;
+        if (interactionPrompt != null) interactionPrompt.SetActive(false);
+
         if (useBlackScreen)
             StartCoroutine(PlayWithBlackScreenTransition());
         else
@@ -157,6 +162,9 @@ public class DialogueTrigger : MonoBehaviour
     private void StartDialogue()
     {
         _isPlaying = true;
+        // Đảm bảo prompt đã bị ẩn (có thể đã ẩn từ trước)
+        if (interactionPrompt != null) interactionPrompt.SetActive(false);
+
         if (sequential)
             DialogueBubbleUI.Instance.ShowSequential(lines, transform, OnDialogueComplete);
         else
@@ -166,6 +174,26 @@ public class DialogueTrigger : MonoBehaviour
     private void OnDialogueComplete()
     {
         _isPlaying = false;
+
+        // Báo cho QuestManager
+        if (QuestManager.Instance != null && !string.IsNullOrEmpty(triggerID))
+            QuestManager.Instance.OnDialogueEnded(triggerID);
+
+        // Quyết định hiện lại prompt hay không
+        if (_playerInRange)
+        {
+            // Nếu playOnce = true và đã chơi rồi => không hiện lại
+            // Ngược lại, nếu có thể chơi lại (playOnce = false) thì hiện lại
+            if (!playOnce || !_hasPlayed)
+            {
+                if (interactionPrompt != null) interactionPrompt.SetActive(true);
+            }
+            // Nếu playOnce && _hasPlayed thì giữ nguyên ẩn (không hiện)
+        }
+        else
+        {
+            if (interactionPrompt != null) interactionPrompt.SetActive(false);
+        }
 
         if (useBlackScreenOnEnd)
         {
@@ -190,7 +218,11 @@ public class DialogueTrigger : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             _playerInRange = true;
-            if (interactionPrompt) interactionPrompt.SetActive(true);
+            // Chỉ hiện prompt nếu chưa từng chơi (hoặc cho phép chơi lại)
+            if ((!playOnce || !_hasPlayed) && !_isPlaying)
+            {
+                if (interactionPrompt != null) interactionPrompt.SetActive(true);
+            }
         }
     }
 
@@ -199,7 +231,7 @@ public class DialogueTrigger : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             _playerInRange = false;
-            if (interactionPrompt) interactionPrompt.SetActive(false);
+            if (interactionPrompt != null) interactionPrompt.SetActive(false);
         }
     }
 }
