@@ -190,6 +190,13 @@ public class ClashAnimationSequence : MonoBehaviour
             Debug.Log($"[ActionAnimation] Spawned VFX '{vfxToSpawn.name}' at {spawnPos}");
         }
 
+        // ---------- Ranged projectile handling ----------
+        if (skill != null && skill.isRanged && skill.projectilePrefab != null && primaryTarget != null)
+        {
+            // Start coroutine to fire projectile towards target. No need to wait for it here.
+            StartCoroutine(FireProjectile(actorView, primaryTarget, skill));
+        }
+
         Action onHitHandler = () => {
             foreach (var outcome in result.Outcomes)
             {
@@ -233,15 +240,58 @@ public class ClashAnimationSequence : MonoBehaviour
         }
     }
 
+    private IEnumerator FireProjectile(UnitView casterView, CombatUnit targetUnit, SkillData skill)
+    {
+        var targetView = GetViewForUnit(targetUnit);
+        if (targetView == null) yield break;
+
+        Vector3 startPos = casterView.transform.position + skill.projectileOffset;
+        var projectile = UnityEngine.Object.Instantiate(skill.projectilePrefab, startPos, Quaternion.identity);
+
+        // Spawn rangedVfxEvents at projectile start (giống cơ chế vfxEvents nhưng ở vị trí projectile)
+        if (skill.rangedVfxEvents != null && skill.rangedVfxEvents.Length > 0)
+        {
+            foreach (var rangedEvt in skill.rangedVfxEvents)
+            {
+                if (rangedEvt == null || rangedEvt.vfxPrefab == null) continue;
+                Vector3 vfxPos = startPos + rangedEvt.offset;
+                var vfx = UnityEngine.Object.Instantiate(rangedEvt.vfxPrefab, vfxPos, Quaternion.identity);
+                if (rangedEvt.attachToCaster)
+                    vfx.transform.SetParent(casterView.transform);
+                UnityEngine.Object.Destroy(vfx, 2f);
+            }
+        }
+
+        float elapsed = 0f;
+        while (elapsed < skill.projectileTravelTime)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / skill.projectileTravelTime);
+            projectile.transform.position = Vector3.Lerp(startPos, targetView.transform.position, t);
+            yield return null;
+        }
+
+        // Ensure projectile ends at target position
+        projectile.transform.position = targetView.transform.position;
+        // Spawn hit VFX on impact (same as normal hit VFX)
+        if (skill != null && skill.hitVfxEvents != null && skill.hitVfxEvents.Length > 0 && skill.hitVfxEvents[0] != null && skill.hitVfxEvents[0].vfxPrefab != null)
+        {
+            var hitEvt = skill.hitVfxEvents[0];
+            Vector3 hitPos = targetView.transform.position + hitEvt.offset;
+            var hitVfx = UnityEngine.Object.Instantiate(hitEvt.vfxPrefab, hitPos, Quaternion.identity);
+            UnityEngine.Object.Destroy(hitVfx, 2f);
+        }
+        // Optionally destroy after short delay
+        UnityEngine.Object.Destroy(projectile, 2f);
+    }
+
+    // Return the caster to its original position after the attack
     private IEnumerator ReturnPhase(UnitView actorView, Vector3 originPosition, ActionResult result)
     {
-        foreach (var outcome in result.Outcomes)
-        {
-            var targetView = GetViewForUnit(outcome.Target);
-            if (targetView != null) targetView.PlayAnimation(AnimationConstants.Idle);
-        }
-        actorView.PlayAnimation(AnimationConstants.Idle);
+        // Move actor back to original position
         yield return StartCoroutine(MoveCoroutine(actorView, originPosition, returnDuration));
+        // Play idle animation after return
+        actorView.SetAnimationTrigger(AnimationConstants.Idle);
     }
 
     private IEnumerator CleanupPhase()

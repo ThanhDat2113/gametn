@@ -39,12 +39,19 @@ public class SkillData : ScriptableObject
 
     [Header("Hit Settings")]
     public int hitCount = 1;
-
-    [Header("Animation")]
-    public string animationTrigger;
-
+    // VFX and ranged visual settings
     [Header("VFX")]
     public VFXEvent[] vfxEvents;
+    [Header("Ranged VFX")]
+public VFXEvent[] rangedVfxEvents;
+[Header("Animation")]
+    public string animationTrigger;
+    // Ranged skill visual
+    public bool isRanged = false; // Set true for skills that fire a projectile
+    public GameObject projectilePrefab; // Prefab for the projectile effect
+    public Vector3 projectileOffset = Vector3.zero; // Offset from caster when spawning projectile
+    public float projectileTravelTime = 0.3f; // Duration of projectile travel
+
     
     [Header("Hit VFX Events - VFX xuất hiện trên mục tiêu khi bị trúng (giống cơ chế vfxEvents)")]
     public VFXEvent[] hitVfxEvents;
