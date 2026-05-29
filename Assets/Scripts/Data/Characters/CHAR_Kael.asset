@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: CHAR_Kael
   m_EditorClassIdentifier: Assembly-CSharp::CharacterData
   prefab: {fileID: 6421382894453432528, guid: 8d3f6ea176105cd40b02420d635d6f0d, type: 3}
-  characterName: Kael
+  characterName: Lucio
   portrait: {fileID: -1634652680, guid: 3d1cc8332d318ce47a32d4896b334861, type: 3}
   battleSprite: {fileID: 21300000, guid: 5ebccdc2d8eafea4dbe37f65c9e3777d, type: 3}
   lore: 
@@ -21,13 +21,14 @@ MonoBehaviour:
   baseATK: 28
   basePDEF: 15
   baseMDEF: 8
-  baseLuck: 12
+  baseSpeed: 10
   hpPerLevel: 8
   atkPerLevel: 3
   pdefPerLevel: 1
   mdefPerLevel: 1
-  luckPerLevel: 1
+  speedPerLevel: 1
   skills:
-  - {fileID: 11400000, guid: ebfc0c401a58c1b43bc0506beb02cfa2, type: 2}
-  - {fileID: 11400000, guid: ba02412c7cef494438ad4a0169ac076e, type: 2}
-  - {fileID: 11400000, guid: 9fc242a608dc2cd48a75703bdd993339, type: 2}
+  - {fileID: 11400000, guid: fdb256a12aa2f9d45b81ce0b7f8b37d4, type: 2}
+  - {fileID: 11400000, guid: 683f1481935046946b6f4469400add0f, type: 2}
+  - {fileID: 11400000, guid: 9d29c1b1f62e7f44887eaff51e1329d2, type: 2}
+  passiveScript: {fileID: 11500000, guid: c2de43556b3af794d9bd09c6c879ba46, type: 3}

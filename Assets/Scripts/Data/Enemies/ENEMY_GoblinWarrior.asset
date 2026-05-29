@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6f9330979f02ddf43a415e7748b42aae, type: 3}
   m_Name: ENEMY_GoblinWarrior
   m_EditorClassIdentifier: Assembly-CSharp::CharacterData
-  prefab: {fileID: 6421382894453432528, guid: 8d3f6ea176105cd40b02420d635d6f0d, type: 3}
+  prefab: {fileID: 8449147886530403286, guid: 54ca9b1ecbb1a9a4497976a4a095b31c, type: 3}
   characterName: Goblin Warrior
   portrait: {fileID: 0}
   battleSprite: {fileID: 21300000, guid: 80ad21a2c3a6cce44a8a1b44cea788a6, type: 3}
@@ -21,11 +21,14 @@ MonoBehaviour:
   baseATK: 18
   basePDEF: 8
   baseMDEF: 4
-  baseLuck: 6
+  baseSpeed: 10
   hpPerLevel: 5
   atkPerLevel: 2
   pdefPerLevel: 1
   mdefPerLevel: 1
-  luckPerLevel: 1
+  speedPerLevel: 1
   skills:
-  - {fileID: 11400000, guid: ebfc0c401a58c1b43bc0506beb02cfa2, type: 2}
+  - {fileID: 11400000, guid: 692b47e5eaac0dc45b6a92f0ab69580d, type: 2}
+  - {fileID: 11400000, guid: e1d46fcf6c8fcb644b07110c8495607b, type: 2}
+  - {fileID: 11400000, guid: ff458b93cf3152547939b5558184f66e, type: 2}
+  passiveScript: {fileID: 11400000, guid: 2b489a907d5d1db4793b593c58ccb825, type: 2}
