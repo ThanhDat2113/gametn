@@ -126,96 +126,40 @@ public class ClashAnimationSequence : MonoBehaviour
     {
         var actorView = GetViewForUnit(result.Actor);
         var skill = result.Skill;
-        var primaryTarget = result.InitialTargets.FirstOrDefault();
+        var targets = result.InitialTargets;
 
         if (actorView == null) return 0.5f;
 
-        // ⭐ GÁN SKILL VÀ TARGET ĐỂ UNITVIEW CÓ THỂ SPAWN VFX ⭐
+        // Gán skill và target để UnitView có thể truy cập nếu cần
         actorView.SetCurrentSkill(skill);
-        if (primaryTarget != null)
-            actorView.SetCurrentTarget(primaryTarget);
+        if (targets.Any())
+            actorView.SetCurrentTarget(targets.First());
 
-        // Spawn VFX ngay khi bắt đầu ExecutePhase (cho cả buff/heal/damage skills)
-        // Ưu tiên vfxEvents[0] (vì [HideInInspector] vfxPrefab không gán được trong Inspector)
-        GameObject vfxToSpawn = null;
-        Vector3 vfxSpawnOffset = Vector3.up * 1.5f;
-        bool vfxAttachToCaster = false;
+        // 1. Spawn VFX for AtCaster and AtTarget modes
+        SpawnSkillVFX(skill, actorView, targets);
 
-        if (skill != null)
+        // 2. Handle Ranged Projectiles
+        if (skill != null && skill.isRanged && skill.projectilePrefab != null && targets.Any())
         {
-            // Check vfxEvents array first (mới, có Inspector UI)
-            if (skill.vfxEvents != null && skill.vfxEvents.Length > 0 && skill.vfxEvents[0] != null && skill.vfxEvents[0].vfxPrefab != null)
-            {
-                vfxToSpawn = skill.vfxEvents[0].vfxPrefab;
-                vfxSpawnOffset = skill.vfxEvents[0].offset;
-                vfxAttachToCaster = skill.vfxEvents[0].attachToCaster;
-            }
-            // Fallback to legacy vfxPrefab
-            else if (skill.vfxPrefab != null)
-            {
-                vfxToSpawn = skill.vfxPrefab;
-                vfxSpawnOffset = new Vector3(0, skill.vfxOffset, 0);
-            }
+            StartCoroutine(FireProjectile(actorView, targets.First(), skill));
         }
 
-        if (vfxToSpawn != null)
-        {
-            // Determine spawn position: target if exists, else actor (self-buff)
-            Vector3 spawnPos;
-            Transform parent = null;
-            if (primaryTarget != null)
-            {
-                var targetView = GetViewForUnit(primaryTarget);
-                if (targetView != null)
-                {
-                    spawnPos = targetView.transform.position + vfxSpawnOffset;
-                    parent = targetView.transform;
-                }
-                else
-                {
-                    spawnPos = actorView.transform.position + vfxSpawnOffset;
-                    parent = actorView.transform;
-                }
-            }
-            else
-            {
-                spawnPos = actorView.transform.position + vfxSpawnOffset;
-                parent = actorView.transform;
-            }
-
-            var vfx = UnityEngine.Object.Instantiate(vfxToSpawn, spawnPos, Quaternion.identity);
-            if (vfxAttachToCaster && parent != null)
-                vfx.transform.SetParent(parent);
-            UnityEngine.Object.Destroy(vfx, 2f);
-            Debug.Log($"[ActionAnimation] Spawned VFX '{vfxToSpawn.name}' at {spawnPos}");
-        }
-
-        // ---------- Ranged projectile handling ----------
-        if (skill != null && skill.isRanged && skill.projectilePrefab != null && primaryTarget != null)
-        {
-            // Start coroutine to fire projectile towards target. No need to wait for it here.
-            StartCoroutine(FireProjectile(actorView, primaryTarget, skill));
-        }
-
+        // 3. Setup Hit Handler to spawn HitOnEachTarget VFX
         Action onHitHandler = () => {
             foreach (var outcome in result.Outcomes)
             {
                 var targetView = GetViewForUnit(outcome.Target);
                 if (targetView == null) continue;
+
                 if (cameraManager != null) cameraManager.PlayImpactShake();
                 targetView.SetAnimationTrigger(AnimationConstants.Hurt);
                 
-                // Spawn hitVFX trên mục tiêu mỗi hit (dùng hitVfxEvents[0])
-                if (skill != null && skill.hitVfxEvents != null && skill.hitVfxEvents.Length > 0 && skill.hitVfxEvents[0] != null && skill.hitVfxEvents[0].vfxPrefab != null)
-                {
-                    var hitEvt = skill.hitVfxEvents[0];
-                    Vector3 hitPos = targetView.transform.position + hitEvt.offset;
-                    var hitVfx = UnityEngine.Object.Instantiate(hitEvt.vfxPrefab, hitPos, Quaternion.identity);
-                    UnityEngine.Object.Destroy(hitVfx, 2f);
-                }
+                // Spawn VFX for HitOnEachTarget mode
+                SpawnHitVFX(skill, targetView);
             }
         };
 
+        // Register and cleanup handlers
         actorView.OnHitAnimationEvent += onHitHandler;
         Action cleanupHandler = null;
         cleanupHandler = () => {
@@ -228,6 +172,7 @@ public class ClashAnimationSequence : MonoBehaviour
         };
         actorView.OnAnimationEndEvent += cleanupHandler;
 
+        // 4. Play Animation
         if (!string.IsNullOrEmpty(skill.animationTrigger))
         {
             actorView.SetAnimationTrigger(skill.animationTrigger);
@@ -240,6 +185,129 @@ public class ClashAnimationSequence : MonoBehaviour
         }
     }
 
+    private void SpawnSkillVFX(SkillData skill, UnitView actorView, List<CombatUnit> targets)
+    {
+        if (skill == null) return;
+
+        // --- New Unified System ---
+        if (skill.vfxEvents != null)
+        {
+            foreach (var evt in skill.vfxEvents)
+            {
+                if (evt.spawnMode == VFXSpawnMode.AtCaster || evt.spawnMode == VFXSpawnMode.AtTarget)
+                {
+                    Vector3 pos = GetVFXPosition(skill, evt, actorView, targets);
+                    InstantiateVFX(evt, pos, actorView.transform);
+                }
+            }
+        }
+
+        // --- Backward Compatibility ---
+        // 1. Legacy single vfxPrefab (treated as AtTarget)
+        if (skill.vfxPrefab != null)
+        {
+            var fakeEvent = new VFXEvent { vfxPrefab = skill.vfxPrefab, offset = new Vector3(0, skill.vfxOffset, 0), spawnMode = VFXSpawnMode.AtTarget };
+            Vector3 pos = GetVFXPosition(skill, fakeEvent, actorView, targets);
+            InstantiateVFX(fakeEvent, pos, null);
+        }
+
+        // 2. Legacy rangedVfxEvents (treated as AtCaster)
+        if (skill.rangedVfxEvents != null)
+        {
+            foreach (var evt in skill.rangedVfxEvents)
+            {
+                if (evt == null || evt.vfxPrefab == null) continue;
+                var fakeEvent = new VFXEvent { vfxPrefab = evt.vfxPrefab, offset = evt.offset, spawnMode = VFXSpawnMode.AtCaster, attachToCaster = evt.attachToCaster };
+                Vector3 pos = GetVFXPosition(skill, fakeEvent, actorView, targets);
+                InstantiateVFX(fakeEvent, pos, actorView.transform);
+            }
+        }
+    }
+
+    private void SpawnHitVFX(SkillData skill, UnitView targetView)
+    {
+        if (skill == null || targetView == null) return;
+
+        // --- New Unified System ---
+        if (skill.vfxEvents != null)
+        {
+            foreach (var evt in skill.vfxEvents)
+            {
+                if (evt.spawnMode == VFXSpawnMode.HitOnEachTarget)
+                {
+                    InstantiateVFX(evt, targetView.transform.position + evt.offset, targetView.transform);
+                }
+            }
+        }
+
+        // --- Backward Compatibility ---
+        // 1. Legacy hitVfxEvents
+        if (skill.hitVfxEvents != null)
+        {
+            foreach (var evt in skill.hitVfxEvents)
+            {
+                if (evt == null || evt.vfxPrefab == null) continue;
+                InstantiateVFX(evt, targetView.transform.position + evt.offset, targetView.transform);
+            }
+        }
+    }
+
+    private Vector3 GetVFXPosition(SkillData skill, VFXEvent evt, UnitView actorView, List<CombatUnit> targets)
+    {
+        switch (evt.spawnMode)
+        {
+            case VFXSpawnMode.AtCaster:
+                return actorView.transform.position + evt.offset;
+
+            case VFXSpawnMode.AtTarget:
+                if (targets == null || !targets.Any())
+                    return actorView.transform.position + evt.offset; // Fallback to caster if no target
+
+                // For single target or non-AoE, use the first target
+                if (skill == null || targets.Count == 1 || (targets.Count > 1 && skill.targetType != TargetType.AllEnemies && skill.targetType != TargetType.AllAllies))
+                {
+                    var targetView = GetViewForUnit(targets.First());
+                    return targetView != null ? targetView.transform.position + evt.offset : actorView.transform.position + evt.offset;
+                }
+                else // AoE: find center point
+                {
+                    Vector3 center = Vector3.zero;
+                    int count = 0;
+                    foreach (var unit in targets)
+                    {
+                        var view = GetViewForUnit(unit);
+                        if (view != null)
+                        {
+                            center += view.transform.position;
+                            count++;
+                        }
+                    }
+                    return count > 0 ? (center / count) + evt.offset : actorView.transform.position + evt.offset;
+                }
+
+            default:
+                return actorView.transform.position + evt.offset;
+        }
+    }
+
+    private void InstantiateVFX(VFXEvent evt, Vector3 position, Transform potentialParent)
+    {
+        if (evt.vfxPrefab == null) return;
+
+        var vfx = Instantiate(evt.vfxPrefab, position, Quaternion.identity);
+        if (evt.attachToCaster && potentialParent != null)
+        {
+            vfx.transform.SetParent(potentialParent);
+        }
+
+        var visualEffect = vfx.GetComponent<UnityEngine.VFX.VisualEffect>();
+        if (visualEffect != null)
+        {
+            visualEffect.Play();
+        }
+        Destroy(vfx, 2f);
+    }
+
     private IEnumerator FireProjectile(UnitView casterView, CombatUnit targetUnit, SkillData skill)
     {
         var targetView = GetViewForUnit(targetUnit);
@@ -247,20 +315,6 @@ public class ClashAnimationSequence : MonoBehaviour
 
         Vector3 startPos = casterView.transform.position + skill.projectileOffset;
         var projectile = UnityEngine.Object.Instantiate(skill.projectilePrefab, startPos, Quaternion.identity);
-
-        // Spawn rangedVfxEvents at projectile start (giống cơ chế vfxEvents nhưng ở vị trí projectile)
-        if (skill.rangedVfxEvents != null && skill.rangedVfxEvents.Length > 0)
-        {
-            foreach (var rangedEvt in skill.rangedVfxEvents)
-            {
-                if (rangedEvt == null || rangedEvt.vfxPrefab == null) continue;
-                Vector3 vfxPos = startPos + rangedEvt.offset;
-                var vfx = UnityEngine.Object.Instantiate(rangedEvt.vfxPrefab, vfxPos, Quaternion.identity);
-                if (rangedEvt.attachToCaster)
-                    vfx.transform.SetParent(casterView.transform);
-                UnityEngine.Object.Destroy(vfx, 2f);
-            }
-        }
 
         float elapsed = 0f;
         while (elapsed < skill.projectileTravelTime)
@@ -271,18 +325,13 @@ public class ClashAnimationSequence : MonoBehaviour
             yield return null;
         }
 
-        // Ensure projectile ends at target position
         projectile.transform.position = targetView.transform.position;
-        // Spawn hit VFX on impact (same as normal hit VFX)
-        if (skill != null && skill.hitVfxEvents != null && skill.hitVfxEvents.Length > 0 && skill.hitVfxEvents[0] != null && skill.hitVfxEvents[0].vfxPrefab != null)
-        {
-            var hitEvt = skill.hitVfxEvents[0];
-            Vector3 hitPos = targetView.transform.position + hitEvt.offset;
-            var hitVfx = UnityEngine.Object.Instantiate(hitEvt.vfxPrefab, hitPos, Quaternion.identity);
-            UnityEngine.Object.Destroy(hitVfx, 2f);
-        }
-        // Optionally destroy after short delay
-        UnityEngine.Object.Destroy(projectile, 2f);
+        
+        // Hit VFX is now handled by the OnHit event, which is triggered after the projectile lands.
+        // We just need to spawn the "HitOnEachTarget" VFX here for ranged attacks.
+        SpawnHitVFX(skill, targetView);
+
+        Destroy(projectile, 2f);
     }
 
     // Return the caster to its original position after the attack

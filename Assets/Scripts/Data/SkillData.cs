@@ -1,10 +1,18 @@
 using UnityEngine;
 
+public enum VFXSpawnMode
+{
+    AtCaster,       // Spawn at the character using the skill
+    AtTarget,       // Spawn at the primary target (or center point for AoE)
+    HitOnEachTarget // Spawn on each target as they are hit
+}
+
 [System.Serializable]
 public class VFXEvent
 {
     public GameObject vfxPrefab;
-    public Vector3 offset = Vector3.up * 1.5f; // offset x,y,z so với caster
+    public VFXSpawnMode spawnMode = VFXSpawnMode.AtTarget; // default backward-compat
+    public Vector3 offset = Vector3.up * 1.5f;
     public bool attachToCaster = false;
 }
 
@@ -39,22 +47,25 @@ public class SkillData : ScriptableObject
 
     [Header("Hit Settings")]
     public int hitCount = 1;
-    // VFX and ranged visual settings
+    
     [Header("VFX")]
-    public VFXEvent[] vfxEvents;
-    [Header("Ranged VFX")]
-public VFXEvent[] rangedVfxEvents;
-[Header("Animation")]
+    public VFXEvent[] vfxEvents; // This is now the main array for all VFX
+
+    // HIDE: Old fields are hidden but kept for backward compatibility
+    [HideInInspector, Header("DEPRECATED: Use vfxEvents with 'AtCaster' mode")]
+    public VFXEvent[] rangedVfxEvents;
+    
+    [HideInInspector, Header("DEPRECATED: Use vfxEvents with 'HitOnEachTarget' mode")]
+    public VFXEvent[] hitVfxEvents;
+
+    [Header("Animation")]
     public string animationTrigger;
+    
     // Ranged skill visual
     public bool isRanged = false; // Set true for skills that fire a projectile
     public GameObject projectilePrefab; // Prefab for the projectile effect
     public Vector3 projectileOffset = Vector3.zero; // Offset from caster when spawning projectile
     public float projectileTravelTime = 0.3f; // Duration of projectile travel
-
-    
-    [Header("Hit VFX Events - VFX xuất hiện trên mục tiêu khi bị trúng (giống cơ chế vfxEvents)")]
-    public VFXEvent[] hitVfxEvents;
 
     // backward compatibility (vẫn giữ để không lỗi skill cũ)
     [HideInInspector] public GameObject vfxPrefab;

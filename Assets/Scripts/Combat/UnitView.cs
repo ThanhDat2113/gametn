@@ -255,64 +255,94 @@ public class UnitView : MonoBehaviour
                 Debug.Log(logMessage + $" HP: {outcome.Target.CurrentHP}");
             }
 
-            // Spawn hitVFX trên mục tiêu mỗi hit (dùng hitVfxEvents[0])
-            if (currentSkill != null && currentSkill.hitVfxEvents != null && currentSkill.hitVfxEvents.Length > 0 && currentSkill.hitVfxEvents[0] != null && currentSkill.hitVfxEvents[0].vfxPrefab != null)
-            {
-                var hitEvt = currentSkill.hitVfxEvents[0];
-                Vector3 hitPos = transform.position + hitEvt.offset;
-                var hitVfx = Instantiate(hitEvt.vfxPrefab, hitPos, Quaternion.identity);
-                Destroy(hitVfx, 2f);
-            }
+            // VFX spawning is now handled by ClashAnimationSequence.SpawnHitVFX
         }
         currentHitIndex++;
     }
 
-    // ================== SỬA HÀM NÀY ĐỂ SPAWN VFX VỚI OFFSET XYZ ==================
     private void ProcessVFXAtFrame(int vfxIndex)
     {
         if (currentSkill == null) return;
 
-        GameObject prefabToSpawn = null;
-        Vector3 offset = Vector3.up * 1.5f;
-        bool attachToCaster = false;
+        VFXEvent evt = null;
 
-        // Lấy từ mảng vfxEvents mới
+        // 1. Get VFXEvent from the new unified array
         if (currentSkill.vfxEvents != null && vfxIndex >= 0 && vfxIndex < currentSkill.vfxEvents.Length)
         {
-            var evt = currentSkill.vfxEvents[vfxIndex];
-            if (evt != null && evt.vfxPrefab != null)
-            {
-                prefabToSpawn = evt.vfxPrefab;
-                offset = evt.offset;
-                attachToCaster = evt.attachToCaster;
-            }
+            evt = currentSkill.vfxEvents[vfxIndex];
         }
-
-        // Fallback cho skill cũ (vfxPrefab, chỉ dùng offsetY)
-        if (prefabToSpawn == null && currentSkill.vfxPrefab != null && vfxIndex == 0)
+        // 2. Fallback for legacy vfxPrefab (if index is 0)
+        else if (vfxIndex == 0 && currentSkill.vfxPrefab != null)
         {
-            prefabToSpawn = currentSkill.vfxPrefab;
-            offset = new Vector3(0, currentSkill.vfxOffset, 0);
+            evt = new VFXEvent 
+            { 
+                vfxPrefab = currentSkill.vfxPrefab, 
+                offset = new Vector3(0, currentSkill.vfxOffset, 0),
+                spawnMode = VFXSpawnMode.AtTarget // Legacy behavior was always at target
+            };
         }
 
-        if (prefabToSpawn == null) return;
+        if (evt == null || evt.vfxPrefab == null) return;
 
-        // Spawn trên caster với offset
-        Vector3 spawnPos = transform.position + offset;
-        Quaternion spawnRot = Quaternion.identity;
-        // Nếu muốn VFX xoay theo hướng caster (tùy ý)
-        // spawnRot = transform.rotation;
+        // 3. Determine spawn position based on spawnMode
+        Vector3 spawnPos;
+        Transform parent = null;
 
-        GameObject vfx = Instantiate(prefabToSpawn, spawnPos, spawnRot);
-        if (attachToCaster) vfx.transform.SetParent(transform);
+        switch (evt.spawnMode)
+        {
+            case VFXSpawnMode.AtCaster:
+                spawnPos = transform.position + evt.offset;
+                parent = transform;
+                break;
+
+            case VFXSpawnMode.AtTarget:
+            case VFXSpawnMode.HitOnEachTarget: // In anim events, these are treated the same
+                var targetView = FindViewForUnit(currentTarget);
+                if (targetView != null)
+                {
+                    spawnPos = targetView.transform.position + evt.offset;
+                    parent = evt.attachToCaster ? transform : null;
+                }
+                else // Fallback to caster if target is somehow null
+                {
+                    spawnPos = transform.position + evt.offset;
+                    parent = transform;
+                }
+                break;
+            
+            default:
+                spawnPos = transform.position + evt.offset;
+                parent = transform;
+                break;
+        }
+
+        // 4. Instantiate VFX
+        GameObject vfx = Instantiate(evt.vfxPrefab, spawnPos, Quaternion.identity);
+        if (evt.attachToCaster && parent != null)
+        {
+            vfx.transform.SetParent(parent);
+        }
         
-        // Hỗ trợ Visual Effect Graph
         var visualEffect = vfx.GetComponent<UnityEngine.VFX.VisualEffect>();
         if (visualEffect != null) visualEffect.Play();
 
         Destroy(vfx, 2f);
     }
-    // =====================================================================
+
+    private UnitView FindViewForUnit(CombatUnit unit)
+    {
+        if (unit == null) return null;
+        // This can be slow, but it's a reliable way to find the view
+        // Called infrequently from animation events, so performance impact is minimal.
+        foreach (var view in FindObjectsByType<UnitView>(FindObjectsSortMode.None))
+        {
+            if (view.LinkedUnit == unit)
+            {
+                return view;
+            }
+        }
+        return null;
+    }
 
     public float GetClipLength(string clipName)
     {
