@@ -3,7 +3,7 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "HealEffect", menuName = "RPG/Effects/Heal")]
 public class HealEffect : SkillEffect
 {
-    [Range(0f, 1f)] public float healPercent = 0.3f;  // % of MaxHP
+    [Range(0f, 1f)] public float healPercent = 0.3f;
 
     public override void Apply(CombatUnit caster, CombatUnit[] targets)
     {
