@@ -232,20 +232,16 @@ public class UnitView : MonoBehaviour
         if (pendingOutcomes.Count == 0 || pendingCaster == null) return;
         if (currentHitIndex >= pendingHitCount) return;
 
-        int damageThisHit = 0;
         foreach (var outcome in pendingOutcomes)
         {
             if (outcome.Target == null || !outcome.Target.IsAlive) continue;
 
             int baseDamage = outcome.Damage / pendingHitCount;
+            int damageThisHit = baseDamage;
             if (currentHitIndex == pendingHitCount - 1)
             {
                 int remainder = outcome.Damage - baseDamage * (pendingHitCount - 1);
                 damageThisHit = remainder;
-            }
-            else
-            {
-                damageThisHit = baseDamage;
             }
 
             if (damageThisHit > 0)
@@ -257,6 +253,15 @@ public class UnitView : MonoBehaviour
                     logMessage += $" ({outcome.EmpowerMultiplier:F1}x)";
                 }
                 Debug.Log(logMessage + $" HP: {outcome.Target.CurrentHP}");
+            }
+
+            // Spawn hitVFX trên mục tiêu mỗi hit (dùng hitVfxEvents[0])
+            if (currentSkill != null && currentSkill.hitVfxEvents != null && currentSkill.hitVfxEvents.Length > 0 && currentSkill.hitVfxEvents[0] != null && currentSkill.hitVfxEvents[0].vfxPrefab != null)
+            {
+                var hitEvt = currentSkill.hitVfxEvents[0];
+                Vector3 hitPos = transform.position + hitEvt.offset;
+                var hitVfx = Instantiate(hitEvt.vfxPrefab, hitPos, Quaternion.identity);
+                Destroy(hitVfx, 2f);
             }
         }
         currentHitIndex++;

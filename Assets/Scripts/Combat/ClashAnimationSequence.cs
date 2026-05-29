@@ -197,6 +197,15 @@ public class ClashAnimationSequence : MonoBehaviour
                 if (targetView == null) continue;
                 if (cameraManager != null) cameraManager.PlayImpactShake();
                 targetView.SetAnimationTrigger(AnimationConstants.Hurt);
+                
+                // Spawn hitVFX trên mục tiêu mỗi hit (dùng hitVfxEvents[0])
+                if (skill != null && skill.hitVfxEvents != null && skill.hitVfxEvents.Length > 0 && skill.hitVfxEvents[0] != null && skill.hitVfxEvents[0].vfxPrefab != null)
+                {
+                    var hitEvt = skill.hitVfxEvents[0];
+                    Vector3 hitPos = targetView.transform.position + hitEvt.offset;
+                    var hitVfx = UnityEngine.Object.Instantiate(hitEvt.vfxPrefab, hitPos, Quaternion.identity);
+                    UnityEngine.Object.Destroy(hitVfx, 2f);
+                }
             }
         };
 

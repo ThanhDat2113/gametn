@@ -43,8 +43,11 @@ public class SkillData : ScriptableObject
     [Header("Animation")]
     public string animationTrigger;
 
-    [Header("VFX Events - Gắn Animation Event OnSpawnVFX với Int = index")]
+    [Header("VFX")]
     public VFXEvent[] vfxEvents;
+    
+    [Header("Hit VFX Events - VFX xuất hiện trên mục tiêu khi bị trúng (giống cơ chế vfxEvents)")]
+    public VFXEvent[] hitVfxEvents;
 
     // backward compatibility (vẫn giữ để không lỗi skill cũ)
     [HideInInspector] public GameObject vfxPrefab;
