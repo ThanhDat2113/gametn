@@ -189,11 +189,18 @@ public class ClashAnimationSequence : MonoBehaviour
     {
         if (skill == null) return;
 
-        // --- New Unified System ---
-        if (skill.vfxEvents != null)
+        // --- New Unified System: Auto-play for Self-Target skills ---
+        // Skills like buffs often don't have animation events, so we play their VFX immediately.
+        // For all other skills, VFX are triggered by Animation Events in UnitView.cs.
+        bool isBuffSkill = skill.targetType == TargetType.Self || 
+                           skill.targetType == TargetType.SingleAlly || 
+                           skill.targetType == TargetType.AllAllies;
+
+        if (isBuffSkill && skill.vfxEvents != null)
         {
             foreach (var evt in skill.vfxEvents)
             {
+                // For self-skills, AtCaster and AtTarget are effectively the same.
                 if (evt.spawnMode == VFXSpawnMode.AtCaster || evt.spawnMode == VFXSpawnMode.AtTarget)
                 {
                     Vector3 pos = GetVFXPosition(skill, evt, actorView, targets);
