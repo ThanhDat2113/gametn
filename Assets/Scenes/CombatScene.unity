@@ -732,9 +732,12 @@ MonoBehaviour:
   finalZoomOutDuration: 1
   defaultOrthoSize: 3.91
   defaultPosition: {x: 0, y: 0, z: 0}
-  cameraHeight: -10.1
+  cameraDistance: 15
+  verticalOffset: 1.5
+  horizontalOffset: -2
   clashZoomSize: 6
   damageZoomSize: 7
+  followZoomSize: 9.5
   zoomInDuration: 0.3
   zoomOutDuration: 0.5
   followOffset: {x: 0, y: 0, z: -5}
@@ -915,7 +918,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 234443471, guid: 2ec54003d88508248a7f89dfe667c6b3, type: 3}
+  m_Sprite: {fileID: 1549194577, guid: c3e76d2ade34bd24896fef5e3c1b5d72, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -1244,9 +1247,9 @@ MonoBehaviour:
   testPlayerCharacters:
   - {fileID: 11400000, guid: ec30fa4ffd05e5f41a38b3c3581af012, type: 2}
   - {fileID: 11400000, guid: d9a02487cd5ceb443a7bfe4ac6df8beb, type: 2}
-  - {fileID: 11400000, guid: 308af45947e50bb47aa77380c82acd80, type: 2}
+  - {fileID: 11400000, guid: 3b2e4d3ea37cd094391480ee499bf6d7, type: 2}
   - {fileID: 11400000, guid: 97faa5da240c37f4c86aa1e422208619, type: 2}
-  - {fileID: 11400000, guid: 65bbda1fd449c8d439d3d269074cf841, type: 2}
+  - {fileID: 11400000, guid: 308af45947e50bb47aa77380c82acd80, type: 2}
   testPlayerLevels: 0100000001000000010000000100000001000000
   testPlayerSlots: 0000000002000000040000000600000008000000
   testEnemyGroup: {fileID: 11400000, guid: d0ca08b04afe8c844bce52497d6780c5, type: 2}
@@ -2177,7 +2180,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1900633177
 RectTransform:
   m_ObjectHideFlags: 0
