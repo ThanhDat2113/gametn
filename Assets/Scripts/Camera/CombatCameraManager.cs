@@ -18,7 +18,7 @@ public class CombatCameraManager : MonoBehaviour
     public float defaultOrthoSize = 12f; // FIX: tăng từ 10 lên 12 để bao quát hơn
     public Vector3 defaultPosition = Vector3.zero;
     [Tooltip("Z position của camera")]
-    public float cameraHeight = 8f;
+    public float cameraDistance = 15f;
 
     [Tooltip("Điều chỉnh camera lên/xuống để căn giữa các nhân vật")]
     public float verticalOffset = 1.5f;
@@ -97,7 +97,10 @@ public class CombatCameraManager : MonoBehaviour
 
         currentOrthoSize = defaultOrthoSize;
         mainCamera.orthographicSize = currentOrthoSize;
-        targetPosition = defaultPosition + new Vector3(0, 0, cameraHeight);
+        float angleRad = transform.rotation.eulerAngles.x * Mathf.Deg2Rad;
+        float yOffset = cameraDistance * Mathf.Sin(angleRad);
+        float zOffset = -cameraDistance * Mathf.Cos(angleRad);
+        targetPosition = defaultPosition + new Vector3(0, yOffset, zOffset);
         cameraTransform.position = targetPosition;
     }
 
@@ -127,7 +130,12 @@ public class CombatCameraManager : MonoBehaviour
                 StopCoroutineIfRunning(followCoroutine);
                 followTarget = null;
                 currentOrthoSize = defaultOrthoSize;
-                targetPosition = defaultPosition + new Vector3(0, 0, cameraHeight);
+
+                float angleRad = transform.rotation.eulerAngles.x * Mathf.Deg2Rad;
+                float yOffset = cameraDistance * Mathf.Sin(angleRad);
+                float zOffset = -cameraDistance * Mathf.Cos(angleRad);
+                targetPosition = defaultPosition + new Vector3(0, yOffset, zOffset);
+
                 shakeOffset = Vector3.zero;
                 yield return new WaitForSeconds(0.2f);
                 AutoFitUnitsInView();
@@ -202,7 +210,11 @@ public class CombatCameraManager : MonoBehaviour
 
     public void SetCameraPositionAndSize(Vector3 position, float size)
     {
-        targetPosition = position + new Vector3(0, 0, cameraHeight);
+        float angleRad = transform.rotation.eulerAngles.x * Mathf.Deg2Rad;
+        float yOffset = cameraDistance * Mathf.Sin(angleRad);
+        float zOffset = -cameraDistance * Mathf.Cos(angleRad);
+        targetPosition = position + new Vector3(0, yOffset, zOffset);
+
         currentOrthoSize = size;
         if (isIntroSequenceActive || followTarget == null)
         {
@@ -221,7 +233,12 @@ public class CombatCameraManager : MonoBehaviour
         shakeOffset = Vector3.zero;
         isShaking = false;
         currentOrthoSize = defaultOrthoSize;
-        targetPosition = defaultPosition + new Vector3(0, 0, cameraHeight);
+
+        float angleRad = transform.rotation.eulerAngles.x * Mathf.Deg2Rad;
+        float yOffset = cameraDistance * Mathf.Sin(angleRad);
+        float zOffset = -cameraDistance * Mathf.Cos(angleRad);
+        targetPosition = defaultPosition + new Vector3(0, yOffset, zOffset);
+
         Debug.Log($"[CombatCamera] Reset: size={currentOrthoSize:F2}, pos={targetPosition}");
     }
 
@@ -262,7 +279,12 @@ public class CombatCameraManager : MonoBehaviour
         defaultOrthoSize = bufferSize;
         defaultPosition = center;
         currentOrthoSize = bufferSize;
-        targetPosition = center + new Vector3(0, 0, cameraHeight);
+
+        float angleRad = transform.rotation.eulerAngles.x * Mathf.Deg2Rad;
+        float yOffset = cameraDistance * Mathf.Sin(angleRad);
+        float zOffset = -cameraDistance * Mathf.Cos(angleRad);
+        targetPosition = center + new Vector3(0, yOffset, zOffset);
+
         followTarget = null;
         shakeOffset = Vector3.zero;
         Debug.Log($"[CombatCamera] Auto-fit: Size={bufferSize:F2}, Center={center}, Units={unitViews.Length}");
@@ -272,7 +294,12 @@ public class CombatCameraManager : MonoBehaviour
     {
         if (zoomCoroutine != null) StopCoroutine(zoomCoroutine);
         followTarget = null;
-        targetPosition = center + new Vector3(0, 0, cameraHeight);
+
+        float angleRad = transform.rotation.eulerAngles.x * Mathf.Deg2Rad;
+        float yOffset = cameraDistance * Mathf.Sin(angleRad);
+        float zOffset = -cameraDistance * Mathf.Cos(angleRad);
+        targetPosition = center + new Vector3(0, yOffset, zOffset);
+
         zoomCoroutine = StartCoroutine(ZoomInCoroutine(damageZoomSize));
     }
 
@@ -440,7 +467,11 @@ public class CombatCameraManager : MonoBehaviour
 
         elapsed = 0f;
         Vector3 currentPos = cameraTransform.position;
-        Vector3 targetPanPos = focusPoint + new Vector3(0, 0, cameraHeight);
+
+        float angleRad = transform.rotation.eulerAngles.x * Mathf.Deg2Rad;
+        float yOffset = cameraDistance * Mathf.Sin(angleRad);
+        float zOffset = -cameraDistance * Mathf.Cos(angleRad);
+        Vector3 targetPanPos = focusPoint + new Vector3(0, yOffset, zOffset);
 
         while (elapsed < panDuration)
         {
@@ -462,7 +493,11 @@ public class CombatCameraManager : MonoBehaviour
 
         AutoFitUnitsInView();
         float finalSize = defaultOrthoSize;
-        Vector3 finalPos = defaultPosition + new Vector3(0, 0, cameraHeight);
+
+        float angleRad = transform.rotation.eulerAngles.x * Mathf.Deg2Rad;
+        float yOffset = cameraDistance * Mathf.Sin(angleRad);
+        float zOffset = -cameraDistance * Mathf.Cos(angleRad);
+        Vector3 finalPos = defaultPosition + new Vector3(0, yOffset, zOffset);
 
         while (elapsed < duration)
         {
@@ -513,7 +548,10 @@ public class CombatCameraManager : MonoBehaviour
         float requiredSizeY = bounds.size.y * 0.5f;
         float targetSize = Mathf.Max(requiredSizeX, requiredSizeY, 7f); // FIX: tăng min lên 7
 
-        Vector3 targetPos = bounds.center + new Vector3(0, 0, cameraHeight);
+        float angleRad = transform.rotation.eulerAngles.x * Mathf.Deg2Rad;
+        float yOffset = cameraDistance * Mathf.Sin(angleRad);
+        float zOffset = -cameraDistance * Mathf.Cos(angleRad);
+        Vector3 targetPos = bounds.center + new Vector3(0, yOffset, zOffset);
 
         StopCoroutineIfRunning(zoomCoroutine);
         followTarget = null;
