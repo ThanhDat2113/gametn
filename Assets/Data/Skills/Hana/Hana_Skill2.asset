@@ -12,16 +12,33 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1e652bd9dd81c6c48a0d625c3dbd9ff3, type: 3}
   m_Name: Hana_Skill2
   m_EditorClassIdentifier: Assembly-CSharp::SkillData
-  skillName: "Empower"
-  description: "Cường hóa cho 1 đồng minh +20% sát thương, +10% tốc độ trong 2 lượt và tăng cho chính hana thêm 30% tốc độ trong 3 lượt."
+  autoConfirmOnSelect: 0
+  movementOverride: 0
+  skillName: Empower
+  description: "C\u01B0\u1EDDng h\xF3a cho 1 \u0111\u1ED3ng minh +20% s\xE1t th\u01B0\u01A1ng,
+    +10% t\u1ED1c \u0111\u1ED9 trong 2 l\u01B0\u1EE3t v\xE0 t\u0103ng cho ch\xEDnh
+    hana th\xEAm 30% t\u1ED1c \u0111\u1ED9 trong 3 l\u01B0\u1EE3t."
   icon: {fileID: 0}
   type: 0
   targetType: 1
+  isChargeable: 0
+  doesNotEndTurn: 0
   apCost: 1
   hitCount: 0
+  vfxEvents:
+  - vfxPrefab: {fileID: 1346443512695734964, guid: a76f43a12360ff94facd90045b0005e0, type: 3}
+    spawnMode: 0
+    offset: {x: 0, y: -1, z: 0}
+    attachToCaster: 0
+  rangedVfxEvents: []
+  hitVfxEvents: []
   animationTrigger: Skill2
+  isRanged: 0
+  projectilePrefab: {fileID: 0}
+  projectileOffset: {x: 0, y: 0, z: 0}
+  projectileTravelTime: 0.3
   vfxPrefab: {fileID: 0}
   vfxOffset: 0
   effects:
-  - {fileID: 11400000, guid: c9fad3066ae428746b34f7b74fcabe7f, type: 2}
-  - {fileID: 11400000, guid: 34a250d599037b14da8fa46e580b2acc, type: 2}
+  - {fileID: 0}
+  - {fileID: 0}
