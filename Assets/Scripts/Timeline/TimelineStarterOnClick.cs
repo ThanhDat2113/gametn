@@ -1,17 +1,27 @@
 using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.SceneManagement;
+using System.Collections;
 
-public class TimelineStarterOnClick : MonoBehaviour
+public class TimelineStarter : MonoBehaviour
 {
-    [Tooltip("PlayableDirector chứa Timeline cần điều khiển")]
+    [Header("Timeline")]
     public PlayableDirector timelineDirector;
-    [Tooltip("Tên scene cần chuyển sau khi timeline kết thúc")]
+
+    [Header("Scene")]
     public string nextSceneName = "MAP";
 
-    private bool hasStarted = false;
+    [Header("Loading Scene")]
+    public string loadingSceneName = "LoadingScene";
 
-    void Start()
+    [Header("Skip Button")]
+    public GameObject skipButton;
+    public float skipButtonVisibleTime = 3f;
+
+    private bool isSkipping = false;
+    private Coroutine hideCoroutine;
+
+    private void Start()
     {
         if (timelineDirector == null)
         {
@@ -19,35 +29,76 @@ public class TimelineStarterOnClick : MonoBehaviour
             return;
         }
 
-        // Dừng Timeline nếu đang chạy, đưa về đầu
-        if (timelineDirector.state == PlayState.Playing)
-            timelineDirector.Stop();
-        timelineDirector.time = 0;
-        timelineDirector.Evaluate();
+        // Ẩn nút Skip lúc đầu
+        if (skipButton != null)
+            skipButton.SetActive(false);
 
-        // Đăng ký sự kiện kết thúc
+        // Đăng ký sự kiện kết thúc Timeline
         timelineDirector.stopped += OnTimelineFinished;
+
+        // Chạy Timeline ngay khi vào scene
+        timelineDirector.Play();
     }
 
-    void Update()
+    private void Update()
     {
-        if (!hasStarted && Input.GetMouseButtonDown(0))
+        if (isSkipping) return;
+
+        // Chỉ hiện Skip khi Timeline đang chạy
+        if (timelineDirector != null &&
+            timelineDirector.state == PlayState.Playing)
         {
-            StartTimeline();
+            if (Input.GetMouseButtonDown(0))
+            {
+                ShowSkipButton();
+            }
         }
     }
 
-    void StartTimeline()
+    private void ShowSkipButton()
     {
-        if (timelineDirector == null) return;
-        hasStarted = true;
-        timelineDirector.Play();
-        Debug.Log("Timeline đã bắt đầu chạy do click chuột.");
+        if (skipButton == null) return;
+
+        skipButton.SetActive(true);
+
+        // Nếu đang có coroutine ẩn nút thì hủy
+        if (hideCoroutine != null)
+            StopCoroutine(hideCoroutine);
+
+        hideCoroutine = StartCoroutine(HideSkipButtonAfterDelay());
+    }
+
+    private IEnumerator HideSkipButtonAfterDelay()
+    {
+        yield return new WaitForSeconds(skipButtonVisibleTime);
+
+        if (skipButton != null)
+            skipButton.SetActive(false);
+    }
+
+    public void SkipCutscene()
+    {
+        if (isSkipping) return;
+
+        isSkipping = true;
+
+        if (timelineDirector != null)
+            timelineDirector.Stop();
+
+        LoadNextScene();
     }
 
     private void OnTimelineFinished(PlayableDirector director)
     {
-        SceneManager.LoadScene(nextSceneName);
+        if (isSkipping) return;
+
+        LoadNextScene();
+    }
+
+    private void LoadNextScene()
+    {
+        SceneLoader.sceneToLoad = nextSceneName;
+        SceneManager.LoadScene(loadingSceneName);
     }
 
     private void OnDestroy()
