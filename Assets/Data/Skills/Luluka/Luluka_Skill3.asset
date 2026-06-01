@@ -12,16 +12,34 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1e652bd9dd81c6c48a0d625c3dbd9ff3, type: 3}
   m_Name: Luluka_Skill3
   m_EditorClassIdentifier: Assembly-CSharp::SkillData
-  skillName: "Desperate Measures"
-  description: "Gây sát thương cho toàn bộ kẻ địch với sát thương tăng theo lượng HP đã mất của cô (tối đa 20%) và tăng phòng thủ của bản thân thêm 30% trong 2 lượt."
+  autoConfirmOnSelect: 0
+  movementOverride: 0
+  skillName: Desperate Measures
+  description: "G\xE2y s\xE1t th\u01B0\u01A1ng cho to\xE0n b\u1ED9 k\u1EBB \u0111\u1ECBch
+    v\u1EDBi s\xE1t th\u01B0\u01A1ng t\u0103ng theo l\u01B0\u1EE3ng HP \u0111\xE3
+    m\u1EA5t c\u1EE7a c\xF4 (t\u1ED1i \u0111a 20%) v\xE0 t\u0103ng ph\xF2ng th\u1EE7
+    c\u1EE7a b\u1EA3n th\xE2n th\xEAm 30% trong 2 l\u01B0\u1EE3t."
   icon: {fileID: 0}
   type: 0
   targetType: 4
+  isChargeable: 0
+  doesNotEndTurn: 0
   apCost: 3
   hitCount: 1
+  vfxEvents:
+  - vfxPrefab: {fileID: 148433057798874328, guid: a94967cfaf4dfbd459c6dd85f075ea76, type: 3}
+    spawnMode: 0
+    offset: {x: 0, y: 0, z: 0}
+    attachToCaster: 0
+  rangedVfxEvents: []
+  hitVfxEvents: []
   animationTrigger: Skill3
+  isRanged: 0
+  projectilePrefab: {fileID: 0}
+  projectileOffset: {x: 0, y: 0, z: 0}
+  projectileTravelTime: 0.3
   vfxPrefab: {fileID: 0}
   vfxOffset: 0
   effects:
-  - {fileID: 11400000, guid: a87340ef030f55549a0af1c52c692138, type: 2}
-  - {fileID: 11400000, guid: e5340f64938232b4d989d1e70775952e, type: 2}
+  - {fileID: 11400000, guid: 35889d993147cbc49a163a24629553dd, type: 2}
+  - {fileID: 11400000, guid: b85c285882314024ca42efaa79378f6e, type: 2}

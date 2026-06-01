@@ -12,17 +12,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1e652bd9dd81c6c48a0d625c3dbd9ff3, type: 3}
   m_Name: Luluka_Skill1
   m_EditorClassIdentifier: Assembly-CSharp::SkillData
-  skillName: "Staff Strike"
-  description: "Tấn công kẻ địch bằng gậy phép."
+  autoConfirmOnSelect: 0
+  movementOverride: 0
+  skillName: Staff Strike
+  description: "T\u1EA5n c\xF4ng k\u1EBB \u0111\u1ECBch b\u1EB1ng g\u1EADy ph\xE9p."
   icon: {fileID: 0}
   type: 0
   targetType: 0
+  isChargeable: 0
+  doesNotEndTurn: 0
   apCost: 0
   hitCount: 1
+  vfxEvents:
+  - vfxPrefab: {fileID: 1615386299189446249, guid: 488767858cb53114bbd8dac9c5033727, type: 3}
+    spawnMode: 0
+    offset: {x: 0, y: 0, z: 0}
+    attachToCaster: 0
+  rangedVfxEvents: []
+  hitVfxEvents: []
   animationTrigger: Skill1
+  isRanged: 0
+  projectilePrefab: {fileID: 0}
+  projectileOffset: {x: 0, y: 0, z: 0}
+  projectileTravelTime: 0.3
   vfxPrefab: {fileID: 0}
   vfxOffset: 0
   effects:
-  - {fileID: 11400000, guid: 5fc7829b076412448a30def5f9836ca1, type: 2}
-  effects:
-  - {fileID: 11400000, guid: 5fc7829b076412448a30def5f9836ca1, type: 2}
+  - {fileID: 0}
