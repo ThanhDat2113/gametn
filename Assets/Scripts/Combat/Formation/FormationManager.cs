@@ -173,10 +173,11 @@ public class FormationManager : MonoBehaviour
         if (currentFormation.slots[uiSlotIndex]?.data != null) return false;
 
         ClearSlot(uiSlotIndex);
+        int savedLevel = FormationProgressHelper.GetCurrentLevel(character);
         currentFormation.slots[uiSlotIndex] = new FormationSlot
         {
             data = character,
-            level = 1,
+            level = savedLevel,
             gridSlot = uiSlotIndex
         };
         slots[uiSlotIndex].SetCharacter(character);

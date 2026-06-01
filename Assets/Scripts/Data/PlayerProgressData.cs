@@ -109,7 +109,7 @@ public class PlayerProgressData : MonoBehaviour
 {
     public static PlayerProgressData Instance { get; private set; }
 
-    private readonly Dictionary<CharacterData, CharacterProgress> _characterProgressDict = new();
+    private readonly Dictionary<string, CharacterProgress> _characterProgressDict = new();
 
     private void Awake()
     {
@@ -129,11 +129,11 @@ public class PlayerProgressData : MonoBehaviour
     /// </summary>
     public CharacterProgress GetOrCreateProgress(CharacterData characterData)
     {
-        if (!_characterProgressDict.ContainsKey(characterData))
+        if (!_characterProgressDict.ContainsKey(characterData.characterName))
         {
-            _characterProgressDict[characterData] = new CharacterProgress(characterData);
+            _characterProgressDict[characterData.characterName] = new CharacterProgress(characterData);
         }
-        return _characterProgressDict[characterData];
+        return _characterProgressDict[characterData.characterName];
     }
 
     /// <summary>
@@ -160,7 +160,7 @@ public class PlayerProgressData : MonoBehaviour
     /// <summary>
     /// Lấy toàn bộ dữ liệu tiến trình (dùng để lưu game).
     /// </summary>
-    public Dictionary<CharacterData, CharacterProgress> GetAllProgress()
+    public Dictionary<string, CharacterProgress> GetAllProgress()
     {
         return _characterProgressDict;
     }

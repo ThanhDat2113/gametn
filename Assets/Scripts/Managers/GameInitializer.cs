@@ -1,9 +1,8 @@
-
 using UnityEngine;
 
 /// <summary>
-/// Tự động khởi tạo các hệ thống quản lý toàn cục (singletons) khi game bắt đầu.
-/// Gắn script này vào một GameObject trong scene đầu tiên của game (VD: Main Menu).
+/// Tự động tạo các singleton khi game khởi động.
+/// Gắn script này vào GameObject bất kỳ trong scene đầu tiên (MainMenu/Intro).
 /// </summary>
 public class GameInitializer : MonoBehaviour
 {
@@ -12,17 +11,19 @@ public class GameInitializer : MonoBehaviour
         // Tạo PlayerProgressData nếu chưa có
         if (PlayerProgressData.Instance == null)
         {
-            GameObject progressManager = new GameObject("PlayerProgressData");
-            progressManager.AddComponent<PlayerProgressData>();
-            Debug.Log("[GameInitializer] PlayerProgressData instance created.");
+            var progressGO = new GameObject("PlayerProgressData");
+            progressGO.AddComponent<PlayerProgressData>();
+            DontDestroyOnLoad(progressGO);
+            Debug.Log("[GameInitializer] Đã tạo PlayerProgressData singleton.");
         }
 
         // Tạo CombatExperienceManager nếu chưa có
         if (CombatExperienceManager.Instance == null)
         {
-            GameObject expManager = new GameObject("CombatExperienceManager");
-            expManager.AddComponent<CombatExperienceManager>();
-            Debug.Log("[GameInitializer] CombatExperienceManager instance created.");
+            var expGO = new GameObject("CombatExperienceManager");
+            expGO.AddComponent<CombatExperienceManager>();
+            DontDestroyOnLoad(expGO);
+            Debug.Log("[GameInitializer] Đã tạo CombatExperienceManager singleton.");
         }
     }
 }
