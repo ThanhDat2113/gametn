@@ -1,4 +1,10 @@
 // CombatEnums.cs
+public enum CharacterType
+{
+    Player,     // Nhân vật người chơi (team của ta)
+    Enemy       // Quái địch (có thể cho EXP)
+}
+
 public enum SkillType 
 { 
     Auto,       // Kỹ năng chủ động (dùng trong lượt)
