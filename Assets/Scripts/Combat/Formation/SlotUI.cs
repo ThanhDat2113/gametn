@@ -5,6 +5,7 @@ using UnityEngine.EventSystems;
 public class SlotUI : MonoBehaviour, IDropHandler, IPointerClickHandler, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
     [SerializeField] private Image icon;
+    [SerializeField] private TMPro.TextMeshProUGUI levelText;
 
     private int slotIndex;
     private FormationManager manager;
@@ -32,10 +33,22 @@ public class SlotUI : MonoBehaviour, IDropHandler, IPointerClickHandler, IBeginD
 
     public void SetCharacter(CharacterData character)
     {
+        SetCharacter(character, 1);
+    }
+
+    public void SetCharacter(CharacterData character, int level)
+    {
         CurrentCharacter = character;
         if (character.portrait != null)
             icon.sprite = character.portrait;
         icon.gameObject.SetActive(true);
+
+        if (levelText != null)
+        {
+            levelText.text = $"LV.{level}";
+            levelText.gameObject.SetActive(true);
+        }
+
         canvasGroup.blocksRaycasts = true;
         canvasGroup.alpha = 1f;
     }
@@ -44,6 +57,8 @@ public class SlotUI : MonoBehaviour, IDropHandler, IPointerClickHandler, IBeginD
     {
         CurrentCharacter = null;
         icon.gameObject.SetActive(false);
+        if (levelText != null)
+            levelText.gameObject.SetActive(false);
         if (canvasGroup != null)
         {
             canvasGroup.blocksRaycasts = true;

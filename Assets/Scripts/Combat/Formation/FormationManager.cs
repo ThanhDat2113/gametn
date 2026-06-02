@@ -173,14 +173,27 @@ public class FormationManager : MonoBehaviour
         if (currentFormation.slots[uiSlotIndex]?.data != null) return false;
 
         ClearSlot(uiSlotIndex);
+<<<<<<< Updated upstream
         int savedLevel = FormationProgressHelper.GetCurrentLevel(character);
         currentFormation.slots[uiSlotIndex] = new FormationSlot
         {
             data = character,
             level = savedLevel,
+=======
+
+        // Lấy level thực từ PlayerProgression (hoặc mặc định 1)
+        int characterLevel = 1;
+        if (PlayerProgression.Instance != null)
+            characterLevel = PlayerProgression.Instance.GetLevel(character);
+
+        currentFormation.slots[uiSlotIndex] = new FormationSlot
+        {
+            data = character,
+            level = characterLevel,
+>>>>>>> Stashed changes
             gridSlot = uiSlotIndex
         };
-        slots[uiSlotIndex].SetCharacter(character);
+        slots[uiSlotIndex].SetCharacter(character, characterLevel);
         SetRosterVisible(character, false);
         UpdateCounter();
         OnFormationChanged?.Invoke();

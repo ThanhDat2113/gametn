@@ -819,8 +819,38 @@ public class CombatManager : MonoBehaviour
         Debug.LogWarning("[CombatManager] CombatExperienceManager not found, EXP not awarded");
     }
 
+<<<<<<< Updated upstream
     OnVictory?.Invoke();
 }
+=======
+    private void DoVictory()
+    {
+        Debug.Log("=== VICTORY ===");
+
+        // Cộng kinh nghiệm cho player units còn sống
+        if (PlayerProgression.Instance != null)
+        {
+            int totalExp = 0;
+            // Tính tổng exp từ enemy đã đánh bại
+            foreach (var enemy in EnemyUnits)
+            {
+                // Mỗi enemy cho exp dựa trên level của nó
+                ExperienceConfig expConfig = null;
+                // Tìm ExperienceConfig từ PlayerProgression (nội bộ)
+                // PlayerProgression tự quản lý việc này
+                totalExp += 50 + (enemy.Level * 10); // base 50 + 10/level
+            }
+
+            if (totalExp > 0)
+            {
+                PlayerProgression.Instance.AddPartyExperience(totalExp);
+                Debug.Log($"[Exp] Party nhận {totalExp} kinh nghiệm từ chiến thắng!");
+            }
+        }
+
+        OnVictory?.Invoke();
+    }
+>>>>>>> Stashed changes
 
     private void DoDefeat()
     {

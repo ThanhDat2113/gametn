@@ -5,6 +5,7 @@ public enum QuestRewardType
 {
     NewCharacter,   // Mở khóa nhân vật mới vào roster
     Item,           // Thêm item/equipment vào inventory
+    Experience,     // Cộng kinh nghiệm cho party (số lượng = amount)
 }
 
 /// <summary>
@@ -22,7 +23,7 @@ public class QuestReward
     [Tooltip("Dùng khi rewardType = Item")]
     public ItemData item;
 
-    [Tooltip("Số lượng item (chỉ dùng với rewardType = Item)")]
+    [Tooltip("Số lượng item (chỉ dùng với rewardType = Item)\nHoặc số kinh nghiệm (dùng với rewardType = Experience)")]
     public int amount = 1;
 
     // ── Helpers ───────────────────────────────────────────────
@@ -34,6 +35,7 @@ public class QuestReward
         {
             QuestRewardType.NewCharacter => character != null ? character.characterName : "(chưa gán)",
             QuestRewardType.Item         => item != null ? item.itemName : "(chưa gán)",
+            QuestRewardType.Experience   => $"{amount} EXP",
             _                            => "Unknown"
         };
     }
@@ -45,6 +47,7 @@ public class QuestReward
         {
             QuestRewardType.NewCharacter => character?.portrait,
             QuestRewardType.Item         => item?.icon,
+            QuestRewardType.Experience   => null, // Có thể gán icon exp sau
             _                            => null
         };
     }
@@ -56,6 +59,7 @@ public class QuestReward
         {
             QuestRewardType.NewCharacter => "Đồng đội mới",
             QuestRewardType.Item         => amount > 1 ? $"x{amount}" : "Trang bị",
+            QuestRewardType.Experience   => "Kinh nghiệm",
             _                            => ""
         };
     }

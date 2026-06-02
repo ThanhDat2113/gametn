@@ -7,6 +7,7 @@ public class CharacterDragItem : MonoBehaviour, IBeginDragHandler, IDragHandler,
     public CharacterData CharacterData { get; private set; }
 
     [SerializeField] private Image icon;
+    [SerializeField] private TMPro.TextMeshProUGUI levelText;
 
     private FormationManager manager;
     private CanvasGroup canvasGroup;
@@ -18,6 +19,16 @@ public class CharacterDragItem : MonoBehaviour, IBeginDragHandler, IDragHandler,
         CharacterData = data;
         manager = mgr;
         icon.sprite = data.portrait;
+
+        // Hiển thị level thực từ PlayerProgression
+        if (levelText != null)
+        {
+            int level = 1;
+            if (PlayerProgression.Instance != null)
+                level = PlayerProgression.Instance.GetLevel(data);
+            levelText.text = $"LV.{level}";
+            levelText.gameObject.SetActive(true);
+        }
 
         canvasGroup = GetComponent<CanvasGroup>();
         if (canvasGroup == null) canvasGroup = gameObject.AddComponent<CanvasGroup>();
