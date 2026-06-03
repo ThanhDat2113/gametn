@@ -12,16 +12,31 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1e652bd9dd81c6c48a0d625c3dbd9ff3, type: 3}
   m_Name: Hana_Skill3
   m_EditorClassIdentifier: Assembly-CSharp::SkillData
-  skillName: "Immediate Action"
-  description: "Chọn 1 đồng minh, cho phép đồng minh ấy hành động ngay lập tức."
+  autoConfirmOnSelect: 0
+  movementOverride: 0
+  skillName: Immediate Action
+  description: "Ch\u1ECDn 1 \u0111\u1ED3ng minh, cho ph\xE9p \u0111\u1ED3ng minh
+    \u1EA5y h\xE0nh \u0111\u1ED9ng ngay l\u1EADp t\u1EE9c."
   icon: {fileID: 0}
   type: 0
   targetType: 1
+  isChargeable: 0
+  doesNotEndTurn: 0
   apCost: 1
   hitCount: 0
+  vfxEvents:
+  - vfxPrefab: {fileID: 8291135225270637410, guid: f97d4f7433cda9840b8533b047dbe934, type: 3}
+    spawnMode: 0
+    offset: {x: 0, y: -2, z: 0}
+    attachToCaster: 0
+  rangedVfxEvents: []
+  hitVfxEvents: []
   animationTrigger: Skill3
+  isRanged: 0
+  projectilePrefab: {fileID: 0}
+  projectileOffset: {x: 0, y: 0, z: 0}
+  projectileTravelTime: 0.3
   vfxPrefab: {fileID: 0}
   vfxOffset: 0
   effects:
-  - {fileID: 11400000, guid: fbcfd889ddea4b8448cbb7727225927a, type: 2}
-  - {fileID: 11400000, guid: e5340f64938232b4d989d1e70775952e, type: 2}
+  - {fileID: 11400000, guid: 8c31c6dba84ac6845877e9f93636a6fe, type: 2}

@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f9330979f02ddf43a415e7748b42aae, type: 3}
+  m_Name: CHAR_Kaneki
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterData
+  defaultCombatStyle: 0
+  prefab: {fileID: 6417493667336926227, guid: 5f06044ad2745cc41a38dec786cbac74, type: 3}
+  characterName: Kaneki
+  portrait: {fileID: -438933639, guid: d5c3c672a31becc46ad0755c649d877a, type: 3}
+  battleSprite: {fileID: -438933639, guid: d5c3c672a31becc46ad0755c649d877a, type: 3}
+  lore: 
+  baseHP: 100
+  baseATK: 100
+  basePDEF: 10
+  baseMDEF: 10
+  baseSpeed: 10
+  hpPerLevel: 5
+  atkPerLevel: 2
+  pdefPerLevel: 1
+  mdefPerLevel: 1
+  speedPerLevel: 1
+  skills:
+  - {fileID: 11400000, guid: e523f0f9301d4e74b9e667de2a76f6e8, type: 2}
+  - {fileID: 11400000, guid: 592b123f295f0f4418c878256344ce75, type: 2}
+  - {fileID: 11400000, guid: 388eaa28a0afaab4c87453d6ae1eea4e, type: 2}
+  passiveScript: {fileID: 11500000, guid: 6e4d36e858aff254fbd44ab208c84321, type: 3}
