@@ -649,7 +649,8 @@ System.Runtime.Serialization.Formatters.Binary.ObjectWriter.Serialize (System.Ob
 System.Runtime.Serialization.Formatters.Binary.BinaryFormatter.Serialize (System.IO.Stream serializationStream, System.Object graph, System.Runtime.Remoting.Messaging.Header[] headers, System.Boolean fCheck) (at <41d29b352f6a475ab1bf7c6628b82790>:0)
 System.Runtime.Serialization.Formatters.Binary.BinaryFormatter.Serialize (System.IO.Stream serializationStream, System.Object graph, System.Runtime.Remoting.Messaging.Header[] headers) (at <41d29b352f6a475ab1bf7c6628b82790>:0)
 System.Runtime.Serialization.Formatters.Binary.BinaryFormatter.Serialize (System.IO.Stream serializationStream, System.Object graph) (at <41d29b352f6a475ab1bf7c6628b82790>:0)
-InventoryManager.SaveToFile () (at Assets/Scripts/Inventory/InventoryManager.cs:52)
+InventoryManager.SaveToFile () (at Assets/Scripts/Inventory/InventoryManager.cs:52)D:\unity\gametn\COMPLETE_GAME_SYSTEM_DOCUMENTATION.md
+đọc file md trong đường dẫn
 InventoryManager.SaveInventory () (at Assets/Scripts/Inventory/InventoryManager.cs:45)
 InventoryManager.OnApplicationQuit () (at Assets/Scripts/Inventory/InventoryManager.cs:75)
 

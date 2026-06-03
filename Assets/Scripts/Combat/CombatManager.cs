@@ -18,7 +18,89 @@ namespace Game.Combat
             Caster = caster;
             Skill = skill;
             Targets = targets;
+    private void DoVictory()
+    {
+        Debug.Log("=== VICTORY ===");
+
+        // Cộng kinh nghiệm cho player units còn sống
+        if (PlayerProgression.Instance != null)
+        {
+            int totalExp = 0;
+            foreach (var enemy in EnemyUnits)
+            {
+                int baseReward = enemy.Data != null ? enemy.Data.expReward : 100;
+                int levelBonus = (enemy.Level - 1) * 10;
+                int enemyExp = baseReward + levelBonus;
+                totalExp += enemyExp;
+                Debug.Log($"[Exp] {enemy.UnitName} (Lv.{enemy.Level}): {baseReward} base + {levelBonus} bonus = {enemyExp} EXP");
+            }
+
+            if (totalExp > 0)
+            {
+                PlayerProgression.Instance.AddPartyExperience(totalExp);
+                Debug.Log($"[Exp] Party nhận {totalExp} kinh nghiệm từ chiến thắng!");
+            }
         }
+
+        OnVictory?.Invoke();
+    }
+>>>>>>> Stashed changes
+
+    private void DoDefeat()
+    {
+        Debug.Log("=== DEFEAT ===");
+        OnDefeat?.Invoke();
+    }
+
+    private void DoVictory()
+    {
+        Debug.Log("=== VICTORY ===");
+
+        // Cộng kinh nghiệm cho player units còn sống
+        if (PlayerProgression.Instance != null)
+        {
+            int totalExp = 0;
+            // Tính tổng exp từ enemy đã đánh bại
+            foreach (var enemy in EnemyUnits)
+            {
+                // Mỗi enemy cho exp dựa trên CharacterData.expReward + level bonus
+                int baseReward = enemy.Data != null ? enemy.Data.expReward : 100;
+                int levelBonus = (enemy.Level - 1) * 10;
+                int enemyExp = baseReward + levelBonus;
+                totalExp += enemyExp;
+                Debug.Log($"[Exp] {enemy.UnitName} (Lv.{enemy.Level}): {baseReward} base + {levelBonus} bonus = {enemyExp} EXP");
+            }
+
+            if (totalExp > 0)
+            {
+                PlayerProgression.Instance.AddPartyExperience(totalExp);
+                Debug.Log($"[Exp] Party nhận {totalExp} kinh nghiệm từ chiến thắng!");
+            }
+        }
+
+        OnVictory?.Invoke();
+    }
+>>>>>>> Stashed changes
+
+    private void DoDefeat()
+    {
+        Debug.Log("=== DEFEAT ===");
+        OnDefeat?.Invoke();
+    }
+
+    public bool WillAttackResultInClash(CombatUnit unitA, CombatUnit unitB)
+    {
+        return false;
+    }
+}
+    public bool WillAttackResultInClash(CombatUnit unitA, CombatUnit unitB)
+    {
+        return false;
+    }
+}
+}
+    }
+}
     }
 }
 
@@ -801,27 +883,43 @@ public class CombatManager : MonoBehaviour
         return false;
     }
 
-    public UnitView GetUnitView(CombatUnit unit) =>
-        unitViews.Find(v => v.LinkedUnit == unit);
-
     private void DoVictory()
-{
-    Debug.Log("=== VICTORY ===");
-
-    // Award EXP to players
-    var expManager = CombatExperienceManager.Instance;
-    if (expManager != null)
     {
-        expManager.OnVictory(PlayerUnits, EnemyUnits);
-    }
-    else
-    {
-        Debug.LogWarning("[CombatManager] CombatExperienceManager not found, EXP not awarded");
+        Debug.Log("=== VICTORY ===");
+
+        // Cộng kinh nghiệm cho player units còn sống
+        if (PlayerProgression.Instance != null)
+        {
+            int totalExp = 0;
+            foreach (var enemy in EnemyUnits)
+            {
+                int baseReward = enemy.Data != null ? enemy.Data.expReward : 100;
+                int levelBonus = (enemy.Level - 1) * 10;
+                int enemyExp = baseReward + levelBonus;
+                totalExp += enemyExp;
+                Debug.Log($"[Exp] {enemy.UnitName} (Lv.{enemy.Level}): {baseReward} base + {levelBonus} bonus = {enemyExp} EXP");
+            }
+
+            if (totalExp > 0)
+            {
+                PlayerProgression.Instance.AddPartyExperience(totalExp);
+                Debug.Log($"[Exp] Party nhận {totalExp} kinh nghiệm từ chiến thắng!");
+            }
+        }
+
+        OnVictory?.Invoke();
     }
 
-<<<<<<< Updated upstream
-    OnVictory?.Invoke();
-}
+    private void DoDefeat()
+    {
+        Debug.Log("=== DEFEAT ===");
+        OnDefeat?.Invoke();
+    }
+
+    public bool WillAttackResultInClash(CombatUnit unitA, CombatUnit unitB)
+    {
+        return false;
+    }
 =======
     private void DoVictory()
     {
@@ -834,11 +932,12 @@ public class CombatManager : MonoBehaviour
             // Tính tổng exp từ enemy đã đánh bại
             foreach (var enemy in EnemyUnits)
             {
-                // Mỗi enemy cho exp dựa trên level của nó
-                ExperienceConfig expConfig = null;
-                // Tìm ExperienceConfig từ PlayerProgression (nội bộ)
-                // PlayerProgression tự quản lý việc này
-                totalExp += 50 + (enemy.Level * 10); // base 50 + 10/level
+                // Mỗi enemy cho exp dựa trên CharacterData.expReward + level bonus
+                int baseReward = enemy.Data != null ? enemy.Data.expReward : 100;
+                int levelBonus = (enemy.Level - 1) * 10;
+                int enemyExp = baseReward + levelBonus;
+                totalExp += enemyExp;
+                Debug.Log($"[Exp] {enemy.UnitName} (Lv.{enemy.Level}): {baseReward} base + {levelBonus} bonus = {enemyExp} EXP");
             }
 
             if (totalExp > 0)

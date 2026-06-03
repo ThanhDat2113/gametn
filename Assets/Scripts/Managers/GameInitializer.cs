@@ -1,29 +1,24 @@
 using UnityEngine;
 
 /// <summary>
-/// Tự động tạo các singleton khi game khởi động.
-/// Gắn script này vào GameObject bất kỳ trong scene đầu tiên (MainMenu/Intro).
+/// Tự động tạo các singleton cần thiết khi game khởi động.
+/// Gắn script này vào GameObject bất kỳ trong scene đầu tiên (MainMenu, Intro, Map...).
 /// </summary>
 public class GameInitializer : MonoBehaviour
 {
+    [Header("Auto-Create Singletons")]
+    [Tooltip("Nếu bật, sẽ tự động tạo PlayerProgression nếu chưa tồn tại")]
+    public bool createPlayerProgression = true;
+
     private void Awake()
     {
-        // Tạo PlayerProgressData nếu chưa có
-        if (PlayerProgressData.Instance == null)
+        // 1. PlayerProgression
+        if (createPlayerProgression && PlayerProgression.Instance == null)
         {
-            var progressGO = new GameObject("PlayerProgressData");
-            progressGO.AddComponent<PlayerProgressData>();
-            DontDestroyOnLoad(progressGO);
-            Debug.Log("[GameInitializer] Đã tạo PlayerProgressData singleton.");
-        }
-
-        // Tạo CombatExperienceManager nếu chưa có
-        if (CombatExperienceManager.Instance == null)
-        {
-            var expGO = new GameObject("CombatExperienceManager");
-            expGO.AddComponent<CombatExperienceManager>();
-            DontDestroyOnLoad(expGO);
-            Debug.Log("[GameInitializer] Đã tạo CombatExperienceManager singleton.");
+            GameObject go = new GameObject("PlayerProgression");
+            go.AddComponent<PlayerProgression>();
+            DontDestroyOnLoad(go);
+            Debug.Log("[GameInitializer] Đã tự động tạo PlayerProgression singleton.");
         }
     }
 }

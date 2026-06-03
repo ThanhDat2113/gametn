@@ -62,7 +62,7 @@ public class PlayerProgression : MonoBehaviour
         string key = character.characterName;
         if (!characterLevels.ContainsKey(key))
         {
-            characterLevels[key] = 1;
+            characterLevels[key] = character.baseLevel;
             characterExp[key] = 0;
         }
         return characterLevels[key];
@@ -84,9 +84,17 @@ public class PlayerProgression : MonoBehaviour
     /// <summary>Lấy tổng exp cần để lên cấp tiếp theo.</summary>
     public int GetExpToNextLevel(CharacterData character)
     {
-        if (character == null || expConfig == null) return 0;
+        if (character == null) return 0;
         int currentLevel = GetLevel(character);
-        return expConfig.GetExpNeededForLevelUp(currentLevel);
+        // Dùng per-character thresholds từ CharacterData nếu có
+        if (character.baseExpThreshold > 0)
+        {
+            if (currentLevel <= 1) return character.baseExpThreshold;
+            return character.baseExpThreshold + character.expIncrementPerLevel * (currentLevel - 1);
+        }
+        // Fallback về ExperienceConfig
+        if (expConfig != null) return expConfig.GetExpNeededForLevelUp(currentLevel);
+        return 100;
     }
 
     /// <summary>Tiến trình exp (0.0 → 1.0) để lên cấp tiếp theo.</summary>
@@ -170,15 +178,19 @@ public class PlayerProgression : MonoBehaviour
     /// <summary>Xử lý level-up, trả về level mới nếu có thay đổi, -1 nếu không.</summary>
     private int ProcessLevelUps(CharacterData character)
     {
-        if (character == null || expConfig == null) return -1;
+        if (character == null) return -1;
 
         string key = character.characterName;
         int currentLevel = characterLevels[key];
         int newLevel = currentLevel;
 
-        while (newLevel < expConfig.maxLevel)
+        // maxLevel từ CharacterData hoặc ExperienceConfig
+        int maxLevel = 50;
+        if (expConfig != null) maxLevel = expConfig.maxLevel;
+
+        while (newLevel < maxLevel)
         {
-            int needed = expConfig.GetExpNeededForLevelUp(newLevel);
+            int needed = GetExpToNextLevel(character, newLevel);
             if (characterExp[key] >= needed)
             {
                 characterExp[key] -= needed;
@@ -197,6 +209,19 @@ public class PlayerProgression : MonoBehaviour
         characterLevels[key] = newLevel;
 
         return (newLevel != currentLevel) ? newLevel : -1;
+    }
+
+    /// <summary>Overload: tính exp cần để lên từ một level cụ thể.</summary>
+    private int GetExpToNextLevel(CharacterData character, int fromLevel)
+    {
+        if (character == null) return 100;
+        if (character.baseExpThreshold > 0)
+        {
+            if (fromLevel <= 1) return character.baseExpThreshold;
+            return character.baseExpThreshold + character.expIncrementPerLevel * (fromLevel - 1);
+        }
+        if (expConfig != null) return expConfig.GetExpNeededForLevelUp(fromLevel);
+        return 100;
     }
 
     /// <summary>
