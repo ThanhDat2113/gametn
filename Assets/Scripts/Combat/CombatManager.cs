@@ -2,75 +2,202 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using Game.Combat;
+
+namespace Game.Combat
+{
+    public class PlannedAction
+    {
+        public CombatUnit Caster { get; }
+        public SkillData Skill { get; }
+        public List<CombatUnit> Targets { get; }
+
+        public PlannedAction(CombatUnit caster, SkillData skill, List<CombatUnit> targets)
+        {
+            Caster = caster;
+            Skill = skill;
+            Targets = targets;
+        }
+    }
+}
 
 public class CombatManager : MonoBehaviour
 {
     public static CombatManager Instance { get; private set; }
 
-    // ── References ────────────────────────────────────────────
     private CombatStateMachine stateMachine = new();
-    private ClashResolver clashResolver = new();
+    private ActionResolver actionResolver = new();
     private EnemyAI enemyAI = new();
 
-    // ── Units ─────────────────────────────────────────────────
+    // Command System
+    private readonly Queue<ICombatCommand> _commandQueue = new Queue<ICombatCommand>();
+    private bool _isProcessingCommands = false;
+
     public List<CombatUnit> PlayerUnits { get; private set; } = new();
     public List<CombatUnit> EnemyUnits { get; private set; } = new();
+    public List<CombatUnit> ActionOrder { get; private set; } = new();
 
-    // ── Views ─────────────────────────────────────────────────
+    // Action Point System
+    public int CurrentPlayerAP { get; private set; }
+    private const int MAX_PLAYER_AP = 5;
+    private const int STARTING_PLAYER_AP = 3;
+    private bool isFirstPlayerTurnOfRound;
+
     [Header("Grid Spawn Settings")]
-    [Tooltip("9 Transform tương ứng 9 ô lưới 3x3 phía player (index 0-8)")]
     public Transform[] playerGridSlots;
-    [Tooltip("9 Transform tương ứng 9 ô lưới 3x3 phía enemy (index 0-8)")]
     public Transform[] enemyGridSlots;
-
+    public Transform enemyRallyPoint;
     private List<UnitView> unitViews = new();
 
-    // Col0 (slot 0,1,2) = Front → Row 2
-    // Col1 (slot 3,4,5) = Mid   → Row 1
-    // Col2 (slot 6,7,8) = Back  → Row 0
+    public List<UnitView> GetAllUnitViews()
+    {
+        return unitViews;
+    }
+
+    public void GrantExtraTurn(CombatUnit unit)
+    {
+        Debug.Log($"[CombatManager] Cấp thêm lượt cho {unit.UnitName}");
+        // Logic để thêm lượt sẽ được triển khai ở đây
+        // Ví dụ: thêm unit vào một hàng đợi ưu tiên
+    }
+
+    public void GrantImmediateTurn(CombatUnit unit)
+    {
+        Debug.Log($"[CombatManager] Cấp lượt hành động ngay lập tức cho {unit.UnitName}");
+        // Đây là một logic phức tạp, cần phải chèn unit vào vị trí tiếp theo trong ActionOrder
+        // và có thể cần phải cấu trúc lại vòng lặp ExecuteRound.
+        // Tạm thời, chúng ta sẽ chèn vào vị trí tiếp theo.
+        if (ActionOrder.Contains(unit))
+        {
+            ActionOrder.Remove(unit);
+        }
+        ActionOrder.Insert(turnIndex + 1, unit);
+    }
+
+    public List<CombatUnit> GetTeam(bool isPlayer)
+    {
+        return isPlayer ? PlayerUnits : EnemyUnits;
+    }
+
+    public List<CombatUnit> GetOpposingTeam(bool isPlayer)
+    {
+        return isPlayer ? EnemyUnits : PlayerUnits;
+    }
+
     private static int SlotToRow(int slot) => 2 - (slot / 3);
 
-    // ── Planning ──────────────────────────────────────────────
     private int planningIndex = 0;
-
-    // ── Round ─────────────────────────────────────────────────
+    private int turnIndex = 0;
+    private bool isWaitingForPlayerInput = false;
     public int CurrentRound { get; private set; } = 0;
 
-    // ── Animation ─────────────────────────────────────────────
     [Header("Animation")]
     public ClashAnimationSequence clashSequence;
+    public CombatCameraManager cameraManager;
+    public CanvasGroup combatUICanvasGroup;
+    private TargetingArrowController arrowController;
 
-    // ── Events ────────────────────────────────────────────────
     public event System.Action OnCombatStarted;
-    // Legacy: gọi từng nhân vật một (không dùng với UI mới)
     public event System.Action<CombatUnit> OnPlayerUnitPlanning;
-    // UI mới: fired khi bắt đầu PlayerPlan, truyền toàn bộ danh sách để UI tự xử lý
+
+    #region Command System
+    public void AddCommand(ICombatCommand command)
+    {
+        _commandQueue.Enqueue(command);
+        if (!_isProcessingCommands)
+        {
+            StartCoroutine(ProcessCommandQueue());
+        }
+    }
+
+    private IEnumerator ProcessCommandQueue()
+    {
+        _isProcessingCommands = true;
+        while (_commandQueue.Count > 0)
+        {
+            ICombatCommand command = _commandQueue.Dequeue();
+            IEnumerator commandCoroutine = command.Execute();
+
+            if (commandCoroutine != null)
+            {
+                yield return StartCoroutine(commandCoroutine);
+            }
+        }
+        _isProcessingCommands = false;
+    }
+    #endregion
+
+    public event System.Action<CombatUnit> OnPlayerTurnStart;
+    public event System.Action<CombatUnit> OnUnitTurnStart;
+    public event System.Action<List<CombatUnit>> OnRoundSetup;
     public event System.Action<List<CombatUnit>> OnPlayerPlanStarted;
-    // Fired sau khi enemy đã plan xong — dùng để hiện mũi tên chỉ target
+    public event System.Action<CombatUnit> OnPlayerSkillSelected;
     public event System.Action OnEnemyPlanDone;
     public event System.Action OnExecuteStarted;
-    public event System.Action<ClashResult> OnClashResolved;
+    public event System.Action<ActionResult> OnActionResolved;
     public event System.Action OnRoundEnded;
     public event System.Action OnVictory;
     public event System.Action OnDefeat;
+    public event System.Action OnPlanChanged;
+    public event System.Action<int> OnAPChanged;
 
-    // ── Public ────────────────────────────────────────────────
+    // Damage modification hook
+    public delegate void DamageModificationHandler(ActionOutcome outcome, CombatUnit actor);
+    public event DamageModificationHandler OnDamageCalculation;
+    public void TriggerDamageCalculation(ActionOutcome outcome, CombatUnit actor) => OnDamageCalculation?.Invoke(outcome, actor);
+
     public CombatPhase CurrentPhase => stateMachine.Current;
 
-    // ─────────────────────────────────────────────────────────
     private void Awake()
     {
         if (Instance != null) { Destroy(gameObject); return; }
         Instance = this;
         stateMachine.OnPhaseChanged += HandlePhaseChanged;
+
+        if (cameraManager == null)
+            cameraManager = FindFirstObjectByType<CombatCameraManager>();
+        
+        if (combatUICanvasGroup == null)
+        {
+            var planningUI = FindFirstObjectByType<CombatPlanningUI>();
+            if (planningUI != null && planningUI.planningCanvas != null)
+            {
+                combatUICanvasGroup = planningUI.planningCanvas.GetComponent<CanvasGroup>();
+                if (combatUICanvasGroup == null)
+                {
+                    Debug.Log("[CombatManager] Automatically adding CanvasGroup to planningCanvas.");
+                    combatUICanvasGroup = planningUI.planningCanvas.gameObject.AddComponent<CanvasGroup>();
+                }
+            }
+            else
+            {
+                Debug.LogWarning("[CombatManager] Could not automatically find UI Canvas. UI fade will not work.");
+            }
+        }
+
+        arrowController = GetComponent<TargetingArrowController>();
+        if (arrowController == null)
+        {
+            arrowController = gameObject.AddComponent<TargetingArrowController>();
+        }
     }
 
-    // ── Init ──────────────────────────────────────────────────
+    private void OnDestroy()
+    {
+        if (stateMachine != null)
+        {
+            stateMachine.OnPhaseChanged -= HandlePhaseChanged;
+        }
+    }
+
     public void StartCombat(FormationData playerFormation, EnemyGroupData enemyGroup)
     {
         PlayerUnits.Clear();
         EnemyUnits.Clear();
         CurrentRound = 0;
+        CurrentPlayerAP = STARTING_PLAYER_AP;
+        OnAPChanged?.Invoke(CurrentPlayerAP);
 
         foreach (var slot in playerFormation.slots)
         {
@@ -95,10 +222,10 @@ public class CombatManager : MonoBehaviour
         SpawnUnitViews();
         Debug.Log($"=== COMBAT STARTED === Player:{PlayerUnits.Count} vs Enemy:{EnemyUnits.Count}");
         OnCombatStarted?.Invoke();
-        stateMachine.TransitionTo(CombatPhase.EnemyPlan);
+
+        stateMachine.TransitionTo(CombatPhase.Intro);
     }
 
-    // Overload tiện dụng cho CombatTestUI
     public void StartCombat(
         List<(CharacterData data, int level, int gridSlot)> playerSetup,
         List<(CharacterData data, int level, int gridSlot)> enemySetup)
@@ -122,7 +249,6 @@ public class CombatManager : MonoBehaviour
         StartCombat(formation, enemyGroup);
     }
 
-    // ── Spawn Views ───────────────────────────────────────────
     private void SpawnUnitViews()
     {
         foreach (var view in unitViews)
@@ -148,23 +274,65 @@ public class CombatManager : MonoBehaviour
                 Debug.LogError($"[CombatManager] gridSlot {slot} của {unit.UnitName} không có Transform!");
                 continue;
             }
-            var go = Instantiate(prefab, gridSlots[slot].position, Quaternion.identity);
+
+            Vector3 finalGridPosition = gridSlots[slot].position;
+
+            bool isEnemy = !unit.IsPlayer;
+            Vector3 spawnPos = isEnemy && enemyRallyPoint != null ? enemyRallyPoint.position : finalGridPosition;
+
+            var go = Instantiate(prefab, spawnPos, Quaternion.identity);
+            SceneManager.MoveGameObjectToScene(go, gameObject.scene);
             var view = go.GetComponent<UnitView>();
             if (view == null) { Debug.LogError($"Prefab {prefab.name} thiếu UnitView!"); continue; }
             view.Setup(unit);
+            InitializePassives(unit);
+
+            view.StoreOriginalPosition(finalGridPosition);
+
             unitViews.Add(view);
-            Debug.Log($"[Spawn] {unit.UnitName} slot{slot} row{unit.GridRow}");
+            Debug.Log($"[Spawn] {unit.UnitName} slot{slot} at {spawnPos}. Final grid pos: {finalGridPosition}");
         }
     }
 
-    // ── Phase Handler ─────────────────────────────────────────
+    private void InitializePassives(CombatUnit unit)
+    {
+        if (unit.Data.passiveScript == null) return;
+
+        string className = unit.Data.passiveScript.name;
+
+        var passiveType = System.Type.GetType(className);
+        if (passiveType == null)
+        {
+            foreach (var assembly in System.AppDomain.CurrentDomain.GetAssemblies())
+            {
+                passiveType = assembly.GetType(className);
+                if (passiveType != null) break;
+            }
+        }
+
+        if (passiveType != null && typeof(PassiveAbility).IsAssignableFrom(passiveType))
+        {
+            var passiveInstance = System.Activator.CreateInstance(passiveType) as PassiveAbility;
+            if (passiveInstance != null)
+            {
+                unit.SetPassive(passiveInstance);
+                Debug.Log($"[Passive] Initialized passive '{className}' for {unit.UnitName}.");
+            }
+        }
+        else
+        {
+            Debug.LogWarning($"[Passive] '{className}' không tìm thấy hoặc không kế thừa PassiveAbility.");
+        }
+    }
+
     private void HandlePhaseChanged(CombatPhase prev, CombatPhase next)
     {
         switch (next)
         {
-            case CombatPhase.EnemyPlan: StartEnemyPlan(); break;
+            case CombatPhase.Intro: StartCoroutine(DoIntro()); break;
+            case CombatPhase.EnemyPlan: SetupRound(); break;
             case CombatPhase.PlayerPlan: StartPlayerPlan(); break;
-            case CombatPhase.RetargetCheck: DoRetargetCheck(); break;
+            case CombatPhase.RetargetCheck: StartCoroutine(DoRetargetCheck()); break;
             case CombatPhase.Execute: StartCoroutine(ExecuteRound()); break;
             case CombatPhase.RoundEnd: DoRoundEnd(); break;
             case CombatPhase.Victory: DoVictory(); break;
@@ -172,450 +340,483 @@ public class CombatManager : MonoBehaviour
         }
     }
 
-    // ── ENEMY PLAN ────────────────────────────────────────────
-    private void StartEnemyPlan()
+    private IEnumerator DoIntro()
     {
-        CurrentRound++;
-        Debug.Log($"\n=== ROUND {CurrentRound} ===");
+        cameraManager.BeginIntroSequence();
 
-        foreach (var enemy in EnemyUnits.Where(e => e.IsAlive))
-            enemyAI.PlanTurn(enemy, PlayerUnits);
+        yield return FadeUI(0f, 0.5f);
 
-        OnEnemyPlanDone?.Invoke();
-        stateMachine.TransitionTo(CombatPhase.PlayerPlan);
-    }
-
-    // ── PLAYER PLAN ───────────────────────────────────────────
-    private void StartPlayerPlan()
-    {
-        planningIndex = 0;
-        // Fire new UI event với toàn bộ danh sách player alive
-        var alivePlayers = PlayerUnits.Where(u => u.IsAlive).ToList();
-        OnPlayerPlanStarted?.Invoke(alivePlayers);
-        // Legacy fallback nếu không có listener mới
-        if (OnPlayerPlanStarted == null)
-            RequestNextPlayerInput();
-    }
-
-    private void RequestNextPlayerInput()
-    {
-        while (planningIndex < PlayerUnits.Count &&
-               !PlayerUnits[planningIndex].IsAlive)
-            planningIndex++;
-
-        Debug.Log($"[CombatManager] RequestNextPlayerInput index={planningIndex}");
-
-        if (planningIndex >= PlayerUnits.Count)
+        Vector3 enemyGridCenter = Vector3.zero;
+        int validSlotCount = 0;
+        if (enemyGridSlots != null && enemyGridSlots.Length > 0)
         {
-            Debug.Log("[CombatManager] Tất cả đã chọn → RetargetCheck");
-            stateMachine.TransitionTo(CombatPhase.RetargetCheck);
-            return;
-        }
-
-        OnPlayerUnitPlanning?.Invoke(PlayerUnits[planningIndex]);
-    }
-
-    /// <summary>
-    /// UI mới: submit tất cả lựa chọn cùng lúc sau khi player nhấn CONFIRM.
-    /// choices: list theo thứ tự hành động (index 0 = hành động đầu tiên)
-    /// </summary>
-    public void SubmitAllPlayerChoices(
-        List<(CombatUnit unit, SkillData skill, List<CombatUnit> targets)> choices)
-    {
-        if (stateMachine.Current != CombatPhase.PlayerPlan)
-        {
-            Debug.LogWarning("[CombatManager] SubmitAllPlayerChoices gọi sai phase!");
-            return;
-        }
-
-        // Reorder PlayerUnits theo thứ tự player đã sắp xếp
-        // (ảnh hưởng đến IndexOf → PlanningOrder → Retarget)
-        var orderedUnits = choices.Select(c => c.unit).ToList();
-        foreach (var unit in PlayerUnits.Where(u => !orderedUnits.Contains(u)))
-            orderedUnits.Add(unit); // unit chưa chọn (dead, etc.) thêm vào cuối
-        PlayerUnits.Clear();
-        PlayerUnits.AddRange(orderedUnits);
-
-        // Gán skill và target
-        foreach (var (unit, skill, targets) in choices)
-        {
-            unit.SelectSkill(skill, targets);
-            Debug.Log($"[Player] {unit.UnitName} chọn [{skill.skillName}] " +
-                      $"→ [{string.Join(", ", targets.Select(t => t.UnitName))}]");
-        }
-
-        stateMachine.TransitionTo(CombatPhase.RetargetCheck);
-    }
-
-    /// <summary>
-    /// Legacy: submit từng nhân vật một (dùng cho CombatTestUI cũ)
-    /// </summary>
-    public void SubmitPlayerChoice(SkillData skill, List<CombatUnit> targets)
-    {
-        if (stateMachine.Current != CombatPhase.PlayerPlan)
-        {
-            Debug.LogWarning("[CombatManager] SubmitPlayerChoice gọi sai phase!");
-            return;
-        }
-
-        var unit = PlayerUnits[planningIndex];
-        unit.SelectSkill(skill, targets);
-
-        Debug.Log($"[Player] {unit.UnitName} chọn [{skill.skillName}] " +
-                  $"→ [{string.Join(", ", targets.Select(t => t.UnitName))}]");
-
-        planningIndex++;
-        Debug.Log($"[CombatManager] planningIndex = {planningIndex}/{PlayerUnits.Count}");
-        RequestNextPlayerInput();
-    }
-
-    // ── RETARGET CHECK ────────────────────────────────────────
-    // Logic mới (dựa trên planning order):
-    // - Nếu có player nhắm vào enemy này → enemy clash với player ĐẦU TIÊN
-    //   trong planning order nhắm nó (index thấp nhất = hành động sớm nhất)
-    // - Nếu không có player nào nhắm → enemy giữ nguyên target AI đã chọn (free attack)
-    private void DoRetargetCheck()
-    {
-        foreach (var enemy in EnemyUnits.Where(e => e.IsAlive))
-        {
-            if (enemy.SelectedSkill == null) continue;
-
-            var playersTargetingEnemy = PlayerUnits
-                .Where(p => p.IsAlive && p.SelectedTargets.Contains(enemy))
-                .ToList();
-
-            if (playersTargetingEnemy.Count == 0)
+            foreach (var slot in enemyGridSlots)
             {
-                // Không ai nhắm → giữ target gốc AI đã chọn, không làm gì
-                Debug.Log($"[Retarget] {enemy.UnitName}: không bị nhắm → " +
-                          $"giữ target [{string.Join(", ", enemy.SelectedTargets.Select(t => t.UnitName))}]");
-                continue;
+                if (slot != null)
+                {
+                    enemyGridCenter += slot.position;
+                    validSlotCount++;
+                }
+            }
+        }
+
+        if (validSlotCount > 0)
+        {
+            enemyGridCenter /= validSlotCount;
+            yield return cameraManager.FadeInAndSetPosition(enemyGridCenter, 7.5f, Vector3.left * 20f, 1.0f);
+        }
+        else
+        {
+            Debug.LogError("[Intro] Không có enemy grid slots hợp lệ để tính trung tâm! Dùng vị trí mặc định.");
+            yield return cameraManager.FadeInAndSetPosition(Vector3.zero, 10f, Vector3.zero, 0f);
+        }
+
+        yield return new WaitForSeconds(0.75f);
+
+        float dollyOutDuration = 2.0f;
+        StartCoroutine(cameraManager.ZoomOutToFinalView(dollyOutDuration));
+
+        var enemyViews = unitViews.Where(v => v.LinkedUnit != null && !v.LinkedUnit.IsPlayer).ToList();
+        if (enemyViews.Count > 0)
+        {
+            List<Coroutine> movementCoroutines = new List<Coroutine>();
+
+            var leader = enemyViews[enemyViews.Count / 2];
+            enemyViews.Remove(leader);
+            movementCoroutines.Add(StartCoroutine(MoveUnitToPosition(leader, leader.GetOriginalPosition(), 0.5f)));
+
+            yield return new WaitForSeconds(0.2f);
+
+            foreach (var follower in enemyViews)
+            {
+                float randomSpeed = Random.Range(0.4f, 0.6f);
+                movementCoroutines.Add(StartCoroutine(MoveUnitToPosition(follower, follower.GetOriginalPosition(), randomSpeed)));
+                yield return new WaitForSeconds(Random.Range(0.05f, 0.15f));
             }
 
-            // Có người nhắm → clash với player ĐẦU TIÊN trong planning order
-            // PlayerUnits đã được reorder theo planning order từ SubmitAllPlayerChoices
-            // → index thấp nhất = hành động sớm nhất
-            var firstPlayer = playersTargetingEnemy
-                .OrderBy(p => PlayerUnits.IndexOf(p))
-                .First();
-
-            string prevTarget = string.Join(", ", enemy.SelectedTargets.Select(t => t.UnitName));
-            enemy.SelectSkill(enemy.SelectedSkill, new List<CombatUnit> { firstPlayer });
-            Debug.Log($"[Retarget] {enemy.UnitName}: {prevTarget} → {firstPlayer.UnitName} " +
-                      $"(player đầu tiên trong planning order nhắm nó)");
+            // Chờ tất cả các coroutine di chuyển hoàn thành
+            foreach (var coroutine in movementCoroutines)
+            {
+                yield return coroutine;
+            }
         }
 
+        yield return new WaitForSeconds(dollyOutDuration);
+
+        yield return FadeUI(1f, 0.5f);
+
+        Debug.Log("[Intro] Intro sequence finished. Starting combat.");
+        cameraManager.EndIntroSequence();
+        stateMachine.TransitionTo(CombatPhase.EnemyPlan);
+    }
+
+
+    private IEnumerator FadeUI(float targetAlpha, float duration)
+    {
+        if (combatUICanvasGroup == null) yield break;
+
+        float startAlpha = combatUICanvasGroup.alpha;
+        float elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            combatUICanvasGroup.alpha = Mathf.Lerp(startAlpha, targetAlpha, elapsed / duration);
+            yield return null;
+        }
+
+        combatUICanvasGroup.alpha = targetAlpha;
+    }
+
+    private IEnumerator MoveUnitToPosition(UnitView unitView, Vector3 targetPosition, float duration)
+    {
+        unitView.SetAnimationTrigger("Rush");
+
+        Vector3 startPosition = unitView.transform.position;
+        float elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = elapsed / duration;
+            unitView.transform.position = Vector3.Lerp(startPosition, targetPosition, t * t);
+            yield return null;
+        }
+
+        unitView.transform.position = targetPosition;
+        
+        unitView.SetAnimationTrigger("Idle");
+    }
+
+    private Vector3 GetSideCenter(List<CombatUnit> units, Transform[] gridSlots)
+    {
+        if (units == null || units.Count == 0 || gridSlots == null || gridSlots.Length == 0)
+        {
+            return Vector3.zero;
+        }
+
+        Vector3 center = Vector3.zero;
+        int count = 0;
+
+        foreach (var unit in units)
+        {
+            if (unit.GridSlot >= 0 && unit.GridSlot < gridSlots.Length && gridSlots[unit.GridSlot] != null)
+            {
+                center += gridSlots[unit.GridSlot].position;
+                count++;
+            }
+        }
+
+        return count > 0 ? center / count : Vector3.zero;
+    }
+
+    private void SetupRound()
+    {
+        CurrentRound++;
+        isFirstPlayerTurnOfRound = true;
+        Debug.Log($"\n=== ROUND {CurrentRound} ===");
+
+        var allUnits = PlayerUnits.Where(u => u.IsAlive).Concat(EnemyUnits.Where(u => u.IsAlive));
+        ActionOrder = allUnits.OrderByDescending(u => u.Speed).ThenBy(u => Random.value).ToList();
+
+        Debug.Log("--- Turn Order ---");
+        for(int i = 0; i < ActionOrder.Count; i++)
+        {
+            Debug.Log($"{i+1}. {ActionOrder[i].UnitName} (Speed: {ActionOrder[i].Speed})");
+        }
+
+        OnRoundSetup?.Invoke(ActionOrder);
+
+        var turnOrderUI = FindFirstObjectByType<TurnOrderUIController>();
+        if (turnOrderUI != null)
+        {
+            turnOrderUI.RebuildTurnOrderUI(ActionOrder);
+        }
+
+        OnEnemyPlanDone?.Invoke();
         stateMachine.TransitionTo(CombatPhase.Execute);
     }
 
-    // ── EXECUTE ───────────────────────────────────────────────
+
+
+
+    private void StartPlayerPlan()
+    {
+        Debug.LogWarning("[CombatManager] StartPlayerPlan is deprecated.");
+    }
+
+    public void SubmitPlayerTurnAction(SkillData skill, List<CombatUnit> targets)
+    {
+        if (!isWaitingForPlayerInput)
+        {
+            Debug.LogWarning("SubmitPlayerTurnAction called when not waiting for player input.");
+            return;
+        }
+
+        if (skill.apCost > CurrentPlayerAP)
+        {
+            Debug.LogWarning($"[AP] Không đủ AP để dùng {skill.skillName}. Cần {skill.apCost}, có {CurrentPlayerAP}.");
+            return;
+        }
+
+        var currentUnit = ActionOrder[turnIndex];
+        if (currentUnit == null || !currentUnit.IsPlayer)
+        {
+            Debug.LogError("SubmitPlayerTurnAction called, but current unit is not a player or is null.");
+            return;
+        }
+
+        CurrentPlayerAP -= skill.apCost;
+        OnAPChanged?.Invoke(CurrentPlayerAP);
+        currentUnit.SpendAP(skill.apCost);
+        Debug.Log($"[AP] Đã dùng {skill.apCost} AP. Còn lại {CurrentPlayerAP}.");
+
+        currentUnit.SelectSkill(skill, targets);
+        Debug.Log($"[Player Input] {currentUnit.UnitName} đã chọn dùng {skill.skillName} lên {string.Join(", ", targets.Select(t => t.UnitName))}.");
+
+        // KIỂM TRA NẾU SKILL KHÔNG KẾT THÚC LƯỢT
+        if (skill.doesNotEndTurn)
+        {
+            Debug.Log($"[CombatManager] {currentUnit.UnitName} dùng kỹ năng không kết thúc lượt. Bắt đầu ExecuteAndRequestNewAction.");
+            // Thực thi ngay lập tức và yêu cầu input mới
+            StartCoroutine(ExecuteAndRequestNewAction(currentUnit));
+        }
+        else
+        {
+            Debug.Log($"[CombatManager] {currentUnit.UnitName} dùng kỹ năng kết thúc lượt. Chờ ExecuteRound tiếp tục.");
+            // Logic cũ: kết thúc lượt
+            isWaitingForPlayerInput = false;
+        }
+    }
+
+    private IEnumerator ExecuteAndRequestNewAction(CombatUnit unit)
+    {
+        bool executionSuccessful = false;
+        try
+        {
+            Debug.Log($"[Action] Attempting to execute skill for {unit.UnitName}.");
+            unit.ExecuteSelectedSkill(0); // AP has been deducted previously
+            unit.ClearSelection();
+            Debug.Log($"[Action] Skill execution completed for {unit.UnitName}.");
+            executionSuccessful = true;
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"[FATAL ERROR] in skill execution for {unit.UnitName}: {e.Message}\n{e.StackTrace}");
+            isWaitingForPlayerInput = false; // Stop the turn to prevent getting stuck
+        }
+
+        if (executionSuccessful)
+        {
+            // Wait a moment for the effects to apply and be seen by the user
+            yield return new WaitForSeconds(0.5f);
+
+            // Request a new action from the same unit
+            isWaitingForPlayerInput = true;
+            OnPlayerTurnStart?.Invoke(unit); // Resend the event to reopen the UI
+            Debug.Log($"[Action] {unit.UnitName} continues their turn.");
+        }
+    }
+
+    public void SpendPlayerAP(int amount)
+    {
+        if (amount > CurrentPlayerAP)
+        {
+            Debug.LogError($"[AP] Attempted to spend {amount} AP, but only have {CurrentPlayerAP}.");
+            return;
+        }
+        CurrentPlayerAP -= amount;
+        OnAPChanged?.Invoke(CurrentPlayerAP);
+        Debug.Log($"[AP] Spent {amount} AP. Remaining: {CurrentPlayerAP}.");
+    }
+
+    public void GainPlayerAP(int amount)
+    {
+        CurrentPlayerAP = Mathf.Min(CurrentPlayerAP + amount, MAX_PLAYER_AP);
+        OnAPChanged?.Invoke(CurrentPlayerAP);
+        Debug.Log($"[AP] Gained {amount} AP. Remaining: {CurrentPlayerAP}.");
+    }
+
+    private IEnumerator HandleStartOfTurnEffects(CombatUnit unit)
+    {
+        var burnStatus = unit.GetActiveStatus(StatusEffectType.ThieuDot);
+        if (burnStatus != null)
+        {
+            int burnDamage = Mathf.RoundToInt(burnStatus.Value);
+            Debug.Log($"<color=red>[ThieuDot] {unit.UnitName} nhận {burnDamage} sát thương thiêu đốt.</color>");
+            unit.TakeDamage(null, burnDamage);
+            
+            var view = unitViews.FirstOrDefault(v => v.LinkedUnit == unit);
+            if (view != null)
+            {
+                view.TriggerHitFlash();
+            }
+
+            yield return new WaitForSeconds(0.5f);
+        }
+    }
+
+    private IEnumerator DoRetargetCheck()
+    {
+        yield return null;
+        stateMachine.TransitionTo(CombatPhase.Execute);
+    }
+
+    private IEnumerator ResolveAction(PlannedAction action)
+    {
+        Debug.Log($"[Resolve] {action.Caster.UnitName} dùng {action.Skill.skillName}");
+        var result = actionResolver.Resolve(action.Caster, action.Skill, action.Targets);
+        OnActionResolved?.Invoke(result);
+
+        // DATA-DRIVEN: Apply non-damage effects NGAY (heal, buff, status)
+        // Damage effects được apply qua animation per-hit
+        bool hasDamageEffects = false;
+        if (action.Skill.effects != null && action.Skill.effects.Length > 0)
+        {
+            foreach (var effect in action.Skill.effects)
+            {
+                if (effect == null) continue;
+                
+                // Chỉ deferred damage effects (kế thừa DamageEffect như MissingHPDamageEffect)
+                // Non-damage effects (buff, heal, stat, status) apply ngay
+                bool isDamageEffect = (effect is DamageEffect);
+                if (isDamageEffect)
+                {
+                    hasDamageEffects = true;
+                    Debug.Log($"[Resolve] DamageEffect '{effect.GetType().Name}' deferred to animation.");
+                }
+                else
+                {
+                    Debug.Log($"[Resolve] Applying non-damage effect: {effect.GetType().Name}");
+                    effect.Apply(action.Caster, action.Targets.ToArray());
+                }
+            }
+        }
+
+        // Fallback: nếu skill không có damage effects, dùng ActionResolver outcomes
+        // NHƯNG vẫn defer vào animation per-hit (không apply ngay)
+        if (!hasDamageEffects)
+        {
+            if (result.Outcomes.Count > 0)
+            {
+                // Gán outcomes vào pending để animation per-hit apply
+                int hitCount = action.Skill != null ? Mathf.Max(1, action.Skill.hitCount) : 1;
+                var actorView = GetUnitView(action.Caster);
+                if (actorView != null)
+                {
+                    actorView.SetPendingOutcomes(result.Outcomes, action.Caster, hitCount);
+                    Debug.Log($"[Resolve] Fallback outcomes deferred to animation: {result.Outcomes.Count} outcomes, {hitCount} hits.");
+                }
+            }
+            else
+            {
+                Debug.LogWarning($"Skill '{action.Skill.skillName}' không có effects và không có fallback outcomes!");
+            }
+        }
+        else
+        {
+            // Có damage effects: gán pending hits vào actorView để animation per-hit apply
+            var actorView = GetUnitView(action.Caster);
+            if (actorView != null)
+            {
+                actorView.SetPendingOutcomes(result.Outcomes, action.Caster, action.Skill != null ? Mathf.Max(1, action.Skill.hitCount) : 1);
+                Debug.Log($"[Resolve] Set pending outcomes cho {action.Caster.UnitName}: {result.Outcomes.Count} outcomes, {Mathf.Max(1, action.Skill != null ? action.Skill.hitCount : 1)} hits.");
+            }
+        }
+
+        if (clashSequence != null)
+        {
+            yield return StartCoroutine(clashSequence.PlayAction(result));
+        }
+        else
+        {
+            Debug.LogError("Clash sequence not set!");
+            yield return new WaitForSeconds(1f);
+        }
+
+        // Kích hoạt sự kiện sau khi hành động đã được giải quyết hoàn toàn
+        Debug.Log($"[EVENT] Chuẩn bị kích hoạt OnActionConfirmed cho {action.Caster.UnitName} với kỹ năng {action.Skill.skillName}.");
+        action.Caster.RaiseActionConfirmed(action.Skill, action.Targets);
+
+        if (CheckForCombatEnd())
+        {
+            yield break;
+        }
+    }
+
+
+
     private IEnumerator ExecuteRound()
     {
         OnExecuteStarted?.Invoke();
         Debug.Log("\n--- EXECUTE ---");
 
-        // allUnits xử lý theo planning order:
-        // PlayerUnits đã được reorder bởi SubmitAllPlayerChoices → giữ nguyên thứ tự
-        // EnemyUnits theo thứ tự spawn
-        var allUnits = PlayerUnits.Concat(EnemyUnits)
-                                   .Where(u => u.IsAlive)
-                                   .ToList();
-
-        // ── Bước 1: Xây dựng clash pairs + afterClash queue ──
-        //
-        // Quy tắc:
-        // - Nếu enemy nhắm player A (sau retarget) VÀ player A nhắm enemy
-        //   VÀ cả hai dùng Clash skill → tạo clash pair
-        // - Các player KHÁC cùng nhắm enemy đó → afterClashQueue (đánh sau)
-        // - Enemy không có clash pair → Bước 4 xử lý (free attack target gốc)
-        // - Player không có clash pair và không trong afterClashQueue → Bước 4
-
-        var clashPairs = new List<(CombatUnit player, CombatUnit enemy)>();
-        var handledUnits = new HashSet<CombatUnit>();
-        var afterClashQueue = new Dictionary<CombatUnit, List<(CombatUnit player, SkillData skill)>>();
-
-        foreach (var enemy in EnemyUnits.Where(e => e.IsAlive))
+        for (turnIndex = 0; turnIndex < ActionOrder.Count; turnIndex++)
         {
-            if (enemy.SelectedSkill?.type != SkillType.Clash) continue;
-            if (enemy.SelectedTargets.Count == 0) continue;
-
-            // Sau retarget, SelectedTargets[0] là player enemy sẽ clash
-            var clashPlayer = enemy.SelectedTargets[0];
-
-            if (!clashPlayer.IsAlive) continue;
-            if (clashPlayer.SelectedSkill?.type != SkillType.Clash) continue;
-            if (!clashPlayer.SelectedTargets.Contains(enemy)) continue;
-
-            // Xác nhận clash pair
-            clashPairs.Add((clashPlayer, enemy));
-            handledUnits.Add(clashPlayer);
-            handledUnits.Add(enemy);
-
-            Debug.Log($"[ClashPair] {clashPlayer.UnitName} ↔ {enemy.UnitName}");
-
-            // Các player KHÁC cùng nhắm enemy này → đánh sau clash
-            // Thứ tự theo planning order (PlayerUnits đã được sort theo planning order)
-            // Snapshot skill ngay bây giờ trước khi bị ClearSelection
-            var otherPlayers = PlayerUnits
-                .Where(p => p.IsAlive
-                         && p != clashPlayer
-                         && p.SelectedSkill != null
-                         && p.SelectedTargets.Contains(enemy))
-                .OrderBy(p => PlayerUnits.IndexOf(p))  // planning order
-                .Select(p => (player: p, skill: p.SelectedSkill))
-                .ToList();
-
-            if (otherPlayers.Count > 0)
+            var currentUnit = ActionOrder[turnIndex];
+            if (!currentUnit.IsAlive)
             {
-                afterClashQueue[enemy] = otherPlayers;
-                foreach (var (p, _) in otherPlayers)
-                {
-                    handledUnits.Add(p);
-                    Debug.Log($"[AfterClash] {p.UnitName} sẽ tấn công {enemy.UnitName} sau clash");
-                }
+                Debug.Log($"[Execute] Bỏ qua {currentUnit.UnitName} vì đã chết.");
+                continue;
             }
-        }
 
-        // ── Bước 2: Xử lý từng Clash pair ────────────────────
-        foreach (var (player, enemy) in clashPairs)
-        {
-            Debug.Log($"\n[CLASH] {player.UnitName} ↔ {enemy.UnitName}");
-
-            var result = clashResolver.Resolve(
-                player, enemy,
-                player.SelectedSkill,
-                enemy.SelectedSkill);
-
-            Debug.Log($"  → [{result.Winner.UnitName}] thắng " +
-                      $"({result.WinnerScore} vs {result.LoserScore})");
-
-            var playerView = unitViews.Find(v => v.LinkedUnit == player);
-            var enemyView = unitViews.Find(v => v.LinkedUnit == enemy);
-            var winnerView = result.Winner.IsPlayer ? playerView : enemyView;
-
-            var hits = CalculateHits(result.Winner, result.Loser, result.WinnerSkill);
-            winnerView?.SetPendingHits(hits, result.Loser);
-            winnerView?.SetCurrentSkill(result.WinnerSkill);
-
-            OnClashResolved?.Invoke(result);
-
-            if (clashSequence != null && playerView != null && enemyView != null)
+            yield return StartCoroutine(HandleStartOfTurnEffects(currentUnit));
+            if (!currentUnit.IsAlive)
             {
-                bool done = false;
-                yield return clashSequence.PlayFullClashSequence(
-                    playerView, enemyView, result,
-                    onComplete: () => done = true);
-                yield return new WaitUntil(() => done);
+                Debug.Log($"[Execute] {currentUnit.UnitName} đã chết do hiệu ứng đầu lượt.");
+                if (CheckForCombatEnd())
+                {
+                    yield break;
+                }
+                continue;
+            }
+
+            Debug.Log($"--- Lượt của: {currentUnit.UnitName} ---");
+            OnUnitTurnStart?.Invoke(currentUnit);
+            currentUnit.TriggerTurnStart();
+
+            if (!currentUnit.IsPlayer)
+            {
+                enemyAI.PlanTurn(currentUnit, PlayerUnits);
             }
             else
             {
-                result.Winner.ExecuteSelectedSkill();
-                yield return new WaitForSeconds(0.5f);
-            }
-
-            yield return new WaitForSeconds(0.2f);
-
-            // ── Bước 3: Các player còn lại tấn công sau clash ─
-            if (afterClashQueue.TryGetValue(enemy, out var remainingPlayers))
-            {
-                foreach (var (remainPlayer, savedSkill) in remainingPlayers)
+                if (CurrentPlayerAP < MAX_PLAYER_AP)
                 {
-                    if (!remainPlayer.IsAlive)
-                    {
-                        Debug.Log($"[AfterClash] {remainPlayer.UnitName} đã chết, skip");
-                        continue;
-                    }
-
-                    if (!enemy.IsAlive)
-                    {
-                        Debug.Log($"[AfterClash] {enemy.UnitName} đã chết, " +
-                                  $"{remainPlayer.UnitName} bỏ qua");
-                        continue;
-                    }
-
-                    Debug.Log($"[AfterClash] {remainPlayer.UnitName} tấn công " +
-                              $"{enemy.UnitName} bằng [{savedSkill.skillName}]");
-                    Debug.Log($"[AfterClash] AnimTrigger: " +
-                              $"'{savedSkill.animationTrigger}'");
-
-                    // Truyền skill đã lưu trước khi bị clear
-                    yield return StartCoroutine(
-                        ExecuteFreeAttack(remainPlayer, enemy, savedSkill));
-
-                    yield return new WaitForSeconds(0.2f);
+                    CurrentPlayerAP++;
+                    OnAPChanged?.Invoke(CurrentPlayerAP);
+                    Debug.Log($"[AP] Hồi 1 AP. Hiện có: {CurrentPlayerAP}");
                 }
+
+                Debug.Log($"[Execute] Unit {currentUnit.UnitName} is a player. Waiting for input...");
+                isWaitingForPlayerInput = true;
+                OnPlayerTurnStart?.Invoke(currentUnit);
+
+                yield return new WaitUntil(() => !isWaitingForPlayerInput);
             }
 
-            yield return new WaitForSeconds(0.1f);
-        }
-
-        // ── Bước 4: Xử lý unit chưa được xử lý ──────────────
-        foreach (var unit in allUnits.Where(u => !handledUnits.Contains(u)))
-        {
-            if (unit.SelectedSkill == null) continue;
-            if (!unit.IsAlive) continue;
-
-            var savedSkill = unit.SelectedSkill;
-
-            if (savedSkill.type == SkillType.Clash)
+            if (currentUnit.SelectedSkill != null && currentUnit.SelectedTargets.Any())
             {
-                var targets = unit.SelectedTargets.Where(t => t.IsAlive).ToList();
-                if (targets.Count == 0) continue;
-
-                Debug.Log($"\n[FreeAttack] {unit.UnitName} → {targets[0].UnitName} " +
-                          $"[{savedSkill.skillName}]");
-
-                yield return StartCoroutine(
-                    ExecuteFreeAttack(unit, targets[0], savedSkill));
+                var action = new PlannedAction(currentUnit, currentUnit.SelectedSkill, currentUnit.SelectedTargets);
+                yield return StartCoroutine(ResolveAction(action));
             }
             else
             {
-                Debug.Log($"\n[AUTO] {unit.UnitName} → {savedSkill.skillName}");
-                unit.ExecuteSelectedSkill();
-                yield return new WaitForSeconds(0.3f);
+                Debug.LogWarning($"[Execute] {currentUnit.UnitName} không có hành động nào được chọn.");
             }
 
-            yield return new WaitForSeconds(0.1f);
+            currentUnit.TickStatuses();
+
+            if (currentUnit.UnitName == "NoName")
+            {
+                int healAmount = Mathf.RoundToInt(currentUnit.MaxHP * 0.05f);
+                currentUnit.Heal(healAmount);
+                Debug.Log($"[Passive] NoName recovered {healAmount} HP.");
+            }
+
+            if (CheckForCombatEnd())
+            {
+                yield break;
+            }
         }
 
-        // ── Dọn selection ─────────────────────────────────────
-        foreach (var u in allUnits) u.ClearSelection();
-
-        // ── Kiểm tra kết thúc ─────────────────────────────────
-        if (!EnemyUnits.Any(e => e.IsAlive))
+        foreach (var unit in PlayerUnits.Concat(EnemyUnits))
         {
-            stateMachine.TransitionTo(CombatPhase.Victory);
-            yield break;
+            unit.ClearSelection();
         }
-
-        if (!PlayerUnits.Any(p => p.IsAlive))
-        {
-            stateMachine.TransitionTo(CombatPhase.Defeat);
-            yield break;
-        }
+        Debug.Log("--- Tất cả các lượt đã thực hiện ---");
 
         stateMachine.TransitionTo(CombatPhase.RoundEnd);
     }
 
-    // ── Free Attack ───────────────────────────────────────────
-    private IEnumerator ExecuteFreeAttack(CombatUnit attacker,
-                                           CombatUnit target,
-                                           SkillData skill)
+    private bool CheckForCombatEnd()
     {
-        if (skill == null)
+        if (!EnemyUnits.Any(e => e.IsAlive))
         {
-            Debug.LogWarning($"[ExecuteFreeAttack] {attacker.UnitName} skill = null!");
-            yield break;
+            stateMachine.TransitionTo(CombatPhase.Victory);
+            return true;
+        }
+        
+        if (!PlayerUnits.Any(p => p.IsAlive))
+        {
+            stateMachine.TransitionTo(CombatPhase.Defeat);
+            return true;
         }
 
-        if (!attacker.IsAlive || !target.IsAlive) yield break;
-
-        Debug.Log($"[ExecuteFreeAttack] {attacker.UnitName} [{skill.skillName}] " +
-                  $"→ {target.UnitName}");
-
-        var attackerView = unitViews.Find(v => v.LinkedUnit == attacker);
-        var hits = CalculateHits(attacker, target, skill);
-
-        if (attackerView == null)
-        {
-            Debug.LogWarning($"[ExecuteFreeAttack] Không tìm thấy view của {attacker.UnitName}!");
-            foreach (var hit in hits) target.TakeDamage(hit.Damage, hit.HitIndex);
-            yield break;
-        }
-
-        var targetView = unitViews.Find(v => v.LinkedUnit == target);
-        Vector3 origin = attackerView.transform.position;
-        Vector3 targetPos = targetView != null ? targetView.transform.position : origin;
-        Vector3 dir = (targetPos - origin).normalized;
-        Vector3 rushDest = targetPos - dir * clashSequence.faceOffDistance;
-
-        // Phase 1: Rush
-        attackerView.SetAnimationTrigger("Rush");
-        float elapsed = 0f;
-        while (elapsed < clashSequence.rushDuration)
-        {
-            elapsed += Time.deltaTime;
-            float t = Mathf.Clamp01(elapsed / clashSequence.rushDuration);
-            attackerView.transform.position = Vector3.Lerp(origin, rushDest, t);
-            yield return null;
-        }
-        attackerView.transform.position = rushDest;
-
-        // Phase 2: Attack
-        attackerView.SetCurrentSkill(skill);
-        attackerView.SetPendingHits(hits, target);
-        string trigger = skill.animationTrigger;
-        if (!string.IsNullOrEmpty(trigger))
-        {
-            attackerView.SetAnimationTrigger(trigger);
-            yield return StartCoroutine(attackerView.WaitUntilAnimationDone(trigger));
-        }
-        else
-        {
-            Debug.LogWarning($"[ExecuteFreeAttack] '{skill.skillName}' không có animationTrigger!");
-            foreach (var hit in hits) target.TakeDamage(hit.Damage, hit.HitIndex);
-            yield return new WaitForSeconds(0.3f);
-        }
-        attackerView.ClearPendingHits();
-
-        yield return new WaitForSeconds(clashSequence.postSkillWait);
-
-        // Phase 3: Return
-        attackerView.SetAnimationTrigger("Idle");
-        Vector3 currentPos = attackerView.transform.position;
-        elapsed = 0f;
-        while (elapsed < clashSequence.returnDuration)
-        {
-            elapsed += Time.deltaTime;
-            float t = Mathf.Clamp01(elapsed / clashSequence.returnDuration);
-            attackerView.transform.position = Vector3.Lerp(currentPos, origin, t);
-            yield return null;
-        }
-        attackerView.transform.position = origin;
+        return false;
     }
 
-    // ── Public Helpers ────────────────────────────────────────
+
     public UnitView GetUnitView(CombatUnit unit) =>
         unitViews.Find(v => v.LinkedUnit == unit);
 
-    // ── Calculate Hits ────────────────────────────────────────
-    private List<HitData> CalculateHits(CombatUnit attacker,
-                                         CombatUnit target,
-                                         SkillData skill)
-    {
-        var hits = new List<HitData>();
-        int hitCount = Mathf.Max(1, skill.hitCount);
-
-        int raw = Mathf.RoundToInt(attacker.ATK
-                       * attacker.GetBuffMultiplier(StatType.ATK));
-        int defend = target.PDEF;
-        int totalDmg = Mathf.Max(hitCount, raw - defend);
-
-        for (int i = 0; i < hitCount; i++)
-        {
-            int dmg = (i == hitCount - 1)
-                ? totalDmg - (totalDmg / hitCount) * (hitCount - 1)
-                : totalDmg / hitCount;
-
-            hits.Add(new HitData { Damage = dmg, HitIndex = i });
-        }
-
-        return hits;
-    }
-
-    // ── ROUND END ─────────────────────────────────────────────
     private void DoRoundEnd()
     {
-        foreach (var u in PlayerUnits.Concat(EnemyUnits).Where(u => u.IsAlive))
-            u.TickCooldowns();
-
         OnRoundEnded?.Invoke();
         Debug.Log("--- ROUND END ---\n");
-
         stateMachine.TransitionTo(CombatPhase.EnemyPlan);
     }
 
-    // ── END CONDITIONS ────────────────────────────────────────
     private void DoVictory()
     {
         Debug.Log("=== VICTORY ===");
@@ -626,5 +827,10 @@ public class CombatManager : MonoBehaviour
     {
         Debug.Log("=== DEFEAT ===");
         OnDefeat?.Invoke();
+    }
+
+    public bool WillAttackResultInClash(CombatUnit unitA, CombatUnit unitB)
+    {
+        return false;
     }
 }

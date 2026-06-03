@@ -1,250 +1,390 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
-/// <summary>
-/// Điều phối toàn bộ chuỗi animation khi Clash xảy ra.
-///
-/// Thứ tự:
-///   1. Cả 2 nhân vật lao vào nhau (Rush)
-///   2. ClashVisualController hiện xúc xắc + kết quả
-///   3. Bên thua play KnockBack
-///   4. Bên thắng play Skill animation (damage được xử lý qua Animation Event)
-///   5. Cả 2 trở về vị trí gốc (Idle)
-/// </summary>
 public class ClashAnimationSequence : MonoBehaviour
 {
     [Header("References")]
-    public ClashVisualController clashVisual;
-    
-    [Tooltip("CombatCameraManager để trigger camera effects")]
     public CombatCameraManager cameraManager;
 
     [Header("Timing")]
-    [Tooltip("Thời gian 2 nhân vật lao vào nhau (giây)")]
-    public float rushDuration = 0.5f;
-
-    [Tooltip("Khoảng cách dừng lại khi đứng đối mặt (world units)")]
-    public float faceOffDistance = 1.2f;
-
-    [Tooltip("Thời gian chờ sau skill animation trước khi về vị trí")]
-    public float postSkillWait = 0.5f;
-
-    [Tooltip("Thời gian chờ sau KnockBack trước khi bắt đầu Skill animation")]
-    public float postKnockbackWait = 0.2f;
-
-    [Tooltip("Thời gian di chuyển về vị trí gốc")]
+    public float moveToTargetDuration = 0.3f;
     public float returnDuration = 0.4f;
+    public float postSkillWait = 0.2f;
 
-    // ─────────────────────────────────────────────────────────────────────
+    [Header("Effects")]
+    public float faceOffDistance = 2.0f;
+    [Range(0, 1)]
+    public float dimAlpha = 0.5f;
+
+    private List<UnitView> allUnitViews = new();
+
     private void Awake()
     {
-        // Auto find camera manager nếu chưa assign
         if (cameraManager == null)
             cameraManager = FindFirstObjectByType<CombatCameraManager>();
     }
 
-    // ─────────────────────────────────────────────────────────────────────
-    /// <summary>
-    /// Chơi toàn bộ chuỗi clash animation.
-    /// </summary>
-    /// <param name="playerView">UnitView của player</param>
-    /// <param name="enemyView">UnitView của enemy</param>
-    /// <param name="result">Kết quả clash (chứa Winner, Loser, WinnerSkill, LoserSkill…)</param>
-    /// <param name="onComplete">Callback khi chuỗi kết thúc</param>
-    public IEnumerator PlayFullClashSequence(
-        UnitView playerView,
-        UnitView enemyView,
-        ClashResult result,
-        Action onComplete = null)
+    public IEnumerator PlayAction(ActionResult result)
     {
-        // Xác định winner/loser view
-        bool playerWon = result.Winner == playerView.LinkedUnit;
-        var winnerView = playerWon ? playerView : enemyView;
-        var loserView = playerWon ? enemyView : playerView;
+        allUnitViews = FindObjectsByType<UnitView>(FindObjectsSortMode.None).ToList();
 
-        // Lưu vị trí gốc
-        Vector3 playerOrigin = playerView.transform.position;
-        Vector3 enemyOrigin = enemyView.transform.position;
+        var actorView = GetViewForUnit(result.Actor);
+        var primaryTargetView = GetViewForUnit(result.InitialTargets.FirstOrDefault());
 
-        // ── Phase 1: Rush vào nhau ────────────────────────────────────────
-        playerView.SetAnimationTrigger("Rush");
-        enemyView.SetAnimationTrigger("Rush");
-
-        // Fade out các unit không liên quan (giảm alpha xuống 20% - tức giảm 80%)
-        var allUnits = FindObjectsByType<UnitView>(FindObjectsSortMode.None);
-        foreach (var unit in allUnits)
+        if (actorView == null)
         {
-            if (unit != playerView && unit != enemyView)
-            {
-                StartCoroutine(FadeUnit(unit, 0.2f, 0.3f)); // Fade to 20% alpha in 0.3s
-            }
+            Debug.LogWarning("[ActionAnimation] Actor View không tồn tại. Bỏ qua animation.");
+            result.ApplyOutcomes();
+            yield break;
         }
 
-        // Camera effect: Zoom vào clash point
-        if (cameraManager != null)
-            cameraManager.PlayClashZoom(playerView.transform, enemyView.transform);
-
-        // Tính midpoint giữa 2 nhân vật
-        Vector3 mid = (playerOrigin + enemyOrigin) * 0.5f;
-        Vector3 playerDir = (mid - playerOrigin).normalized;
-        Vector3 enemyDir = (mid - enemyOrigin).normalized;
-
-        Vector3 playerTarget = mid - playerDir * faceOffDistance * 0.5f;
-        Vector3 enemyTarget = mid - enemyDir * faceOffDistance * 0.5f;
-
-        float elapsed = 0f;
-        while (elapsed < rushDuration)
+        // Cho phép animation chạy ngay cả khi không có target (ví dụ: kỹ năng tự buff)
+        if (primaryTargetView == null)
         {
-            elapsed += Time.deltaTime;
-            float t = Mathf.Clamp01(elapsed / rushDuration);
-            playerView.transform.position = Vector3.Lerp(playerOrigin, playerTarget, t);
-            enemyView.transform.position = Vector3.Lerp(enemyOrigin, enemyTarget, t);
-            yield return null;
+            Debug.Log("[ActionAnimation] Không có Target View (có thể là kỹ năng tự buff). Vẫn tiếp tục animation.");
         }
 
-        playerView.transform.position = playerTarget;
-        enemyView.transform.position = enemyTarget;
+        bool shouldMove = ShouldCharacterMove(result.Actor, result.Skill);
 
-        // Chuyển sang ClashIdle (2 bên đứng đối mặt)
-        playerView.SetAnimationTrigger("ClashIdle");
-        enemyView.SetAnimationTrigger("ClashIdle");
+        yield return StartCoroutine(SetupPhase(actorView, result, shouldMove));
 
-        // ── Phase 2: Hiện ClashVisualController (xúc xắc + kết quả) ──────
-        if (clashVisual != null)
+        Vector3 actorOrigin = actorView.transform.position;
+
+        if (shouldMove)
         {
-            yield return StartCoroutine(
-                clashVisual.PlayClashSequence(result.VisualData, null));
-        }
-        else
-        {
-            yield return new WaitForSeconds(0.8f);
+            Vector3 targetPosition = primaryTargetView.transform.position;
+            Vector3 direction = (targetPosition - actorOrigin).normalized;
+            Vector3 attackPosition = targetPosition - direction * faceOffDistance;
+            yield return StartCoroutine(ApproachPhase(actorView, attackPosition));
         }
 
-        // ── Phase 3: Bên thua KnockBack ───────────────────────────────────
-        loserView.SetAnimationTrigger("KnockBack");
-        float knockbackLength = loserView.GetClipLength("KnockBack");
-        if (knockbackLength <= 0f) knockbackLength = 0.6f;
-        yield return new WaitForSeconds(knockbackLength);
+        float animationLength = ExecutePhase(result);
+        yield return new WaitForSeconds(animationLength + postSkillWait);
 
-        yield return new WaitForSeconds(postKnockbackWait);
-
-        // ── Phase 4: Bên thắng play Skill animation ───────────────────────
-        // Damage/VFX được xử lý bên trong qua Animation Events trên winner
-        var winnerSkill = result.WinnerSkill;
-
-        if (winnerSkill != null && !string.IsNullOrEmpty(winnerSkill.animationTrigger))
+        if (shouldMove)
         {
-            winnerView.SetCurrentSkill(winnerSkill);
-
-            // Chuẩn bị hit data cho loser
-            var hits = BuildHitsForLoser(result);
-            winnerView.SetPendingHits(hits, loserView.LinkedUnit);
-
-            winnerView.SetAnimationTrigger(winnerSkill.animationTrigger);
-
-            // Chờ clip chạy hết hoàn toàn rồi mới tiếp tục
-            yield return StartCoroutine(
-                winnerView.WaitUntilAnimationDone(winnerSkill.animationTrigger));
-
-            winnerView.ClearPendingHits();
-        }
-        else
-        {
-            // Fallback: áp damage thẳng nếu không có animation
-            var hits = BuildHitsForLoser(result);
-            foreach (var hit in hits)
-                result.Loser.TakeDamage(hit.Damage, hit.HitIndex);
-
-            yield return new WaitForSeconds(0.5f);
+            yield return StartCoroutine(ReturnPhase(actorView, actorOrigin, result));
         }
 
-        yield return new WaitForSeconds(postSkillWait);
+        // KHÔNG apply non-damage effects ở đây! ResolveAction() đã apply chúng rồi.
+        // Nếu apply lại sẽ gây double buff/heal.
+        Debug.Log($"[ActionAnimation] Non-damage effects were already applied in ResolveAction. Skipping.");
 
-        // ── Phase 5: Cả 2 trở về vị trí gốc ─────────────────────────────
-        playerView.SetAnimationTrigger("Idle");
-        enemyView.SetAnimationTrigger("Idle");
-
-        // Camera effect: zoom out khi units trở về
-        if (cameraManager != null)
-            cameraManager.EndClashZoom();
-
-        elapsed = 0f;
-        Vector3 playerCurrent = playerView.transform.position;
-        Vector3 enemyCurrent = enemyView.transform.position;
-
-        while (elapsed < returnDuration)
-        {
-            elapsed += Time.deltaTime;
-            float t = Mathf.Clamp01(elapsed / returnDuration);
-            playerView.transform.position = Vector3.Lerp(playerCurrent, playerOrigin, t);
-            enemyView.transform.position = Vector3.Lerp(enemyCurrent, enemyOrigin, t);
-            yield return null;
-        }
-
-        playerView.transform.position = playerOrigin;
-        enemyView.transform.position = enemyOrigin;
-
-        // Fade back tất cả units về alpha = 1.0
-        var allUnitsEnd = FindObjectsByType<UnitView>(FindObjectsSortMode.None);
-        foreach (var unit in allUnitsEnd)
-        {
-            if (unit != playerView && unit != enemyView)
-            {
-                StartCoroutine(FadeUnit(unit, 1.0f, 0.3f)); // Fade back to full alpha
-            }
-        }
-
-        onComplete?.Invoke();
+        yield return StartCoroutine(CleanupPhase());
     }
 
-    // ─────────────────────────────────────────────────────────────────────
-    // Helper: Fade unit alpha
-    private IEnumerator FadeUnit(UnitView unitView, float targetAlpha, float duration)
+    private bool ShouldCharacterMove(CombatUnit actor, SkillData skill)
     {
-        var spriteRenderer = unitView.spriteRenderer;
-        if (spriteRenderer == null) yield break;
+        if (skill == null) return true;
+        switch (skill.movementOverride)
+        {
+            case SkillMovementOverride.ForceRushToTarget: return true;
+            case SkillMovementOverride.ForceStationary: return false;
+            default: return actor.Data.defaultCombatStyle == CombatStyle.Melee;
+        }
+    }
 
-        Color startColor = spriteRenderer.color;
+    private IEnumerator SetupPhase(UnitView actorView, ActionResult result, bool isMoving)
+    {
+        SetAllUnitAlphas(1.0f);
+
+        var involvedUnits = new HashSet<CombatUnit>(result.Outcomes.Select(o => o.Target));
+        involvedUnits.Add(result.Actor);
+        foreach (var view in allUnitViews)
+        {
+            if (view.LinkedUnit != null && !involvedUnits.Contains(view.LinkedUnit))
+                view.SetAlpha(dimAlpha);
+        }
+
+        if (cameraManager != null)
+        {
+            if (isMoving)
+            {
+                cameraManager.ZoomToUnit(actorView.transform, cameraManager.clashZoomSize);
+                yield return new WaitForSeconds(cameraManager.zoomInDuration);
+            }
+            else
+            {
+                var allTargets = new List<UnitView> { actorView };
+                allTargets.AddRange(result.InitialTargets.Select(t => GetViewForUnit(t)));
+                cameraManager.FrameTargets(allTargets.Where(v => v != null).Distinct().ToList());
+                yield return new WaitForSeconds(cameraManager.zoomInDuration);
+            }
+        }
+    }
+
+    private IEnumerator ApproachPhase(UnitView actorView, Vector3 attackPosition)
+    {
+        actorView.PlayAnimation(AnimationConstants.Rush);
+        yield return StartCoroutine(MoveCoroutine(actorView, attackPosition, moveToTargetDuration));
+    }
+
+    private float ExecutePhase(ActionResult result)
+    {
+        var actorView = GetViewForUnit(result.Actor);
+        var skill = result.Skill;
+        var targets = result.InitialTargets;
+
+        if (actorView == null) return 0.5f;
+
+        // Gán skill và target để UnitView có thể truy cập nếu cần
+        actorView.SetCurrentSkill(skill);
+        if (targets.Any())
+            actorView.SetCurrentTarget(targets.First());
+
+        // 1. Spawn VFX for AtCaster and AtTarget modes
+        SpawnSkillVFX(skill, actorView, targets);
+
+        // 2. Handle Ranged Projectiles
+        if (skill != null && skill.isRanged && skill.projectilePrefab != null && targets.Any())
+        {
+            StartCoroutine(FireProjectile(actorView, targets.First(), skill));
+        }
+
+        // 3. Setup Hit Handler to spawn HitOnEachTarget VFX
+        Action onHitHandler = () => {
+            foreach (var outcome in result.Outcomes)
+            {
+                var targetView = GetViewForUnit(outcome.Target);
+                if (targetView == null) continue;
+
+                if (cameraManager != null) cameraManager.PlayImpactShake();
+                targetView.SetAnimationTrigger(AnimationConstants.Hurt);
+                
+                // Spawn VFX for HitOnEachTarget mode
+                SpawnHitVFX(skill, targetView);
+            }
+        };
+
+        // Register and cleanup handlers
+        actorView.OnHitAnimationEvent += onHitHandler;
+        Action cleanupHandler = null;
+        cleanupHandler = () => {
+            actorView.OnHitAnimationEvent -= onHitHandler;
+            if (actorView != null)
+            {
+                actorView.OnAnimationEndEvent -= cleanupHandler;
+                actorView.FlushPendingOutcomes();
+            }
+        };
+        actorView.OnAnimationEndEvent += cleanupHandler;
+
+        // 4. Play Animation
+        if (!string.IsNullOrEmpty(skill.animationTrigger))
+        {
+            actorView.SetAnimationTrigger(skill.animationTrigger);
+            return actorView.GetClipLength(skill.animationTrigger);
+        }
+        else
+        {
+            actorView.SetAnimationTrigger(AnimationConstants.Attack);
+            return actorView.GetClipLength(AnimationConstants.Attack);
+        }
+    }
+
+    private void SpawnSkillVFX(SkillData skill, UnitView actorView, List<CombatUnit> targets)
+    {
+        if (skill == null) return;
+
+        // --- New Unified System: Auto-play for Self-Target skills ---
+        // Skills like buffs often don't have animation events, so we play their VFX immediately.
+        // For all other skills, VFX are triggered by Animation Events in UnitView.cs.
+        bool isBuffSkill = skill.targetType == TargetType.Self || 
+                           skill.targetType == TargetType.SingleAlly || 
+                           skill.targetType == TargetType.AllAllies;
+
+        if (isBuffSkill && skill.vfxEvents != null)
+        {
+            foreach (var evt in skill.vfxEvents)
+            {
+                // For self-skills, AtCaster and AtTarget are effectively the same.
+                if (evt.spawnMode == VFXSpawnMode.AtCaster || evt.spawnMode == VFXSpawnMode.AtTarget)
+                {
+                    Vector3 pos = GetVFXPosition(skill, evt, actorView, targets);
+                    InstantiateVFX(evt, pos, actorView.transform);
+                }
+            }
+        }
+
+        // --- Backward Compatibility ---
+        // 1. Legacy single vfxPrefab (treated as AtTarget)
+        if (skill.vfxPrefab != null)
+        {
+            var fakeEvent = new VFXEvent { vfxPrefab = skill.vfxPrefab, offset = new Vector3(0, skill.vfxOffset, 0), spawnMode = VFXSpawnMode.AtTarget };
+            Vector3 pos = GetVFXPosition(skill, fakeEvent, actorView, targets);
+            InstantiateVFX(fakeEvent, pos, null);
+        }
+
+        // 2. Legacy rangedVfxEvents (treated as AtCaster)
+        if (skill.rangedVfxEvents != null)
+        {
+            foreach (var evt in skill.rangedVfxEvents)
+            {
+                if (evt == null || evt.vfxPrefab == null) continue;
+                var fakeEvent = new VFXEvent { vfxPrefab = evt.vfxPrefab, offset = evt.offset, spawnMode = VFXSpawnMode.AtCaster, attachToCaster = evt.attachToCaster };
+                Vector3 pos = GetVFXPosition(skill, fakeEvent, actorView, targets);
+                InstantiateVFX(fakeEvent, pos, actorView.transform);
+            }
+        }
+    }
+
+    private void SpawnHitVFX(SkillData skill, UnitView targetView)
+    {
+        if (skill == null || targetView == null) return;
+
+        // --- New Unified System ---
+        if (skill.vfxEvents != null)
+        {
+            foreach (var evt in skill.vfxEvents)
+            {
+                if (evt.spawnMode == VFXSpawnMode.HitOnEachTarget)
+                {
+                    InstantiateVFX(evt, targetView.transform.position + evt.offset, targetView.transform);
+                }
+            }
+        }
+
+        // --- Backward Compatibility ---
+        // 1. Legacy hitVfxEvents
+        if (skill.hitVfxEvents != null)
+        {
+            foreach (var evt in skill.hitVfxEvents)
+            {
+                if (evt == null || evt.vfxPrefab == null) continue;
+                InstantiateVFX(evt, targetView.transform.position + evt.offset, targetView.transform);
+            }
+        }
+    }
+
+    private Vector3 GetVFXPosition(SkillData skill, VFXEvent evt, UnitView actorView, List<CombatUnit> targets)
+    {
+        switch (evt.spawnMode)
+        {
+            case VFXSpawnMode.AtCaster:
+                return actorView.transform.position + evt.offset;
+
+            case VFXSpawnMode.AtTarget:
+                if (targets == null || !targets.Any())
+                    return actorView.transform.position + evt.offset; // Fallback to caster if no target
+
+                // For single target or non-AoE, use the first target
+                if (skill == null || targets.Count == 1 || (targets.Count > 1 && skill.targetType != TargetType.AllEnemies && skill.targetType != TargetType.AllAllies))
+                {
+                    var targetView = GetViewForUnit(targets.First());
+                    return targetView != null ? targetView.transform.position + evt.offset : actorView.transform.position + evt.offset;
+                }
+                else // AoE: find center point
+                {
+                    Vector3 center = Vector3.zero;
+                    int count = 0;
+                    foreach (var unit in targets)
+                    {
+                        var view = GetViewForUnit(unit);
+                        if (view != null)
+                        {
+                            center += view.transform.position;
+                            count++;
+                        }
+                    }
+                    return count > 0 ? (center / count) + evt.offset : actorView.transform.position + evt.offset;
+                }
+
+            default:
+                return actorView.transform.position + evt.offset;
+        }
+    }
+
+    private void InstantiateVFX(VFXEvent evt, Vector3 position, Transform potentialParent)
+    {
+        if (evt.vfxPrefab == null) return;
+
+        var vfx = Instantiate(evt.vfxPrefab, position, Quaternion.identity);
+        if (evt.attachToCaster && potentialParent != null)
+        {
+            vfx.transform.SetParent(potentialParent);
+        }
+
+        var visualEffect = vfx.GetComponent<UnityEngine.VFX.VisualEffect>();
+        if (visualEffect != null)
+        {
+            visualEffect.Play();
+        }
+        Destroy(vfx, 2f);
+    }
+
+    private IEnumerator FireProjectile(UnitView casterView, CombatUnit targetUnit, SkillData skill)
+    {
+        var targetView = GetViewForUnit(targetUnit);
+        if (targetView == null) yield break;
+
+        Vector3 startPos = casterView.transform.position + skill.projectileOffset;
+        var projectile = UnityEngine.Object.Instantiate(skill.projectilePrefab, startPos, Quaternion.identity);
+
         float elapsed = 0f;
+        while (elapsed < skill.projectileTravelTime)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / skill.projectileTravelTime);
+            projectile.transform.position = Vector3.Lerp(startPos, targetView.transform.position, t);
+            yield return null;
+        }
 
+        projectile.transform.position = targetView.transform.position;
+        
+        // Hit VFX is now handled by the OnHit event, which is triggered after the projectile lands.
+        // We just need to spawn the "HitOnEachTarget" VFX here for ranged attacks.
+        SpawnHitVFX(skill, targetView);
+
+        Destroy(projectile, 2f);
+    }
+
+    // Return the caster to its original position after the attack
+    private IEnumerator ReturnPhase(UnitView actorView, Vector3 originPosition, ActionResult result)
+    {
+        // Move actor back to original position
+        yield return StartCoroutine(MoveCoroutine(actorView, originPosition, returnDuration));
+        // Play idle animation after return
+        actorView.SetAnimationTrigger(AnimationConstants.Idle);
+    }
+
+    private IEnumerator CleanupPhase()
+    {
+        foreach (var view in allUnitViews)
+            if (view != null) view.PlayAnimation(AnimationConstants.Idle);
+        SetAllUnitAlphas(1.0f);
+        if (cameraManager != null)
+        {
+            cameraManager.ResetCamera();
+            yield return new WaitForSeconds(cameraManager.zoomOutDuration);
+        }
+    }
+
+    private IEnumerator MoveCoroutine(UnitView view, Vector3 targetPos, float duration)
+    {
+        Vector3 startPos = view.transform.position;
+        float elapsed = 0f;
         while (elapsed < duration)
         {
             elapsed += Time.deltaTime;
             float t = Mathf.Clamp01(elapsed / duration);
-            Color newColor = startColor;
-            newColor.a = Mathf.Lerp(startColor.a, targetAlpha, t);
-            spriteRenderer.color = newColor;
+            view.transform.position = Vector3.Lerp(startPos, targetPos, t);
             yield return null;
         }
-
-        Color finalColor = spriteRenderer.color;
-        finalColor.a = targetAlpha;
-        spriteRenderer.color = finalColor;
+        view.transform.position = targetPos;
     }
 
-    // ─────────────────────────────────────────────────────────────────────
-    // Helper: Tính danh sách hit cho loser dựa trên ClashResult
-    private System.Collections.Generic.List<HitData> BuildHitsForLoser(ClashResult result)
+    private UnitView GetViewForUnit(CombatUnit unit)
     {
-        var hits = new System.Collections.Generic.List<HitData>();
-        var skill = result.WinnerSkill;
-        int hitCount = skill != null ? Mathf.Max(1, skill.hitCount) : 1;
+        if (unit == null) return null;
+        return allUnitViews.FirstOrDefault(v => v.LinkedUnit == unit);
+    }
 
-        int raw = Mathf.RoundToInt(result.Winner.ATK
-                       * result.Winner.GetBuffMultiplier(StatType.ATK));
-        int defend = result.Loser.PDEF;
-        int totalDmg = Mathf.Max(hitCount, raw - defend);
-
-        for (int i = 0; i < hitCount; i++)
-        {
-            int dmg = (i == hitCount - 1)
-                ? totalDmg - (totalDmg / hitCount) * (hitCount - 1)
-                : totalDmg / hitCount;
-
-            hits.Add(new HitData { Damage = dmg, HitIndex = i });
-        }
-
-        return hits;
+    private void SetAllUnitAlphas(float alpha)
+    {
+        foreach (var view in allUnitViews)
+            if (view != null) view.SetAlpha(alpha);
     }
 }
