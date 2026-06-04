@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f9330979f02ddf43a415e7748b42aae, type: 3}
+  m_Name: ENEMY_EvilWizard
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterData
+  defaultCombatStyle: 1
+  prefab: {fileID: 151686111864234405, guid: 2de63cba2453fea4b82a2dda076e4f5b, type: 3}
+  characterName: EvilWizard
+  portrait: {fileID: 1401021378, guid: ecfcb23081893d94a938282bf1156043, type: 3}
+  battleSprite: {fileID: 911202532, guid: 112a68de91daa4548a3e1b7aaf33811d, type: 3}
+  lore: 
+  baseHP: 60
+  baseATK: 18
+  basePDEF: 8
+  baseMDEF: 4
+  baseSpeed: 10
+  hpPerLevel: 5
+  atkPerLevel: 2
+  pdefPerLevel: 1
+  mdefPerLevel: 1
+  speedPerLevel: 1
+  skills:
+  - {fileID: 11400000, guid: 947665250c3a8f34d9e60cc8da26c0eb, type: 2}
+  passiveScript: {fileID: 0}

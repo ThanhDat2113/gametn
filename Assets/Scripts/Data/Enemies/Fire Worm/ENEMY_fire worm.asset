@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f9330979f02ddf43a415e7748b42aae, type: 3}
+  m_Name: ENEMY_fire worm
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterData
+  defaultCombatStyle: 1
+  prefab: {fileID: 151686111864234405, guid: 08f7b8b251355524580240dad3cb9dd6, type: 3}
+  characterName: fire worm
+  portrait: {fileID: -930524400, guid: 2d6d0cf92b218f84788bb1d33f9ac8ee, type: 3}
+  battleSprite: {fileID: -2088003404, guid: 36c70699c7b51774cac0699b52c5fc10, type: 3}
+  lore: 
+  baseHP: 60
+  baseATK: 18
+  basePDEF: 8
+  baseMDEF: 4
+  baseSpeed: 10
+  hpPerLevel: 5
+  atkPerLevel: 2
+  pdefPerLevel: 1
+  mdefPerLevel: 1
+  speedPerLevel: 1
+  skills:
+  - {fileID: 11400000, guid: 4af5b8e3506272e4d992c9bfd3b369f1, type: 2}
+  passiveScript: {fileID: 0}

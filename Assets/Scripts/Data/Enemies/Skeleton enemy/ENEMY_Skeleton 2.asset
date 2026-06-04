@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f9330979f02ddf43a415e7748b42aae, type: 3}
+  m_Name: ENEMY_Skeleton 2
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterData
+  defaultCombatStyle: 0
+  prefab: {fileID: 151686111864234405, guid: 923ed05e491112145b6809a27649c24b, type: 3}
+  characterName: Skeleton 2
+  portrait: {fileID: -555321530, guid: acb3b27517412974286431fd50e80f2f, type: 3}
+  battleSprite: {fileID: -555321530, guid: acb3b27517412974286431fd50e80f2f, type: 3}
+  lore: 
+  baseHP: 80
+  baseATK: 18
+  basePDEF: 8
+  baseMDEF: 4
+  baseSpeed: 10
+  hpPerLevel: 5
+  atkPerLevel: 2
+  pdefPerLevel: 1
+  mdefPerLevel: 1
+  speedPerLevel: 1
+  skills:
+  - {fileID: 11400000, guid: 27b8594603cfb76459cd8044235dd910, type: 2}
+  passiveScript: {fileID: 0}
