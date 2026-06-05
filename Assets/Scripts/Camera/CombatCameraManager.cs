@@ -109,7 +109,7 @@ public class CombatCameraManager : MonoBehaviour
         if (CombatManager.Instance != null)
         {
             CombatManager.Instance.OnCombatStarted += HandleCombatStarted;
-            CombatManager.Instance.OnRoundEnded += HandleRoundEnded;
+            CombatManager.Instance.OnExecuteStarted += HandleRoundEnded;
             CombatManager.Instance.OnDefeat += HandleCombatEnd;
             CombatManager.Instance.OnVictory += HandleCombatEnd;
         }
@@ -124,7 +124,7 @@ public class CombatCameraManager : MonoBehaviour
             yield return new WaitForSeconds(0.1f);
             if (CombatManager.Instance == null) yield break;
             CombatPhase currentPhase = CombatManager.Instance.CurrentPhase;
-            if (currentPhase == CombatPhase.PlayerPlan && lastPhase != CombatPhase.PlayerPlan)
+            if (currentPhase == CombatPhase.Execute && lastPhase != CombatPhase.Execute)
             {
                 StopCoroutineIfRunning(zoomCoroutine);
                 StopCoroutineIfRunning(followCoroutine);
@@ -150,7 +150,7 @@ public class CombatCameraManager : MonoBehaviour
         if (CombatManager.Instance != null)
         {
             CombatManager.Instance.OnCombatStarted -= HandleCombatStarted;
-            CombatManager.Instance.OnRoundEnded -= HandleRoundEnded;
+            CombatManager.Instance.OnExecuteStarted -= HandleRoundEnded;
             CombatManager.Instance.OnDefeat -= HandleCombatEnd;
             CombatManager.Instance.OnVictory -= HandleCombatEnd;
         }

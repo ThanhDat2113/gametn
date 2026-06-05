@@ -219,6 +219,18 @@ public class QuestManager : MonoBehaviour
                         Debug.Log($"[Quest Reward] Thêm item: {reward.item.itemName} x{reward.amount}");
                     }
                     break;
+
+                case QuestRewardType.Experience:
+                    if (reward.amount > 0 && PlayerProgression.Instance != null)
+                    {
+                        PlayerProgression.Instance.AddPartyExperience(reward.amount);
+                        Debug.Log($"[Quest Reward] Party nhận {reward.amount} kinh nghiệm!");
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"[Quest Reward] Không thể cộng {reward.amount} EXP: PlayerProgression chưa được khởi tạo.");
+                    }
+                    break;
             }
         }
     }

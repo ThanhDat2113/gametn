@@ -6,7 +6,6 @@ using TMPro;
 
 public class FormationManager : MonoBehaviour
 {
-    // ─── Event ────────────────────────────────────────────────
     public event System.Action OnFormationChanged;
 
     [Header("Formation UI Panel (sẽ hiện khi nhấn F)")]
@@ -21,7 +20,7 @@ public class FormationManager : MonoBehaviour
     public GameObject characterIconPrefab;
     public CharacterData[] availableCharacters;
 
-    [Header("Default Character (must always be present if formation would be empty)")]
+    [Header("Default Character")]
     public CharacterData defaultCharacter;
 
     [Header("Mapping: UI slot index -> Combat slot index (0-8)")]
@@ -42,9 +41,7 @@ public class FormationManager : MonoBehaviour
     {
         BuildGrid();
         BuildRoster();
-
         EnsureAtLeastOneCharacter();
-
         formationPanel.SetActive(false);
         UpdateCounter();
     }
@@ -57,14 +54,11 @@ public class FormationManager : MonoBehaviour
             formationPanel.SetActive(isFormationUIOpen);
             if (isFormationUIOpen) UpdateCounter();
         }
-
         if (Input.GetKeyDown(KeyCode.T))
         {
             int count = currentFormation.slots.Count(s => s != null && s.data != null);
-            if (count > 0)
-                SaveAndStartCombat();
-            else
-                Debug.Log("Chưa có nhân vật nào trong đội hình!");
+            if (count > 0) SaveAndStartCombat();
+            else Debug.Log("Chưa có nhân vật nào trong đội hình!");
         }
     }
 
@@ -94,8 +88,7 @@ public class FormationManager : MonoBehaviour
     private void UpdateCounter()
     {
         int count = currentFormation.slots.Count(s => s != null && s.data != null);
-        if (counterText != null)
-            counterText.text = $"{count}/{MAX_UNITS}";
+        if (counterText != null) counterText.text = $"{count}/{MAX_UNITS}";
     }
 
     private void SetRosterVisible(CharacterData character, bool visible)
@@ -116,50 +109,31 @@ public class FormationManager : MonoBehaviour
         CharacterData defaultChar = defaultCharacter;
         if (defaultChar == null && availableCharacters.Length > 0)
             defaultChar = availableCharacters[0];
+        if (defaultChar == null) return;
 
-        if (defaultChar == null)
-        {
-            Debug.LogError("[FormationManager] Không có defaultCharacter và không có availableCharacters nào! Không thể tạo đội hình.");
-            return;
-        }
-
-        int emptySlotIndex = -1;
+        int emptySlot = -1;
         for (int i = 0; i < slots.Length; i++)
         {
             if (currentFormation.slots[i] == null || currentFormation.slots[i].data == null)
-            {
-                emptySlotIndex = i;
-                break;
-            }
+            { emptySlot = i; break; }
         }
+        if (emptySlot == -1) return;
 
-        if (emptySlotIndex == -1)
-        {
-            Debug.LogWarning("[FormationManager] Không tìm thấy ô trống để đặt nhân vật mặc định!");
-            return;
-        }
-
-        currentFormation.slots[emptySlotIndex] = new FormationSlot
+        currentFormation.slots[emptySlot] = new FormationSlot
         {
             data = defaultChar,
             level = 1,
-            gridSlot = emptySlotIndex
+            gridSlot = emptySlot
         };
-        slots[emptySlotIndex].SetCharacter(defaultChar);
+        slots[emptySlot].SetCharacter(defaultChar);
         SetRosterVisible(defaultChar, false);
         OnFormationChanged?.Invoke();
-        Debug.Log($"[FormationManager] Đã tự động thêm nhân vật mặc định '{defaultChar.characterName}' vào ô {emptySlotIndex}");
     }
 
-    private bool CanRemoveCharacter(int uiSlotIndex)
+    private bool CanRemoveCharacter(int idx)
     {
-        int currentCount = currentFormation.slots.Count(s => s != null && s.data != null);
-        if (currentCount == 1 && currentFormation.slots[uiSlotIndex]?.data != null)
-        {
-            Debug.Log("[FormationManager] Không thể gỡ nhân vật cuối cùng. Đội hình phải có ít nhất 1 người.");
-            return false;
-        }
-        return true;
+        int count = currentFormation.slots.Count(s => s != null && s.data != null);
+        return !(count == 1 && currentFormation.slots[idx]?.data != null);
     }
 
     public bool TryPlaceCharacter(CharacterData character, int uiSlotIndex)
@@ -169,17 +143,21 @@ public class FormationManager : MonoBehaviour
 
         int currentCount = currentFormation.slots.Count(s => s != null && s.data != null);
         if (currentCount >= MAX_UNITS) return false;
-
         if (currentFormation.slots[uiSlotIndex]?.data != null) return false;
 
         ClearSlot(uiSlotIndex);
+
+        int characterLevel = 1;
+        if (PlayerProgression.Instance != null)
+            characterLevel = PlayerProgression.Instance.GetLevel(character);
+
         currentFormation.slots[uiSlotIndex] = new FormationSlot
         {
             data = character,
-            level = 1,
+            level = characterLevel,
             gridSlot = uiSlotIndex
         };
-        slots[uiSlotIndex].SetCharacter(character);
+        slots[uiSlotIndex].SetCharacter(character, characterLevel);
         SetRosterVisible(character, false);
         UpdateCounter();
         OnFormationChanged?.Invoke();
@@ -189,7 +167,6 @@ public class FormationManager : MonoBehaviour
     public void RemoveCharacter(int uiSlotIndex)
     {
         if (!CanRemoveCharacter(uiSlotIndex)) return;
-
         ClearSlot(uiSlotIndex);
         UpdateCounter();
         OnFormationChanged?.Invoke();
@@ -219,21 +196,10 @@ public class FormationManager : MonoBehaviour
         }
         else
         {
-            var levelFrom = currentFormation.slots[fromSlot].level;
-            var levelTo = currentFormation.slots[toSlot].level;
-
-            currentFormation.slots[fromSlot] = new FormationSlot
-            {
-                data = charTo,
-                level = levelTo,
-                gridSlot = fromSlot
-            };
-            currentFormation.slots[toSlot] = new FormationSlot
-            {
-                data = charFrom,
-                level = levelFrom,
-                gridSlot = toSlot
-            };
+            var l1 = currentFormation.slots[fromSlot].level;
+            var l2 = currentFormation.slots[toSlot].level;
+            currentFormation.slots[fromSlot] = new FormationSlot { data = charTo, level = l2, gridSlot = fromSlot };
+            currentFormation.slots[toSlot] = new FormationSlot { data = charFrom, level = l1, gridSlot = toSlot };
             slots[fromSlot].SetCharacter(charTo);
             slots[toSlot].SetCharacter(charFrom);
             UpdateCounter();
@@ -241,23 +207,23 @@ public class FormationManager : MonoBehaviour
         }
     }
 
-    void ClearSlot(int uiSlotIndex)
+    void ClearSlot(int idx)
     {
-        if (currentFormation.slots[uiSlotIndex] != null)
+        if (currentFormation.slots[idx] != null)
         {
-            var removedChar = currentFormation.slots[uiSlotIndex].data;
-            currentFormation.slots[uiSlotIndex] = null;
-            slots[uiSlotIndex].Clear();
-            SetRosterVisible(removedChar, true);
+            var removed = currentFormation.slots[idx].data;
+            currentFormation.slots[idx] = null;
+            slots[idx].Clear();
+            SetRosterVisible(removed, true);
         }
     }
 
-    void ClearSlotInternal(int uiSlotIndex)
+    void ClearSlotInternal(int idx)
     {
-        if (currentFormation.slots[uiSlotIndex] != null)
+        if (currentFormation.slots[idx] != null)
         {
-            currentFormation.slots[uiSlotIndex] = null;
-            slots[uiSlotIndex].Clear();
+            currentFormation.slots[idx] = null;
+            slots[idx].Clear();
         }
     }
 
@@ -268,22 +234,21 @@ public class FormationManager : MonoBehaviour
 
     public void SaveFormation()
     {
-        var mappedFormation = new FormationData { slots = new FormationSlot[9] };
-        for (int uiIdx = 0; uiIdx < currentFormation.slots.Length; uiIdx++)
+        var mapped = new FormationData { slots = new FormationSlot[9] };
+        for (int i = 0; i < currentFormation.slots.Length; i++)
         {
-            if (currentFormation.slots[uiIdx] != null)
+            if (currentFormation.slots[i] != null)
             {
-                int combatSlot = uiToCombatSlot[uiIdx];
-                mappedFormation.slots[combatSlot] = new FormationSlot
+                int cs = uiToCombatSlot[i];
+                mapped.slots[cs] = new FormationSlot
                 {
-                    data = currentFormation.slots[uiIdx].data,
-                    level = currentFormation.slots[uiIdx].level,
-                    gridSlot = combatSlot
+                    data = currentFormation.slots[i].data,
+                    level = currentFormation.slots[i].level,
+                    gridSlot = cs
                 };
             }
         }
-        FormationDataStorage.PendingFormation = mappedFormation;
-        Debug.Log($"[FormationManager] SaveFormation: đã lưu {currentFormation.slots.Count(s => s != null && s.data != null)} nhân vật.");
+        FormationDataStorage.PendingFormation = mapped;
     }
 
     void SaveAndStartCombat()
@@ -295,25 +260,16 @@ public class FormationManager : MonoBehaviour
     public int GetSlotAtPosition(Vector2 screenPos)
     {
         for (int i = 0; i < slots.Length; i++)
-            if (slots[i].IsPointerOver(screenPos))
-                return i;
+            if (slots[i].IsPointerOver(screenPos)) return i;
         return -1;
     }
 
-    public FormationData GetCurrentFormationData()
-    {
-        return currentFormation;
-    }
+    public FormationData GetCurrentFormationData() => currentFormation;
 
     public void UnlockCharacter(CharacterData character)
     {
         if (character == null) return;
-
-        if (rosterItemMap.ContainsKey(character))
-        {
-            Debug.LogWarning($"[FormationManager] '{character.characterName}' đã có trong roster.");
-            return;
-        }
+        if (rosterItemMap.ContainsKey(character)) return;
 
         var go = Instantiate(characterIconPrefab, rosterContainer);
         var drag = go.GetComponent<CharacterDragItem>();
@@ -322,7 +278,5 @@ public class FormationManager : MonoBehaviour
 
         var list = new List<CharacterData>(availableCharacters) { character };
         availableCharacters = list.ToArray();
-
-        Debug.Log($"[FormationManager] Đã mở khóa nhân vật mới: '{character.characterName}'");
     }
 }
