@@ -1,36 +1,75 @@
 using UnityEngine;
 
+public enum VFXSpawnMode
+{
+    AtCaster,       // Spawn at the character using the skill
+    AtTarget,       // Spawn at the primary target (or center point for AoE)
+    HitOnEachTarget // Spawn on each target as they are hit
+}
+
+[System.Serializable]
+public class VFXEvent
+{
+    public GameObject vfxPrefab;
+    public VFXSpawnMode spawnMode = VFXSpawnMode.AtTarget; // default backward-compat
+    public Vector3 offset = Vector3.up * 1.5f;
+    public bool attachToCaster = false;
+}
+
+public enum SkillMovementOverride
+{
+    InheritFromCharacter,
+    ForceRushToTarget,
+    ForceStationary
+}
+
 [CreateAssetMenu(fileName = "NewSkill", menuName = "RPG/Skill")]
 public class SkillData : ScriptableObject
 {
+    public bool autoConfirmOnSelect = false;
+
+    [Header("Behavior")]
+    public SkillMovementOverride movementOverride = SkillMovementOverride.InheritFromCharacter;
+
     [Header("Identity")]
     public string skillName;
-    [TextArea]
-    public string description;
+    [TextArea] public string description;
     public Sprite icon;
 
     [Header("Type")]
-    public SkillType type = SkillType.Clash;
+    public SkillType type = SkillType.Auto;
     public TargetType targetType = TargetType.SingleEnemy;
+    public bool isChargeable = false;
+    public bool doesNotEndTurn = false;
 
-    [Header("Clash Settings")]
-    [Tooltip("Chỉ dùng khi type = Clash")]
-    public int basePoint = 4;
+    [Header("Cost")]
+    public int apCost = 1;
 
     [Header("Hit Settings")]
-    [Tooltip("Số lần đánh. VD: 3 = đánh 3 lần")]
-    [Min(1)]
     public int hitCount = 1;
+    
+    [Header("VFX")]
+    public VFXEvent[] vfxEvents; // This is now the main array for all VFX
 
-    [Header("Cooldown")]
-    [Tooltip("0 = không có cooldown")]
-    public int cooldown = 0;
+    // HIDE: Old fields are hidden but kept for backward compatibility
+    [HideInInspector, Header("DEPRECATED: Use vfxEvents with 'AtCaster' mode")]
+    public VFXEvent[] rangedVfxEvents;
+    
+    [HideInInspector, Header("DEPRECATED: Use vfxEvents with 'HitOnEachTarget' mode")]
+    public VFXEvent[] hitVfxEvents;
 
     [Header("Animation")]
-    [Tooltip("Tên Trigger trong Animator. VD: Skill1, Skill2...")]
     public string animationTrigger;
-    public GameObject vfxPrefab;
-    public float vfxOffset = 0f;
+    
+    // Ranged skill visual
+    public bool isRanged = false; // Set true for skills that fire a projectile
+    public GameObject projectilePrefab; // Prefab for the projectile effect
+    public Vector3 projectileOffset = Vector3.zero; // Offset from caster when spawning projectile
+    public float projectileTravelTime = 0.3f; // Duration of projectile travel
+
+    // backward compatibility (vẫn giữ để không lỗi skill cũ)
+    [HideInInspector] public GameObject vfxPrefab;
+    [HideInInspector] public float vfxOffset = 0f;
 
     [Header("Effects")]
     public SkillEffect[] effects;

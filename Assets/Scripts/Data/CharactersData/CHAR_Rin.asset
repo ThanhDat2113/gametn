@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f9330979f02ddf43a415e7748b42aae, type: 3}
+  m_Name: CHAR_Rin
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterData
+  defaultCombatStyle: 1
+  prefab: {fileID: 1679760919306360566, guid: 0e23467f17e6c0e49b1f04f4a33f80d1, type: 3}
+  characterName: Rin
+  portrait: {fileID: 1363956482, guid: 7603d0d43cf327641ac44e35633570a2, type: 3}
+  battleSprite: {fileID: 1363956482, guid: 7603d0d43cf327641ac44e35633570a2, type: 3}
+  lore: 
+  baseHP: 100
+  baseATK: 20
+  basePDEF: 10
+  baseMDEF: 10
+  baseSpeed: 10
+  hpPerLevel: 5
+  atkPerLevel: 2
+  pdefPerLevel: 1
+  mdefPerLevel: 1
+  speedPerLevel: 1
+  skills:
+  - {fileID: 11400000, guid: fdb256a12aa2f9d45b81ce0b7f8b37d4, type: 2}
+  - {fileID: 11400000, guid: 683f1481935046946b6f4469400add0f, type: 2}
+  - {fileID: 11400000, guid: 9d29c1b1f62e7f44887eaff51e1329d2, type: 2}
+  passiveScript: {fileID: 11500000, guid: c2de43556b3af794d9bd09c6c879ba46, type: 3}
