@@ -2,9 +2,7 @@ public enum CombatPhase
 {
     None,
     Intro,
-    EnemyPlan,
     PlayerPlan,
-    RetargetCheck,
     Execute,
     RoundEnd,
     Victory,

@@ -38,8 +38,8 @@ public class TargetingArrowController : MonoBehaviour
             SubscribeToEvents();
         }
 
-        // Only run the visual update logic when in player planning phase
-        if (combat != null && combat.CurrentPhase == CombatPhase.PlayerPlan)
+        // Vẽ arrow khi đang trong phase Execute (có unit đang chọn skill)
+        if (combat != null && combat.CurrentPhase == CombatPhase.Execute)
         {
             CheckForHover();
             UpdateLineVisuals();
@@ -122,34 +122,29 @@ public class TargetingArrowController : MonoBehaviour
         combat = CombatManager.Instance;
         if (combat == null) return;
 
-        combat.OnPlayerPlanStarted += HandlePlanStarted;
-        combat.OnPlayerSkillSelected += HandleSkillSelected;
         combat.OnPlanChanged += DrawAllArrows;
         combat.OnExecuteStarted += HideAllArrows;
         combat.OnVictory += HideAllArrows;
         combat.OnDefeat += HideAllArrows;
 
-        if (combat.CurrentPhase == CombatPhase.PlayerPlan)
+        if (combat.CurrentPhase == CombatPhase.Execute)
         {
             DrawAllArrows();
         }
+
+        isSubscribed = true;
     }
 
     private void OnDestroy()
     {
         if (combat != null)
         {
-            combat.OnPlayerPlanStarted -= HandlePlanStarted;
-            combat.OnPlayerSkillSelected -= HandleSkillSelected;
             combat.OnPlanChanged -= DrawAllArrows;
             combat.OnExecuteStarted -= HideAllArrows;
             combat.OnVictory -= HideAllArrows;
             combat.OnDefeat -= HideAllArrows;
         }
     }
-
-    private void HandlePlanStarted(List<CombatUnit> units) => DrawAllArrows();
-    private void HandleSkillSelected(CombatUnit unit) => DrawAllArrows();
 
     private void HideAllArrows()
     {
