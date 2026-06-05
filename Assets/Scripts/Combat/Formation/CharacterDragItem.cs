@@ -1,13 +1,14 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
+using TMPro;
 
 public class CharacterDragItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
     public CharacterData CharacterData { get; private set; }
 
     [SerializeField] private Image icon;
-    [SerializeField] private TMPro.TextMeshProUGUI levelText;
+    [SerializeField] private TextMeshProUGUI levelText;
 
     private FormationManager manager;
     private CanvasGroup canvasGroup;

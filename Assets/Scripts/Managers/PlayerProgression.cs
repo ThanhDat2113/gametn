@@ -126,7 +126,7 @@ public class PlayerProgression : MonoBehaviour
         characterExp[key] += amount;
         OnExperienceGained?.Invoke(character, amount);
 
-        Log($"[Exp] {character.characterName} nhận {amount} EXP. Tổng: {characterExp[key]}");
+        Debug.Log($"[Exp] <color=yellow>{character.characterName}</color> nhận <color=#FFD700>{amount}</color> EXP. Tổng: <color=cyan>{characterExp[key]}</color> (Level {characterLevels[key]})");
 
         // Xử lý level-up (có thể lên nhiều cấp cùng lúc)
         int newLevel = ProcessLevelUps(character);
@@ -195,7 +195,7 @@ public class PlayerProgression : MonoBehaviour
             {
                 characterExp[key] -= needed;
                 newLevel++;
-                Log($"[Level Up] {character.characterName} lên cấp {newLevel}!");
+                Debug.Log($"[Level Up] <color=green>{character.characterName}</color> lên cấp <color=yellow>{newLevel}</color>! Exp còn: <color=cyan>{characterExp[key]}</color> (cần {GetExpToNextLevel(character, newLevel)} cho cấp tiếp)");
 
                 // Trigger event
                 OnCharacterLevelUp?.Invoke(character, newLevel);

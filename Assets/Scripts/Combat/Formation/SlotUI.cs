@@ -1,11 +1,12 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
+using TMPro;
 
 public class SlotUI : MonoBehaviour, IDropHandler, IPointerClickHandler, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
     [SerializeField] private Image icon;
-    [SerializeField] private TMPro.TextMeshProUGUI levelText;
+    [SerializeField] private TextMeshProUGUI levelText;
 
     private int slotIndex;
     private FormationManager manager;
