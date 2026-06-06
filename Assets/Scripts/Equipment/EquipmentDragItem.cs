@@ -1,3 +1,4 @@
+// EquipmentDragItem.cs
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
@@ -12,49 +13,88 @@ public class EquipmentDragItem : MonoBehaviour, IBeginDragHandler, IDragHandler,
 
     private CanvasGroup canvasGroup;
     private GameObject ghost;
-    private Canvas rootCanvas;
     private EquipmentPanel panel;
 
     public void Initialize(EquipmentData equip, EquipmentPanel parentPanel)
     {
         Equipment = equip;
         panel = parentPanel;
+        SetupCommon();
+
+        if (equip == null) { SetEmptyVisual(); return; }
+
         if (icon != null)
         {
             icon.sprite = equip.icon;
             icon.enabled = true;
+            icon.color = Color.white;
         }
-        if (nameText != null) nameText.text = equip.itemName;
+        if (nameText != null)
+            nameText.text = equip.itemName;
+    }
 
+    public void InitializeDummy(EquipmentPanel parentPanel)
+    {
+        Equipment = null;
+        panel = parentPanel;
+        SetupCommon();
+        SetEmptyVisual();
+    }
+
+    private void SetupCommon()
+    {
         canvasGroup = GetComponent<CanvasGroup>();
-        if (canvasGroup == null) canvasGroup = gameObject.AddComponent<CanvasGroup>();
+        if (canvasGroup == null)
+            canvasGroup = gameObject.AddComponent<CanvasGroup>();
 
-        rootCanvas = GetComponentInParent<Canvas>().rootCanvas;
+        if (icon == null)
+            icon = GetComponentInChildren<Image>();
+    }
+
+    private void SetEmptyVisual()
+    {
+        if (icon != null)
+        {
+            icon.sprite = null;
+            icon.enabled = true;
+            icon.color = new Color(1, 1, 1, 0.25f);
+        }
+        if (nameText != null)
+            nameText.text = "Empty";
     }
 
     public void DestroyGhost()
     {
         if (ghost != null) Destroy(ghost);
+        ghost = null;
     }
 
     public void OnBeginDrag(PointerEventData eventData)
     {
+        if (Equipment == null) return;
+
         canvasGroup.alpha = 0.6f;
         canvasGroup.blocksRaycasts = false;
 
+        Canvas rootCanvas = GetComponentInParent<Canvas>();
+        if (rootCanvas != null) rootCanvas = rootCanvas.rootCanvas;
+        if (rootCanvas == null)
+        {
+            Debug.LogWarning("[EquipmentDragItem] Không tìm thấy rootCanvas!");
+            return;
+        }
+
         ghost = new GameObject("DragGhost", typeof(RectTransform), typeof(CanvasGroup), typeof(Image));
         ghost.transform.SetParent(rootCanvas.transform, false);
+
         var ghostRect = ghost.GetComponent<RectTransform>();
         ghostRect.sizeDelta = GetComponent<RectTransform>().sizeDelta;
         ghostRect.position = eventData.position;
 
         var ghostImg = ghost.GetComponent<Image>();
-        ghostImg.sprite = icon.sprite;
+        ghostImg.sprite = icon != null ? icon.sprite : null;
         ghostImg.color = new Color(1, 1, 1, 0.7f);
         ghostImg.raycastTarget = false;
-
-        var ghostGroup = ghost.GetComponent<CanvasGroup>();
-        ghostGroup.blocksRaycasts = false;
     }
 
     public void OnDrag(PointerEventData eventData)
@@ -66,7 +106,10 @@ public class EquipmentDragItem : MonoBehaviour, IBeginDragHandler, IDragHandler,
     public void OnEndDrag(PointerEventData eventData)
     {
         DestroyGhost();
-        canvasGroup.alpha = 1f;
-        canvasGroup.blocksRaycasts = true;
+        if (canvasGroup != null)
+        {
+            canvasGroup.alpha = 1f;
+            canvasGroup.blocksRaycasts = true;
+        }
     }
 }

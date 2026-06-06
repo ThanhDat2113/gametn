@@ -12,17 +12,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6f9330979f02ddf43a415e7748b42aae, type: 3}
   m_Name: CHAR_Tharja
   m_EditorClassIdentifier: Assembly-CSharp::CharacterData
+  characterType: 0
   defaultCombatStyle: 1
   prefab: {fileID: 3915831744494207552, guid: 31876bb8e676b5f4b9049f36bf6032c6, type: 3}
   characterName: Tharja
   portrait: {fileID: -1600191504, guid: 34c3291ef954c534684caa443e5dc95f, type: 3}
-  battleSprite: {fileID: -1600191504, guid: 34c3291ef954c534684caa443e5dc95f, type: 3}
+  battleSprite: {fileID: 21300000, guid: 6779ebdc72027984397ba9acacc3e9f6, type: 3}
   lore: 
   baseHP: 100
   baseATK: 80
   basePDEF: 10
   baseMDEF: 10
   baseSpeed: 10
+  baseLevel: 1
+  expReward: 100
+  baseExpThreshold: 100
+  expIncrementPerLevel: 50
   hpPerLevel: 5
   atkPerLevel: 2
   pdefPerLevel: 1
