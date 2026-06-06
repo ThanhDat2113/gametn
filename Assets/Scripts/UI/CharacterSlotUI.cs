@@ -19,6 +19,10 @@ public class CharacterSlotUI : MonoBehaviour
     public TextMeshProUGUI levelText;
     public TextMeshProUGUI orderText;
 
+    private CharacterData currentCharacter;
+    private int currentLevel;
+    private int currentOrder;
+
     private void Awake()
     {
         // Tự tìm nếu chưa gán
@@ -29,11 +33,14 @@ public class CharacterSlotUI : MonoBehaviour
     }
 
     /// <summary>
-    /// Gọi từ MapMenuManager.RefreshCharacterContainer().
+    /// Gọi từ MapMenuManager.RefreshCharacterContainer() hoặc EquipmentPanel.
     /// </summary>
     public void Setup(CharacterData data, int level, int order)
     {
         if (data == null) return;
+        currentCharacter = data;
+        currentLevel = level;
+        currentOrder = order;
 
         // Portrait
         if (portrait != null)
@@ -73,4 +80,8 @@ public class CharacterSlotUI : MonoBehaviour
         }
         return null;
     }
+
+    public CharacterData GetCharacter() => currentCharacter;
+    public int GetLevel() => currentLevel;
+    public int GetOrder() => currentOrder;
 }
