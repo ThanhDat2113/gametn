@@ -12,17 +12,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6f9330979f02ddf43a415e7748b42aae, type: 3}
   m_Name: CHAR_Aqua
   m_EditorClassIdentifier: Assembly-CSharp::CharacterData
+  characterType: 0
   defaultCombatStyle: 1
   prefab: {fileID: 1592895977249800688, guid: 7c83cee0cc810e64ca95e904c25e1b97, type: 3}
   characterName: Aqua
   portrait: {fileID: -1571412716, guid: 0ca30b280e5505f4eb1ea2e391458794, type: 3}
-  battleSprite: {fileID: -1571412716, guid: 0ca30b280e5505f4eb1ea2e391458794, type: 3}
+  battleSprite: {fileID: 21300000, guid: 3632c3182dc9ea34d812682634c74bb9, type: 3}
   lore: 
   baseHP: 100
   baseATK: 20
   basePDEF: 10
   baseMDEF: 10
   baseSpeed: 10
+  baseLevel: 1
+  expReward: 100
+  baseExpThreshold: 100
+  expIncrementPerLevel: 50
   hpPerLevel: 5
   atkPerLevel: 2
   pdefPerLevel: 1

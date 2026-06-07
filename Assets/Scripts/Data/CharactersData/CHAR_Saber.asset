@@ -12,17 +12,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6f9330979f02ddf43a415e7748b42aae, type: 3}
   m_Name: CHAR_Saber
   m_EditorClassIdentifier: Assembly-CSharp::CharacterData
+  characterType: 0
   defaultCombatStyle: 0
   prefab: {fileID: 5494798816747836731, guid: fa0c979268b25264ca7ecd3e63989576, type: 3}
   characterName: Saber
   portrait: {fileID: 2045420828, guid: 9028d355654918740b31539bf7663f0f, type: 3}
-  battleSprite: {fileID: 2045420828, guid: 9028d355654918740b31539bf7663f0f, type: 3}
+  battleSprite: {fileID: 21300000, guid: 3c1ced070bf40424d81bb019c5b55d4f, type: 3}
   lore: 
   baseHP: 100
   baseATK: 80
   basePDEF: 10
   baseMDEF: 10
   baseSpeed: 10
+  baseLevel: 1
+  expReward: 100
+  baseExpThreshold: 100
+  expIncrementPerLevel: 50
   hpPerLevel: 5
   atkPerLevel: 2
   pdefPerLevel: 1

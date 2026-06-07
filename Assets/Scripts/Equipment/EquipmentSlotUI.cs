@@ -1,3 +1,4 @@
+// EquipmentSlotUI.cs
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
@@ -15,6 +16,18 @@ public class EquipmentSlotUI : MonoBehaviour, IDropHandler, IPointerClickHandler
 
     private EquipmentPanel panel;
 
+    private void Awake()
+    {
+        // Đảm bảo có Image với raycastTarget=true để OnDrop fire được
+        var bg = GetComponent<Image>();
+        if (bg == null)
+        {
+            bg = gameObject.AddComponent<Image>();
+            bg.color = new Color(0, 0, 0, 0); // trong suốt
+        }
+        bg.raycastTarget = true;
+    }
+
     public void Initialize(EquipmentPanel parentPanel, EquipmentSlot type, CharacterData character)
     {
         panel = parentPanel;
@@ -27,14 +40,18 @@ public class EquipmentSlotUI : MonoBehaviour, IDropHandler, IPointerClickHandler
     public void Refresh()
     {
         if (currentCharacter == null) return;
+        if (EquipmentManager.Instance == null) return;
+
         var equip = EquipmentManager.Instance.GetEquipment(currentCharacter).GetEquipment(slotType);
-        if (equip != null && icon != null)
+        if (icon == null) return;
+
+        if (equip != null)
         {
             icon.sprite = equip.icon;
             icon.enabled = true;
             icon.color = Color.white;
         }
-        else if (icon != null)
+        else
         {
             icon.sprite = null;
             icon.enabled = false;
@@ -44,30 +61,35 @@ public class EquipmentSlotUI : MonoBehaviour, IDropHandler, IPointerClickHandler
     public void OnDrop(PointerEventData eventData)
     {
         var dragItem = eventData.pointerDrag?.GetComponent<EquipmentDragItem>();
-        if (dragItem != null && dragItem.Equipment != null)
+        if (dragItem == null || dragItem.Equipment == null) return;
+
+        if (dragItem.Equipment.slot != slotType)
         {
-            if (dragItem.Equipment.slot == slotType)
-            {
-                EquipmentManager.Instance.Equip(currentCharacter, slotType, dragItem.Equipment);
-                Refresh();
-                panel.RefreshEquipmentList(); // Cập nhật danh sách trang bị (xóa item đã gắn)
-                dragItem.DestroyGhost();
-            }
-            else
-            {
-                Debug.Log($"Cannot equip {dragItem.Equipment.slot} into {slotType} slot");
-            }
+            Debug.Log($"Cannot equip {dragItem.Equipment.slot} into {slotType} slot");
+            return;
         }
+
+        EquipmentManager.Instance.Equip(currentCharacter, slotType, dragItem.Equipment);
+        Refresh();
+        panel?.RefreshEquipmentList();
+        // KHÔNG gọi dragItem.DestroyGhost() ở đây — OnEndDrag sẽ xử lý
     }
 
     public void OnPointerClick(PointerEventData eventData)
     {
-        // Click phải để tháo trang bị
+        // Nhấn chuột phải: gỡ trang bị
         if (eventData.button == PointerEventData.InputButton.Right)
         {
             EquipmentManager.Instance.Unequip(currentCharacter, slotType);
             Refresh();
-            panel.RefreshEquipmentList();
+            panel?.RefreshEquipmentList();
+        }
+        // Nhấn đúp chuột trái: cũng gỡ trang bị
+        else if (eventData.clickCount == 2 && eventData.button == PointerEventData.InputButton.Left)
+        {
+            EquipmentManager.Instance.Unequip(currentCharacter, slotType);
+            Refresh();
+            panel?.RefreshEquipmentList();
         }
     }
 }

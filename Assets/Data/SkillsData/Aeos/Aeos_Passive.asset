@@ -12,14 +12,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1e652bd9dd81c6c48a0d625c3dbd9ff3, type: 3}
   m_Name: Aeos_Passive
   m_EditorClassIdentifier: Assembly-CSharp::SkillData
-  skillName: "Executioner"
-  description: "Aeos bỏ qua 30% phòng thủ của toàn bộ kẻ địch và mỗi khi tiêu diệt được 1 kẻ địch anh nhận thêm 10% xuyên giáp (tối đa 20% cộng thêm)."
+  autoConfirmOnSelect: 0
+  movementOverride: 0
+  skillName: Executioner
+  description: "Aeos b\u1ECF qua 30% ph\xF2ng th\u1EE7 c\u1EE7a to\xE0n b\u1ED9 k\u1EBB
+    \u0111\u1ECBch v\xE0 m\u1ED7i khi ti\xEAu di\u1EC7t \u0111\u01B0\u1EE3c 1 k\u1EBB
+    \u0111\u1ECBch anh nh\u1EADn th\xEAm 10% xuy\xEAn gi\xE1p (t\u1ED1i \u0111a 20%
+    c\u1ED9ng th\xEAm)."
   icon: {fileID: 0}
   type: 1
   targetType: 0
+  isChargeable: 0
+  doesNotEndTurn: 0
   apCost: 0
   hitCount: 0
+  vfxEvents: []
+  rangedVfxEvents: []
+  hitVfxEvents: []
+  sfxClips:
+  - {fileID: 0}
   animationTrigger: 
+  isRanged: 0
+  projectilePrefab: {fileID: 0}
+  projectileOffset: {x: 0, y: 0, z: 0}
+  projectileTravelTime: 0.3
   vfxPrefab: {fileID: 0}
   vfxOffset: 0
   effects:

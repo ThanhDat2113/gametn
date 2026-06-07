@@ -12,17 +12,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6f9330979f02ddf43a415e7748b42aae, type: 3}
   m_Name: CHAR_Eugeo
   m_EditorClassIdentifier: Assembly-CSharp::CharacterData
+  characterType: 0
   defaultCombatStyle: 0
   prefab: {fileID: 3188301542722477838, guid: 9ecb07f97fa63a349b5dba2d26759638, type: 3}
   characterName: Eugeo
   portrait: {fileID: -468791960, guid: 44b3762434522914cb5bb9e8cf64b6be, type: 3}
-  battleSprite: {fileID: -468791960, guid: 44b3762434522914cb5bb9e8cf64b6be, type: 3}
+  battleSprite: {fileID: 21300000, guid: 7c4a954e27ec7f740a0a559d3a8bb35d, type: 3}
   lore: 
   baseHP: 100
   baseATK: 90
   basePDEF: 10
   baseMDEF: 10
   baseSpeed: 10
+  baseLevel: 1
+  expReward: 100
+  baseExpThreshold: 100
+  expIncrementPerLevel: 50
   hpPerLevel: 5
   atkPerLevel: 2
   pdefPerLevel: 1
