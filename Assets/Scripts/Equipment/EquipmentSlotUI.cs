@@ -18,7 +18,7 @@ public class EquipmentSlotUI : MonoBehaviour, IDropHandler, IPointerClickHandler
 
     private void Awake()
     {
-        // ⭐ Đảm bảo có Image với raycastTarget=true để OnDrop fire được
+        // Đảm bảo có Image với raycastTarget=true để OnDrop fire được
         var bg = GetComponent<Image>();
         if (bg == null)
         {
@@ -72,12 +72,20 @@ public class EquipmentSlotUI : MonoBehaviour, IDropHandler, IPointerClickHandler
         EquipmentManager.Instance.Equip(currentCharacter, slotType, dragItem.Equipment);
         Refresh();
         panel?.RefreshEquipmentList();
-        // ⭐ KHÔNG gọi dragItem.DestroyGhost() ở đây — OnEndDrag sẽ xử lý
+        // KHÔNG gọi dragItem.DestroyGhost() ở đây — OnEndDrag sẽ xử lý
     }
 
     public void OnPointerClick(PointerEventData eventData)
     {
+        // Nhấn chuột phải: gỡ trang bị
         if (eventData.button == PointerEventData.InputButton.Right)
+        {
+            EquipmentManager.Instance.Unequip(currentCharacter, slotType);
+            Refresh();
+            panel?.RefreshEquipmentList();
+        }
+        // Nhấn đúp chuột trái: cũng gỡ trang bị
+        else if (eventData.clickCount == 2 && eventData.button == PointerEventData.InputButton.Left)
         {
             EquipmentManager.Instance.Unequip(currentCharacter, slotType);
             Refresh();
