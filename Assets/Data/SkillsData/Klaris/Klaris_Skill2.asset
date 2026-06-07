@@ -12,14 +12,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1e652bd9dd81c6c48a0d625c3dbd9ff3, type: 3}
   m_Name: Klaris_Skill2
   m_EditorClassIdentifier: Assembly-CSharp::SkillData
-  skillName: "Defensive Stance"
-  description: "Cô tăng cho bản thân 30% phòng thủ và tăng cho toàn đồng minh 10% phòng thủ."
+  autoConfirmOnSelect: 0
+  movementOverride: 0
+  skillName: Defensive Stance
+  description: "C\xF4 t\u0103ng cho b\u1EA3n th\xE2n 30% ph\xF2ng th\u1EE7 v\xE0
+    t\u0103ng cho to\xE0n \u0111\u1ED3ng minh 10% ph\xF2ng th\u1EE7."
   icon: {fileID: 0}
   type: 0
-  targetType: 6
+  targetType: 4
+  isChargeable: 0
+  doesNotEndTurn: 0
   apCost: 1
   hitCount: 0
+  vfxEvents: []
+  rangedVfxEvents: []
+  hitVfxEvents: []
+  sfxClips: []
   animationTrigger: Skill2
+  isRanged: 0
+  projectilePrefab: {fileID: 0}
+  projectileOffset: {x: 0, y: 0, z: 0}
+  projectileTravelTime: 0.3
   vfxPrefab: {fileID: 0}
   vfxOffset: 0
   effects: []

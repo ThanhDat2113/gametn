@@ -12,17 +12,28 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1e652bd9dd81c6c48a0d625c3dbd9ff3, type: 3}
   m_Name: Klaris_Skill1
   m_EditorClassIdentifier: Assembly-CSharp::SkillData
-  skillName: "Sword Strike"
-  description: "Tấn công bằng cách bổ kiếm gây sát thương vật lý."
+  autoConfirmOnSelect: 0
+  movementOverride: 0
+  skillName: Sword Strike
+  description: "T\u1EA5n c\xF4ng b\u1EB1ng c\xE1ch b\u1ED5 ki\u1EBFm g\xE2y s\xE1t
+    th\u01B0\u01A1ng v\u1EADt l\xFD."
   icon: {fileID: 0}
   type: 0
   targetType: 0
+  isChargeable: 0
+  doesNotEndTurn: 0
   apCost: 0
   hitCount: 1
+  vfxEvents: []
+  rangedVfxEvents: []
+  hitVfxEvents: []
+  sfxClips: []
   animationTrigger: Skill1
+  isRanged: 0
+  projectilePrefab: {fileID: 0}
+  projectileOffset: {x: 0, y: 0, z: 0}
+  projectileTravelTime: 0.3
   vfxPrefab: {fileID: 0}
   vfxOffset: 0
   effects:
-  - {fileID: 11400000, guid: 5fc7829b076412448a30def5f9836ca1, type: 2}
-  effects:
-  - {fileID: 11400000, guid: 5fc7829b076412448a30def5f9836ca1, type: 2}
+  - {fileID: 11400000, guid: 8d6a64a0641cb1d4db71527cec2f2270, type: 2}
