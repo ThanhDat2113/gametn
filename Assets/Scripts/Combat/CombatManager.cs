@@ -215,6 +215,13 @@ public class CombatManager : MonoBehaviour
         SpawnUnitViews();
         Debug.Log($"=== COMBAT STARTED === Player:{PlayerUnits.Count} vs Enemy:{EnemyUnits.Count}");
         OnCombatStarted?.Invoke();
+
+        // Play BGM
+        if (CombatAudioManager.Instance != null)
+        {
+            CombatAudioManager.Instance.PlayBGM(enemyGroup.zoneTag, enemyGroup.bgmClip);
+        }
+
         stateMachine.TransitionTo(CombatPhase.Intro);
     }
 

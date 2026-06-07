@@ -55,7 +55,54 @@ public class PlayerProgression : MonoBehaviour
         Debug.Log("[PlayerProgression] Đã reset toàn bộ tiến trình.");
     }
 
-    /// <summary>Lấy level hiện tại của nhân vật (mặc định 1).</summary>
+    /// <summary>Tính level trung bình của toàn bộ party (từ formation hiện tại).</summary>
+    public int GetAveragePartyLevel()
+    {
+        int totalLevel = 0;
+        int count = 0;
+
+        // Ưu tiên lấy từ FormationManager nếu có
+        var formationMgr = GameObject.FindFirstObjectByType<FormationManager>();
+        if (formationMgr != null)
+        {
+            var formation = formationMgr.GetCurrentFormationData();
+            if (formation?.slots != null)
+            {
+                foreach (var slot in formation.slots)
+                {
+                    if (slot?.data != null)
+                    {
+                        totalLevel += GetLevel(slot.data);
+                        count++;
+                    }
+                }
+            }
+        }
+
+        if (count == 0)
+        {
+            // Fallback: lấy từ dictionary đã có
+            foreach (var kvp in characterLevels)
+            {
+                totalLevel += kvp.Value;
+                count++;
+            }
+        }
+
+        return count > 0 ? Mathf.RoundToInt((float)totalLevel / count) : 1;
+    }
+
+    /// <summary>Set level trực tiếp cho character (dùng khi mở khóa nhân vật mới từ quest).</summary>
+    public void SetLevel(CharacterData character, int newLevel)
+    {
+        if (character == null) return;
+        string key = character.characterName;
+        characterLevels[key] = Mathf.Clamp(newLevel, 1, 50);
+        if (!characterExp.ContainsKey(key)) characterExp[key] = 0;
+        Debug.Log($"[PlayerProgression] Set level {character.characterName} → {characterLevels[key]}");
+    }
+
+    /// <summary>Lấy level hiện tại của nhân vật (mặc định baseLevel từ CharacterData).</summary>
     public int GetLevel(CharacterData character)
     {
         if (character == null) return 1;
@@ -145,7 +192,7 @@ public class PlayerProgression : MonoBehaviour
     {
         if (totalExp <= 0) return;
 
-        // Lấy danh sách player units hiện tại (nếu đang trong combat)
+        // Lấy danh sách player units
         List<CharacterData> partyMembers = new List<CharacterData>();
 
         if (CombatManager.Instance != null)
@@ -156,6 +203,23 @@ public class PlayerProgression : MonoBehaviour
                 .Select(u => u.Data)
                 .Where(d => d != null)
                 .ToList();
+        }
+        else
+        {
+            // Ngoài combat (quest reward, v.v.): lấy từ FormationManager
+            var formationMgr = GameObject.FindFirstObjectByType<FormationManager>();
+            if (formationMgr != null)
+            {
+                var formation = formationMgr.GetCurrentFormationData();
+                if (formation?.slots != null)
+                {
+                    foreach (var slot in formation.slots)
+                    {
+                        if (slot?.data != null && !partyMembers.Contains(slot.data))
+                            partyMembers.Add(slot.data);
+                    }
+                }
+            }
         }
 
         if (partyMembers.Count == 0)

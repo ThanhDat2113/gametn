@@ -43,6 +43,17 @@ public class CombatSceneStarter : MonoBehaviour
 
     private System.Collections.IEnumerator HandleCombatEnd(bool isVictory)
     {
+        // Hiển thị panel Victory/Defeat với animation pop-up
+        var resultUI = FindFirstObjectByType<CombatResultUI>();
+        if (resultUI != null)
+        {
+            yield return resultUI.ShowResult(isVictory);
+        }
+        else
+        {
+            Debug.LogWarning("[CombatSceneStarter] Không tìm thấy CombatResultUI trong scene.");
+        }
+
         // Fade to black trước khi rời combat scene
         if (FadeController.Instance != null)
             yield return FadeController.Instance.FadeToBlack();
@@ -57,7 +68,7 @@ public class CombatSceneStarter : MonoBehaviour
             LastTouchedEnemy.MarkAsDefeated();
         }
 
-        // Unload combat scene (sẽ tự động kích hoạt lại MapRoot và fade từ đen bên trong SceneLoaderManager)
+        // Unload combat scene
         SceneLoaderManager.UnloadCombatScene();
     }
 
