@@ -45,16 +45,23 @@ public class EquipmentPanel : MonoBehaviour
         var allCharacters = formationMgr.availableCharacters;
         if (allCharacters == null || allCharacters.Length == 0) return;
 
-        foreach (var character in allCharacters)
+        // Duyệt qua tất cả nhân vật và tạo slot, order chạy từ 1 theo thứ tự trong mảng
+        for (int i = 0; i < allCharacters.Length; i++)
         {
+            var character = allCharacters[i];
             if (character == null) continue;
+
+            // Lấy level thực từ PlayerProgression (nếu có)
+            int level = 1;
+            if (PlayerProgression.Instance != null)
+                level = PlayerProgression.Instance.GetLevel(character);
 
             GameObject go = Instantiate(characterSlotPrefab, characterContainer);
             var slotUI = go.GetComponent<CharacterSlotUI>();
             if (slotUI != null)
             {
-                int level = PlayerProgression.Instance?.GetLevel(character) ?? 1;
-                slotUI.Setup(character, level, 0);
+                // order = i+1 để hiển thị 1,2,3,... theo thứ tự trong danh sách
+                slotUI.Setup(character, level, i + 1);
 
                 var btn = go.GetComponent<Button>();
                 if (btn == null) btn = go.AddComponent<Button>();
@@ -74,7 +81,6 @@ public class EquipmentPanel : MonoBehaviour
         if (characterBattleSpriteDisplay != null)
         {
             characterBattleSpriteDisplay.sprite = character.battleSprite;
-            // Giữ tỷ lệ ảnh gốc, không bị kéo giãn theo khung Image
             characterBattleSpriteDisplay.preserveAspect = true;
         }
 

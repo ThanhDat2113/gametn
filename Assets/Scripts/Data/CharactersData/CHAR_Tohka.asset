@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6f9330979f02ddf43a415e7748b42aae, type: 3}
   m_Name: CHAR_Tohka
   m_EditorClassIdentifier: Assembly-CSharp::CharacterData
+  characterType: 0
   defaultCombatStyle: 0
   prefab: {fileID: 4372764338220409011, guid: c60750495697cc94ba0952a34bac5cc4, type: 3}
   characterName: Tohka
@@ -23,11 +24,15 @@ MonoBehaviour:
   basePDEF: 10
   baseMDEF: 10
   baseSpeed: 10
-  hpPerLevel: 5
-  atkPerLevel: 2
-  pdefPerLevel: 1
-  mdefPerLevel: 1
-  speedPerLevel: 1
+  baseLevel: 1
+  expReward: 100
+  baseExpThreshold: 100
+  expIncrementPerLevel: 50
+  hpPerLevel: 20
+  atkPerLevel: 10
+  pdefPerLevel: 10
+  mdefPerLevel: 10
+  speedPerLevel: 5
   skills:
   - {fileID: 11400000, guid: e523f0f9301d4e74b9e667de2a76f6e8, type: 2}
   - {fileID: 11400000, guid: 592b123f295f0f4418c878256344ce75, type: 2}
