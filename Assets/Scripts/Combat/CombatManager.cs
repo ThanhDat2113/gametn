@@ -166,22 +166,42 @@ public class CombatManager : MonoBehaviour
         OnTurnOrderUpdated?.Invoke(ActionOrder);
     }
 
+    // === START COMBAT (từ FormationData) – ĐÃ SỬA: cộng bonus trang bị ===
     public void StartCombat(FormationData playerFormation, EnemyGroupData enemyGroup)
     {
         PlayerUnits.Clear(); EnemyUnits.Clear();
         CurrentPlayerAP = STARTING_PLAYER_AP;
         OnAPChanged?.Invoke(CurrentPlayerAP);
 
+        // Tạo player units – có áp dụng bonus từ trang bị
         foreach (var slot in playerFormation.slots)
         {
             if (slot?.data == null) continue;
+
+            int level = slot.level;
+            CharacterData charData = slot.data;
+
+            // Lấy bonus trang bị từ EquipmentManager
+            int hpBonus = 0, atkBonus = 0, defBonus = 0;
+            if (EquipmentManager.Instance != null)
+            {
+                var equipment = EquipmentManager.Instance.GetEquipment(charData);
+                if (equipment != null)
+                {
+                    hpBonus = equipment.GetHPBonus();
+                    atkBonus = equipment.GetATKBonus();
+                    defBonus = equipment.GetDEFBonus();
+                }
+            }
+
             var unit = new CombatUnit();
-            unit.Initialize(slot.data, slot.level, isPlayer: true);
+            unit.Initialize(charData, level, isPlayer: true, hpBonus, atkBonus, defBonus);
             unit.GridRow = SlotToRow(slot.gridSlot);
             unit.GridSlot = slot.gridSlot;
             PlayerUnits.Add(unit);
         }
 
+        // Tạo enemy units (không có bonus)
         foreach (var entry in enemyGroup.enemies)
         {
             if (entry?.data == null) continue;
@@ -198,6 +218,7 @@ public class CombatManager : MonoBehaviour
         stateMachine.TransitionTo(CombatPhase.Intro);
     }
 
+    // === START COMBAT (overload dùng List, dùng cho test) – cũng đã sửa bonus ===
     public void StartCombat(
         List<(CharacterData data, int level, int gridSlot)> playerSetup,
         List<(CharacterData data, int level, int gridSlot)> enemySetup)

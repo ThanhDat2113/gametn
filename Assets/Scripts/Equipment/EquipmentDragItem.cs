@@ -27,7 +27,7 @@ public class EquipmentDragItem : MonoBehaviour, IBeginDragHandler, IDragHandler,
         {
             icon.sprite = equip.icon;
             icon.enabled = true;
-            icon.color = Color.white;
+            icon.color = Color.white; // alpha = 1
         }
         if (nameText != null)
             nameText.text = equip.itemName;
@@ -57,7 +57,8 @@ public class EquipmentDragItem : MonoBehaviour, IBeginDragHandler, IDragHandler,
         {
             icon.sprite = null;
             icon.enabled = true;
-            icon.color = new Color(1, 1, 1, 0.25f);
+            // Đặt alpha = 0 để icon trong suốt hoàn toàn
+            icon.color = new Color(1, 1, 1, 0f);
         }
         if (nameText != null)
             nameText.text = "Empty";
