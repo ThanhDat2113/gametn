@@ -9,7 +9,11 @@ public enum CombatStyle
 [CreateAssetMenu(fileName = "NewCharacter", menuName = "RPG/Character")]
 public class CharacterData : ScriptableObject
 {
-    [Header("Behavior")]
+    [Header("Type & Role")]
+[Tooltip("Chọn loại: Player (nhân vật của ta) hay Enemy (quái)")]
+public CharacterType characterType = CharacterType.Player;
+
+[Header("Behavior")]
     public CombatStyle defaultCombatStyle = CombatStyle.Melee;
 
     [Header("Prefab")]
@@ -29,7 +33,21 @@ public class CharacterData : ScriptableObject
     public int baseMDEF = 10;
     public int baseSpeed = 10;
 
-    [Header("Growth Per Level")]
+    [Header("Level Settings")]
+[Tooltip("Level mặc định khi character này được tạo")]
+public int baseLevel = 1;
+
+[Tooltip("Chỉ dùng nếu characterType = Enemy. EXP mà toàn team nhận khi quái này bị đánh bại")]
+public int expReward = 100;
+
+[Header("Level-Up Configuration")]
+[Tooltip("EXP cần để lên từ level 1→2")]
+public int baseExpThreshold = 100;
+
+[Tooltip("Mỗi level sẽ thêm thêm X EXP cần")]
+public int expIncrementPerLevel = 50;
+
+[Header("Growth Per Level")]
     public int hpPerLevel = 5;
     public int atkPerLevel = 2;
     public int pdefPerLevel = 1;

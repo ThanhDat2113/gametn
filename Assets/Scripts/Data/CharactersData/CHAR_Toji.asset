@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f9330979f02ddf43a415e7748b42aae, type: 3}
+  m_Name: CHAR_Toji
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterData
+  characterType: 0
+  defaultCombatStyle: 0
+  prefab: {fileID: 2325525273792315245, guid: 8d8ba1f6b4100524e87a512b37f28506, type: 3}
+  characterName: Toji
+  portrait: {fileID: -123971641, guid: 304ec525b347a2e48b6a8e2a9a767206, type: 3}
+  battleSprite: {fileID: 21300000, guid: 13521d89f41197c468a999ffce590d4b, type: 3}
+  lore: 
+  baseHP: 100
+  baseATK: 100
+  basePDEF: 10
+  baseMDEF: 10
+  baseSpeed: 10
+  baseLevel: 1
+  expReward: 100
+  baseExpThreshold: 100
+  expIncrementPerLevel: 50
+  hpPerLevel: 5
+  atkPerLevel: 2
+  pdefPerLevel: 1
+  mdefPerLevel: 1
+  speedPerLevel: 1
+  skills:
+  - {fileID: 11400000, guid: 0248620eb26882f45bfe08bd73a6c08b, type: 2}
+  - {fileID: 11400000, guid: 4ab8e516fda48194cb4b038fad207461, type: 2}
+  - {fileID: 11400000, guid: 264550706cb90704da9daecb1442fa1d, type: 2}
+  passiveScript: {fileID: 11500000, guid: 46396c75ce7306442bcfab8715ff208e, type: 3}

@@ -1,3 +1,5 @@
+
+
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -5,12 +7,6 @@ using UnityEngine;
 /// <summary>
 /// Test UI dùng OnGUI để chạy combat với tối đa 5 nhân vật mỗi bên.
 /// Thay thế CombatUI cũ.
-///
-/// Setup trong Inspector:
-///   ─ Player Roster: kéo tối đa 5 CharacterData vào (có thể để trống)
-///   ─ Player Levels:  level tương ứng cho từng slot (mặc định = 1)
-///   ─ Player Slots:   gridSlot 0-8 cho từng nhân vật
-///   ─ Enemy Group:    kéo EnemyGroupData asset vào
 /// </summary>
 public class CombatTestUI : MonoBehaviour
 {
@@ -21,16 +17,14 @@ public class CombatTestUI : MonoBehaviour
     [Tooltip("Level của từng nhân vật (index tương ứng playerRoster)")]
     public int[] playerLevels = { 1, 1, 1, 1, 1 };
 
-    [Tooltip("GridSlot 0-8 của từng nhân vật\n" +
-             "0-2=Front, 3-5=Mid, 6-8=Back\n" +
-             "Col: slot%3  (0=trái, 1=giữa, 2=phải)")]
+    [Tooltip("GridSlot 0-8 của từng nhân vật")]
     public int[] playerGridSlots = { 0, 1, 2, 3, 4 };
 
     [Header("Enemy Setup")]
     [Tooltip("Kéo EnemyGroupData asset vào đây")]
     public EnemyGroupData enemyGroup;
 
-    // ── Internal ──────────────────────────────────────────────
+    // ── Internal ──
     private CombatManager combat;
     private CombatUnit planningUnit;
     private SkillData selectedSkill;
@@ -54,7 +48,7 @@ public class CombatTestUI : MonoBehaviour
     {
         GUILayout.BeginArea(new Rect(10, 10, 420, 900));
 
-        // ── Chưa bắt đầu ──────────────────────────────────────
+        // ── Chưa bắt đầu ──
         if (combat.CurrentPhase == CombatPhase.None ||
             combat.CurrentPhase == CombatPhase.Defeat)
         {
@@ -66,17 +60,16 @@ public class CombatTestUI : MonoBehaviour
             return;
         }
 
-        // ── HP bars ────────────────────────────────────────────
+        // ── Phase label ──
+        GUILayout.Label($"Phase: {combat.CurrentPhase}");
+
+        // ── HP bars ──
         DrawUnitList("── PLAYER ──", combat.PlayerUnits);
         DrawUnitList("── ENEMY ──", combat.EnemyUnits);
         GUILayout.Space(8);
 
-        // ── Phase label ────────────────────────────────────────
-        GUILayout.Label($"Phase: {combat.CurrentPhase}   " +
-                        $"Round: {combat.CurrentRound}");
-
-        // ── Chọn skill ────────────────────────────────────────
-        if (combat.CurrentPhase == CombatPhase.PlayerPlan &&
+        // ── Chọn skill (chỉ khi đang Execute và có planningUnit) ──
+        if (combat.CurrentPhase == CombatPhase.Execute &&
             planningUnit != null)
         {
             DrawSkillSelection();
@@ -156,7 +149,6 @@ public class CombatTestUI : MonoBehaviour
     private void Submit(SkillData skill, List<CombatUnit> targets)
     {
         selectedSkill = null;
-        // combat.SubmitPlayerChoice(skill, targets);
         Debug.LogWarning("CombatTestUI.Submit is disabled due to API changes. Use the main game UI.");
     }
 
@@ -184,8 +176,7 @@ public class CombatTestUI : MonoBehaviour
 
         if (playerSetup.Count == 0)
         {
-            Debug.LogError("[CombatTestUI] Chưa có nhân vật nào! " +
-                           "Kéo CharacterData vào Player Roster.");
+            Debug.LogError("[CombatTestUI] Chưa có nhân vật nào! Kéo CharacterData vào Player Roster.");
             return;
         }
 

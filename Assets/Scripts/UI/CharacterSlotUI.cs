@@ -9,6 +9,7 @@ using TMPro;
 ///   - "Name"        → TextMeshProUGUI (tên nhân vật)
 ///   - "Level"       → TextMeshProUGUI (hiện "Lv. X")
 ///   - "Order"       → TextMeshProUGUI (số thứ tự: 1, 2, 3...)
+///   - "ExpSlider"   → Slider (thanh exp %, 0-1)
 /// Tất cả đều optional — thiếu cái nào thì bỏ qua cái đó.
 /// </summary>
 public class CharacterSlotUI : MonoBehaviour
@@ -18,6 +19,11 @@ public class CharacterSlotUI : MonoBehaviour
     public TextMeshProUGUI nameText;
     public TextMeshProUGUI levelText;
     public TextMeshProUGUI orderText;
+    public Slider expSlider;
+
+    private CharacterData currentCharacter;
+    private int currentLevel;
+    private int currentOrder;
 
     private void Awake()
     {
@@ -26,14 +32,18 @@ public class CharacterSlotUI : MonoBehaviour
         if (nameText   == null) nameText   = FindInChildren<TextMeshProUGUI>("Name");
         if (levelText  == null) levelText  = FindInChildren<TextMeshProUGUI>("Level");
         if (orderText  == null) orderText  = FindInChildren<TextMeshProUGUI>("Order");
+        if (expSlider  == null) expSlider  = FindInChildren<Slider>("ExpSlider");
     }
 
     /// <summary>
-    /// Gọi từ MapMenuManager.RefreshCharacterContainer().
+    /// Gọi từ MapMenuManager.RefreshCharacterContainer() hoặc EquipmentPanel.
     /// </summary>
-    public void Setup(CharacterData data, int level, int order)
+    public void Setup(CharacterData data, int level, int order, float expProgress = -1f)
     {
         if (data == null) return;
+        currentCharacter = data;
+        currentLevel = level;
+        currentOrder = order;
 
         // Portrait
         if (portrait != null)
@@ -61,6 +71,15 @@ public class CharacterSlotUI : MonoBehaviour
         // Số thứ tự
         if (orderText != null)
             orderText.text = order.ToString();
+
+        // EXP Slider
+        if (expSlider != null)
+        {
+            if (expProgress >= 0f)
+                expSlider.value = expProgress;
+            else
+                expSlider.value = 0f;
+        }
     }
 
     // Helper tìm component trong children theo tên, kể cả object đang inactive
@@ -73,4 +92,8 @@ public class CharacterSlotUI : MonoBehaviour
         }
         return null;
     }
+
+    public CharacterData GetCharacter() => currentCharacter;
+    public int GetLevel() => currentLevel;
+    public int GetOrder() => currentOrder;
 }

@@ -27,9 +27,9 @@ public class TurnOrderUIController : MonoBehaviour
         combatManager = CombatManager.Instance;
         if (combatManager != null)
         {
-            combatManager.OnRoundSetup += RebuildTurnOrderUI;
+            combatManager.OnTurnOrderUpdated += RebuildTurnOrderUI;
             combatManager.OnUnitTurnStart += OnUnitTurnStart;
-            combatManager.OnActionResolved += OnActionResolved; // Xóa icon khi hành động xong
+            combatManager.OnActionResolved += OnActionResolved;
         }
     }
 
@@ -37,7 +37,7 @@ public class TurnOrderUIController : MonoBehaviour
     {
         if (combatManager != null)
         {
-            combatManager.OnRoundSetup -= RebuildTurnOrderUI;
+            combatManager.OnTurnOrderUpdated -= RebuildTurnOrderUI;
             combatManager.OnUnitTurnStart -= OnUnitTurnStart;
             combatManager.OnActionResolved -= OnActionResolved;
         }

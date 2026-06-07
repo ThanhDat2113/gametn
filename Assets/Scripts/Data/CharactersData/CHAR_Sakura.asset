@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f9330979f02ddf43a415e7748b42aae, type: 3}
+  m_Name: CHAR_Sakura
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterData
+  characterType: 0
+  defaultCombatStyle: 1
+  prefab: {fileID: 3573782288335869188, guid: 040870377b3090349b9542a19506c5cf, type: 3}
+  characterName: Sakura
+  portrait: {fileID: 1477793598, guid: 6e857aaf62313c44ba5de2141ef0007d, type: 3}
+  battleSprite: {fileID: 21300000, guid: 52528e42be9ca7349b6e26f9cc414f26, type: 3}
+  lore: 
+  baseHP: 100
+  baseATK: 50
+  basePDEF: 10
+  baseMDEF: 10
+  baseSpeed: 10
+  baseLevel: 1
+  expReward: 100
+  baseExpThreshold: 100
+  expIncrementPerLevel: 50
+  hpPerLevel: 5
+  atkPerLevel: 2
+  pdefPerLevel: 1
+  mdefPerLevel: 1
+  speedPerLevel: 1
+  skills:
+  - {fileID: 11400000, guid: a70f92c8555ad874c9ec764cf2e394ac, type: 2}
+  - {fileID: 11400000, guid: 38dbaf8905a77fb49bf2b2bb4c42e53c, type: 2}
+  - {fileID: 11400000, guid: 9cf412b114b6d9c4180e49319d6cb1ff, type: 2}
+  passiveScript: {fileID: 11500000, guid: 54918cf9d24e9834bb20254f0bedc759, type: 3}

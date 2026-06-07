@@ -144,8 +144,17 @@ public class ClashAnimationSequence : MonoBehaviour
             StartCoroutine(FireProjectile(actorView, targets.First(), skill));
         }
 
-        // 3. Setup Hit Handler to spawn HitOnEachTarget VFX
+        // 3. Setup Hit Handler to spawn VFX and play SFX
+        int hitCounter = 0;
         Action onHitHandler = () => {
+            int currentHit = hitCounter++;
+
+            // Play skill SFX mỗi hit
+            if (CombatAudioManager.Instance != null && skill != null)
+            {
+                CombatAudioManager.Instance.PlaySkillSFX(skill.sfxClips, currentHit);
+            }
+
             foreach (var outcome in result.Outcomes)
             {
                 var targetView = GetViewForUnit(outcome.Target);

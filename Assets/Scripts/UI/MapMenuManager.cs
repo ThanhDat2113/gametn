@@ -13,6 +13,7 @@ public class MapMenuManager : MonoBehaviour
     public GameObject characterPanel;
     public GameObject formationPanel;
     public GameObject inventoryPanel;
+    public GameObject equipmentPanel;      // <--- THÊM
     public GameObject savePanel;
     public GameObject loadPanel;
     public GameObject quitPanel;
@@ -35,12 +36,13 @@ public class MapMenuManager : MonoBehaviour
 
     [Header("Sub Panel Managers")]
     public CharacterPanelManager characterPanelManager;
+    public EquipmentPanel equipmentPanelManager;   // <--- THÊM (gán trong Inspector)
 
     private RectTransform mainRect;
     private CanvasGroup mainCG;
     private AudioSource audioSource;
 
-    private enum MenuState { Closed, Main, Character, Formation, Inventory, Save, Load, Quit }
+    private enum MenuState { Closed, Main, Character, Formation, Inventory, Equipment, Save, Load, Quit }
     private MenuState currentState = MenuState.Closed;
     private Coroutine currentAnim;
 
@@ -51,6 +53,7 @@ public class MapMenuManager : MonoBehaviour
         if (characterPanel != null) characterPanel.SetActive(false);
         if (formationPanel != null) formationPanel.SetActive(false);
         if (inventoryPanel != null) inventoryPanel.SetActive(false);
+        if (equipmentPanel != null) equipmentPanel.SetActive(false);
         if (savePanel != null) savePanel.SetActive(false);
         if (loadPanel != null) loadPanel.SetActive(false);
         if (quitPanel != null) quitPanel.SetActive(false);
@@ -77,6 +80,7 @@ public class MapMenuManager : MonoBehaviour
         characterPanel.SetActive(false);
         formationPanel.SetActive(false);
         inventoryPanel.SetActive(false);
+        equipmentPanel.SetActive(false);
         savePanel.SetActive(false);
         loadPanel.SetActive(false);
         quitPanel.SetActive(false);
@@ -124,6 +128,13 @@ public class MapMenuManager : MonoBehaviour
                 else
                     GoBackToMainWithoutEffect();
                 break;
+            case MenuState.Equipment:
+                // EquipmentPanel tự xử lý back (nếu đang ở detail thì quay về list)
+                if (equipmentPanelManager != null && equipmentPanelManager.TryGoBack())
+                    return;
+                else
+                    GoBackToMainWithoutEffect();
+                break;
             case MenuState.Quit:
                 CloseQuitPanel();
                 break;
@@ -143,7 +154,7 @@ public class MapMenuManager : MonoBehaviour
     {
         if (currentAnim != null) StopCoroutine(currentAnim);
         mainPanel.SetActive(true);
-        RefreshCharacterContainer(); // Cập nhật danh sách nhân vật
+        RefreshCharacterContainer();
         mainRect.localScale = Vector3.one * startScale;
         if (useFade && mainCG != null) mainCG.alpha = 0f;
         currentAnim = StartCoroutine(AnimateMainPanel(startScale, 1f, 0f, 1f, false));
@@ -160,7 +171,7 @@ public class MapMenuManager : MonoBehaviour
     {
         CloseCurrentSubPanel();
         mainPanel.SetActive(true);
-        RefreshCharacterContainer(); // Cập nhật lại khi quay về main
+        RefreshCharacterContainer();
         mainRect.localScale = Vector3.one;
         if (useFade && mainCG != null) mainCG.alpha = 1f;
         currentState = MenuState.Main;
@@ -173,6 +184,7 @@ public class MapMenuManager : MonoBehaviour
             case MenuState.Character: characterPanel.SetActive(false); break;
             case MenuState.Formation: formationPanel.SetActive(false); break;
             case MenuState.Inventory: inventoryPanel.SetActive(false); break;
+            case MenuState.Equipment: equipmentPanel.SetActive(false); break;
             case MenuState.Save: savePanel.SetActive(false); break;
             case MenuState.Load: loadPanel.SetActive(false); break;
         }
@@ -249,6 +261,7 @@ public class MapMenuManager : MonoBehaviour
     public void OpenCharacterPanel() => OpenSubPanel(characterPanel, MenuState.Character);
     public void OpenFormationPanel() => OpenSubPanel(formationPanel, MenuState.Formation);
     public void OpenInventoryPanel() => OpenSubPanel(inventoryPanel, MenuState.Inventory);
+    public void OpenEquipmentPanel() => OpenSubPanel(equipmentPanel, MenuState.Equipment);
     public void OpenSavePanel() => OpenSubPanel(savePanel, MenuState.Save);
     public void OpenLoadPanel() => OpenSubPanel(loadPanel, MenuState.Load);
     public void OpenQuit() => OpenQuitPanel();
@@ -291,13 +304,21 @@ public class MapMenuManager : MonoBehaviour
         {
             var slotData = activeSlots[idx];
             var character = slotData.slot.data;
+
+            // Lấy level thực + exp progress từ PlayerProgression (cập nhật sau combat)
             int level = slotData.slot.level;
+            float expProgress = 0f;
+            if (PlayerProgression.Instance != null)
+            {
+                level = PlayerProgression.Instance.GetLevel(character);
+                expProgress = PlayerProgression.Instance.GetLevelProgress(character);
+            }
 
             GameObject slotGO = Instantiate(characterSlotPrefab, characterContainer);
             var slotUI = slotGO.GetComponent<CharacterSlotUI>();
             if (slotUI != null)
             {
-                slotUI.Setup(character, level, idx + 1);
+                slotUI.Setup(character, level, idx + 1, expProgress);
                 characterSlots.Add(slotUI);
             }
             else

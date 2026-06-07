@@ -208,7 +208,16 @@ public class QuestManager : MonoBehaviour
                     if (reward.character != null && formationMgr != null)
                     {
                         formationMgr.UnlockCharacter(reward.character);
-                        Debug.Log($"[Quest Reward] Mở khóa nhân vật: {reward.character.characterName}");
+
+                        // Scale level nhân vật mới = level trung bình của party
+                        int avgLevel = 1;
+                        if (PlayerProgression.Instance != null)
+                        {
+                            avgLevel = PlayerProgression.Instance.GetAveragePartyLevel();
+                            PlayerProgression.Instance.SetLevel(reward.character, avgLevel);
+                        }
+
+                        Debug.Log($"[Quest Reward] Mở khóa nhân vật: {reward.character.characterName} (Lv.{avgLevel})");
                     }
                     break;
 
@@ -217,6 +226,18 @@ public class QuestManager : MonoBehaviour
                     {
                         InventoryManager.Instance.AddItem(reward.item, reward.amount);
                         Debug.Log($"[Quest Reward] Thêm item: {reward.item.itemName} x{reward.amount}");
+                    }
+                    break;
+
+                case QuestRewardType.Experience:
+                    if (reward.amount > 0 && PlayerProgression.Instance != null)
+                    {
+                        PlayerProgression.Instance.AddPartyExperience(reward.amount);
+                        Debug.Log($"[Quest Reward] Party nhận {reward.amount} kinh nghiệm!");
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"[Quest Reward] Không thể cộng {reward.amount} EXP: PlayerProgression chưa được khởi tạo.");
                     }
                     break;
             }

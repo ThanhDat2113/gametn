@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6f9330979f02ddf43a415e7748b42aae, type: 3}
   m_Name: ENEMY_Mushroom
   m_EditorClassIdentifier: Assembly-CSharp::CharacterData
+  characterType: 1
   defaultCombatStyle: 0
   prefab: {fileID: 151686111864234405, guid: a564c0b3a15d54849935a658308984e0, type: 3}
   characterName: Mushroom
@@ -23,6 +24,10 @@ MonoBehaviour:
   basePDEF: 8
   baseMDEF: 4
   baseSpeed: 10
+  baseLevel: 1
+  expReward: 100
+  baseExpThreshold: 100
+  expIncrementPerLevel: 50
   hpPerLevel: 5
   atkPerLevel: 2
   pdefPerLevel: 1
