@@ -56,7 +56,8 @@ public class UnitView : MonoBehaviour
 
         if (unit.Data.battleSprite != null)
             spriteRenderer.sprite = unit.Data.battleSprite;
-        spriteRenderer.flipX = !unit.IsPlayer;
+        bool prefabFlipX = spriteRenderer.flipX;
+spriteRenderer.flipX = prefabFlipX ^ !unit.IsPlayer;
 
         if (cameraManager == null)
             cameraManager = FindFirstObjectByType<CombatCameraManager>();
