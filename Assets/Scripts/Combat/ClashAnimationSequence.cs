@@ -20,6 +20,8 @@ public class ClashAnimationSequence : MonoBehaviour
     public float dimAlpha = 0.5f;
 
     private List<UnitView> allUnitViews = new();
+    // Track hit counter từ ExecutePhase để fallback trong PlayAction
+    private int _lastHitCounter = 0;
 
     private void Awake()
     {
@@ -61,8 +63,29 @@ public class ClashAnimationSequence : MonoBehaviour
             yield return StartCoroutine(ApproachPhase(actorView, attackPosition));
         }
 
+        // Reset hit counter và chạy execute phase
+        _lastHitCounter = 0;
         float animationLength = ExecutePhase(result);
         yield return new WaitForSeconds(animationLength + postSkillWait);
+
+        // Fallback: nếu animation không có OnHit event, force flush ngay
+        if (_lastHitCounter == 0 && actorView != null)
+        {
+            Debug.Log($"[Anim] {result.Skill?.skillName} không có Hit event — force flush fallback.");
+            // Force apply damage + VFX + SFX ngay lập tức
+            if (CombatAudioManager.Instance != null && result.Skill != null)
+                CombatAudioManager.Instance.PlaySkillSFX(result.Skill.sfxClips, 0);
+
+            foreach (var outcome in result.Outcomes)
+            {
+                var targetView = GetViewForUnit(outcome.Target);
+                if (targetView == null) continue;
+                if (cameraManager != null) cameraManager.PlayImpactShake();
+                targetView.SetAnimationTrigger(AnimationConstants.Hurt);
+                SpawnHitVFX(result.Skill, targetView);
+            }
+            actorView.FlushPendingOutcomes();
+        }
 
         if (shouldMove)
         {
@@ -145,9 +168,9 @@ public class ClashAnimationSequence : MonoBehaviour
         }
 
         // 3. Setup Hit Handler to spawn VFX and play SFX
-        int hitCounter = 0;
+        _lastHitCounter = 0;
         Action onHitHandler = () => {
-            int currentHit = hitCounter++;
+            int currentHit = _lastHitCounter++;
 
             // Play skill SFX mỗi hit
             if (CombatAudioManager.Instance != null && skill != null)
@@ -198,14 +221,9 @@ public class ClashAnimationSequence : MonoBehaviour
     {
         if (skill == null) return;
 
-        // --- New Unified System: Auto-play for Self-Target skills ---
-        // Skills like buffs often don't have animation events, so we play their VFX immediately.
-        // For all other skills, VFX are triggered by Animation Events in UnitView.cs.
-        bool isBuffSkill = skill.targetType == TargetType.Self || 
-                           skill.targetType == TargetType.SingleAlly || 
-                           skill.targetType == TargetType.AllAllies;
-
-        if (isBuffSkill && skill.vfxEvents != null)
+        // Auto-spawn AtCaster và AtTarget VFX cho tất cả skills (melee, ranged, buff)
+        // HitOnEachTarget VFX được spawn bởi onHit handler qua animation event
+        if (skill.vfxEvents != null)
         {
             foreach (var evt in skill.vfxEvents)
             {
