@@ -38,6 +38,13 @@ public class EnemyGroupData : ScriptableObject
         public int gridSlot = 0;
     }
 
+    [Header("BGM & Zone")]
+    [Tooltip("Tag vùng: 'vùng 1' → 'vùng 5'")]
+    public string zoneTag = "vùng 1";
+
+    [Tooltip("Nhạc nền cho trận này (ghi đè lên zoneBGM fallback)")]
+    public AudioClip bgmClip;
+
     [Tooltip("Tối đa 9 kẻ địch (1 ô / 1 kẻ địch)")]
     public EnemyEntry[] enemies;
 }

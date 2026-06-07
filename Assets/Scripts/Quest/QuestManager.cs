@@ -208,7 +208,16 @@ public class QuestManager : MonoBehaviour
                     if (reward.character != null && formationMgr != null)
                     {
                         formationMgr.UnlockCharacter(reward.character);
-                        Debug.Log($"[Quest Reward] Mở khóa nhân vật: {reward.character.characterName}");
+
+                        // Scale level nhân vật mới = level trung bình của party
+                        int avgLevel = 1;
+                        if (PlayerProgression.Instance != null)
+                        {
+                            avgLevel = PlayerProgression.Instance.GetAveragePartyLevel();
+                            PlayerProgression.Instance.SetLevel(reward.character, avgLevel);
+                        }
+
+                        Debug.Log($"[Quest Reward] Mở khóa nhân vật: {reward.character.characterName} (Lv.{avgLevel})");
                     }
                     break;
 

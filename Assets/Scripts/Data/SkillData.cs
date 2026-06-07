@@ -58,6 +58,9 @@ public class SkillData : ScriptableObject
     [HideInInspector, Header("DEPRECATED: Use vfxEvents with 'HitOnEachTarget' mode")]
     public VFXEvent[] hitVfxEvents;
 
+    [Header("Audio")]
+    public AudioClip[] sfxClips;  // SFX cho skill, mỗi hit 1 clip (nếu có)
+
     [Header("Animation")]
     public string animationTrigger;
     

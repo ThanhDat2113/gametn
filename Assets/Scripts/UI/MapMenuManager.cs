@@ -292,16 +292,20 @@ public class MapMenuManager : MonoBehaviour
             var slotData = activeSlots[idx];
             var character = slotData.slot.data;
 
-            // Lấy level thực từ PlayerProgression (cập nhật sau combat)
+            // Lấy level thực + exp progress từ PlayerProgression (cập nhật sau combat)
             int level = slotData.slot.level;
+            float expProgress = 0f;
             if (PlayerProgression.Instance != null)
+            {
                 level = PlayerProgression.Instance.GetLevel(character);
+                expProgress = PlayerProgression.Instance.GetLevelProgress(character);
+            }
 
             GameObject slotGO = Instantiate(characterSlotPrefab, characterContainer);
             var slotUI = slotGO.GetComponent<CharacterSlotUI>();
             if (slotUI != null)
             {
-                slotUI.Setup(character, level, idx + 1);
+                slotUI.Setup(character, level, idx + 1, expProgress);
                 characterSlots.Add(slotUI);
             }
             else
