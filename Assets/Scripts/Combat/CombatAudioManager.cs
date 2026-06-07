@@ -67,9 +67,18 @@ public class CombatAudioManager : MonoBehaviour
     /// </summary>
     public void PlayBGM(string zoneTag, AudioClip overrideClip = null)
     {
+        // Null check an toàn cho AudioSource
+        if (bgmSource == null)
+        {
+            Debug.LogWarning("[CombatAudio] bgmSource null, không thể play BGM. Tự động tạo...");
+            bgmSource = gameObject.AddComponent<AudioSource>();
+            bgmSource.loop = true;
+            bgmSource.volume = 0.5f;
+            bgmSource.spatialBlend = 0f;
+        }
+
         if (overrideClip != null)
         {
-            // Dùng clip từ EnemyGroupData
             if (bgmSource.clip != overrideClip)
             {
                 bgmSource.clip = overrideClip;
@@ -80,22 +89,26 @@ public class CombatAudioManager : MonoBehaviour
             return;
         }
 
-        // Fallback: tìm trong zoneBGMList
+        // Fallback: tìm trong zoneBGMList (có thể null)
         if (zoneTag == currentZone && bgmSource.isPlaying) return;
 
-        foreach (var entry in zoneBGMList)
+        if (zoneBGMList != null)
         {
-            if (entry.zoneTag == zoneTag && entry.bgmClip != null)
+            foreach (var entry in zoneBGMList)
             {
-                bgmSource.clip = entry.bgmClip;
-                bgmSource.Play();
-                currentZone = zoneTag;
-                Debug.Log($"[CombatAudio] Play BGM: {entry.bgmClip.name} (zone: {zoneTag})");
-                return;
+                if (entry == null) continue;
+                if (entry.zoneTag == zoneTag && entry.bgmClip != null)
+                {
+                    bgmSource.clip = entry.bgmClip;
+                    bgmSource.Play();
+                    currentZone = zoneTag;
+                    Debug.Log($"[CombatAudio] Play BGM: {entry.bgmClip.name} (zone: {zoneTag})");
+                    return;
+                }
             }
         }
 
-        Debug.LogWarning($"[CombatAudio] Không tìm thấy BGM cho zone: {zoneTag}");
+        Debug.Log($"[CombatAudio] Không tìm thấy BGM cho zone: {zoneTag} (bỏ qua, không lỗi)");
     }
 
     /// <summary>

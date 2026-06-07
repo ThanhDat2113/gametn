@@ -21,12 +21,18 @@ public class CombatTestStarter : MonoBehaviour
         combat = CombatManager.Instance;
         if (combat == null) Debug.LogError("[TestStarter] CombatManager not found!");
 
-        // Nếu đã có đội hình từ Map → vô hiệu hóa hoàn toàn
+        // Nếu đã có đội hình từ Map → vô hiệu hóa (khi load additively)
         if (FormationDataStorage.PendingFormation != null)
         {
             Debug.Log("[TestStarter] PendingFormation detected from Map. Disabling test starter.");
             enabled = false;
             return;
+        }
+
+        // Standalone mode: dùng autoStartOnAwake nếu được bật
+        if (autoStartOnAwake && enabled)
+        {
+            Debug.Log("[TestStarter] Standalone mode. Auto-starting combat.");
         }
     }
 

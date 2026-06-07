@@ -12,13 +12,26 @@ public class CombatSceneStarter : MonoBehaviour
         var pendingFormation = FormationDataStorage.PendingFormation;
         var pendingEnemy = PendingEnemyGroup != null ? PendingEnemyGroup : enemyGroup;
 
-        Debug.Log($"[CombatSceneStarter] Formation: {(pendingFormation == null ? "NULL" : "OK")} Enemy: {(pendingEnemy == null ? "NULL" : pendingEnemy.name)}");
-
-        if (pendingFormation == null || pendingEnemy == null)
+        // Kiểm tra: nếu không có pending data, cho TestStarter xử lý (standalone mode)
+        if (pendingFormation == null)
         {
-            Debug.LogError("Thiếu dữ liệu đội hình hoặc enemy group. Không thể bắt đầu combat.");
-            // Quay về map nếu lỗi
-            ReturnToMapAfterError();
+            var testStarter = GetComponent<CombatTestStarter>();
+            if (testStarter != null && testStarter.enabled)
+            {
+                Debug.Log("[CombatSceneStarter] Không có pending data. Chuyển xử lý cho CombatTestStarter.");
+                return;
+            }
+            // Nếu không có TestStarter → báo lỗi và thoát
+            Debug.LogError("[CombatSceneStarter] Không có pending data và không có TestStarter!");
+            return;
+        }
+
+        Debug.Log($"[CombatSceneStarter] Formation: OK Enemy: {(pendingEnemy == null ? "NULL" : pendingEnemy.name)}");
+
+        if (pendingEnemy == null)
+        {
+            Debug.LogError("[CombatSceneStarter] Enemy group is null!");
+            if (SceneLoaderManager.Instance != null) ReturnToMapAfterError();
             return;
         }
 
@@ -43,6 +56,10 @@ public class CombatSceneStarter : MonoBehaviour
 
     private System.Collections.IEnumerator HandleCombatEnd(bool isVictory)
     {
+        // Dừng BGM combat khi kết thúc
+        if (CombatAudioManager.Instance != null)
+            CombatAudioManager.Instance.StopBGM();
+
         // Hiển thị panel Victory/Defeat với animation pop-up
         var resultUI = FindFirstObjectByType<CombatResultUI>();
         if (resultUI != null)
@@ -68,8 +85,15 @@ public class CombatSceneStarter : MonoBehaviour
             LastTouchedEnemy.MarkAsDefeated();
         }
 
-        // Unload combat scene
-        SceneLoaderManager.UnloadCombatScene();
+        // Unload combat scene (chỉ khi đang load additively qua Map)
+        if (SceneLoaderManager.Instance != null)
+        {
+            SceneLoaderManager.UnloadCombatScene();
+        }
+        else
+        {
+            Debug.Log("[CombatSceneStarter] Standalone mode — không unload scene.");
+        }
     }
 
     // Lưu enemy vừa chạm (gán từ MapEnemy trước khi load)

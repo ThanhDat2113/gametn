@@ -15,10 +15,19 @@ public class GameInitializer : MonoBehaviour
         // 1. PlayerProgression
         if (createPlayerProgression && PlayerProgression.Instance == null)
         {
-            GameObject go = new GameObject("PlayerProgression");
+            var go = new GameObject("PlayerProgression");
             go.AddComponent<PlayerProgression>();
             DontDestroyOnLoad(go);
             Debug.Log("[GameInitializer] Đã tự động tạo PlayerProgression singleton.");
+        }
+
+        // 2. SceneLoaderManager (cần cho load/unload combat scene)
+        if (SceneLoaderManager.Instance == null)
+        {
+            var go = new GameObject("SceneLoaderManager");
+            go.AddComponent<SceneLoaderManager>();
+            DontDestroyOnLoad(go);
+            Debug.Log("[GameInitializer] Đã tự động tạo SceneLoaderManager singleton.");
         }
     }
 }

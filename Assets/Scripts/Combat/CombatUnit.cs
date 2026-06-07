@@ -345,6 +345,23 @@ public class CombatUnit
     }
 
     /// <summary>
+    /// Recalculate stats khi level-up.
+    /// Gọi từ PlayerProgression.UpdateCombatUnitLevel().
+    /// </summary>
+    public void RecalculateStatsForLevel(int newLevel)
+    {
+        Level = newLevel;
+        int oldMaxHP = MaxHP;
+        MaxHP = Data.GetHP(Level);
+        CurrentHP += (MaxHP - oldMaxHP); // hồi thêm phần máu mới
+        ATK = Data.GetATK(Level);
+        PDEF = Data.GetPDEF(Level);
+        MDEF = Data.GetMDEF(Level);
+        Speed = Data.GetSpeed(Level);
+        Debug.Log($"[{UnitName}] Level Up stats: HP {MaxHP} | ATK {ATK} | PDEF {PDEF} | MDEF {MDEF} | Speed {Speed}");
+    }
+
+    /// <summary>
     /// Lấy hệ số nhân sát thương từ Empowered stacks mà KHÔNG tiêu thụ chúng.
     /// </summary>
     public float GetEmpowerMultiplier()

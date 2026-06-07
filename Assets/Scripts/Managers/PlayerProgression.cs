@@ -289,7 +289,7 @@ public class PlayerProgression : MonoBehaviour
     }
 
     /// <summary>
-    /// Cập nhật level cho CombatUnit tương ứng nếu đang trong combat.
+    /// Cập nhật level + stats cho CombatUnit khi level-up ngay trong combat.
     /// </summary>
     private void UpdateCombatUnitLevel(CharacterData character, int newLevel)
     {
@@ -300,8 +300,8 @@ public class PlayerProgression : MonoBehaviour
 
         if (unit != null)
         {
-            Debug.Log($"[PlayerProgression] {character.characterName} lên cấp {newLevel} trong combat!");
-            // Ghi nhận level mới (CombatUnit sẽ refresh stats ở lần combat sau)
+            Debug.Log($"[PlayerProgression] {character.characterName} lên cấp {newLevel} trong combat! Cập nhật stats...");
+            unit.RecalculateStatsForLevel(newLevel);
         }
     }
 
