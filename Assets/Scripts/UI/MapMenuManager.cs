@@ -13,7 +13,7 @@ public class MapMenuManager : MonoBehaviour
     public GameObject characterPanel;
     public GameObject formationPanel;
     public GameObject inventoryPanel;
-    public GameObject equipmentPanel;      // <--- THÊM
+    public GameObject equipmentPanel;
     public GameObject savePanel;
     public GameObject loadPanel;
     public GameObject quitPanel;
@@ -36,7 +36,7 @@ public class MapMenuManager : MonoBehaviour
 
     [Header("Sub Panel Managers")]
     public CharacterPanelManager characterPanelManager;
-    public EquipmentPanel equipmentPanelManager;   // <--- THÊM (gán trong Inspector)
+    public EquipmentPanel equipmentPanelManager;
 
     private RectTransform mainRect;
     private CanvasGroup mainCG;
@@ -85,7 +85,6 @@ public class MapMenuManager : MonoBehaviour
         loadPanel.SetActive(false);
         quitPanel.SetActive(false);
 
-        // Đăng ký sự kiện thay đổi đội hình
         var formationMgr = FindFirstObjectByType<FormationManager>();
         if (formationMgr != null)
         {
@@ -129,7 +128,6 @@ public class MapMenuManager : MonoBehaviour
                     GoBackToMainWithoutEffect();
                 break;
             case MenuState.Equipment:
-                // EquipmentPanel tự xử lý back (nếu đang ở detail thì quay về list)
                 if (equipmentPanelManager != null && equipmentPanelManager.TryGoBack())
                     return;
                 else
@@ -269,7 +267,6 @@ public class MapMenuManager : MonoBehaviour
     // ─── Character Container ─────────────────────────────────
     private void RefreshCharacterContainer()
     {
-        // Xóa các slot cũ
         foreach (var slot in characterSlots)
         {
             if (slot != null) Destroy(slot.gameObject);
@@ -288,7 +285,6 @@ public class MapMenuManager : MonoBehaviour
         var formationData = formationMgr.GetCurrentFormationData();
         if (formationData == null || formationData.slots == null) return;
 
-        // Lọc các ô có nhân vật, sắp xếp theo gridSlot
         var activeSlots = new List<(int gridSlot, FormationSlot slot)>();
         for (int i = 0; i < formationData.slots.Length; i++)
         {
@@ -299,26 +295,36 @@ public class MapMenuManager : MonoBehaviour
         }
         activeSlots.Sort((a, b) => a.gridSlot.CompareTo(b.gridSlot));
 
-        // Tạo UI slot
         for (int idx = 0; idx < activeSlots.Count; idx++)
         {
             var slotData = activeSlots[idx];
             var character = slotData.slot.data;
 
-            // Lấy level thực + exp progress từ PlayerProgression (cập nhật sau combat)
-            int level = slotData.slot.level;
+            // Lấy dữ liệu từ PlayerProgression
+            int level = 1;
             float expProgress = 0f;
+            int currentExp = 0;
+            int neededExp = 100;
+
             if (PlayerProgression.Instance != null)
             {
                 level = PlayerProgression.Instance.GetLevel(character);
                 expProgress = PlayerProgression.Instance.GetLevelProgress(character);
+                currentExp = PlayerProgression.Instance.GetCurrentExp(character);
+                neededExp = PlayerProgression.Instance.GetExpToNextLevel(character);
+            }
+            else
+            {
+                // Fallback
+                level = slotData.slot.level;
+                neededExp = 100;
             }
 
             GameObject slotGO = Instantiate(characterSlotPrefab, characterContainer);
             var slotUI = slotGO.GetComponent<CharacterSlotUI>();
             if (slotUI != null)
             {
-                slotUI.Setup(character, level, idx + 1, expProgress);
+                slotUI.Setup(character, level, idx + 1, expProgress, currentExp, neededExp);
                 characterSlots.Add(slotUI);
             }
             else
