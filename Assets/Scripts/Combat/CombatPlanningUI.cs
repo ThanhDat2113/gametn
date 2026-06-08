@@ -268,9 +268,12 @@ public class CombatPlanningUI : MonoBehaviour
             {
                 // Chỉ có thể nhấn nút nếu đủ AP
                 btn.interactable = canAfford;
-                btn.onClick.AddListener(() => OnSkillSelected(skill));
-            }
-            AddHoverEffect(go, unit, capturedIdx, skill);
+                    btn.onClick.AddListener(() => {
+                        AudioManager.Instance.PlayUIClick();
+                        OnSkillSelected(skill);
+                    });
+                }
+                AddHoverEffect(go, unit, capturedIdx, skill);
             activeSkillButtons.Add(go);
         }
         SetInstruction($"{unit.UnitName} — Choose a skill");

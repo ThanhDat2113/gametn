@@ -47,6 +47,10 @@ public class DialogueBubbleUI : MonoBehaviour
         bubbleRoot.transform.position = target.position + (Vector3)offset;
         speakerText.text = line.speakerName;
         contentText.text = line.text;
+        
+        // Phát âm thanh text dialogue mỗi khi hiện dòng mới
+        AudioManager.Instance.PlayDialogueSound();
+        
         bubbleRoot.SetActive(true);
         _isShowing = true;
         _onHide = onHide;

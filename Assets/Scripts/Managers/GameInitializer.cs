@@ -21,13 +21,22 @@ public class GameInitializer : MonoBehaviour
             Debug.Log("[GameInitializer] Đã tự động tạo PlayerProgression singleton.");
         }
 
-        // 2. SceneLoaderManager (cần cho load/unload combat scene)
+        // 2. SceneLoaderManager
         if (SceneLoaderManager.Instance == null)
         {
             var go = new GameObject("SceneLoaderManager");
             go.AddComponent<SceneLoaderManager>();
             DontDestroyOnLoad(go);
             Debug.Log("[GameInitializer] Đã tự động tạo SceneLoaderManager singleton.");
+        }
+
+        // 3. AudioManager (map SFX, dialogue, UI sound)
+        if (AudioManager.Instance == null)
+        {
+            // AudioManager tự tạo qua lazy init trong Instance getter
+            // Chỉ cần gọi Instance là nó tự tạo
+            var _ = AudioManager.Instance;
+            Debug.Log("[GameInitializer] Đã tự động tạo AudioManager singleton.");
         }
     }
 }
