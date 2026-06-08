@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1e652bd9dd81c6c48a0d625c3dbd9ff3, type: 3}
-  m_Name: Slime_Skill1
+  m_Name: frogger_Skill1
   m_EditorClassIdentifier: Assembly-CSharp::SkillData
   autoConfirmOnSelect: 0
   movementOverride: 0
@@ -23,8 +23,15 @@ MonoBehaviour:
   doesNotEndTurn: 0
   apCost: 0
   hitCount: 1
+  vfxEvents: []
+  rangedVfxEvents: []
+  hitVfxEvents: []
   animationTrigger: Skill1
+  isRanged: 0
+  projectilePrefab: {fileID: 0}
+  projectileOffset: {x: 0, y: 0, z: 0}
+  projectileTravelTime: 0.3
   vfxPrefab: {fileID: 0}
   vfxOffset: 0
   effects:
-  - {fileID: 11400000, guid: 86a1cfdc47336bc40a1baef0f6dd8d0d, type: 2}
+  - {fileID: 11400000, guid: 7ba69f4983d297b49b1b616f7d580ced, type: 2}

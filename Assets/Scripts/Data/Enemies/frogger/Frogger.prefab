@@ -182,8 +182,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: -0.12}
-  m_SizeDelta: {x: 4.6411, y: 0.7239}
+  m_AnchoredPosition: {x: 0.013, y: -0.36439}
+  m_SizeDelta: {x: 9.4337, y: 0.78609}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!223 &2086020226542407881
 Canvas:
@@ -203,6 +203,7 @@ Canvas:
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
   m_VertexColorAlwaysGammaSpace: 0
+  m_UseReflectionProbes: 0
   m_AdditionalShaderChannelsFlag: 0
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
@@ -284,8 +285,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 7.2622, y: -0.000025034}
-  m_SizeDelta: {x: 19.1654, y: 0.7239}
+  m_AnchoredPosition: {x: 7.244, y: 0.00013229}
+  m_SizeDelta: {x: 23.922, y: 0.78635}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &5848264616499623767
 MonoBehaviour:
@@ -353,7 +354,7 @@ GameObject:
   - component: {fileID: 2327023978695372928}
   - component: {fileID: 2232090259357035045}
   m_Layer: 0
-  m_Name: Slime
+  m_Name: Frogger
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -368,8 +369,8 @@ Transform:
   m_GameObject: {fileID: 7850509950937586201}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 13, y: 13, z: 13}
+  m_LocalPosition: {x: -2.4769, y: -1.9953, z: 0}
+  m_LocalScale: {x: 6.1204, y: 6.1204, z: 6.1204}
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 1094986939450145744}
@@ -377,7 +378,7 @@ Transform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &6330854825303683867
 SpriteRenderer:
-  serializedVersion: 2
+  serializedVersion: 3
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -424,7 +425,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 0
-  m_Sprite: {fileID: -1312985809, guid: 81c5caebb3072684e85602fd4858f421, type: 3}
+  m_Sprite: {fileID: 2137714816, guid: 00fd8b22c322eb64d9e3cd97db934fc1, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -434,6 +435,7 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+  m_BlendShapeWeights: []
 --- !u!95 &1263359407345071542
 Animator:
   serializedVersion: 7
@@ -444,7 +446,7 @@ Animator:
   m_GameObject: {fileID: 7850509950937586201}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: a1c73711abcba5244a3a0c6cecd83d42, type: 2}
+  m_Controller: {fileID: 9100000, guid: 4e5548f4a9f90f34992849d4831948cd, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -518,17 +520,17 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0}
+  m_Offset: {x: 0, y: -0.09859188}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 0.19, y: 0.16}
+    oldSize: {x: 0.72, y: 0.58}
     newSize: {x: 0.19, y: 0.16}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 0.19, y: 0.16}
+  m_Size: {x: 0.19, y: 0.35718367}
   m_EdgeRadius: 0
 --- !u!1 &9203884994941467475
 GameObject:

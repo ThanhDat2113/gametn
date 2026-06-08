@@ -182,7 +182,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: -0.12}
+  m_AnchoredPosition: {x: 0, y: -0.21}
   m_SizeDelta: {x: 4.6411, y: 0.7239}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!223 &2086020226542407881
@@ -203,6 +203,7 @@ Canvas:
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
   m_VertexColorAlwaysGammaSpace: 0
+  m_UseReflectionProbes: 0
   m_AdditionalShaderChannelsFlag: 0
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
@@ -353,7 +354,7 @@ GameObject:
   - component: {fileID: 2327023978695372928}
   - component: {fileID: 2232090259357035045}
   m_Layer: 0
-  m_Name: Slime
+  m_Name: Kohold
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -377,7 +378,7 @@ Transform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &6330854825303683867
 SpriteRenderer:
-  serializedVersion: 2
+  serializedVersion: 3
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -424,7 +425,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 0
-  m_Sprite: {fileID: -1312985809, guid: 81c5caebb3072684e85602fd4858f421, type: 3}
+  m_Sprite: {fileID: -1900741425, guid: f60256c72cf20704d983ff5882caf6fa, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -434,6 +435,7 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+  m_BlendShapeWeights: []
 --- !u!95 &1263359407345071542
 Animator:
   serializedVersion: 7
@@ -444,7 +446,7 @@ Animator:
   m_GameObject: {fileID: 7850509950937586201}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: a1c73711abcba5244a3a0c6cecd83d42, type: 2}
+  m_Controller: {fileID: 9100000, guid: 58109b4ed6d5a1e49b36c677b359c7f0, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -522,7 +524,7 @@ BoxCollider2D:
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 0.19, y: 0.16}
+    oldSize: {x: 0.32, y: 0.32}
     newSize: {x: 0.19, y: 0.16}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
