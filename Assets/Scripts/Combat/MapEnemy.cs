@@ -22,7 +22,6 @@ public class MapEnemy : MonoBehaviour
 
     private IEnumerator StartCombatTransition()
     {
-        // Lưu đội hình
         var formationManager = FindFirstObjectByType<FormationManager>();
         if (formationManager == null)
         {
@@ -31,17 +30,14 @@ public class MapEnemy : MonoBehaviour
         }
         formationManager.SaveFormation();
 
-        // Gán enemy group
-        CombatSceneStarter.PendingEnemyGroup = enemyGroup;
+        // ✅ Ghi nhận rằng đây là từ map (tham số thứ ba = true)
+        CombatSessionData.Set(FormationDataStorage.PendingFormation, enemyGroup, fromMap: true);
 
-        // Đăng ký enemy này để sau thắng có thể xóa
         CombatSceneStarter.RegisterLastEnemy(this);
 
-        // Fade to black
         if (FadeController.Instance != null)
             yield return FadeController.Instance.FadeToBlack();
 
-        // ✅ Tìm và lưu MapRoot reference trước khi ẩn
         var mapRoot = GameObject.Find("MapRoot");
         if (mapRoot != null)
         {
@@ -54,7 +50,6 @@ public class MapEnemy : MonoBehaviour
             Debug.LogError("[MapEnemy] Không tìm thấy MapRoot! Hãy tạo một GameObject tên 'MapRoot' chứa toàn bộ map.");
         }
 
-        // Load combat scene
         SceneLoaderManager.LoadCombatScene();
     }
 

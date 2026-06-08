@@ -9,7 +9,6 @@ public class SceneLoaderManager : MonoBehaviour
     [SerializeField] private string combatSceneName = "CombatScene";
     private bool isCombatLoaded = false;
 
-    // Lưu tham chiếu đến MapRoot (sẽ được gán từ MapEnemy)
     public static GameObject MapRoot { get; set; }
 
     private void Awake()
@@ -33,8 +32,6 @@ public class SceneLoaderManager : MonoBehaviour
 
         isCombatLoaded = true;
         Scene combatScene = SceneManager.GetSceneByName(combatSceneName);
-        
-        // ✅ QUAN TRỌNG: set combat scene làm active scene
         SceneManager.SetActiveScene(combatScene);
         Debug.Log("[SceneLoaderManager] Combat scene loaded and set active.");
     }
@@ -53,7 +50,6 @@ public class SceneLoaderManager : MonoBehaviour
 
         isCombatLoaded = false;
 
-        // ✅ Bật lại MapRoot dùng reference đã lưu
         if (MapRoot != null)
         {
             MapRoot.SetActive(true);
@@ -62,7 +58,6 @@ public class SceneLoaderManager : MonoBehaviour
         else
         {
             Debug.LogWarning("[SceneLoaderManager] MapRoot reference is null, trying to find by name...");
-            // Fallback: tìm trong scene gốc (index 0)
             Scene mapScene = SceneManager.GetSceneAt(0);
             GameObject[] roots = mapScene.GetRootGameObjects();
             foreach (var obj in roots)
@@ -77,5 +72,31 @@ public class SceneLoaderManager : MonoBehaviour
 
         if (FadeController.Instance != null)
             yield return FadeController.Instance.FadeFromBlack();
+    }
+
+    public static void ReloadCombatScene()
+    {
+        if (Instance != null && Instance.isCombatLoaded)
+            Instance.StartCoroutine(Instance.ReloadAdditive());
+    }
+
+    private IEnumerator ReloadAdditive()
+    {
+        // Unload current combat scene
+        AsyncOperation unload = SceneManager.UnloadSceneAsync(combatSceneName);
+        while (!unload.isDone)
+            yield return null;
+
+        isCombatLoaded = false;
+
+        // Load lại
+        AsyncOperation load = SceneManager.LoadSceneAsync(combatSceneName, LoadSceneMode.Additive);
+        while (!load.isDone)
+            yield return null;
+
+        isCombatLoaded = true;
+        Scene combatScene = SceneManager.GetSceneByName(combatSceneName);
+        SceneManager.SetActiveScene(combatScene);
+        Debug.Log("[SceneLoaderManager] Combat scene reloaded.");
     }
 }

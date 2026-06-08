@@ -3,64 +3,50 @@ using System.Collections;
 
 public class CombatSceneStarter : MonoBehaviour
 {
-    public EnemyGroupData enemyGroup; // fallback nếu không có pending
-
-    public static EnemyGroupData PendingEnemyGroup { get; set; }
-
     void Start()
     {
-        var pendingFormation = FormationDataStorage.PendingFormation;
-        var pendingEnemy = PendingEnemyGroup != null ? PendingEnemyGroup : enemyGroup;
+        // 👈 Kiểm tra test starter trước tiên
+        var testStarter = GetComponent<CombatTestStarter>();
+        bool hasValidTestStarter = testStarter != null && testStarter.enabled && testStarter.HasTestData();
 
-        if (pendingFormation == null)
+        if (hasValidTestStarter && !CombatSessionData.IsFromMap)
         {
-            var testStarter = GetComponent<CombatTestStarter>();
-            if (testStarter != null && testStarter.enabled)
+            // Chỉ ưu tiên test starter khi không phải từ map (tức đang chạy scene test trực tiếp)
+            Debug.Log("[CombatSceneStarter] Test starter detected and not from map. Letting it handle combat.");
+            return; // để test starter tự xử lý
+        }
+
+        // Nếu có dữ liệu từ map → chạy bình thường
+        if (CombatSessionData.HasData)
+        {
+            var combat = CombatManager.Instance;
+            if (combat == null)
             {
-                Debug.Log("[CombatSceneStarter] Không có pending data. Chuyển xử lý cho CombatTestStarter.");
+                Debug.LogError("[CombatSceneStarter] Không tìm thấy CombatManager trong CombatScene!");
                 return;
             }
-            Debug.LogError("[CombatSceneStarter] Không có pending data và không có TestStarter!");
-            return;
-        }
 
-        Debug.Log($"[CombatSceneStarter] Formation: OK Enemy: {(pendingEnemy == null ? "NULL" : pendingEnemy.name)}");
+            Debug.Log($"[CombatSceneStarter] StartCombat from Map: formation={CombatSessionData.Formation?.slots?.Length} slots, enemy={CombatSessionData.EnemyGroup?.name}");
 
-        if (pendingEnemy == null)
-        {
-            Debug.LogError("[CombatSceneStarter] Enemy group is null!");
-            if (SceneLoaderManager.Instance != null) ReturnToMapAfterError();
-            return;
-        }
-
-        var combat = CombatManager.Instance;
-        if (combat != null)
-        {
-            combat.StartCombat(pendingFormation, pendingEnemy);
-
-            FormationDataStorage.PendingFormation = null;
-            PendingEnemyGroup = null;
+            combat.StartCombat(CombatSessionData.Formation, CombatSessionData.EnemyGroup);
 
             combat.OnVictory += () => StartCoroutine(HandleVictory());
-            combat.OnDefeat += () => StartCoroutine(HandleDefeat());
+            combat.OnDefeat  += () => StartCoroutine(HandleDefeat());
         }
         else
         {
-            Debug.LogError("Không tìm thấy CombatManager trong CombatScene!");
+            // Không có session data và không có test starter hợp lệ
+            if (!hasValidTestStarter)
+                Debug.LogError("[CombatSceneStarter] Không có CombatSessionData và không có TestStarter hợp lệ!");
         }
     }
 
-    /// <summary>
-    /// Xử lý khi thắng: xóa enemy, cập nhật quest, nhưng KHÔNG unload scene.
-    /// Việc unload sẽ do VictoryPanel xử lý sau khi người chơi click.
-    /// </summary>
     private IEnumerator HandleVictory()
     {
         Debug.Log("[CombatSceneStarter] Victory - Xóa enemy và cập nhật quest.");
         if (CombatAudioManager.Instance != null)
             CombatAudioManager.Instance.StopBGM();
 
-        // Xóa enemy đã trigger và cập nhật quest (giống logic cũ)
         if (LastTouchedEnemy != null)
         {
             if (QuestManager.Instance != null && LastTouchedEnemy.enemyGroup != null)
@@ -68,46 +54,30 @@ public class CombatSceneStarter : MonoBehaviour
             LastTouchedEnemy.MarkAsDefeated();
         }
 
-        // Không gọi UnloadCombatScene ở đây – để VictoryPanel xử lý khi người chơi click
+        CombatSessionData.Clear();
         yield break;
     }
 
-    /// <summary>
-    /// Xử lý khi thua: hiển thị panel defeat, fade, rồi unload scene.
-    /// </summary>
     private IEnumerator HandleDefeat()
     {
-        Debug.Log("[CombatSceneStarter] Defeat - tự động quay về map.");
+        Debug.Log("[CombatSceneStarter] Defeat - showing defeat panel.");
         if (CombatAudioManager.Instance != null)
             CombatAudioManager.Instance.StopBGM();
 
-        var resultUI = FindFirstObjectByType<CombatResultUI>();
-        if (resultUI != null)
-            yield return resultUI.ShowResult(false);
-        else
-            yield return new WaitForSeconds(1f);
-
-        if (FadeController.Instance != null)
-            yield return FadeController.Instance.FadeToBlack();
-
-        if (LastTouchedEnemy != null)
+        DefeatPanel defeatPanel = FindFirstObjectByType<DefeatPanel>(FindObjectsInactive.Include);
+        if (defeatPanel != null)
         {
-            if (QuestManager.Instance != null && LastTouchedEnemy.enemyGroup != null)
-                QuestManager.Instance.OnEnemyGroupDefeated(LastTouchedEnemy.enemyGroup);
-            LastTouchedEnemy.MarkAsDefeated();
+            defeatPanel.Show();
         }
-
-        SceneLoaderManager.UnloadCombatScene();
+        else
+        {
+            Debug.LogError("[CombatSceneStarter] Không tìm thấy DefeatPanel trong scene!");
+            yield return new WaitForSeconds(2f);
+            SceneLoaderManager.UnloadCombatScene();
+        }
+        yield break;
     }
 
     private static MapEnemy LastTouchedEnemy;
     public static void RegisterLastEnemy(MapEnemy enemy) => LastTouchedEnemy = enemy;
-
-    private void ReturnToMapAfterError()
-    {
-        if (FadeController.Instance != null)
-            FadeController.Instance.FadeToBlack(() => SceneLoaderManager.UnloadCombatScene());
-        else
-            SceneLoaderManager.UnloadCombatScene();
-    }
 }
