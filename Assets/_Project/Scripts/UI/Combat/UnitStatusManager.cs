@@ -30,7 +30,6 @@ public class UnitStatusManager : MonoBehaviour
     {
         if (combat == null) return;
 
-        // Fallback: nếu OnCombatStarted đã fire trước khi Awake kịp subscribe
         if (combat.CurrentPhase != CombatPhase.None)
         {
             Debug.Log($"[UnitStatusManager] Combat already in phase {combat.CurrentPhase}, creating slots.");
@@ -49,12 +48,11 @@ public class UnitStatusManager : MonoBehaviour
     private void OnCombatStarted()
     {
         Debug.Log("[UnitStatusManager] OnCombatStarted called");
-        StartCoroutine(CreateSlotsDelayed()); // Chờ 1 frame để units spawn xong
+        StartCoroutine(CreateSlotsDelayed());
     }
 
     private IEnumerator CreateSlotsDelayed()
     {
-        // Thử tối đa 5 frame, đợi đến khi PlayerUnits có data
         for (int attempt = 0; attempt < 5; attempt++)
         {
             yield return null;
@@ -82,6 +80,12 @@ public class UnitStatusManager : MonoBehaviour
             slot.Setup(unit);
             unitSlots[unit] = slot;
         }
+    }
+
+    // Overload cho OnVictory (có tham số) gọi ClearAllSlots gốc
+    private void ClearAllSlots(Dictionary<CharacterData, int> _)
+    {
+        ClearAllSlots();
     }
 
     private void ClearAllSlots()

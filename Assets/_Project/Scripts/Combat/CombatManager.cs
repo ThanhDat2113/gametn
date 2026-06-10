@@ -106,7 +106,7 @@ public class CombatManager : MonoBehaviour
     public event System.Action OnExecuteStarted;
     public event System.Action OnRoundEnded;
     public event System.Action<ActionResult> OnActionResolved;
-    public event System.Action OnVictory;
+    public event System.Action<Dictionary<CharacterData, int>> OnVictory;    // THAY ĐỔI: gửi kèm EXP
     public event System.Action OnDefeat;
     public event System.Action OnPlanChanged;
     public event System.Action<int> OnAPChanged;
@@ -459,23 +459,30 @@ public class CombatManager : MonoBehaviour
     private void DoVictory()
     {
         Debug.Log("=== VICTORY ===");
-        if (PlayerProgression.Instance != null)
+        // Tính tổng EXP từ enemy
+        int totalExp = 0;
+        foreach (var enemy in EnemyUnits)
         {
-            int totalExp = 0;
-            foreach (var enemy in EnemyUnits)
-            {
-                int baseReward = enemy.Data != null ? enemy.Data.expReward : 100;
-                int bonus = (enemy.Level - 1) * 10;
-                totalExp += baseReward + bonus;
-                Debug.Log($"[Exp] {enemy.UnitName} (Lv.{enemy.Level}): {baseReward} base + {bonus} bonus = {baseReward + bonus} EXP");
-            }
-            if (totalExp > 0)
-            {
-                PlayerProgression.Instance.AddPartyExperience(totalExp);
-                Debug.Log($"[Exp] Party nhận {totalExp} EXP từ chiến thắng!");
-            }
+            int baseReward = enemy.Data != null ? enemy.Data.expReward : 100;
+            int bonus = (enemy.Level - 1) * 10;
+            totalExp += baseReward + bonus;
+            Debug.Log($"[Exp] {enemy.UnitName} (Lv.{enemy.Level}): {baseReward} base + {bonus} bonus = {baseReward + bonus} EXP");
         }
-        OnVictory?.Invoke();
+
+        // Chia đều cho player còn sống
+        var alivePlayers = PlayerUnits.Where(p => p.IsAlive).ToList();
+        if (alivePlayers.Count == 0) return;
+        int expPerPlayer = totalExp / alivePlayers.Count;
+        if (expPerPlayer <= 0) expPerPlayer = totalExp;
+
+        var expGained = new Dictionary<CharacterData, int>();
+        foreach (var player in alivePlayers)
+        {
+            expGained[player.Data] = expPerPlayer;
+        }
+
+        // Gửi event kèm dictionary EXP (KHÔNG cộng vào PlayerProgression ngay)
+        OnVictory?.Invoke(expGained);
     }
 
     private void DoDefeat()

@@ -275,10 +275,13 @@ public class PlayerProgression : MonoBehaviour
         return (newLevel != currentLevel) ? newLevel : -1;
     }
 
-    /// <summary>Overload: tính exp cần để lên từ một level cụ thể.</summary>
-    private int GetExpToNextLevel(CharacterData character, int fromLevel)
+    /// <summary>
+    /// Lấy EXP cần để lên cấp tiếp theo từ một level cụ thể.
+    /// Dùng cho animation trong VictoryPanel.
+    /// </summary>
+    public int GetExpToNextLevel(CharacterData character, int fromLevel)
     {
-        if (character == null) return 100;
+        if (character == null) return 0;
         if (character.baseExpThreshold > 0)
         {
             if (fromLevel <= 1) return character.baseExpThreshold;

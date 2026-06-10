@@ -1,5 +1,3 @@
-
-
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -34,18 +32,20 @@ public class CombatTestUI : MonoBehaviour
     {
         combat = CombatManager.Instance;
 
-        combat.OnPlayerUnitPlanning += unit =>
+        combat.OnPlayerTurnStart += unit =>
         {
             planningUnit = unit;
             selectedSkill = null;
         };
-        combat.OnVictory += () => planningUnit = null;
+        combat.OnVictory += (expDict) => planningUnit = null;  // SỬA: nhận tham số
         combat.OnDefeat += () => planningUnit = null;
     }
 
     // ─────────────────────────────────────────────────────────
     private void OnGUI()
     {
+        if (combat == null) return;
+
         GUILayout.BeginArea(new Rect(10, 10, 420, 900));
 
         // ── Chưa bắt đầu ──
@@ -99,9 +99,11 @@ public class CombatTestUI : MonoBehaviour
         GUILayout.Label($"Chọn skill cho: {planningUnit.UnitName}");
         GUILayout.Label($"AP hiện tại: {combat.CurrentPlayerAP}");
 
-        for (int i = 0; i < planningUnit.Data.skills.Length; i++)
+        // Lấy danh sách skill từ AvailableSkills hoặc Data.skills
+        var skills = planningUnit.AvailableSkills.Count > 0 ? planningUnit.AvailableSkills : planningUnit.Data.skills.ToList();
+        for (int i = 0; i < skills.Count; i++)
         {
-            var skill = planningUnit.Data.skills[i];
+            var skill = skills[i];
             bool canAfford = skill.apCost <= combat.CurrentPlayerAP;
 
             string label = $"[{skill.skillName}] (AP: {skill.apCost})";
@@ -118,11 +120,18 @@ public class CombatTestUI : MonoBehaviour
             GUILayout.Label($"Chọn mục tiêu cho: {selectedSkill.skillName}");
 
             bool targetAlly = selectedSkill.targetType == TargetType.SingleAlly ||
-                              selectedSkill.targetType == TargetType.AllAllies;
+                              selectedSkill.targetType == TargetType.AllAllies ||
+                              selectedSkill.targetType == TargetType.Self;
 
             var validTargets = targetAlly
                 ? combat.PlayerUnits.Where(p => p.IsAlive).ToList()
                 : combat.EnemyUnits.Where(e => e.IsAlive).ToList();
+
+            // Xử lý Self: chỉ có planningUnit là mục tiêu hợp lệ
+            if (selectedSkill.targetType == TargetType.Self)
+            {
+                validTargets = new List<CombatUnit> { planningUnit };
+            }
 
             // All target
             if (selectedSkill.targetType == TargetType.AllAllies ||
@@ -137,8 +146,10 @@ public class CombatTestUI : MonoBehaviour
                 {
                     string row = t.GridRow == 2 ? "Front" :
                                  t.GridRow == 1 ? "Mid" : "Back";
-                    if (GUILayout.Button($"→ {t.UnitName} [{row}]" +
-                                         $"  HP:{t.CurrentHP}/{t.MaxHP}"))
+                    string btnText = selectedSkill.targetType == TargetType.Self ?
+                        $"→ Bản thân" :
+                        $"→ {t.UnitName} [{row}] HP:{t.CurrentHP}/{t.MaxHP}";
+                    if (GUILayout.Button(btnText))
                         Submit(selectedSkill, new List<CombatUnit> { t });
                 }
             }
@@ -148,8 +159,9 @@ public class CombatTestUI : MonoBehaviour
     // ─────────────────────────────────────────────────────────
     private void Submit(SkillData skill, List<CombatUnit> targets)
     {
+        if (skill == null || targets == null || targets.Count == 0) return;
         selectedSkill = null;
-        Debug.LogWarning("CombatTestUI.Submit is disabled due to API changes. Use the main game UI.");
+        combat.SubmitPlayerTurnAction(skill, targets);
     }
 
     // ─────────────────────────────────────────────────────────

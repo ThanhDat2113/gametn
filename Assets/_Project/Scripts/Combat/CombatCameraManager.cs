@@ -14,16 +14,10 @@ public class CombatCameraManager : MonoBehaviour
     public float finalZoomOutDuration = 1.0f;
 
     [Header("Default State")]
-    [Tooltip("Default camera size khi không zoom")]
-    public float defaultOrthoSize = 12f; // FIX: tăng từ 10 lên 12 để bao quát hơn
+    public float defaultOrthoSize = 12f;
     public Vector3 defaultPosition = Vector3.zero;
-    [Tooltip("Z position của camera")]
     public float cameraDistance = 15f;
-
-    [Tooltip("Điều chỉnh camera lên/xuống để căn giữa các nhân vật")]
     public float verticalOffset = 1.5f;
-
-    [Tooltip("Điều chỉnh camera sang trái/phải")]
     public float horizontalOffset = -2.0f;
 
     [Header("Zoom Settings")]
@@ -72,27 +66,16 @@ public class CombatCameraManager : MonoBehaviour
     private List<Behaviour> disabledBehaviours = new List<Behaviour>();
     private bool isIntroSequenceActive = false;
 
-#if CINEMACHINE_PRESENT
-    private Cinemachine.CinemachineBrain brain;
-    private List<Behaviour> disabledBrains = new List<Behaviour>();
-    private List<GameObject> disabledVcamGameObjects = new List<GameObject>();
-#endif
-
     private void Awake()
     {
         mainCamera = GetComponent<Camera>();
         cameraTransform = transform;
-#if CINEMACHINE_PRESENT
-        brain = GetComponent<Cinemachine.CinemachineBrain>();
-#endif
         if (mainCamera == null)
         {
             Debug.LogError("[CombatCameraManager] Camera component not found!");
             return;
         }
-        mainCamera.farClipPlane = 4000f; // FIX: Tăng khoảng cách nhìn thấy của camera
-
-        // Đặt góc nghiêng mặc định cho camera
+        mainCamera.farClipPlane = 4000f;
         transform.rotation = Quaternion.Euler(30f, 0, 0);
 
         currentOrthoSize = defaultOrthoSize;
@@ -111,7 +94,7 @@ public class CombatCameraManager : MonoBehaviour
             CombatManager.Instance.OnCombatStarted += HandleCombatStarted;
             CombatManager.Instance.OnExecuteStarted += HandleRoundEnded;
             CombatManager.Instance.OnDefeat += HandleCombatEnd;
-            CombatManager.Instance.OnVictory += HandleCombatEnd;
+            CombatManager.Instance.OnVictory += (_) => HandleCombatEnd(); // ✅ lambda cho OnVictory
         }
         StartCoroutine(MonitorPhaseChanges());
     }
@@ -130,12 +113,10 @@ public class CombatCameraManager : MonoBehaviour
                 StopCoroutineIfRunning(followCoroutine);
                 followTarget = null;
                 currentOrthoSize = defaultOrthoSize;
-
                 float angleRad = transform.rotation.eulerAngles.x * Mathf.Deg2Rad;
                 float yOffset = cameraDistance * Mathf.Sin(angleRad);
                 float zOffset = -cameraDistance * Mathf.Cos(angleRad);
                 targetPosition = defaultPosition + new Vector3(0, yOffset, zOffset);
-
                 shakeOffset = Vector3.zero;
                 yield return new WaitForSeconds(0.2f);
                 AutoFitUnitsInView();
@@ -152,7 +133,7 @@ public class CombatCameraManager : MonoBehaviour
             CombatManager.Instance.OnCombatStarted -= HandleCombatStarted;
             CombatManager.Instance.OnExecuteStarted -= HandleRoundEnded;
             CombatManager.Instance.OnDefeat -= HandleCombatEnd;
-            CombatManager.Instance.OnVictory -= HandleCombatEnd;
+            CombatManager.Instance.OnVictory -= (_) => HandleCombatEnd();
         }
     }
 
@@ -172,24 +153,14 @@ public class CombatCameraManager : MonoBehaviour
         mainCamera.orthographicSize = Mathf.Lerp(mainCamera.orthographicSize, currentOrthoSize, 0.15f);
     }
 
-    public float GetCurrentOrthoSize()
-    {
-        return currentOrthoSize;
-    }
-
-    public void SetCameraSize(float newSize)
-    {
-        currentOrthoSize = newSize;
-        mainCamera.orthographicSize = currentOrthoSize;
-    }
+    public float GetCurrentOrthoSize() => currentOrthoSize;
+    public void SetCameraSize(float newSize) { currentOrthoSize = newSize; mainCamera.orthographicSize = currentOrthoSize; }
 
     public void ZoomToUnit(Transform unit, float zoomSize = 0)
     {
         if (unit == null) return;
-        // FIX: giới hạn zoomSize không được nhỏ hơn 8.5f để tránh crop
         if (zoomSize <= 0) zoomSize = Mathf.Max(damageZoomSize, 8.5f);
         else zoomSize = Mathf.Max(zoomSize, 8.5f);
-        
         StopCoroutineIfRunning(zoomCoroutine);
         StopCoroutineIfRunning(followCoroutine);
         followTarget = unit;
@@ -214,7 +185,6 @@ public class CombatCameraManager : MonoBehaviour
         float yOffset = cameraDistance * Mathf.Sin(angleRad);
         float zOffset = -cameraDistance * Mathf.Cos(angleRad);
         targetPosition = position + new Vector3(0, yOffset, zOffset);
-
         currentOrthoSize = size;
         if (isIntroSequenceActive || followTarget == null)
         {
@@ -233,12 +203,10 @@ public class CombatCameraManager : MonoBehaviour
         shakeOffset = Vector3.zero;
         isShaking = false;
         currentOrthoSize = defaultOrthoSize;
-
         float angleRad = transform.rotation.eulerAngles.x * Mathf.Deg2Rad;
         float yOffset = cameraDistance * Mathf.Sin(angleRad);
         float zOffset = -cameraDistance * Mathf.Cos(angleRad);
         targetPosition = defaultPosition + new Vector3(0, yOffset, zOffset);
-
         Debug.Log($"[CombatCamera] Reset: size={currentOrthoSize:F2}, pos={targetPosition}");
     }
 
@@ -259,32 +227,22 @@ public class CombatCameraManager : MonoBehaviour
             max = Vector3.Max(max, pos);
         }
         Vector3 center = (min + max) * 0.5f;
-        center.y += verticalOffset; // Áp dụng offset theo chiều dọc
-        center.x += horizontalOffset; // Áp dụng offset theo chiều ngang
+        center.y += verticalOffset;
+        center.x += horizontalOffset;
         float width = Mathf.Abs(max.x - min.x);
         float height = Mathf.Abs(max.y - min.y);
-        
-        // FIX: thêm padding dọc rõ ràng (tăng thêm 30% chiều cao)
-        // Tăng padding để đảm bảo không bị cắt xén
-        float horizontalPadding = width * 0.4f; // Thêm 40% padding ngang
-        float verticalPadding = height * 0.6f;  // Thêm 60% padding dọc
-
-        // Tính toán kích thước camera cần thiết dựa trên chiều rộng và chiều cao đã có padding
+        float horizontalPadding = width * 0.4f;
+        float verticalPadding = height * 0.6f;
         float requiredWidth = (width + horizontalPadding) * 0.5f / mainCamera.aspect;
         float requiredHeight = (height + verticalPadding) * 0.5f;
-
-        // Lấy kích thước lớn hơn và đảm bảo không nhỏ hơn một giá trị tối thiểu
         float bufferSize = Mathf.Max(requiredWidth, requiredHeight, 12f);
-        
         defaultOrthoSize = bufferSize;
         defaultPosition = center;
         currentOrthoSize = bufferSize;
-
         float angleRad = transform.rotation.eulerAngles.x * Mathf.Deg2Rad;
         float yOffset = cameraDistance * Mathf.Sin(angleRad);
         float zOffset = -cameraDistance * Mathf.Cos(angleRad);
         targetPosition = center + new Vector3(0, yOffset, zOffset);
-
         followTarget = null;
         shakeOffset = Vector3.zero;
         Debug.Log($"[CombatCamera] Auto-fit: Size={bufferSize:F2}, Center={center}, Units={unitViews.Length}");
@@ -294,12 +252,10 @@ public class CombatCameraManager : MonoBehaviour
     {
         if (zoomCoroutine != null) StopCoroutine(zoomCoroutine);
         followTarget = null;
-
         float angleRad = transform.rotation.eulerAngles.x * Mathf.Deg2Rad;
         float yOffset = cameraDistance * Mathf.Sin(angleRad);
         float zOffset = -cameraDistance * Mathf.Cos(angleRad);
         targetPosition = center + new Vector3(0, yOffset, zOffset);
-
         zoomCoroutine = StartCoroutine(ZoomInCoroutine(damageZoomSize));
     }
 
@@ -396,49 +352,19 @@ public class CombatCameraManager : MonoBehaviour
 
     private void StopCoroutineIfRunning(Coroutine coroutine)
     {
-        if (coroutine != null)
-        {
-            StopCoroutine(coroutine);
-        }
+        if (coroutine != null) StopCoroutine(coroutine);
     }
 
-    private void HandleCombatStarted()
-    {
-        AutoFitUnitsInView();
-    }
+    private void HandleCombatStarted() => AutoFitUnitsInView();
+    private void HandleRoundEnded() => ResetCamera();
+    private void HandleCombatEnd() => ResetCamera();
 
-    private void HandleRoundEnded()
-    {
-        ResetCamera();
-    }
-
-    private void HandleCombatEnd()
-    {
-        ResetCamera();
-    }
-
-    private float EaseInOutQuad(float t)
-    {
-        return t < 0.5f ? 2 * t * t : 1 - Mathf.Pow(-2 * t + 2, 2) / 2;
-    }
-
-    private float EaseOutQuad(float t)
-    {
-        return 1 - (1 - t) * (1 - t);
-    }
-
-    private float EaseInOutCubic(float t)
-    {
-        return t < 0.5f ? 4 * t * t * t : 1 - Mathf.Pow(-2 * t + 2, 3) / 2;
-    }
-
-    private float EaseOutCubic(float t)
-    {
-        return 1 - Mathf.Pow(1 - t, 3);
-    }
+    private float EaseInOutQuad(float t) => t < 0.5f ? 2 * t * t : 1 - Mathf.Pow(-2 * t + 2, 2) / 2;
+    private float EaseOutQuad(float t) => 1 - (1 - t) * (1 - t);
+    private float EaseInOutCubic(float t) => t < 0.5f ? 4 * t * t * t : 1 - Mathf.Pow(-2 * t + 2, 3) / 2;
+    private float EaseOutCubic(float t) => 1 - Mathf.Pow(1 - t, 3);
 
     #region Intro Sequence Methods
-
     public IEnumerator FadeInAndSetPosition(Vector3 focusPoint, float targetSize, Vector3 panFromOffset, float panDuration)
     {
         if (fadePanel == null)
@@ -446,14 +372,11 @@ public class CombatCameraManager : MonoBehaviour
             Debug.LogError("[CombatCameraManager] Fade Panel is not assigned! Aborting intro.", this);
             yield break;
         }
-
         fadePanel.color = Color.black;
         fadePanel.gameObject.SetActive(true);
-
         Vector3 startPanPos = focusPoint + panFromOffset;
         SetCameraPositionAndSize(startPanPos, targetSize);
         yield return new WaitForSeconds(0.1f);
-
         float elapsed = 0f;
         while (elapsed < fadeDuration)
         {
@@ -464,15 +387,12 @@ public class CombatCameraManager : MonoBehaviour
         }
         fadePanel.gameObject.SetActive(false);
         Debug.Log("[IntroCamera] Fade-in complete.");
-
         elapsed = 0f;
         Vector3 currentPos = cameraTransform.position;
-
         float angleRad = transform.rotation.eulerAngles.x * Mathf.Deg2Rad;
         float yOffset = cameraDistance * Mathf.Sin(angleRad);
         float zOffset = -cameraDistance * Mathf.Cos(angleRad);
         Vector3 targetPanPos = focusPoint + new Vector3(0, yOffset, zOffset);
-
         while (elapsed < panDuration)
         {
             elapsed += Time.deltaTime;
@@ -490,15 +410,12 @@ public class CombatCameraManager : MonoBehaviour
         float elapsed = 0f;
         float startSize = mainCamera.orthographicSize;
         Vector3 startPos = cameraTransform.position;
-
         AutoFitUnitsInView();
         float finalSize = defaultOrthoSize;
-
         float angleRad = transform.rotation.eulerAngles.x * Mathf.Deg2Rad;
         float yOffset = cameraDistance * Mathf.Sin(angleRad);
         float zOffset = -cameraDistance * Mathf.Cos(angleRad);
         Vector3 finalPos = defaultPosition + new Vector3(0, yOffset, zOffset);
-
         while (elapsed < duration)
         {
             elapsed += Time.deltaTime;
@@ -507,25 +424,15 @@ public class CombatCameraManager : MonoBehaviour
             cameraTransform.position = Vector3.Lerp(startPos, finalPos, t);
             yield return null;
         }
-
         mainCamera.orthographicSize = finalSize;
         cameraTransform.position = finalPos;
         Debug.Log("[IntroCamera] Final zoom-out complete.");
     }
 
-    public void BeginIntroSequence()
-    {
-        isIntroSequenceActive = true;
-        Debug.Log("[IntroCamera] Intro sequence BEGAN. Camera control is now locked.");
-    }
+    public void BeginIntroSequence() { isIntroSequenceActive = true; Debug.Log("[IntroCamera] Intro sequence BEGAN."); }
+    public void EndIntroSequence() { isIntroSequenceActive = false; Debug.Log("[IntroCamera] Intro sequence ENDED."); }
 
-    public void EndIntroSequence()
-    {
-        isIntroSequenceActive = false;
-        Debug.Log("[IntroCamera] Intro sequence ENDED. Camera control is now unlocked.");
-    }
-
-    public void FrameTargets(List<UnitView> targets, float padding = 1.5f) // FIX: tăng padding mặc định từ 1.2 -> 1.5
+    public void FrameTargets(List<UnitView> targets, float padding = 1.5f)
     {
         StopCoroutineIfRunning(frameTargetsCoroutine);
         frameTargetsCoroutine = StartCoroutine(FrameTargetsCoroutine(targets, padding));
@@ -533,32 +440,25 @@ public class CombatCameraManager : MonoBehaviour
 
     private IEnumerator FrameTargetsCoroutine(List<UnitView> targets, float padding)
     {
-        if (targets == null || targets.Count == 0)
-            yield break;
-
+        if (targets == null || targets.Count == 0) yield break;
         var bounds = new Bounds(targets[0].transform.position, Vector3.zero);
         for (int i = 1; i < targets.Count; i++)
         {
-            if (targets[i] != null)
-                bounds.Encapsulate(targets[i].transform.position);
+            if (targets[i] != null) bounds.Encapsulate(targets[i].transform.position);
         }
         bounds.size *= padding;
-
         float requiredSizeX = bounds.size.x * Screen.height / Screen.width * 0.5f;
         float requiredSizeY = bounds.size.y * 0.5f;
-        float targetSize = Mathf.Max(requiredSizeX, requiredSizeY, 7f); // FIX: tăng min lên 7
-
+        float targetSize = Mathf.Max(requiredSizeX, requiredSizeY, 7f);
         float angleRad = transform.rotation.eulerAngles.x * Mathf.Deg2Rad;
         float yOffset = cameraDistance * Mathf.Sin(angleRad);
         float zOffset = -cameraDistance * Mathf.Cos(angleRad);
         Vector3 targetPos = bounds.center + new Vector3(0, yOffset, zOffset);
-
         StopCoroutineIfRunning(zoomCoroutine);
         followTarget = null;
         targetPosition = targetPos;
         zoomCoroutine = StartCoroutine(ZoomInCoroutine(targetSize));
         yield return zoomCoroutine;
     }
-
     #endregion
 }

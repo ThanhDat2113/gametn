@@ -30,7 +30,7 @@ public class CombatSceneStarter : MonoBehaviour
 
             combat.StartCombat(CombatSessionData.Formation, CombatSessionData.EnemyGroup);
 
-            combat.OnVictory += () => StartCoroutine(HandleVictory());
+            combat.OnVictory += (_) => StartCoroutine(HandleVictory());  // SỬA: lambda bỏ qua tham số
             combat.OnDefeat  += () => StartCoroutine(HandleDefeat());
         }
         else

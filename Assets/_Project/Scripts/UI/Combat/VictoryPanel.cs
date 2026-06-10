@@ -17,7 +17,9 @@ public class VictoryPanel : MonoBehaviour
     public CanvasGroup panelCanvasGroup;
     public float fadeDuration = 0.3f;
 
-    private List<GameObject> currentEntries = new List<GameObject>();
+    private List<VictoryEntryUI> entries = new List<VictoryEntryUI>();
+    private int completedAnimations = 0;
+    private Dictionary<CharacterData, int> pendingExpGains;
     private bool isWaitingForClick = false;
 
     private void Awake()
@@ -47,9 +49,11 @@ public class VictoryPanel : MonoBehaviour
     public void Show(List<CombatUnit> playerUnits, Dictionary<CharacterData, int> expGained)
     {
         // Xoá các dòng cũ
-        foreach (var entry in currentEntries)
-            Destroy(entry);
-        currentEntries.Clear();
+        foreach (var entry in entries)
+            if (entry != null) Destroy(entry.gameObject);
+        entries.Clear();
+        completedAnimations = 0;
+        pendingExpGains = expGained;
 
         // Tạo dòng mới cho từng nhân vật
         foreach (var unit in playerUnits)
@@ -57,41 +61,39 @@ public class VictoryPanel : MonoBehaviour
             if (unit == null || unit.Data == null) continue;
 
             GameObject entryGO = Instantiate(entryPrefab, contentParent);
-            currentEntries.Add(entryGO);
             VictoryEntryUI entry = entryGO.GetComponent<VictoryEntryUI>();
             if (entry == null)
             {
                 Debug.LogError("Entry prefab thiếu component VictoryEntryUI!");
                 continue;
             }
+            entries.Add(entry);
 
             CharacterData data = unit.Data;
             int gained = expGained.ContainsKey(data) ? expGained[data] : 0;
-            int currentLevel = PlayerProgression.Instance.GetLevel(data);
-            int currentExp = PlayerProgression.Instance.GetCurrentExp(data);
-            int neededExp = PlayerProgression.Instance.GetExpToNextLevel(data);
+            int startLevel = PlayerProgression.Instance.GetLevel(data);
+            int startExp = PlayerProgression.Instance.GetCurrentExp(data);
 
-            entry.Setup(data, gained, currentLevel, currentExp, neededExp);
+            entry.Setup(data, gained, startLevel, startExp);
         }
 
         // Hiển thị panel
         gameObject.SetActive(true);
-        isWaitingForClick = false; // Chưa cho click ngay — chờ hết fade
+        isWaitingForClick = false;
 
-        // Fade in rồi mới bắt đầu lắng nghe click
+        // Fade in rồi chạy animation
         if (panelCanvasGroup != null)
         {
             panelCanvasGroup.alpha = 0f;
-            StartCoroutine(FadeInThenListen());
+            StartCoroutine(FadeInAndAnimate());
         }
         else
         {
-            // Không có fade: đợi 1 frame để tránh bắt click cũ
-            StartCoroutine(EnableClickNextFrame());
+            StartCoroutine(AnimateAllEntries());
         }
     }
 
-    private IEnumerator FadeInThenListen()
+    private IEnumerator FadeInAndAnimate()
     {
         float elapsed = 0f;
         while (elapsed < fadeDuration)
@@ -102,19 +104,33 @@ public class VictoryPanel : MonoBehaviour
         }
         panelCanvasGroup.alpha = 1f;
 
-        // Đợi thêm 1 frame để chắc chắn click hiện tại không bị bắt
-        yield return null;
-        isWaitingForClick = true;
+        yield return StartCoroutine(AnimateAllEntries());
     }
 
-    private IEnumerator EnableClickNextFrame()
+    private IEnumerator AnimateAllEntries()
     {
-        yield return null;
+        // Chạy animation cho mỗi entry
+        foreach (var entry in entries)
+            StartCoroutine(entry.AnimateExpGain(PlayerProgression.Instance, () => {
+                completedAnimations++;
+            }));
+
+        // Chờ tất cả hoàn tất
+        while (completedAnimations < entries.Count)
+            yield return null;
+
+        // Sau animation mới cho phép click Continue
         isWaitingForClick = true;
     }
 
     private void OnContinue()
     {
+        // Cộng EXP thật vào PlayerProgression
+        foreach (var kvp in pendingExpGains)
+        {
+            PlayerProgression.Instance.AddExperience(kvp.Key, kvp.Value);
+        }
+
         // Gỡ scene combat và quay về map
         SceneLoaderManager.UnloadCombatScene();
 
