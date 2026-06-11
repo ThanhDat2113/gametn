@@ -1645,7 +1645,7 @@ MonoBehaviour:
   - {fileID: 2136036714}
   - {fileID: 1039118417}
   - {fileID: 874683034}
-  enemyRallyPoint: {fileID: 1720891064}
+  enemyRallyPoint: {fileID: 0}
   clashSequence: {fileID: 551415321}
   cameraManager: {fileID: 844719901}
   combatUICanvasGroup: {fileID: 0}
@@ -2403,7 +2403,6 @@ Transform:
   - {fileID: 1520134470}
   - {fileID: 789879764}
   - {fileID: 1866062677}
-  - {fileID: 1720891064}
   - {fileID: 1341089379}
   - {fileID: 2136036714}
   - {fileID: 1039118417}
@@ -2478,37 +2477,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: -460}
   m_SizeDelta: {x: 1920, y: 160}
   m_Pivot: {x: 0.5, y: 0}
---- !u!1 &1720891063
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1720891064}
-  m_Layer: 0
-  m_Name: E5 (1)
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1720891064
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1720891063}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 28.88, y: 6.5, z: -8}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1519196810}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1729393016
 GameObject:
   m_ObjectHideFlags: 0
