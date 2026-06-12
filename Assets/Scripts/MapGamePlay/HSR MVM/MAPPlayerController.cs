@@ -6,15 +6,25 @@ public class HSRPlayerController : MonoBehaviour
     [Header("Movement")]
     public float moveSpeed = 6f;
     public float sprintSpeed = 9f;
-    public Transform cameraTransform;   // Kéo Camera chính vào đây
+    public Transform cameraTransform;
 
     [Header("Visual References")]
     public Animator animator;
-    public Transform spriteContainer; 
+    public Transform spriteContainer;
+
+    [Header("Audio")]
+    public AudioClip[] footstepSounds;
+    public float footstepInterval = 0.45f;
+    [Range(0f, 1f)]
+    public float footstepVolume = 0.3f;
 
     private CharacterController _controller;
     private Vector3 _moveDir;
     private Vector3 _initialScale;
+    private float footstepTimer = 0f;
+    private int lastFootstepIndex = -1;
+    private bool _wasMoving = false;
+    private AudioSource _footstepSource;
 
     void Awake()
     {
@@ -23,14 +33,19 @@ public class HSRPlayerController : MonoBehaviour
             _initialScale = spriteContainer.localScale;
         if (cameraTransform == null)
             cameraTransform = Camera.main.transform;
+
+        // Tạo AudioSource riêng cho footstep để có thể stop ngay khi dừng
+        _footstepSource = gameObject.AddComponent<AudioSource>();
+        _footstepSource.playOnAwake = false;
+        _footstepSource.spatialBlend = 1f;
+        _footstepSource.volume = footstepVolume;
     }
 
     void Update()
     {
         float h = Input.GetAxisRaw("Horizontal");
         float v = Input.GetAxisRaw("Vertical");
-        
-        // Lấy hướng forward và right từ camera, bỏ qua độ nghiêng (chỉ lấy ngang)
+
         Vector3 camForward = cameraTransform.forward;
         Vector3 camRight = cameraTransform.right;
         camForward.y = 0;
@@ -38,7 +53,6 @@ public class HSRPlayerController : MonoBehaviour
         camForward.Normalize();
         camRight.Normalize();
 
-        // Hướng di chuyển tương đối theo camera
         Vector3 move = (camForward * v + camRight * h).normalized;
         _moveDir = move;
 
@@ -47,10 +61,8 @@ public class HSRPlayerController : MonoBehaviour
             float speed = Input.GetKey(KeyCode.LeftShift) ? sprintSpeed : moveSpeed;
             _controller.Move(_moveDir * speed * Time.deltaTime);
 
-            // Lật sprite dựa trên hướng di chuyển so với camera
             if (spriteContainer != null)
             {
-                // Tính hướng di chuyển trong không gian world, lấy thành phần X
                 float moveX = _moveDir.x;
                 if (moveX != 0)
                 {
@@ -59,22 +71,46 @@ public class HSRPlayerController : MonoBehaviour
                 }
             }
 
+            // Footstep — không delay, play footstep lần đầu ngay
+            footstepTimer -= Time.deltaTime;
+            if (!_wasMoving)
+            {
+                _wasMoving = true;
+                footstepTimer = 0f;
+            }
+
+            if (footstepTimer <= 0f)
+            {
+                AudioClip clip = GetFootstepClip();
+                if (clip != null)
+                {
+                    _footstepSource.Stop();
+                    _footstepSource.clip = clip;
+                    _footstepSource.Play();
+                }
+                footstepTimer = footstepInterval;
+            }
+
             UpdateAnimation(true, h, v);
         }
         else
         {
+            if (_wasMoving)
+            {
+                _wasMoving = false;
+                // Dừng footstep ngay lập tức
+                _footstepSource.Stop();
+            }
+            footstepTimer = 0f;
             UpdateAnimation(false, 0, 0);
         }
 
-        // Trọng lực
         if (!_controller.isGrounded)
             _controller.Move(Vector3.down * 5f * Time.deltaTime);
 
-        // Billboard cho sprite (luôn hướng về camera) – nếu bạn chưa có script Billboard
         if (spriteContainer != null)
         {
             spriteContainer.LookAt(cameraTransform.position);
-            // Chỉ xoay theo trục Y (nếu sprite bị nghiêng)
             spriteContainer.rotation = Quaternion.Euler(0, spriteContainer.eulerAngles.y, 0);
         }
     }
@@ -88,5 +124,20 @@ public class HSRPlayerController : MonoBehaviour
             animator.SetFloat("MoveX", x);
             animator.SetFloat("MoveY", y);
         }
+    }
+
+    AudioClip GetFootstepClip()
+    {
+        if (footstepSounds == null || footstepSounds.Length == 0)
+            return null;
+
+        int index;
+        do
+        {
+            index = Random.Range(0, footstepSounds.Length);
+        } while (index == lastFootstepIndex && footstepSounds.Length > 1);
+
+        lastFootstepIndex = index;
+        return footstepSounds[index];
     }
 }

@@ -70,6 +70,7 @@ public class CombatManager : MonoBehaviour
 
     private int turnIndex = 0;
     private bool isWaitingForPlayerInput = false;
+    private EnemyGroupData _currentEnemyGroup;
 
     [Header("Animation")]
     public ClashAnimationSequence clashSequence;
@@ -169,6 +170,7 @@ public class CombatManager : MonoBehaviour
     // === START COMBAT (từ FormationData) – ĐÃ SỬA: cộng bonus trang bị ===
     public void StartCombat(FormationData playerFormation, EnemyGroupData enemyGroup)
     {
+        _currentEnemyGroup = enemyGroup;
         PlayerUnits.Clear(); EnemyUnits.Clear();
         CurrentPlayerAP = STARTING_PLAYER_AP;
         OnAPChanged?.Invoke(CurrentPlayerAP);
@@ -215,6 +217,10 @@ public class CombatManager : MonoBehaviour
         SpawnUnitViews();
         Debug.Log($"=== COMBAT STARTED === Player:{PlayerUnits.Count} vs Enemy:{EnemyUnits.Count}");
         OnCombatStarted?.Invoke();
+
+        // Play intro stinger nếu có
+        if (enemyGroup.introStinger != null && AudioManager.Instance != null)
+            AudioManager.Instance.PlaySFX2D(enemyGroup.introStinger, 0.8f);
 
         // Play BGM
         if (CombatAudioManager.Instance != null)
@@ -459,6 +465,11 @@ public class CombatManager : MonoBehaviour
     private void DoVictory()
     {
         Debug.Log("=== VICTORY ===");
+
+        // Play victory fanfare nếu có
+        if (_currentEnemyGroup != null && _currentEnemyGroup.victoryFanfare != null && AudioManager.Instance != null)
+            AudioManager.Instance.PlaySFX2D(_currentEnemyGroup.victoryFanfare, 0.8f);
+
         // Tính tổng EXP từ enemy
         int totalExp = 0;
         foreach (var enemy in EnemyUnits)

@@ -45,6 +45,13 @@ public class EnemyGroupData : ScriptableObject
     [Tooltip("Nhạc nền cho trận này (ghi đè lên zoneBGM fallback)")]
     public AudioClip bgmClip;
 
+    [Header("Audio (Tùy chọn)")]
+    [Tooltip("Nhạc ngắn khi bắt đầu trận (boss intro stinger)")]
+    public AudioClip introStinger;
+    [Tooltip("Nhạc khi thắng trận")]
+    public AudioClip victoryFanfare;
+
+    [Header("Enemies")]
     [Tooltip("Tối đa 9 kẻ địch (1 ô / 1 kẻ địch)")]
     public EnemyEntry[] enemies;
 }
