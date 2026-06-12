@@ -1,15 +1,34 @@
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 public class MapEnemy : MonoBehaviour
 {
     [Header("Enemy Data")]
     public EnemyGroupData enemyGroup;
 
+    [Header("Loot Override (Tùy chọn)")]
+    [Tooltip("Ghi đè loot table cho prefab này. Để trống nếu muốn dùng loot từ EnemyGroupData.")]
+    public EnemyGroupData.LootEntry[] overrideLoot;
+
     [Header("Transition")]
     public float fadeDuration = 0.5f;
 
     private bool isTriggered = false;
+
+    /// <summary>
+    /// Lấy danh sách loot: ưu tiên overrideLoot (trên prefab), fallback về enemyGroup.lootTable.
+    /// </summary>
+    public List<EnemyGroupData.LootEntry> GetLoot()
+    {
+        if (overrideLoot != null && overrideLoot.Length > 0)
+            return new List<EnemyGroupData.LootEntry>(overrideLoot);
+
+        if (enemyGroup != null && enemyGroup.lootTable != null)
+            return new List<EnemyGroupData.LootEntry>(enemyGroup.lootTable);
+
+        return new List<EnemyGroupData.LootEntry>();
+    }
 
     private void OnTriggerEnter(Collider other)
     {

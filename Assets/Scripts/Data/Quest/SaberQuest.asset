@@ -18,16 +18,22 @@ MonoBehaviour:
   - stepId: 0
     type: 0
     targetId: 2
+    requiredItem: {fileID: 0}
+    requiredAmount: 1
     description: "T\xECm v\xE0 tr\xF2 chuy\u1EC7n v\u1EDBi Saber"
     isCompleted: 0
   - stepId: 1
-    type: 1
-    targetId: Wolf
-    description: "\u0110\xE1nh b\u1EA1i s\xF3i"
+    type: 2
+    targetId: rang
+    requiredItem: {fileID: 11400000, guid: 13d10f2da9e50d94a9180befeca2851d, type: 2}
+    requiredAmount: 1
+    description: "\u0110\xE1nh b\u1EA1i v\xE0 thu th\u1EADp nanh s\xF3i"
     isCompleted: 0
   - stepId: 2
     type: 0
     targetId: 2
+    requiredItem: {fileID: 0}
+    requiredAmount: 1
     description: "Tr\xF2 chuy\u1EC7n v\u1EDBi Saber"
     isCompleted: 0
   isRepeatable: 0

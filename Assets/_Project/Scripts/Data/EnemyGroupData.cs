@@ -51,6 +51,27 @@ public class EnemyGroupData : ScriptableObject
     [Tooltip("Nhạc khi thắng trận")]
     public AudioClip victoryFanfare;
 
+    [System.Serializable]
+    public class LootEntry
+    {
+        [Tooltip("Vật phẩm sẽ drop")]
+        public ItemData item;
+
+        [Tooltip("Tỉ lệ drop (0.0 = 0%, 0.5 = 50%, 1.0 = 100%)")]
+        [Range(0, 1)]
+        public float dropRate = 1f;
+
+        [Tooltip("Số lượng drop tối thiểu")]
+        public int minAmount = 1;
+
+        [Tooltip("Số lượng drop tối đa")]
+        public int maxAmount = 1;
+    }
+
+    [Header("Loot")]
+    [Tooltip("Danh sách vật phẩm có thể drop khi tiêu diệt nhóm này")]
+    public LootEntry[] lootTable;
+
     [Header("Enemies")]
     [Tooltip("Tối đa 9 kẻ địch (1 ô / 1 kẻ địch)")]
     public EnemyEntry[] enemies;

@@ -12,6 +12,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b1bcc9fdcc2ab1f4f908593bcd76e9c9, type: 3}
   m_Name: Wolf
   m_EditorClassIdentifier: Assembly-CSharp::EnemyGroupData
+  zoneTag: "v\xF9ng 1"
+  bgmClip: {fileID: 0}
+  introStinger: {fileID: 0}
+  victoryFanfare: {fileID: 0}
+  lootTable:
+  - item: {fileID: 11400000, guid: 13d10f2da9e50d94a9180befeca2851d, type: 2}
+    dropRate: 1
+    minAmount: 1
+    maxAmount: 1
   enemies:
   - data: {fileID: 11400000, guid: 60a9e12f14d018246a1e606de24b5944, type: 2}
     level: 1

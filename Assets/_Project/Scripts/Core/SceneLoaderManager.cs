@@ -6,7 +6,14 @@ public class SceneLoaderManager : MonoBehaviour
 {
     public static SceneLoaderManager Instance { get; private set; }
 
+    [Header("Scene Names")]
     [SerializeField] private string combatSceneName = "CombatScene";
+    [SerializeField] private string loadingSceneName = "LoadingScene";
+
+    [Header("Settings")]
+    [Tooltip("Số frame tối đa xử lý load mỗi frame. Càng thấp càng ít giật nhưng load lâu hơn.")]
+    public int maxFrameMilliseconds = 50;
+
     private bool isCombatLoaded = false;
 
     public static GameObject MapRoot { get; set; }
@@ -26,7 +33,30 @@ public class SceneLoaderManager : MonoBehaviour
 
     private IEnumerator LoadAdditive()
     {
+        // Bắt đầu load combat scene ở chế độ nền
         AsyncOperation async = SceneManager.LoadSceneAsync(combatSceneName, LoadSceneMode.Additive);
+
+        // Ngăn scene tự động active cho đến khi load xong
+        async.allowSceneActivation = false;
+
+        // Hiển thị loading indicator trong quá trình load
+        // (nếu có FadeController, giữ màn đen)
+        Debug.Log("[SceneLoaderManager] Loading combat scene additively...");
+
+        // Load với yield và theo dõi progress
+        while (async.progress < 0.9f)
+        {
+            // Chia nhỏ thời gian xử lý để không block main thread
+            if (Time.deltaTime * 1000f > maxFrameMilliseconds)
+                yield return null;
+            else
+                yield return new WaitForEndOfFrame();
+        }
+
+        // Load gần xong (progress >= 0.9), cho phép activation
+        async.allowSceneActivation = true;
+
+        // Chờ activation hoàn tất
         while (!async.isDone)
             yield return null;
 
@@ -44,12 +74,23 @@ public class SceneLoaderManager : MonoBehaviour
 
     private IEnumerator UnloadAdditive()
     {
+        // Giữ màn đen trong khi unload
+        Debug.Log("[SceneLoaderManager] Unloading combat scene...");
+
         AsyncOperation async = SceneManager.UnloadSceneAsync(combatSceneName);
+
+        // Chia nhỏ frame để tránh giật
         while (!async.isDone)
-            yield return null;
+        {
+            if (Time.deltaTime * 1000f > maxFrameMilliseconds)
+                yield return null;
+            else
+                yield return new WaitForEndOfFrame();
+        }
 
         isCombatLoaded = false;
 
+        // Kích hoạt lại map
         if (MapRoot != null)
         {
             MapRoot.SetActive(true);
@@ -70,6 +111,7 @@ public class SceneLoaderManager : MonoBehaviour
             }
         }
 
+        // Fade in
         if (FadeController.Instance != null)
             yield return FadeController.Instance.FadeFromBlack();
     }
@@ -85,12 +127,28 @@ public class SceneLoaderManager : MonoBehaviour
         // Unload current combat scene
         AsyncOperation unload = SceneManager.UnloadSceneAsync(combatSceneName);
         while (!unload.isDone)
-            yield return null;
+        {
+            if (Time.deltaTime * 1000f > maxFrameMilliseconds)
+                yield return null;
+            else
+                yield return new WaitForEndOfFrame();
+        }
 
         isCombatLoaded = false;
 
-        // Load lại
+        // Load lại với async
         AsyncOperation load = SceneManager.LoadSceneAsync(combatSceneName, LoadSceneMode.Additive);
+        load.allowSceneActivation = false;
+
+        while (load.progress < 0.9f)
+        {
+            if (Time.deltaTime * 1000f > maxFrameMilliseconds)
+                yield return null;
+            else
+                yield return new WaitForEndOfFrame();
+        }
+
+        load.allowSceneActivation = true;
         while (!load.isDone)
             yield return null;
 

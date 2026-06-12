@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 public class CombatSceneStarter : MonoBehaviour
 {
@@ -43,14 +44,42 @@ public class CombatSceneStarter : MonoBehaviour
 
     private IEnumerator HandleVictory()
     {
-        Debug.Log("[CombatSceneStarter] Victory - Xóa enemy và cập nhật quest.");
+        Debug.Log("[CombatSceneStarter] Victory - Xóa enemy, drop loot và cập nhật quest.");
         if (CombatAudioManager.Instance != null)
             CombatAudioManager.Instance.StopBGM();
 
         if (LastTouchedEnemy != null)
         {
+            // 🎲 Roll loot từ enemy
+            var loots = LastTouchedEnemy.GetLoot();
+            if (loots.Count > 0 && InventoryManager.Instance != null)
+            {
+                Debug.Log($"[CombatSceneStarter] Enemy có {loots.Count} loot entries. Bắt đầu roll...");
+                foreach (var entry in loots)
+                {
+                    if (entry.item == null) continue;
+
+                    float roll = Random.value;
+                    if (roll <= entry.dropRate)
+                    {
+                        int amount = Random.Range(entry.minAmount, entry.maxAmount + 1);
+                        if (amount > 0)
+                        {
+                            InventoryManager.Instance.AddItem(entry.item, amount);
+                            Debug.Log($"[Drop] +{amount}x {entry.item.itemName} (rate: {entry.dropRate * 100}%, roll: {roll:F2})");
+                        }
+                    }
+                    else
+                    {
+                        Debug.Log($"[Drop] {entry.item.itemName} không drop (rate: {entry.dropRate * 100}%, roll: {roll:F2})");
+                    }
+                }
+            }
+
+            // 📜 Cập nhật quest
             if (QuestManager.Instance != null && LastTouchedEnemy.enemyGroup != null)
                 QuestManager.Instance.OnEnemyGroupDefeated(LastTouchedEnemy.enemyGroup);
+
             LastTouchedEnemy.MarkAsDefeated();
         }
 

@@ -18,16 +18,22 @@ MonoBehaviour:
   - stepId: 0
     type: 0
     targetId: 3
+    requiredItem: {fileID: 0}
+    requiredAmount: 1
     description: "T\xECm v\xE0 tr\xF2 chuy\u1EC7n v\u1EDBi Tharja"
     isCompleted: 0
   - stepId: 1
-    type: 1
-    targetId: Skeleton
-    description: "\u0110\xE1nh b\u1EA1i skeleton"
+    type: 2
+    targetId: bau
+    requiredItem: {fileID: 11400000, guid: ce5aae82e2c672747bc30ff8f0197e34, type: 2}
+    requiredAmount: 1
+    description: "Thu th\u1EADp nguy\xEAn li\u1EC7u t\u1EEB r\u01B0\u01A1ng b\xE1u"
     isCompleted: 0
   - stepId: 2
     type: 0
     targetId: 3
+    requiredItem: {fileID: 0}
+    requiredAmount: 1
     description: "Tr\xF2 chuy\u1EC7n v\u1EDBi Tharja"
     isCompleted: 0
   isRepeatable: 0
