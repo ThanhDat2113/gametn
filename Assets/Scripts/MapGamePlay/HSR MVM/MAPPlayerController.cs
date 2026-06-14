@@ -6,6 +6,7 @@ public class HSRPlayerController : MonoBehaviour
     [Header("Movement")]
     public float moveSpeed = 6f;
     public float sprintSpeed = 9f;
+    public float gravityForce = 15f;
     public Transform cameraTransform;
 
     [Header("Visual References")]
@@ -106,7 +107,7 @@ public class HSRPlayerController : MonoBehaviour
         }
 
         if (!_controller.isGrounded)
-            _controller.Move(Vector3.down * 5f * Time.deltaTime);
+            _controller.Move(Vector3.down * gravityForce * Time.deltaTime);
 
         if (spriteContainer != null)
         {
