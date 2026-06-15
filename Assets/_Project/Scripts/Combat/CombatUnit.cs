@@ -61,8 +61,9 @@ public class CombatUnit
     public event System.Action OnTurnStart;
 
     // ── Initialize ────────────────────────────────────────────
-    // *** ĐÃ SỬA: Thêm 3 tham số bonus từ trang bị (mặc định = 0) ***
-    public void Initialize(CharacterData data, int level, bool isPlayer, int hpBonus = 0, int atkBonus = 0, int defBonus = 0)
+    // ĐÃ SỬA: hỗ trợ 5 chỉ số riêng: HP, ATK, PDEF, MDEF, Speed
+    public void Initialize(CharacterData data, int level, bool isPlayer, 
+        int hpBonus = 0, int atkBonus = 0, int pdefBonus = 0, int mdefBonus = 0, int speedBonus = 0)
     {
         Id = nextId++;
         Data = data;
@@ -70,13 +71,12 @@ public class CombatUnit
         IsPlayer = isPlayer;
         UnitName = data.characterName;
 
-        // Cộng bonus từ trang bị vào chỉ số cơ bản
         MaxHP = data.GetHP(level) + hpBonus;
         CurrentHP = MaxHP;
         ATK = data.GetATK(level) + atkBonus;
-        PDEF = data.GetPDEF(level) + defBonus;
-        MDEF = data.GetMDEF(level) + defBonus;   // giả định MDEF cũng nhận bonus từ def
-        Speed = data.GetSpeed(level);
+        PDEF = data.GetPDEF(level) + pdefBonus;
+        MDEF = data.GetMDEF(level) + mdefBonus;
+        Speed = data.GetSpeed(level) + speedBonus;
 
         // Instantiate skills to make them unique to this unit
         AvailableSkills.Clear();

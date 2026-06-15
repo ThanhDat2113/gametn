@@ -1,7 +1,7 @@
-// EquipmentPanel.cs
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class EquipmentPanel : MonoBehaviour
 {
@@ -19,10 +19,21 @@ public class EquipmentPanel : MonoBehaviour
     public EquipmentListUI equipmentList;
 
     [Header("Character Battle Sprite Display")]
-    public Image characterBattleSpriteDisplay;   // Image ở giữa panel
+    public Image characterBattleSpriteDisplay;
+
+    [Header("Stat Display")]
+    public TextMeshProUGUI statHpText;
+    public TextMeshProUGUI statAtkText;
+    public TextMeshProUGUI statPdefText;
+    public TextMeshProUGUI statMdefText;
+    public TextMeshProUGUI statSpeedText;
 
     private List<CharacterSlotUI> characterSlots = new List<CharacterSlotUI>();
     private CharacterData selectedCharacter;
+
+    private EquipmentData previewEquipment;
+    private EquipmentSlot previewSlot;
+    private bool isPreviewing = false;
 
     void OnEnable()
     {
@@ -31,9 +42,23 @@ public class EquipmentPanel : MonoBehaviour
             SelectCharacter(characterSlots[0].GetCharacter());
     }
 
+    void OnDestroy()
+    {
+        if (EquipmentManager.Instance != null)
+            EquipmentManager.Instance.OnEquipmentChanged -= OnEquipmentChanged;
+    }
+
+    private void OnEquipmentChanged(CharacterData character)
+    {
+        if (character == selectedCharacter)
+        {
+            ClearPreview();
+            RefreshStatsDisplay();
+        }
+    }
+
     public void RefreshCharacterList()
     {
-        // Xóa các slot cũ
         foreach (var slot in characterSlots)
             if (slot != null) Destroy(slot.gameObject);
         characterSlots.Clear();
@@ -41,17 +66,14 @@ public class EquipmentPanel : MonoBehaviour
         var formationMgr = FindFirstObjectByType<FormationManager>();
         if (formationMgr == null) return;
 
-        // Lấy tất cả nhân vật người chơi sở hữu (đã mở khóa)
         var allCharacters = formationMgr.availableCharacters;
         if (allCharacters == null || allCharacters.Length == 0) return;
 
-        // Duyệt qua tất cả nhân vật và tạo slot, order chạy từ 1 theo thứ tự trong mảng
         for (int i = 0; i < allCharacters.Length; i++)
         {
             var character = allCharacters[i];
             if (character == null) continue;
 
-            // Lấy level thực từ PlayerProgression (nếu có)
             int level = 1;
             if (PlayerProgression.Instance != null)
                 level = PlayerProgression.Instance.GetLevel(character);
@@ -60,14 +82,11 @@ public class EquipmentPanel : MonoBehaviour
             var slotUI = go.GetComponent<CharacterSlotUI>();
             if (slotUI != null)
             {
-                // order = i+1 để hiển thị 1,2,3,... theo thứ tự trong danh sách
                 slotUI.Setup(character, level, i + 1);
-
                 var btn = go.GetComponent<Button>();
                 if (btn == null) btn = go.AddComponent<Button>();
                 CharacterData captured = character;
                 btn.onClick.AddListener(() => SelectCharacter(captured));
-
                 characterSlots.Add(slotUI);
             }
         }
@@ -77,14 +96,12 @@ public class EquipmentPanel : MonoBehaviour
     {
         selectedCharacter = character;
 
-        // Hiển thị battle sprite với tỷ lệ gốc
         if (characterBattleSpriteDisplay != null)
         {
             characterBattleSpriteDisplay.sprite = character.battleSprite;
             characterBattleSpriteDisplay.preserveAspect = true;
         }
 
-        // Cập nhật các slot trang bị
         weaponSlot.Initialize(this, EquipmentSlot.Weapon, character);
         helmetSlot.Initialize(this, EquipmentSlot.Helmet, character);
         armorSlot.Initialize(this, EquipmentSlot.Armor, character);
@@ -95,6 +112,12 @@ public class EquipmentPanel : MonoBehaviour
             equipmentList.Initialize(this);
             equipmentList.Refresh();
         }
+
+        ClearPreview();
+        RefreshStatsDisplay();
+
+        if (EquipmentManager.Instance != null)
+            EquipmentManager.Instance.OnEquipmentChanged += OnEquipmentChanged;
     }
 
     public void RefreshEquipmentList()
@@ -107,9 +130,122 @@ public class EquipmentPanel : MonoBehaviour
             armorSlot.Refresh();
             accessorySlot.Refresh();
         }
+        ClearPreview();
     }
 
     public CharacterData GetSelectedCharacter() => selectedCharacter;
-
     public bool TryGoBack() => false;
+
+    public void ShowPreview(EquipmentData equip)
+    {
+        if (selectedCharacter == null || equip == null) return;
+
+        previewEquipment = equip;
+        previewSlot = equip.slot;
+        isPreviewing = true;
+
+        GetCurrentTotalStats(selectedCharacter, out int curHp, out int curAtk, out int curPdef, out int curMdef, out int curSpeed);
+        GetStatsWithEquipment(selectedCharacter, equip, previewSlot, out int newHp, out int newAtk, out int newPdef, out int newMdef, out int newSpeed);
+
+        UpdateStatText(statHpText, curHp, newHp, "HP");
+        UpdateStatText(statAtkText, curAtk, newAtk, "ATK");
+        UpdateStatText(statPdefText, curPdef, newPdef, "P.DEF");
+        UpdateStatText(statMdefText, curMdef, newMdef, "M.DEF");
+        UpdateStatText(statSpeedText, curSpeed, newSpeed, "SPD");
+    }
+
+    public void ClearPreview()
+    {
+        if (!isPreviewing) return;
+        isPreviewing = false;
+        previewEquipment = null;
+        RefreshStatsDisplay();
+    }
+
+    private void RefreshStatsDisplay()
+    {
+        if (selectedCharacter == null) return;
+        GetCurrentTotalStats(selectedCharacter, out int hp, out int atk, out int pdef, out int mdef, out int speed);
+        SetStatText(statHpText, hp, "HP");
+        SetStatText(statAtkText, atk, "ATK");
+        SetStatText(statPdefText, pdef, "P.DEF");
+        SetStatText(statMdefText, mdef, "M.DEF");
+        SetStatText(statSpeedText, speed, "SPD");
+    }
+
+    private void GetCurrentTotalStats(CharacterData character, out int hp, out int atk, out int pdef, out int mdef, out int speed)
+    {
+        int level = 1;
+        if (PlayerProgression.Instance != null)
+            level = PlayerProgression.Instance.GetLevel(character);
+
+        int baseHp = character.GetHP(level);
+        int baseAtk = character.GetATK(level);
+        int basePdef = character.GetPDEF(level);
+        int baseMdef = character.GetMDEF(level);
+        int baseSpeed = character.GetSpeed(level);
+
+        var equipment = EquipmentManager.Instance?.GetEquipment(character);
+        if (equipment != null)
+        {
+            hp = baseHp + equipment.GetHPBonus();
+            atk = baseAtk + equipment.GetATKBonus();
+            pdef = basePdef + equipment.GetPDEFBonus();
+            mdef = baseMdef + equipment.GetMDEFBonus();
+            speed = baseSpeed + equipment.GetSpeedBonus();
+        }
+        else
+        {
+            hp = baseHp;
+            atk = baseAtk;
+            pdef = basePdef;
+            mdef = baseMdef;
+            speed = baseSpeed;
+        }
+    }
+
+    private void GetStatsWithEquipment(CharacterData character, EquipmentData newEquip, EquipmentSlot slot,
+        out int hp, out int atk, out int pdef, out int mdef, out int speed)
+    {
+        GetCurrentTotalStats(character, out hp, out atk, out pdef, out mdef, out speed);
+
+        var currentEquip = EquipmentManager.Instance?.GetEquipment(character)?.GetEquipment(slot);
+        if (currentEquip != null)
+        {
+            hp -= currentEquip.hpBonus;
+            atk -= currentEquip.atkBonus;
+            pdef -= currentEquip.pdefBonus;
+            mdef -= currentEquip.mdefBonus;
+            speed -= currentEquip.speedBonus;
+        }
+
+        hp += newEquip.hpBonus;
+        atk += newEquip.atkBonus;
+        pdef += newEquip.pdefBonus;
+        mdef += newEquip.mdefBonus;
+        speed += newEquip.speedBonus;
+    }
+
+    private void UpdateStatText(TextMeshProUGUI text, int currentValue, int newValue, string statName)
+    {
+        if (text == null) return;
+        int diff = newValue - currentValue;
+        if (diff > 0)
+            text.text = $"{statName}: {newValue} <color=#00AAFF>(+{diff})</color>";
+        else if (diff < 0)
+            text.text = $"{statName}: {newValue} <color=#FF5555>({diff})</color>";
+        else
+            text.text = $"{statName}: {newValue}";
+    }
+
+    private void SetStatText(TextMeshProUGUI text, int value, string statName)
+    {
+        if (text != null)
+            text.text = $"{statName}: {value}";
+    }
+
+    public void OnClickBackground()
+    {
+        ClearPreview();
+    }
 }

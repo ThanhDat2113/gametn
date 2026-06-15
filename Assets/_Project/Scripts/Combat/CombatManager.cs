@@ -107,7 +107,7 @@ public class CombatManager : MonoBehaviour
     public event System.Action OnExecuteStarted;
     public event System.Action OnRoundEnded;
     public event System.Action<ActionResult> OnActionResolved;
-    public event System.Action<Dictionary<CharacterData, int>> OnVictory;    // THAY ĐỔI: gửi kèm EXP
+    public event System.Action<Dictionary<CharacterData, int>> OnVictory;
     public event System.Action OnDefeat;
     public event System.Action OnPlanChanged;
     public event System.Action<int> OnAPChanged;
@@ -167,7 +167,7 @@ public class CombatManager : MonoBehaviour
         OnTurnOrderUpdated?.Invoke(ActionOrder);
     }
 
-    // === START COMBAT (từ FormationData) – ĐÃ SỬA: cộng bonus trang bị ===
+    // === START COMBAT (từ FormationData) – ĐÃ SỬA: cộng bonus trang bị riêng cho 5 chỉ số ===
     public void StartCombat(FormationData playerFormation, EnemyGroupData enemyGroup)
     {
         _currentEnemyGroup = enemyGroup;
@@ -184,7 +184,7 @@ public class CombatManager : MonoBehaviour
             CharacterData charData = slot.data;
 
             // Lấy bonus trang bị từ EquipmentManager
-            int hpBonus = 0, atkBonus = 0, defBonus = 0;
+            int hpBonus = 0, atkBonus = 0, pdefBonus = 0, mdefBonus = 0, speedBonus = 0;
             if (EquipmentManager.Instance != null)
             {
                 var equipment = EquipmentManager.Instance.GetEquipment(charData);
@@ -192,12 +192,14 @@ public class CombatManager : MonoBehaviour
                 {
                     hpBonus = equipment.GetHPBonus();
                     atkBonus = equipment.GetATKBonus();
-                    defBonus = equipment.GetDEFBonus();
+                    pdefBonus = equipment.GetPDEFBonus();
+                    mdefBonus = equipment.GetMDEFBonus();
+                    speedBonus = equipment.GetSpeedBonus();
                 }
             }
 
             var unit = new CombatUnit();
-            unit.Initialize(charData, level, isPlayer: true, hpBonus, atkBonus, defBonus);
+            unit.Initialize(charData, level, isPlayer: true, hpBonus, atkBonus, pdefBonus, mdefBonus, speedBonus);
             unit.GridRow = SlotToRow(slot.gridSlot);
             unit.GridSlot = slot.gridSlot;
             PlayerUnits.Add(unit);

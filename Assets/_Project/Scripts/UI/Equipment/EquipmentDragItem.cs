@@ -4,7 +4,7 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using TMPro;
 
-public class EquipmentDragItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
+public class EquipmentDragItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerClickHandler
 {
     public EquipmentData Equipment { get; private set; }
 
@@ -14,6 +14,9 @@ public class EquipmentDragItem : MonoBehaviour, IBeginDragHandler, IDragHandler,
     private CanvasGroup canvasGroup;
     private GameObject ghost;
     private EquipmentPanel panel;
+
+    // Sự kiện khi click vào item (có thể dùng hoặc không)
+    public event System.Action<EquipmentData> OnItemClicked;
 
     public void Initialize(EquipmentData equip, EquipmentPanel parentPanel)
     {
@@ -27,7 +30,7 @@ public class EquipmentDragItem : MonoBehaviour, IBeginDragHandler, IDragHandler,
         {
             icon.sprite = equip.icon;
             icon.enabled = true;
-            icon.color = Color.white; // alpha = 1
+            icon.color = Color.white;
         }
         if (nameText != null)
             nameText.text = equip.itemName;
@@ -111,6 +114,16 @@ public class EquipmentDragItem : MonoBehaviour, IBeginDragHandler, IDragHandler,
         {
             canvasGroup.alpha = 1f;
             canvasGroup.blocksRaycasts = true;
+        }
+    }
+
+    // Xử lý click để hiển thị preview chỉ số
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        if (Equipment != null && panel != null)
+        {
+            panel.ShowPreview(Equipment);
+            OnItemClicked?.Invoke(Equipment);
         }
     }
 }

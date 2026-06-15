@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 
 [Serializable]
@@ -34,8 +33,9 @@ public class CharacterEquipment
         }
     }
 
-    // Tính toán stat bonus từ trang bị
-    public int GetATKBonus() => (weapon?.atkBonus ?? 0) + (helmet?.atkBonus ?? 0) + (armor?.atkBonus ?? 0) + (accessory?.atkBonus ?? 0);
-    public int GetDEFBonus() => (weapon?.defBonus ?? 0) + (helmet?.defBonus ?? 0) + (armor?.defBonus ?? 0) + (accessory?.defBonus ?? 0);
     public int GetHPBonus() => (weapon?.hpBonus ?? 0) + (helmet?.hpBonus ?? 0) + (armor?.hpBonus ?? 0) + (accessory?.hpBonus ?? 0);
+    public int GetATKBonus() => (weapon?.atkBonus ?? 0) + (helmet?.atkBonus ?? 0) + (armor?.atkBonus ?? 0) + (accessory?.atkBonus ?? 0);
+    public int GetPDEFBonus() => (weapon?.pdefBonus ?? 0) + (helmet?.pdefBonus ?? 0) + (armor?.pdefBonus ?? 0) + (accessory?.pdefBonus ?? 0);
+    public int GetMDEFBonus() => (weapon?.mdefBonus ?? 0) + (helmet?.mdefBonus ?? 0) + (armor?.mdefBonus ?? 0) + (accessory?.mdefBonus ?? 0);
+    public int GetSpeedBonus() => (weapon?.speedBonus ?? 0) + (helmet?.speedBonus ?? 0) + (armor?.speedBonus ?? 0) + (accessory?.speedBonus ?? 0);
 }

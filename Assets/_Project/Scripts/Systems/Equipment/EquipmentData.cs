@@ -4,13 +4,14 @@ using UnityEngine;
 public class EquipmentData : ItemData
 {
     public EquipmentSlot slot;
-    public int atkBonus;
-    public int defBonus;
+    
+    [Header("Stat Bonuses")]
     public int hpBonus;
-    public int critRateBonus;
-    public int critDamageBonus;
+    public int atkBonus;
+    public int pdefBonus;
+    public int mdefBonus;
+    public int speedBonus;
 
-    // Đảm bảo itemType là Equipment khi khởi tạo
     void OnEnable()
     {
         itemType = ItemType.Equipment;
