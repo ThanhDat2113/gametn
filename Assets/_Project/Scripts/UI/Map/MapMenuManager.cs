@@ -144,7 +144,10 @@ public class MapMenuManager : MonoBehaviour
 
     void PlaySound(AudioClip clip)
     {
-        if (clip != null && audioSource != null)
+        if (clip == null) return;
+        if (AudioManager.Instance != null)
+            AudioManager.Instance.PlayUISound(clip, volume);
+        else if (audioSource != null)
             audioSource.PlayOneShot(clip, volume);
     }
 

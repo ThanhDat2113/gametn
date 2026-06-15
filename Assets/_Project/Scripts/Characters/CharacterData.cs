@@ -62,6 +62,16 @@ public int expIncrementPerLevel = 50;
     [Tooltip("Kéo file .cs của passive vào đây (VD: AleusPassive.cs)")]
     public Object passiveScript;
 
+    [Header("Audio")]
+    [Tooltip("Giọng khi bị đánh (random)")]
+    public AudioClip[] hitVoiceClips;
+    [Tooltip("Giọng khi tấn công (random)")]
+    public AudioClip[] attackVoiceClips;
+    [Tooltip("Giọng khi chết")]
+    public AudioClip[] deathVoiceClips;
+    [Tooltip("Tiếng bước chân (overworld)")]
+    public AudioClip footstepSound;
+
     // Tính stat theo level
     public int GetHP(int level) => baseHP + hpPerLevel * (level - 1);
     public int GetATK(int level) => baseATK + atkPerLevel * (level - 1);

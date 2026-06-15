@@ -60,6 +60,8 @@ public class SkillData : ScriptableObject
 
     [Header("Audio")]
     public AudioClip[] sfxClips;  // SFX cho skill, mỗi hit 1 clip (nếu có)
+    public AudioClip chargeSound;    // SFX khi bắt đầu charge skill
+    public AudioClip[] voiceLines;   // Giọng nhân vật khi dùng skill (random)
 
     [Header("Animation")]
     public string animationTrigger;
