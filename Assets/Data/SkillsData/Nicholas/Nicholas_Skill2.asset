@@ -25,11 +25,19 @@ MonoBehaviour:
   doesNotEndTurn: 0
   apCost: 1
   hitCount: 1
-  animationTrigger: Skill2
   vfxEvents:
-  - vfxPrefab: {fileID: 2370235132157063983, guid: 474d84a7c80408047a39ea5e64c3adfd, type: 3}
+  - vfxPrefab: {fileID: 4163806820961978622, guid: 24320a8e0add9424aa463e49203e0a0f, type: 3}
+    spawnMode: 1
     offset: {x: 1, y: 0, z: 0}
     attachToCaster: 0
+  rangedVfxEvents: []
+  hitVfxEvents: []
+  sfxClips: []
+  animationTrigger: Skill2
+  isRanged: 0
+  projectilePrefab: {fileID: 0}
+  projectileOffset: {x: 0, y: 0, z: 0}
+  projectileTravelTime: 0.3
   vfxPrefab: {fileID: 0}
   vfxOffset: 0
   effects:
