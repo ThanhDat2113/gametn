@@ -129,6 +129,22 @@ public class QuestManager : MonoBehaviour
             CompleteCurrentStep();
     }
 
+    public void OnPuzzleCompleted(string triggerID)
+    {
+        if (runtimeQuest == null) return;
+        if (currentStepIndex >= runtimeQuest.steps.Length) return;
+
+        var step = runtimeQuest.steps[currentStepIndex];
+        bool isPuzzleType = step.type == QuestStepType.SymbolSequence
+                         || step.type == QuestStepType.RiddleGate
+                         || step.type == QuestStepType.MemoryGrove
+                         || step.type == QuestStepType.SlidePuzzle
+                         || step.type == QuestStepType.SpirePuzzle
+                         || step.type == QuestStepType.FlowPuzzle;
+        if (isPuzzleType && step.targetId == triggerID && !step.isCompleted)
+            CompleteCurrentStep();
+    }
+
     private void CompleteCurrentStep()
     {
         var step = runtimeQuest.steps[currentStepIndex];
