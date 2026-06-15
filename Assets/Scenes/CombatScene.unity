@@ -375,7 +375,7 @@ Light:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 306007187}
   m_Enabled: 0
-  serializedVersion: 12
+  serializedVersion: 13
   m_Type: 1
   m_Color: {r: 1, g: 0.95686275, b: 0.8392157, a: 1}
   m_Intensity: 1
@@ -427,7 +427,7 @@ Light:
   m_UseBoundingSphereOverride: 0
   m_UseViewFrustumForShadowCasterCull: 1
   m_ForceVisible: 0
-  m_ShadowRadius: 0
+  m_ShapeRadius: 0
   m_ShadowAngle: 0
   m_LightUnit: 1
   m_LuxAtDistance: 1
@@ -1568,6 +1568,7 @@ Canvas:
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
   m_VertexColorAlwaysGammaSpace: 0
+  m_UseReflectionProbes: 0
   m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
@@ -1694,9 +1695,9 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 97faa5da240c37f4c86aa1e422208619, type: 2}
   - {fileID: 11400000, guid: c0d2389d8a2a6fc4b879fb26c825e331, type: 2}
   - {fileID: 11400000, guid: d9a02487cd5ceb443a7bfe4ac6df8beb, type: 2}
-  testPlayerLevels: 0100000001000000010000000100000001000000
-  testPlayerSlots: 0000000002000000040000000600000008000000
-  testEnemyGroup: {fileID: 11400000, guid: 4f070e30182b8494687da0780ce4d0c1, type: 2}
+  testPlayerLevels: {_typeName: int, _data: 0100000001000000010000000100000001000000}
+  testPlayerSlots: {_typeName: int, _data: 0000000002000000040000000600000008000000}
+  testEnemyGroup: {fileID: 11400000, guid: 23bfa545e4684414f988df8eba6a6727, type: 2}
   autoStartOnAwake: 1
   startKey: 116
 --- !u!1 &1019903363
@@ -1776,6 +1777,7 @@ Canvas:
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
   m_VertexColorAlwaysGammaSpace: 0
+  m_UseReflectionProbes: 0
   m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
@@ -1943,7 +1945,7 @@ MonoBehaviour:
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 0
-  m_ActiveFontFeatures: 6e72656b
+  m_ActiveFontFeatures: {_typeName: unsigned int, _data: 6e72656b}
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
@@ -2277,7 +2279,7 @@ MonoBehaviour:
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 0
-  m_ActiveFontFeatures: 6e72656b
+  m_ActiveFontFeatures: {_typeName: unsigned int, _data: 6e72656b}
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
@@ -2688,7 +2690,7 @@ MonoBehaviour:
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 0
-  m_ActiveFontFeatures: 6e72656b
+  m_ActiveFontFeatures: {_typeName: unsigned int, _data: 6e72656b}
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
@@ -2983,7 +2985,7 @@ MonoBehaviour:
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 0
-  m_ActiveFontFeatures: 6e72656b
+  m_ActiveFontFeatures: {_typeName: unsigned int, _data: 6e72656b}
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
@@ -3032,7 +3034,7 @@ GameObject:
   m_IsActive: 1
 --- !u!212 &1910550706
 SpriteRenderer:
-  serializedVersion: 2
+  serializedVersion: 3
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -3089,6 +3091,7 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+  m_BlendShapeWeights: []
 --- !u!4 &1910550707
 Transform:
   m_ObjectHideFlags: 0
@@ -3273,7 +3276,7 @@ MonoBehaviour:
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 0
-  m_ActiveFontFeatures: 6e72656b
+  m_ActiveFontFeatures: {_typeName: unsigned int, _data: 6e72656b}
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
