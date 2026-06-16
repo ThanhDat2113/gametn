@@ -7843,8 +7843,12 @@ PrefabInstance:
       value: Raining
       objectReference: {fileID: 0}
     - target: {fileID: 6903224756807677017, guid: ba30b9262b59a1a4792c80173f4330df, type: 3}
+      propertyPath: prewarm
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6903224756807677017, guid: ba30b9262b59a1a4792c80173f4330df, type: 3}
       propertyPath: lengthInSec
-      value: 10
+      value: 30
       objectReference: {fileID: 0}
     - target: {fileID: 6903224756807677017, guid: ba30b9262b59a1a4792c80173f4330df, type: 3}
       propertyPath: ShapeModule.m_Scale.x
@@ -7860,7 +7864,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6903224756807677017, guid: ba30b9262b59a1a4792c80173f4330df, type: 3}
       propertyPath: InitialModule.maxNumParticles
-      value: 10000
+      value: 100000
       objectReference: {fileID: 0}
     - target: {fileID: 6903224756807677017, guid: ba30b9262b59a1a4792c80173f4330df, type: 3}
       propertyPath: InitialModule.startSize.scalar
@@ -7876,11 +7880,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6903224756807677017, guid: ba30b9262b59a1a4792c80173f4330df, type: 3}
       propertyPath: InitialModule.startSpeed.scalar
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6903224756807677017, guid: ba30b9262b59a1a4792c80173f4330df, type: 3}
       propertyPath: EmissionModule.rateOverTime.scalar
-      value: 1000
+      value: 3600
       objectReference: {fileID: 0}
     - target: {fileID: 6903224756807677017, guid: ba30b9262b59a1a4792c80173f4330df, type: 3}
       propertyPath: InitialModule.startLifetime.scalar
@@ -7890,6 +7894,14 @@ PrefabInstance:
       propertyPath: m_NormalDirection
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 8900934603567384309, guid: ba30b9262b59a1a4792c80173f4330df, type: 3}
+      propertyPath: m_RenderingLayerMask
+      value: 4294967295
+      objectReference: {fileID: 0}
+    - target: {fileID: 8900934603567384309, guid: ba30b9262b59a1a4792c80173f4330df, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: cc3a4b86baeeb7846a5830b7f09fb9bf, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
