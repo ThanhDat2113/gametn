@@ -223,10 +223,7 @@ public class CombatManager : MonoBehaviour
             AudioManager.Instance.PlaySFX2D(enemyGroup.introStinger, 0.8f);
 
         // Play BGM
-        if (CombatAudioManager.Instance != null)
-        {
-            CombatAudioManager.Instance.PlayBGM(enemyGroup.zoneTag, enemyGroup.bgmClip);
-        }
+        CombatAudioManager.Instance?.PlayCombatBGM(enemyGroup.combatArea, enemyGroup.bgmClip);
 
         stateMachine.TransitionTo(CombatPhase.Intro);
     }
