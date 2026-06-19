@@ -1,0 +1,44 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6b16013e257e8246ac0b768d7079c9e, type: 3}
+  m_Name: 5
+  m_EditorClassIdentifier: Assembly-CSharp::PuzzleData
+  puzzleID: 5
+  puzzleName: 5
+  puzzleType: 8
+  allowedAttempts: 3
+  showOnComplete: 1
+  symbolConfig:
+    gridSize: 3
+    startLength: 3
+    maxLength: 7
+  riddleConfig:
+    riddles: []
+    correctAnswers: []
+    wrongAnswerA: []
+    wrongAnswerB: []
+    wrongAnswerC: []
+    requiredCorrect: 1
+  memoryConfig:
+    characterPool: []
+    gridCols: 4
+    gridRows: 3
+    showLoreOnMatch: 1
+  slideConfig:
+    gridSize: 3
+    maxMoves: 100
+  pipeConfig:
+    gridSize: 4
+    maxMoves: 30
+  flowConfig:
+    gridSize: 5
+    pairColors: []

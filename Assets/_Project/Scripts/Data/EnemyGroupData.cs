@@ -39,10 +39,10 @@ public class EnemyGroupData : ScriptableObject
     }
 
     [Header("BGM & Zone")]
-    [Tooltip("Tag vùng: 'vùng 1' → 'vùng 5'")]
-    public string zoneTag = "vùng 1";
+    [Tooltip("Index vùng combat (1, 2, 3...). Tương ứng với combatBGMClips trong AudioManager.")]
+    public int combatArea = 1;
 
-    [Tooltip("Nhạc nền cho trận này (ghi đè lên zoneBGM fallback)")]
+    [Tooltip("Nhạc nền cho trận này (ghi đè lên combatBGMClips[combatArea])")]
     public AudioClip bgmClip;
 
     [Header("Audio (Tùy chọn)")]

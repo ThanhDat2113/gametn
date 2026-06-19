@@ -55,6 +55,7 @@ public class CombatSceneStarter : MonoBehaviour
         }
 
         CombatSessionData.Clear();
+        SceneLoaderManager.UnloadCombatScene();
         yield break;
     }
 
@@ -75,6 +76,19 @@ public class CombatSceneStarter : MonoBehaviour
             yield return new WaitForSeconds(2f);
             SceneLoaderManager.UnloadCombatScene();
         }
+        // Không unload combat scene khi thua — DefeatPanel sẽ xử lý (retry/quit)
+        // Nếu DefeatPanel không unload, player bị stuck. FIX: đợi panel rồi unload.
+        yield return new WaitForSeconds(0.5f);
+        // Chờ player nhấn Quit trên DefeatPanel — nếu không có, unload sau 5s
+        float timer = 5f;
+        while (timer > 0f)
+        {
+            if (FindFirstObjectByType<DefeatPanel>() == null)
+                break; // Panel đã đóng → unload
+            timer -= Time.deltaTime;
+            yield return null;
+        }
+        SceneLoaderManager.UnloadCombatScene();
         yield break;
     }
 
