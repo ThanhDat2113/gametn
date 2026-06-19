@@ -30,6 +30,7 @@ public class DialogueBubbleUI : MonoBehaviour
     private System.Action _onComplete;
     private Coroutine _typingCoroutine;
     private bool _isTyping;
+    private string _currentFullText;
 
     public bool IsShowing => _isShowing;
 
@@ -91,6 +92,8 @@ public class DialogueBubbleUI : MonoBehaviour
         _isShowing = true;
         _onHide = onHide;
 
+        _currentFullText = line.text;
+
         // Bắt đầu typing effect (hoặc hiện ngay nếu typingSpeed = 0)
         if (typingSpeed > 0f)
         {
@@ -145,6 +148,12 @@ public class DialogueBubbleUI : MonoBehaviour
             StopCoroutine(_typingCoroutine);
             _typingCoroutine = null;
         }
+
+        // Đây là phần bị thiếu trước đó: dừng coroutine giữa chừng
+        // nhưng không gán nốt phần text còn lại -> chữ bị cụt.
+        if (!string.IsNullOrEmpty(_currentFullText))
+            contentText.text = _currentFullText;
+
         _isTyping = false;
 
         // Dừng typing sound ngay lập tức

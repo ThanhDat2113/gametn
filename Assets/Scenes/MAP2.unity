@@ -8759,9 +8759,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 301e6ec3e8a53394688f0578664b8a4f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SceneBootstrapper
-  retryInterval: 0.1
-  maxRetryTime: 5
-  debugMode: 1
 --- !u!114 &304261612
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8776,13 +8773,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SceneTransfer
   sceneNameToLoad: MAP
   spawnPointName: SpawnPoint_Main
-  useSpawnPoint: 1
-  useCustomPosition: 0
-  customPosition: {x: 0, y: 0, z: 0}
-  positionOffset: {x: 0, y: 0, z: 0}
-  useCharacterController: 1
-  triggerDelay: 0
-  debugMode: 1
 --- !u!65 &304261613
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -13090,6 +13080,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1ca002da428252441b92f28d83c8a65f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.ProBuilder::UnityEngine.ProBuilder.Shapes.ProBuilderShape
+  m_Shape:
+    rid: 1525822414714044553
+  m_ShapeRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_UnmodifiedMeshVersion: 0
+  m_Size: {x: 1, y: 1, z: 1}
+  m_LocalCenter: {x: 0, y: 0, z: 0}
+  references:
+    version: 2
+    RefIds:
+    - rid: 1525822414714044553
+      type: {class: Cube, ns: UnityEngine.ProBuilder.Shapes, asm: Unity.ProBuilder}
+      data: 
 --- !u!114 &485984754
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -13102,6 +13104,29 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8233d90336aea43098adf6dbabd606a2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.ProBuilder::UnityEngine.ProBuilder.ProBuilderMesh
+  m_MeshFormatVersion: 0
+  m_Faces: []
+  m_SharedVertices: []
+  m_SharedTextures: []
+  m_Positions: []
+  m_Textures0: []
+  m_Textures2: []
+  m_Textures3: []
+  m_Tangents: []
+  m_Colors: []
+  m_UnwrapParameters:
+    m_HardAngle: 88
+    m_PackMargin: 20
+    m_AngleError: 8
+    m_AreaError: 15
+  m_PreserveMeshAssetOnDestroy: 0
+  assetGuid: 
+  m_Mesh: {fileID: 0}
+  m_VersionIndex: 0
+  m_IsSelectable: 1
+  m_SelectedFaces: 
+  m_SelectedEdges: []
+  m_SelectedVertices: 
 --- !u!4 &485984755
 Transform:
   m_ObjectHideFlags: 0
@@ -22269,13 +22294,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SceneTransfer
   sceneNameToLoad: MAP3
   spawnPointName: MAP2
-  useSpawnPoint: 1
-  useCustomPosition: 0
-  customPosition: {x: 0, y: 0, z: 0}
-  positionOffset: {x: 0, y: 0, z: 0}
-  useCharacterController: 1
-  triggerDelay: 0
-  debugMode: 1
 --- !u!114 &764890266
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -22288,9 +22306,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 301e6ec3e8a53394688f0578664b8a4f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SceneBootstrapper
-  retryInterval: 0.1
-  maxRetryTime: 5
-  debugMode: 1
 --- !u!1001 &767034821
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -49700,9 +49715,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 301e6ec3e8a53394688f0578664b8a4f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SceneBootstrapper
-  retryInterval: 0.1
-  maxRetryTime: 5
-  debugMode: 1
 --- !u!65 &1738328051
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -56609,13 +56621,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SceneTransfer
   sceneNameToLoad: MAP1
   spawnPointName: MAP2
-  useSpawnPoint: 1
-  useCustomPosition: 0
-  customPosition: {x: 0, y: 0, z: 0}
-  positionOffset: {x: 0, y: 0, z: 0}
-  useCharacterController: 1
-  triggerDelay: 0
-  debugMode: 1
 --- !u!4 &2002713126 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 400000, guid: abc00000000001396940432565039792, type: 3}
@@ -59424,7 +59429,7 @@ MonoBehaviour:
   m_IsGlobal: 1
   priority: 0
   blendDistance: 0
-  weight: 1
+  weight: 0
   sharedProfile: {fileID: 11400000, guid: 556d0ae0e1c87a44a9c0eac6d0ae3a05, type: 2}
 --- !u!114 &2118060757
 MonoBehaviour:
