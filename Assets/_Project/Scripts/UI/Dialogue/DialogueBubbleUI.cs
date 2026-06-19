@@ -26,18 +26,39 @@ public class DialogueBubbleUI : MonoBehaviour
 
     void Awake()
     {
-        if (Instance != null) Destroy(gameObject);
-        else Instance = this;
-        _cam = Camera.main;
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
         bubbleRoot.SetActive(false);
     }
 
     void Update()
     {
         if (!_isShowing) return;
-        bubbleRoot.transform.rotation = _cam.transform.rotation;
+
+        // Quan trọng: KHÔNG để việc xoay bubble theo camera làm gãy việc bắt input.
+        // Nếu Camera.main null/đổi camera (VD: cutscene chuyển sang cutsceneCamera
+        // không gắn tag MainCamera), trước đây dòng xoay sẽ ném NullReferenceException
+        // ngay tại Update() khiến đoạn check click/space phía dưới KHÔNG BAO GIỜ chạy.
+        UpdateBillboard();
+
         bool keyPressed = Input.GetKeyDown(continueKey) || (clickToContinue && Input.GetMouseButtonDown(0));
         if (keyPressed) Hide();
+    }
+
+    private void UpdateBillboard()
+    {
+        // Tự refetch nếu cache bị mất, thay vì chỉ lấy 1 lần duy nhất ở Awake.
+        if (_cam == null)
+            _cam = Camera.main;
+
+        if (_cam == null)
+            return; // không có camera hợp lệ -> bỏ qua xoay, không phá input
+
+        bubbleRoot.transform.rotation = _cam.transform.rotation;
     }
 
     public void Show(DialogueLineData line, Transform target, System.Action onHide = null)
