@@ -265,6 +265,7 @@ public class CombatPlanningUI : MonoBehaviour
     private void OnSkillSelected(SkillData skill)
     {
         if (combat.CurrentPlayerAP < skill.apCost) { Debug.LogWarning($"[AP] Không đủ AP để dùng {skill.skillName}."); return; }
+        AudioManager.Instance?.PlayUISelect();
         if (skill.autoConfirmOnSelect)
         {
             combat.SubmitPlayerTurnAction(skill, new List<CombatUnit> { currentUnit });
@@ -304,6 +305,7 @@ public class CombatPlanningUI : MonoBehaviour
             }
             if (finalTargets.Count > 0)
             {
+                AudioManager.Instance?.PlayUITargetConfirm();
                 combat.SubmitPlayerTurnAction(selectedSkill, finalTargets);
                 UpdateAPDisplay();
             }
@@ -314,6 +316,7 @@ public class CombatPlanningUI : MonoBehaviour
     {
         if (isChoosingTarget)
         {
+            AudioManager.Instance?.PlayUICancel();
             isChoosingTarget = false;
             selectedSkill = null;
             ClearTargetHighlights();
@@ -358,12 +361,51 @@ public class CombatPlanningUI : MonoBehaviour
     {
         var trigger = go.AddComponent<EventTrigger>();
         bool canAfford = skill.apCost <= combat.CurrentPlayerAP;
+
         var enterEntry = new EventTrigger.Entry { eventID = EventTriggerType.PointerEnter };
-        enterEntry.callback.AddListener(_ => { var img = go.GetComponent<Image>(); if (img != null && canAfford) img.color = skillHoverColor; });
+        enterEntry.callback.AddListener(_ =>
+        {
+            if (!canAfford) return;
+            // Hover scale effect
+            var rect = go.GetComponent<RectTransform>();
+            if (rect != null && gameObject.activeInHierarchy)
+                StartCoroutine(HoverScaleCoroutine(rect, 1f, 1.15f));
+            // Hover color
+            var img = go.GetComponent<Image>();
+            if (img != null) img.color = skillHoverColor;
+            // Hover sound (cooldown inside AudioManager)
+            AudioManager.Instance?.PlayUIHover();
+        });
         trigger.triggers.Add(enterEntry);
+
         var exitEntry = new EventTrigger.Entry { eventID = EventTriggerType.PointerExit };
-        exitEntry.callback.AddListener(_ => { var img = go.GetComponent<Image>(); if (img != null && canAfford) img.color = (selectedSkill == skill) ? skillSelectedColor : skillNormalColor; });
+        exitEntry.callback.AddListener(_ =>
+        {
+            if (!canAfford) return;
+            // Unhover scale
+            var rect = go.GetComponent<RectTransform>();
+            if (rect != null && gameObject.activeInHierarchy)
+                StartCoroutine(HoverScaleCoroutine(rect, rect.localScale.x, 1f));
+            // Revert color
+            var img = go.GetComponent<Image>();
+            if (img != null) img.color = (selectedSkill == skill) ? skillSelectedColor : skillNormalColor;
+        });
         trigger.triggers.Add(exitEntry);
+    }
+
+    private IEnumerator HoverScaleCoroutine(RectTransform rect, float from, float to)
+    {
+        float duration = 0.12f;
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            float t = Mathf.Clamp01(elapsed / duration);
+            float scale = Mathf.Lerp(from, to, t);
+            rect.localScale = new Vector3(scale, scale, scale);
+            yield return null;
+        }
+        rect.localScale = new Vector3(to, to, to);
     }
 
     private void UpdateUnitEmphasis()

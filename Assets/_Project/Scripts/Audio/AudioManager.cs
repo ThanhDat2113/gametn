@@ -36,6 +36,18 @@ public class AudioManager : MonoBehaviour
     public AudioSource uiSource;
     public AudioSourcePool sfxPool;
 
+    [Header("UI Sounds")]
+    public AudioClip uiSkillSelectClip;
+    public AudioClip uiSkillCancelClip;
+    public AudioClip uiTargetConfirmClip;
+    public AudioClip uiTypingClip;
+    public AudioClip uiDialogueAdvanceClip;
+    public AudioClip uiHoverClip;
+
+    [Header("Combat BGM (theo area index)")]
+    [Tooltip("clip[0] = combat area 1, clip[1] = area 2, clip[2] = area 3...")]
+    public AudioClip[] combatBGMClips;
+
     [Header("Zone BGM List (fallback)")]
     public ZoneBGMEntry[] zoneBGMList;
 
@@ -48,6 +60,14 @@ public class AudioManager : MonoBehaviour
 
     private string currentZone = "";
     private Coroutine bgmFadeCoroutine;
+
+    // UI sound cooldown tracking
+    private float lastTypingTime;
+    private float lastDialogueAdvanceTime;
+    private float lastHoverTime;
+    public float typingCooldown = 0.05f;
+    public float dialogueAdvanceCooldown = 1f;
+    public float hoverCooldown = 0.2f;
 
     private const string PREFS_MASTER = "Audio_MasterVolume";
     private const string PREFS_BGM = "Audio_BGMVolume";
@@ -193,6 +213,21 @@ public class AudioManager : MonoBehaviour
                 }
             }
         }
+    }
+
+    /// <summary>Phát nhạc combat dựa trên area index (1, 2, 3...).</summary>
+    public void PlayCombatBGM(int areaIndex, AudioClip overrideClip = null)
+    {
+        if (overrideClip != null)
+        {
+            PlayBGM(overrideClip);
+            return;
+        }
+
+        if (combatBGMClips == null || combatBGMClips.Length == 0) return;
+        int index = Mathf.Clamp(areaIndex - 1, 0, combatBGMClips.Length - 1);
+        var clip = combatBGMClips[index];
+        if (clip != null) PlayBGM(clip);
     }
 
     private IEnumerator CrossfadeBGM(AudioClip newClip, float duration)
@@ -352,6 +387,56 @@ public class AudioManager : MonoBehaviour
     {
         if (clip != null && uiSource != null)
             uiSource.PlayOneShot(clip, volume);
+    }
+
+    // ── UI Sound Methods (tập trung tại AudioManager) ────────
+
+    public void PlayUISelect()
+    {
+        if (uiSkillSelectClip != null && uiSource != null)
+            uiSource.PlayOneShot(uiSkillSelectClip);
+    }
+
+    public void PlayUICancel()
+    {
+        if (uiSkillCancelClip != null && uiSource != null)
+            uiSource.PlayOneShot(uiSkillCancelClip);
+    }
+
+    public void PlayUITargetConfirm()
+    {
+        if (uiTargetConfirmClip != null && uiSource != null)
+            uiSource.PlayOneShot(uiTargetConfirmClip);
+    }
+
+    public void PlayUITyping()
+    {
+        if (uiTypingClip == null || uiSource == null) return;
+        if (Time.unscaledTime - lastTypingTime < typingCooldown) return;
+        lastTypingTime = Time.unscaledTime;
+        uiSource.PlayOneShot(uiTypingClip);
+    }
+
+    public void PlayUIDialogueAdvance()
+    {
+        if (uiDialogueAdvanceClip == null || uiSource == null) return;
+        if (Time.unscaledTime - lastDialogueAdvanceTime < dialogueAdvanceCooldown) return;
+        lastDialogueAdvanceTime = Time.unscaledTime;
+        StopUITyping();
+        uiSource.PlayOneShot(uiDialogueAdvanceClip);
+    }
+
+    public void PlayUIHover()
+    {
+        if (uiHoverClip == null || uiSource == null) return;
+        if (Time.unscaledTime - lastHoverTime < hoverCooldown) return;
+        lastHoverTime = Time.unscaledTime;
+        uiSource.PlayOneShot(uiHoverClip);
+    }
+
+    public void StopUITyping()
+    {
+        lastTypingTime = Time.unscaledTime;
     }
 
     private IEnumerator ReturnToPoolAfterPlay(AudioSource source)

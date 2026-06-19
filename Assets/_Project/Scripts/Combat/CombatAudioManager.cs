@@ -34,6 +34,12 @@ public class CombatAudioManager : MonoBehaviour
             AudioManager.Instance.PlayBGM(zoneTag, overrideClip);
     }
 
+    public void PlayCombatBGM(int areaIndex, AudioClip overrideClip = null)
+    {
+        if (AudioManager.Instance != null)
+            AudioManager.Instance.PlayCombatBGM(areaIndex, overrideClip);
+    }
+
     public void PlaySkillSFX(AudioClip[] sfxClips, int hitIndex = 0)
     {
         if (AudioManager.Instance != null)
