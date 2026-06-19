@@ -51,7 +51,7 @@ public class WaypointNavigator : MonoBehaviour
     private QuestMarkerBridge _targetBridge;
     private QuestMarkerUI     _activeMarkerUI;
 
-    private readonly NavMeshPath _navPath = new NavMeshPath();
+    private NavMeshPath _navPath;
     private int     _currentCornerIndex;
     private float   _recalcTimer;
     private bool    _pathValid;
@@ -62,7 +62,7 @@ public class WaypointNavigator : MonoBehaviour
 
     /// <summary>Đã đi hết các corner trung gian → corner cuối chính là NPC.</summary>
     public bool IsPointingAtNPC =>
-        IsNavigating && (!_pathValid || _currentCornerIndex >= _navPath.corners.Length - 1);
+        IsNavigating && (!_pathValid || _navPath == null || _currentCornerIndex >= _navPath.corners.Length - 1);
 
     public Vector3? CurrentTargetPosition
     {
@@ -70,7 +70,7 @@ public class WaypointNavigator : MonoBehaviour
         {
             if (!IsNavigating) return null;
 
-            if (_pathValid && _currentCornerIndex < _navPath.corners.Length)
+            if (_pathValid && _navPath != null && _currentCornerIndex < _navPath.corners.Length)
                 return _navPath.corners[_currentCornerIndex];
 
             // Path lỗi/không tính được → fallback chỉ thẳng NPC
@@ -85,6 +85,9 @@ public class WaypointNavigator : MonoBehaviour
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
         DontDestroyOnLoad(gameObject);
+
+        _navPath = new NavMeshPath();
+
         ResolvePlayer();
     }
 
@@ -196,18 +199,40 @@ public class WaypointNavigator : MonoBehaviour
     {
         if (_targetBridge == null || playerTransform == null) return;
 
-        bool ok = NavMeshPathfinder.TryCalculatePath(
-            playerTransform.position, _targetBridge.MarkerPosition, _navPath, areaMask);
+        Vector3 playerPos = playerTransform.position;
+        Vector3 npcPos     = _targetBridge.MarkerPosition;
 
-        if (!ok)
+        var reason = NavMeshPathfinder.TryCalculatePath(playerPos, npcPos, _navPath, areaMask);
+
+#if UNITY_EDITOR
+        _debugPlayerPos    = playerPos;
+        _debugNpcPos       = npcPos;
+        _debugPlayerOnMesh = NavMeshPathfinder.SampleOnNavMesh(playerPos, out _, areaMask);
+        _debugNpcOnMesh    = NavMeshPathfinder.SampleOnNavMesh(npcPos, out _, areaMask);
+#endif
+
+        if (reason != NavMeshPathfinder.FailReason.None)
         {
-            Log($"⚠ Không tính được NavMesh path đến '{_targetBridge.TriggerID}' " +
-                "(có thể chưa bake NavMesh hoặc bị chặn). Fallback chỉ thẳng NPC.");
+            string detail = reason switch
+            {
+                NavMeshPathfinder.FailReason.FromNotOnNavMesh =>
+                    $"Player tại {playerPos} KHÔNG nằm gần NavMesh (trong 5m không thấy NavMesh nào).",
+                NavMeshPathfinder.FailReason.ToNotOnNavMesh =>
+                    $"NPC tại {npcPos} KHÔNG nằm gần NavMesh.",
+                NavMeshPathfinder.FailReason.PathPartial =>
+                    "Có path nhưng KHÔNG TRỌN VẸN — NavMesh bị đứt đoạn/chặn giữa 2 điểm.",
+                NavMeshPathfinder.FailReason.PathInvalid =>
+                    "NavMesh.CalculatePath() thất bại hoàn toàn.",
+                _ => "Không xác định."
+            };
+
+            LogFailReasonThrottled(reason, detail);
             _pathValid = false;
             NotifyUI();
             return;
         }
 
+        _lastLoggedReason = NavMeshPathfinder.FailReason.None;
         _pathValid = true;
 
         // Giữ currentCornerIndex hợp lệ trong path mới (path có thể đổi số corner)
@@ -280,24 +305,55 @@ public class WaypointNavigator : MonoBehaviour
         return QuestMarkerManager.Instance.GetMarkerUI(bridge);
     }
 
+    private NavMeshPathfinder.FailReason _lastLoggedReason = NavMeshPathfinder.FailReason.None;
+
     private void Log(string msg)
     {
         if (verboseLog) Debug.Log($"[WaypointNavigator] {msg}");
     }
 
+    /// <summary>Chỉ log khi lý do thất bại THAY ĐỔI, tránh spam Console mỗi giây.</summary>
+    private void LogFailReasonThrottled(NavMeshPathfinder.FailReason reason, string detail)
+    {
+        if (reason == _lastLoggedReason) return;
+        _lastLoggedReason = reason;
+        Log($"⚠ NavMesh path đến '{_targetBridge.TriggerID}' thất bại. Lý do: {detail} Fallback chỉ thẳng NPC.");
+    }
+
 #if UNITY_EDITOR
+    private Vector3? _debugPlayerPos;
+    private Vector3? _debugNpcPos;
+    private bool      _debugPlayerOnMesh;
+    private bool      _debugNpcOnMesh;
+
     private void OnDrawGizmos()
     {
-        if (!drawPathGizmo || !_pathValid || _navPath.corners == null) return;
+        if (!drawPathGizmo) return;
 
-        Gizmos.color = Color.cyan;
-        for (int i = 0; i < _navPath.corners.Length - 1; i++)
-            Gizmos.DrawLine(_navPath.corners[i], _navPath.corners[i + 1]);
-
-        for (int i = 0; i < _navPath.corners.Length; i++)
+        // Vẽ path nếu hợp lệ
+        if (_pathValid && _navPath != null && _navPath.corners != null)
         {
-            Gizmos.color = i == _currentCornerIndex ? Color.yellow : Color.cyan;
-            Gizmos.DrawWireSphere(_navPath.corners[i], 0.2f);
+            Gizmos.color = Color.cyan;
+            for (int i = 0; i < _navPath.corners.Length - 1; i++)
+                Gizmos.DrawLine(_navPath.corners[i], _navPath.corners[i + 1]);
+
+            for (int i = 0; i < _navPath.corners.Length; i++)
+            {
+                Gizmos.color = i == _currentCornerIndex ? Color.yellow : Color.cyan;
+                Gizmos.DrawWireSphere(_navPath.corners[i], 0.2f);
+            }
+        }
+
+        // Vẽ vị trí player/NPC + trạng thái sample lên NavMesh (đỏ = lỗi, xanh = OK)
+        if (_debugPlayerPos.HasValue)
+        {
+            Gizmos.color = _debugPlayerOnMesh ? Color.green : Color.red;
+            Gizmos.DrawWireSphere(_debugPlayerPos.Value, 0.4f);
+        }
+        if (_debugNpcPos.HasValue)
+        {
+            Gizmos.color = _debugNpcOnMesh ? Color.green : Color.red;
+            Gizmos.DrawWireSphere(_debugNpcPos.Value, 0.4f);
         }
     }
 #endif

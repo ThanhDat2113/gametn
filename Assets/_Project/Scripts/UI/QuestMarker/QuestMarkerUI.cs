@@ -3,17 +3,20 @@ using UnityEngine.UI;
 using TMPro;
 
 /// <summary>
-/// Icon mũi tên duy nhất trên Canvas — hoạt động ở 2 chế độ:
+/// Icon marker duy nhất trên Canvas — kiểu hiển thị giống Honkai: Star Rail / Genshin:
 ///
-///   CHẾ ĐỘ WAYPOINT (có WaypointPath):
-///     Icon xoay chỉ về waypoint hiện tại → khi qua hết waypoint → chỉ thẳng NPC
+///   TRONG TẦM NHÌN CAMERA:
+///     Icon "lơ lửng" world-space tại vị trí target (+ chiều cao nổi lên),
+///     không xoay, không clamp — bám đúng theo world position qua WorldToScreenPoint.
 ///
-///   CHẾ ĐỘ NPC TRỰC TIẾP (không có WaypointPath):
-///     NPC trong màn hình  → icon đặt đúng vị trí trên đầu NPC, không xoay
-///     NPC ngoài màn hình  → icon clamp về mép màn hình, xoay theo hướng NPC
+///   NGOÀI TẦM NHÌN CAMERA:
+///     Icon clamp về mép màn hình theo hướng target — KHÔNG xoay (giữ góc identity).
 ///
-/// WaypointNavigator sẽ gọi SetWaypointTarget() hoặc SetNPCTarget() để chuyển chế độ.
-/// QuestMarkerManager không cần sửa — vẫn gọi InitializeFromBridge() như cũ.
+/// Hoạt động cho cả 2 chế độ:
+///   - NPC mode      (SetNPCMode)       → target = vị trí NPC (MarkerPosition)
+///   - Waypoint mode (SetWaypointTarget) → target = vị trí waypoint hiện tại
+///
+/// QuestMarkerManager gọi InitializeFromBridge() như cũ, không cần sửa.
 /// </summary>
 [RequireComponent(typeof(RectTransform))]
 [RequireComponent(typeof(CanvasGroup))]
@@ -23,17 +26,20 @@ public class QuestMarkerUI : MonoBehaviour
     // ── Serialized ────────────────────────────────────────────────────────────
 
     [Header("UI References")]
-    [SerializeField] private Image arrowIcon;
+    [Tooltip("Icon chính dùng khi marker lơ lửng trong tầm nhìn (không xoay)")]
+    [SerializeField] private Image floatingIcon;
+
+    [Tooltip("Icon mũi tên dùng khi target ngoài màn hình (xoay theo hướng, fallback kiểu minimap)")]
+    [SerializeField] private Image edgeArrowIcon;
+
     [SerializeField] private TextMeshProUGUI distanceText;
 
-    [Header("Arrow Settings")]
+    [Header("Floating Marker (in view)")]
+    [Tooltip("Độ cao marker lơ lửng phía trên target trong world units")]
+    [SerializeField] private float floatHeight = 2.2f;
+
+    [Header("Edge Arrow (out of view)")]
     [SerializeField] private float edgePadding = 20f;
-
-    [Tooltip("Offset góc sprite khi angle = 0° (target ở phải player).\n" +
-             "Sprite → RIGHT: 0° | LEFT: 180° | UP: -90° | DOWN: 90°")]
-    [SerializeField] private float spriteAngleOffset = 180f;
-
-
 
     [Header("Fade")]
     [SerializeField] private float fadeSpeed = 6f;
@@ -47,14 +53,14 @@ public class QuestMarkerUI : MonoBehaviour
     private Camera        _mainCamera;
     private Camera        _uiCamera;
 
-    // Chế độ NPC trực tiếp (cũ)
     private QuestMarkerBridge _targetBridge;
 
-    // Chế độ Waypoint (mới)
+    // Waypoint mode override
     private bool    _waypointMode;
     private Vector3 _waypointWorldPos;
 
     private float _targetAlpha = 0f;
+    private bool  _wasInView;
 
     // ── Properties ────────────────────────────────────────────────────────────
 
@@ -68,14 +74,13 @@ public class QuestMarkerUI : MonoBehaviour
         _canvasGroup   = GetComponent<CanvasGroup>();
         _mainCamera    = Camera.main;
 
-        if (arrowIcon == null) arrowIcon = GetComponent<Image>();
+        // Fallback nếu quên gán: dùng Image gốc trên object làm floatingIcon
+        if (floatingIcon == null) floatingIcon = GetComponent<Image>();
 
         _canvasGroup.alpha = 0f;
     }
 
-    /// <summary>
-    /// Gọi bởi QuestMarkerManager khi spawn (chế độ NPC trực tiếp).
-    /// </summary>
+    /// <summary>Gọi bởi QuestMarkerManager khi spawn marker.</summary>
     public void InitializeFromBridge(QuestMarkerBridge bridge, RectTransform canvasParent)
     {
         if (bridge == null) { Debug.LogError("[QuestMarkerUI] bridge is null"); return; }
@@ -86,26 +91,19 @@ public class QuestMarkerUI : MonoBehaviour
         _uiCamera     = (_parentCanvas != null && _parentCanvas.renderMode != RenderMode.ScreenSpaceOverlay)
             ? _parentCanvas.worldCamera : null;
 
-        // Mặc định chế độ NPC, WaypointNavigator sẽ override nếu có path
         _waypointMode = false;
         _targetAlpha  = 1f;
     }
 
     // ── Public API (gọi bởi WaypointNavigator) ───────────────────────────────
 
-    /// <summary>
-    /// Chuyển sang chế độ waypoint: icon xoay quanh tâm màn hình chỉ về worldPos.
-    /// </summary>
     public void SetWaypointTarget(Vector3 worldPos)
     {
-        _waypointMode    = true;
+        _waypointMode     = true;
         _waypointWorldPos = worldPos;
-        _targetAlpha     = 1f;
+        _targetAlpha      = 1f;
     }
 
-    /// <summary>
-    /// Trở về chế độ NPC trực tiếp (khi đã qua hết waypoint hoặc không có path).
-    /// </summary>
     public void SetNPCMode()
     {
         _waypointMode = false;
@@ -115,103 +113,89 @@ public class QuestMarkerUI : MonoBehaviour
     public void SetActive(bool active)
     {
         _targetAlpha = active ? 1f : 0f;
-        if (!active) gameObject.SetActive(false);
-        else         gameObject.SetActive(true);
+        gameObject.SetActive(active);
     }
 
     // ── Update ────────────────────────────────────────────────────────────────
 
     private void Update()
     {
-        // Fade
         _canvasGroup.alpha = Mathf.MoveTowards(
             _canvasGroup.alpha, _targetAlpha, fadeSpeed * Time.deltaTime);
 
-        if (_mainCamera == null || _canvasRect == null) return;
+        if (_targetBridge == null || _mainCamera == null || _canvasRect == null) return;
 
-        if (_waypointMode)
-            UpdateWaypointMode();
-        else
-            UpdateNPCMode();
-
-        UpdateDistanceText();
+        Vector3 targetPos = _waypointMode ? _waypointWorldPos : _targetBridge.MarkerPosition;
+        UpdateMarkerToTarget(targetPos);
+        UpdateDistanceText(targetPos);
     }
 
-    // ── Waypoint Mode ─────────────────────────────────────────────────────────
+    // ── Core: Floating (in-view) vs Edge Arrow (out-of-view) ─────────────────
 
-    private void UpdateWaypointMode()
+    private void UpdateMarkerToTarget(Vector3 targetPos)
     {
-        if (_targetBridge == null) return;
+        bool inView = ScreenEdgeMarkerCalculator.IsInViewFrustum(targetPos, _mainCamera);
+
+        if (inView)
+            ShowFloatingMarker(targetPos);
+        else
+            ShowEdgeArrow(targetPos);
+
+        _wasInView = inView;
+    }
+
+    /// <summary>Marker lơ lửng world-space, không xoay, không clamp.</summary>
+    private void ShowFloatingMarker(Vector3 targetPos)
+    {
+        SetIconMode(showFloating: true);
+
+        Vector3 floatPos = targetPos + Vector3.up * floatHeight;
+        Vector3 sp = _mainCamera.WorldToScreenPoint(floatPos);
+
+        RectTransformUtility.ScreenPointToLocalPointInRectangle(
+            _canvasRect, new Vector2(sp.x, sp.y), _uiCamera, out Vector2 canvasPos);
+
+        _rectTransform.anchoredPosition = canvasPos;
+        _rectTransform.localRotation    = Quaternion.identity;
+    }
+
+    /// <summary>Icon clamp mép màn hình, KHÔNG xoay — chỉ đổi vị trí (fallback).</summary>
+    private void ShowEdgeArrow(Vector3 targetPos)
+    {
+        SetIconMode(showFloating: false);
 
         Vector3 playerPos = _targetBridge.PlayerTransform != null
             ? _targetBridge.PlayerTransform.position
             : _mainCamera.transform.position;
 
-        // Clamp về mép màn hình (giống NPC ngoài màn hình) nhưng target là waypoint
         Vector2 screenPos = ScreenEdgeMarkerCalculator.CalculateEdgeScreenPos(
-            playerPos, _waypointWorldPos, _mainCamera, edgePadding);
+            playerPos, targetPos, _mainCamera, edgePadding);
 
         RectTransformUtility.ScreenPointToLocalPointInRectangle(
             _canvasRect, screenPos, _uiCamera, out Vector2 canvasPos);
 
-        float angle = ScreenEdgeMarkerCalculator.CalculateArrowRotation(
-            playerPos, _waypointWorldPos, _mainCamera);
-
         _rectTransform.anchoredPosition = canvasPos;
-        _rectTransform.localRotation =
-            Quaternion.AngleAxis(angle + spriteAngleOffset, Vector3.forward);
+        _rectTransform.localRotation    = Quaternion.identity;
     }
 
-    // ── NPC Direct Mode (logic cũ) ────────────────────────────────────────────
-
-    private void UpdateNPCMode()
+    /// <summary>Bật/tắt đúng icon tương ứng (nếu có 2 icon riêng biệt).</summary>
+    private void SetIconMode(bool showFloating)
     {
-        if (_targetBridge == null) return;
+        // Nếu chỉ dùng 1 icon chung (edgeArrowIcon == null), không cần đổi gì
+        if (edgeArrowIcon == null) return;
 
-        Vector3 targetPos = _targetBridge.MarkerPosition;
-        Vector3 playerPos = _targetBridge.PlayerTransform != null
-            ? _targetBridge.PlayerTransform.position
-            : _mainCamera.transform.position;
-
-        bool inView = ScreenEdgeMarkerCalculator.IsInViewFrustum(targetPos, _mainCamera);
-
-        if (inView)
-        {
-            // NPC trong màn hình → đặt đúng vị trí trên đầu NPC
-            Vector3 sp = _mainCamera.WorldToScreenPoint(targetPos);
-            RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                _canvasRect, new Vector2(sp.x, sp.y), _uiCamera, out Vector2 canvasPos);
-
-            _rectTransform.anchoredPosition = canvasPos;
-            _rectTransform.localRotation    = Quaternion.identity;
-        }
-        else
-        {
-            // NPC ngoài màn hình → clamp về mép + xoay
-            Vector2 screenPos = ScreenEdgeMarkerCalculator.CalculateEdgeScreenPos(
-                playerPos, targetPos, _mainCamera, edgePadding);
-
-            RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                _canvasRect, screenPos, _uiCamera, out Vector2 canvasPos);
-
-            float angle = ScreenEdgeMarkerCalculator.CalculateArrowRotation(
-                playerPos, targetPos, _mainCamera);
-
-            _rectTransform.anchoredPosition = canvasPos;
-            _rectTransform.localRotation    =
-                Quaternion.AngleAxis(angle + spriteAngleOffset, Vector3.forward);
-        }
+        if (floatingIcon  != null) floatingIcon.enabled  = showFloating;
+        edgeArrowIcon.enabled = !showFloating;
     }
 
     // ── Distance Text ─────────────────────────────────────────────────────────
 
-    private void UpdateDistanceText()
+    private void UpdateDistanceText(Vector3 targetPos)
     {
         if (distanceText == null) return;
         if (_targetBridge?.PlayerTransform == null) { distanceText.text = ""; return; }
 
-        Vector3 target = _waypointMode ? _waypointWorldPos : _targetBridge.MarkerPosition;
-        Vector3 delta  = target - _targetBridge.PlayerTransform.position;
+        Vector3 delta = targetPos - _targetBridge.PlayerTransform.position;
         delta.y = 0f;
         float dist = delta.magnitude;
 
