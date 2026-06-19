@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f9330979f02ddf43a415e7748b42aae, type: 3}
+  m_Name: ENEMY_Mit
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterData
+  characterType: 1
+  defaultCombatStyle: 0
+  prefab: {fileID: 7850509950937586201, guid: 80ec91254d4e9e748bc477ece9af87ee, type: 3}
+  characterName: Mit
+  portrait: {fileID: 65358320, guid: 97f99f39c982e8d40999f035495a3b36, type: 3}
+  battleSprite: {fileID: 65358320, guid: 97f99f39c982e8d40999f035495a3b36, type: 3}
+  lore: 
+  baseHP: 100
+  baseATK: 90
+  basePDEF: 8
+  baseMDEF: 4
+  baseSpeed: 10
+  baseLevel: 1
+  expReward: 100
+  baseExpThreshold: 100
+  expIncrementPerLevel: 50
+  hpPerLevel: 5
+  atkPerLevel: 2
+  pdefPerLevel: 1
+  mdefPerLevel: 1
+  speedPerLevel: 1
+  skills:
+  - {fileID: 11400000, guid: 00730a883f6701b41bf3aa10ad47313f, type: 2}
+  passiveScript: {fileID: 0}
+  hitVoiceClips: []
+  attackVoiceClips: []
+  deathVoiceClips: []
+  footstepSound: {fileID: 0}
