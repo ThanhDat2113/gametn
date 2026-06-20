@@ -465,7 +465,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &396847646
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1646,6 +1646,7 @@ MonoBehaviour:
   - {fileID: 1039118417}
   - {fileID: 874683034}
   enemyRallyPoint: {fileID: 0}
+  actionValueTickRate: 10
   clashSequence: {fileID: 551415321}
   cameraManager: {fileID: 844719901}
   combatUICanvasGroup: {fileID: 0}
@@ -3166,6 +3167,51 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1519196810}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &2006244914
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2006244916}
+  - component: {fileID: 2006244915}
+  m_Layer: 0
+  m_Name: winlosemanager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &2006244915
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2006244914}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0b31829ac53f5a845ab5e7c648db9539, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::VictoryPanelController
+  victoryPanel: {fileID: 396847647}
+--- !u!4 &2006244916
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2006244914}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 591.6454, y: 0.00002, z: -444.9323}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2016638035
 GameObject:
   m_ObjectHideFlags: 0
@@ -3427,6 +3473,8 @@ MonoBehaviour:
   playerColor: {r: 0.2, g: 0.3, b: 0.8, a: 0.5}
   enemyColor: {r: 0.8, g: 0.2, b: 0.2, a: 0.5}
   currentTurnColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  showActionValueBar: 1
+  actionValueSliderPrefab: {fileID: 0}
 --- !u!1 &2136036713
 GameObject:
   m_ObjectHideFlags: 0
@@ -3470,3 +3518,4 @@ SceneRoots:
   - {fileID: 551415322}
   - {fileID: 1019903367}
   - {fileID: 1910550707}
+  - {fileID: 2006244916}

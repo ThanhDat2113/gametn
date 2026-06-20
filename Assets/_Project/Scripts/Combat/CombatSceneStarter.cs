@@ -49,7 +49,7 @@ public class CombatSceneStarter : MonoBehaviour
         }
 
         CombatSessionData.Clear();
-        SceneLoaderManager.UnloadCombatScene();
+        // KHÔNG unload scene ở đây - để VictoryPanel.OnContinue() xử lý sau khi cộng EXP
         yield break;
     }
 
