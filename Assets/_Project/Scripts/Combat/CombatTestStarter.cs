@@ -18,27 +18,17 @@ public class CombatTestStarter : MonoBehaviour
 
     void Awake()
     {
-        // Nếu đang từ map vào, TestStarter không cần can thiệp gì
-        if (CombatSessionData.IsFromMap)
+        // Nếu có CombatSessionData (từ map hoặc retry), TestStarter tự disable
+        // để không can thiệp vào combat đang chạy
+        if (CombatSessionData.HasData)
         {
-            Debug.Log("[TestStarter] Detected transition from map. Disabling TestStarter.");
+            Debug.Log("[TestStarter] Session data detected. Disabling TestStarter.");
             enabled = false;
             return;
         }
 
         combat = CombatManager.Instance;
         if (combat == null) Debug.LogError("[TestStarter] CombatManager not found!");
-
-        // Clear session data cũ (nếu có) để tránh nhiễm từ map trước đó
-        if (CombatSessionData.HasData)
-        {
-            Debug.Log("[TestStarter] Found stale CombatSessionData. Clearing it for test run.");
-            CombatSessionData.Clear();
-        }
-
-        // Nếu autoStart được bật, log thông báo (sẽ chạy trong Start())
-        if (autoStartOnAwake)
-            Debug.Log("[TestStarter] Standalone mode. Auto-starting combat.");
     }
 
     void Start()
@@ -67,10 +57,6 @@ public class CombatTestStarter : MonoBehaviour
             return;
         }
 
-        // Đảm bảo session data sạch trước khi test (phòng ngừa)
-        if (CombatSessionData.HasData)
-            CombatSessionData.Clear();
-
         var playerSetup = new List<(CharacterData, int, int)>();
         for (int i = 0; i < testPlayerCharacters.Length; i++)
         {
@@ -87,6 +73,6 @@ public class CombatTestStarter : MonoBehaviour
 
         combat.StartCombat(playerSetup, enemySetup);
         started = true;
-        enabled = false; // Tự disable sau khi đã start
+        enabled = false;
     }
 }

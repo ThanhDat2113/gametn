@@ -12,17 +12,7 @@ public class CombatSceneStarter : MonoBehaviour
             return;
         }
 
-        // Kiểm tra test starter
-        var testStarter = GetComponent<CombatTestStarter>();
-        bool hasValidTestStarter = testStarter != null && testStarter.enabled && testStarter.HasTestData();
-
-        if (hasValidTestStarter && !CombatSessionData.IsFromMap)
-        {
-            Debug.Log("[CombatSceneStarter] Test starter detected and not from map. Letting it handle combat.");
-            return;
-        }
-
-        // Nếu có dữ liệu từ map → chạy bình thường
+        // Chỉ chạy khi có dữ liệu từ map
         if (CombatSessionData.HasData)
         {
             var combat = CombatManager.Instance;
@@ -41,8 +31,7 @@ public class CombatSceneStarter : MonoBehaviour
         }
         else
         {
-            if (!hasValidTestStarter)
-                Debug.LogError("[CombatSceneStarter] Không có CombatSessionData và không có TestStarter hợp lệ!");
+            Debug.Log("[CombatSceneStarter] No session data (likely test mode). Skipping.");
         }
     }
 
@@ -81,15 +70,12 @@ public class CombatSceneStarter : MonoBehaviour
             yield return new WaitForSeconds(2f);
             SceneLoaderManager.UnloadCombatScene();
         }
-        // Không unload combat scene khi thua — DefeatPanel sẽ xử lý (retry/quit)
-        // Nếu DefeatPanel không unload, player bị stuck. FIX: đợi panel rồi unload.
         yield return new WaitForSeconds(0.5f);
-        // Chờ player nhấn Quit trên DefeatPanel — nếu không có, unload sau 5s
         float timer = 5f;
         while (timer > 0f)
         {
             if (FindFirstObjectByType<DefeatPanel>() == null)
-                break; // Panel đã đóng → unload
+                break;
             timer -= Time.deltaTime;
             yield return null;
         }
