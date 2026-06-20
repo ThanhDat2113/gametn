@@ -21,12 +21,12 @@ public class CombatTestStarter : MonoBehaviour
         combat = CombatManager.Instance;
         if (combat == null) Debug.LogError("[TestStarter] CombatManager not found!");
 
-        // ✅ Luôn clear session data cũ khi test starter active
+        // ✅ Chỉ clear session data nếu KHÔNG phải từ map
         // (tránh trường hợp data từ map trước đó còn sót lại, khiến CombatSceneStarter
         //  chạy combat cũ thay vì dùng test data của người dùng)
-        if (CombatSessionData.HasData)
+        if (CombatSessionData.HasData && !CombatSessionData.IsFromMap)
         {
-            Debug.Log("[TestStarter] Found stale CombatSessionData. Clearing it for test run.");
+            Debug.Log("[TestStarter] Found stale CombatSessionData (not from map). Clearing it for test run.");
             CombatSessionData.Clear();
         }
 

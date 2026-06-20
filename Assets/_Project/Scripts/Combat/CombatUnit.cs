@@ -37,6 +37,22 @@ public class CombatUnit
     // ── Challenge Stack ───────────────────────────────────────
     public ChallengeStack ChallengeStack { get; private set; } = new();
 
+    // ── Action Value (Turn Meter) ─────────────────────────────
+    public float CurrentActionValue { get; set; } = 0f;
+    public const float ACTION_THRESHOLD = 100f;
+    public bool IsActionReady => CurrentActionValue >= ACTION_THRESHOLD;
+
+    public void AddActionValue(float amount)
+    {
+        CurrentActionValue += amount;
+    }
+
+    public void ConsumeActionValue()
+    {
+        CurrentActionValue -= ACTION_THRESHOLD;
+        if (CurrentActionValue < 0) CurrentActionValue = 0;
+    }
+
     // ── Round selection ───────────────────────────────────────
     public List<SkillData> AvailableSkills { get; private set; } = new();
     public SkillData SelectedSkill { get; private set; }

@@ -35,6 +35,8 @@ public class CombatManager : MonoBehaviour
 
     public List<CombatUnit> PlayerUnits { get; private set; } = new();
     public List<CombatUnit> EnemyUnits { get; private set; } = new();
+
+    // ActionOrder giữ lại để UI tham chiếu (sắp xếp theo action value giảm dần)
     public List<CombatUnit> ActionOrder { get; private set; } = new();
 
     public int CurrentPlayerAP { get; private set; }
@@ -49,58 +51,17 @@ public class CombatManager : MonoBehaviour
 
     public List<UnitView> GetAllUnitViews() { return unitViews; }
 
-    public void GrantExtraTurn(CombatUnit unit)
-    {
-        Debug.Log($"[CombatManager] Cấp thêm lượt cho {unit.UnitName}");
-        if (ActionOrder.Contains(unit)) ActionOrder.Remove(unit);
-        ActionOrder.Insert(turnIndex + 1, unit);
-    }
+    // ── Action Value / Turn Meter ─────────────────────────────
+    [Header("Turn Meter Settings")]
+    [Tooltip("Tốc độ tích lũy action value mỗi giây (real-time)")]
+    public float actionValueTickRate = 10f; // mỗi giây cộng Speed * tickRate
 
-    public void GrantImmediateTurn(CombatUnit unit)
-    {
-        Debug.Log($"[CombatManager] Cấp lượt hành động ngay lập tức cho {unit.UnitName}");
-        if (ActionOrder.Contains(unit)) ActionOrder.Remove(unit);
-        ActionOrder.Insert(turnIndex + 1, unit);
-    }
+    private bool _isExecutingTurn = false;       // đang xử lý turn của unit hiện tại
+    private CombatUnit _currentActingUnit = null; // unit đang hành động
 
-    public List<CombatUnit> GetTeam(bool isPlayer) => isPlayer ? PlayerUnits : EnemyUnits;
-    public List<CombatUnit> GetOpposingTeam(bool isPlayer) => isPlayer ? EnemyUnits : PlayerUnits;
-
-    private static int SlotToRow(int slot) => 2 - (slot / 3);
-
-    private int turnIndex = 0;
-    private bool isWaitingForPlayerInput = false;
-    private EnemyGroupData _currentEnemyGroup;
-
-    [Header("Animation")]
-    public ClashAnimationSequence clashSequence;
-    public CombatCameraManager cameraManager;
-    public CanvasGroup combatUICanvasGroup;
-    private TargetingArrowController arrowController;
-
+    // ── Events ─────────────────────────────────────────────────
     public event System.Action OnCombatStarted;
     public event System.Action<CombatUnit> OnPlayerUnitPlanning;
-
-    #region Command System
-    public void AddCommand(ICombatCommand command)
-    {
-        _commandQueue.Enqueue(command);
-        if (!_isProcessingCommands) StartCoroutine(ProcessCommandQueue());
-    }
-
-    private IEnumerator ProcessCommandQueue()
-    {
-        _isProcessingCommands = true;
-        while (_commandQueue.Count > 0)
-        {
-            ICombatCommand command = _commandQueue.Dequeue();
-            IEnumerator coroutine = command.Execute();
-            if (coroutine != null) yield return StartCoroutine(coroutine);
-        }
-        _isProcessingCommands = false;
-    }
-    #endregion
-
     public event System.Action<CombatUnit> OnPlayerTurnStart;
     public event System.Action<CombatUnit> OnUnitTurnStart;
     public event System.Action<List<CombatUnit>> OnTurnOrderUpdated;
@@ -116,6 +77,14 @@ public class CombatManager : MonoBehaviour
     public event DamageModificationHandler OnDamageCalculation;
     public void TriggerDamageCalculation(ActionOutcome outcome, CombatUnit actor) => OnDamageCalculation?.Invoke(outcome, actor);
     public CombatPhase CurrentPhase => stateMachine.Current;
+
+    private EnemyGroupData _currentEnemyGroup;
+
+    [Header("UI & Animation")]
+    public ClashAnimationSequence clashSequence;
+    public CombatCameraManager cameraManager;
+    public CanvasGroup combatUICanvasGroup;
+    private TargetingArrowController arrowController;
 
     private void Awake()
     {
@@ -144,30 +113,44 @@ public class CombatManager : MonoBehaviour
         if (stateMachine != null) stateMachine.OnPhaseChanged -= HandlePhaseChanged;
     }
 
-    public void RebuildActionOrder()
+    // ── Grant Extra / Immediate Turns ─────────────────────────
+    public void GrantExtraTurn(CombatUnit unit)
     {
-        var alive = PlayerUnits.Where(u => u.IsAlive).Concat(EnemyUnits.Where(u => u.IsAlive));
-        ActionOrder = alive.OrderByDescending(u => u.Speed).ThenBy(u => Random.value).ToList();
+        Debug.Log($"[CombatManager] Cấp thêm lượt cho {unit.UnitName}");
+        unit.CurrentActionValue = CombatUnit.ACTION_THRESHOLD - 1f;
+    }
+
+    public void GrantImmediateTurn(CombatUnit unit)
+    {
+        Debug.Log($"[CombatManager] Cấp lượt hành động ngay lập tức cho {unit.UnitName}");
+        unit.CurrentActionValue = CombatUnit.ACTION_THRESHOLD;
+    }
+
+    public List<CombatUnit> GetTeam(bool isPlayer) => isPlayer ? PlayerUnits : EnemyUnits;
+    public List<CombatUnit> GetOpposingTeam(bool isPlayer) => isPlayer ? EnemyUnits : PlayerUnits;
+
+    private static int SlotToRow(int slot) => 2 - (slot / 3);
+
+    // Cập nhật ActionOrder cho UI dựa trên action value
+    private void UpdateActionOrderForUI()
+    {
+        var alive = GetAllAliveUnits();
+        // Sắp xếp theo action value giảm dần (người gần hành động nhất lên đầu)
+        ActionOrder = alive
+            .OrderByDescending(u => u.CurrentActionValue)
+            .ThenByDescending(u => u.Speed)
+            .ToList();
         OnTurnOrderUpdated?.Invoke(ActionOrder);
     }
 
-    private void MoveCurrentUnitToEnd()
+    private List<CombatUnit> GetAllAliveUnits()
     {
-        if (ActionOrder.Count == 0) return;
-        var current = ActionOrder[0];
-        ActionOrder.RemoveAt(0);
-        if (ActionOrder.Count == 0) { ActionOrder.Add(current); }
-        else
-        {
-            int idx = ActionOrder.Count;
-            for (int i = ActionOrder.Count - 1; i >= 0; i--)
-                if (ActionOrder[i].Speed > current.Speed) { idx = i + 1; break; }
-            ActionOrder.Insert(idx, current);
-        }
-        OnTurnOrderUpdated?.Invoke(ActionOrder);
+        return PlayerUnits.Where(u => u.IsAlive)
+            .Concat(EnemyUnits.Where(u => u.IsAlive))
+            .ToList();
     }
 
-    // === START COMBAT (từ FormationData) – ĐÃ SỬA: cộng bonus trang bị riêng cho 5 chỉ số ===
+    // ── START COMBAT ──────────────────────────────────────────
     public void StartCombat(FormationData playerFormation, EnemyGroupData enemyGroup)
     {
         _currentEnemyGroup = enemyGroup;
@@ -230,7 +213,7 @@ public class CombatManager : MonoBehaviour
         stateMachine.TransitionTo(CombatPhase.Intro);
     }
 
-    // === START COMBAT (overload dùng List, dùng cho test) – cũng đã sửa bonus ===
+    // Overload dùng List, dùng cho test
     public void StartCombat(
         List<(CharacterData data, int level, int gridSlot)> playerSetup,
         List<(CharacterData data, int level, int gridSlot)> enemySetup)
@@ -282,7 +265,7 @@ public class CombatManager : MonoBehaviour
         var passiveType = System.Type.GetType(className);
         if (passiveType == null)
             foreach (var asm in System.AppDomain.CurrentDomain.GetAssemblies())
-                { passiveType = asm.GetType(className); if (passiveType != null) break; }
+            { passiveType = asm.GetType(className); if (passiveType != null) break; }
         if (passiveType != null && typeof(PassiveAbility).IsAssignableFrom(passiveType))
         {
             var instance = System.Activator.CreateInstance(passiveType) as PassiveAbility;
@@ -295,7 +278,7 @@ public class CombatManager : MonoBehaviour
         switch (next)
         {
             case CombatPhase.Intro: StartCoroutine(DoIntro()); break;
-            case CombatPhase.Execute: StartCoroutine(ExecuteCoreLoop()); break;
+            case CombatPhase.Execute: StartCoroutine(TurnMeterLoop()); break;
             case CombatPhase.Victory: DoVictory(); break;
             case CombatPhase.Defeat: DoDefeat(); break;
         }
@@ -328,7 +311,14 @@ public class CombatManager : MonoBehaviour
         yield return new WaitForSeconds(2.0f);
         yield return FadeUI(1f, 0.5f);
         cameraManager.EndIntroSequence();
-        RebuildActionOrder();
+
+        // Khởi tạo action value cho tất cả unit
+        foreach (var unit in GetAllAliveUnits())
+        {
+            unit.CurrentActionValue = 0f;
+        }
+        UpdateActionOrderForUI();
+
         stateMachine.TransitionTo(CombatPhase.Execute);
     }
 
@@ -349,33 +339,188 @@ public class CombatManager : MonoBehaviour
         view.SetAnimationTrigger("Idle");
     }
 
-    public void SubmitPlayerTurnAction(SkillData skill, List<CombatUnit> targets)
+    // ═══════════════════════════════════════════════════════════
+    //  TURN METER LOOP – Core loop mới
+    // ═══════════════════════════════════════════════════════════
+    private IEnumerator TurnMeterLoop()
     {
-        if (!isWaitingForPlayerInput) return;
-        if (skill.apCost > CurrentPlayerAP) { Debug.LogWarning($"[AP] Không đủ AP"); return; }
-        var unit = ActionOrder[turnIndex];
-        if (unit == null || !unit.IsPlayer) return;
+        OnExecuteStarted?.Invoke();
+        _isExecutingTurn = false;
 
-        CurrentPlayerAP -= skill.apCost;
-        OnAPChanged?.Invoke(CurrentPlayerAP);
-        unit.SpendAP(skill.apCost);
-        unit.SelectSkill(skill, targets);
+        while (true)
+        {
+            // Nếu không có unit nào đang hành động, tích lũy action value
+            if (!_isExecutingTurn)
+            {
+                AccumulateActionValues();
 
-        if (skill.doesNotEndTurn) StartCoroutine(ExecuteAndRequestNewAction(unit));
-        else isWaitingForPlayerInput = false;
+                // Tìm unit có action value >= threshold
+                var readyUnit = GetAllAliveUnits()
+                    .Where(u => u.IsActionReady)
+                    .OrderByDescending(u => u.CurrentActionValue)
+                    .FirstOrDefault();
+
+                if (readyUnit != null)
+                {
+                    _isExecutingTurn = true;
+                    _currentActingUnit = readyUnit;
+                    yield return StartCoroutine(ProcessUnitTurn(readyUnit));
+                    _isExecutingTurn = false;
+                    _currentActingUnit = null;
+
+                    if (CheckForCombatEnd()) yield break;
+                }
+                else
+                {
+                    // Chờ 1 frame rồi tích lũy tiếp
+                    yield return null;
+                }
+            }
+            else
+            {
+                yield return null;
+            }
+        }
     }
 
-    private IEnumerator ExecuteAndRequestNewAction(CombatUnit unit)
+    private void AccumulateActionValues()
     {
-        try { unit.ExecuteSelectedSkill(0); unit.ClearSelection(); }
-        catch (System.Exception e) { Debug.LogError(e); isWaitingForPlayerInput = false; yield break; }
-        yield return new WaitForSeconds(0.5f);
-        isWaitingForPlayerInput = true;
+        float delta = Time.deltaTime * actionValueTickRate;
+
+        foreach (var unit in GetAllAliveUnits())
+        {
+            // Unit bị stun vẫn tích lũy chậm hơn 50%
+            if (unit.HasStatus(StatusEffectType.Stun))
+            {
+                unit.AddActionValue(unit.Speed * delta * 0.5f);
+            }
+            else
+            {
+                unit.AddActionValue(unit.Speed * delta);
+            }
+        }
+    }
+
+    private IEnumerator ProcessUnitTurn(CombatUnit unit)
+    {
+        // Tiêu thụ action value
+        unit.ConsumeActionValue();
+
+        Debug.Log($"[TurnMeter] {unit.UnitName} hành động (Speed={unit.Speed}, AV còn lại={unit.CurrentActionValue:F1})");
+
+        // Cập nhật UI
+        UpdateActionOrderForUI();
+
+        // Xử lý start-of-turn effects (burn)
+        yield return HandleStartOfTurnEffects(unit);
+
+        if (!unit.IsAlive)
+        {
+            if (CheckForCombatEnd()) yield break;
+            yield break;
+        }
+
+        OnUnitTurnStart?.Invoke(unit);
+        unit.TriggerTurnStart();
+
+        // Enemy AI hoặc chờ player input
+        if (!unit.IsPlayer)
+        {
+            enemyAI.PlanTurn(unit, PlayerUnits);
+        }
+        else
+        {
+            // Player turn: +1 AP
+            if (CurrentPlayerAP < MAX_PLAYER_AP) { CurrentPlayerAP++; OnAPChanged?.Invoke(CurrentPlayerAP); }
+            yield return StartCoroutine(WaitForPlayerInput(unit));
+        }
+
+        // Nếu unit có skill đã chọn, thực thi
+        if (unit.SelectedSkill != null && unit.SelectedTargets.Any())
+        {
+            yield return ResolveAction(new PlannedAction(unit, unit.SelectedSkill, unit.SelectedTargets));
+        }
+
+        // Tick statuses
+        unit.TickStatuses();
+
+        if (CheckForCombatEnd()) yield break;
+
+        // Cập nhật UI sau turn
+        UpdateActionOrderForUI();
+    }
+
+    private IEnumerator WaitForPlayerInput(CombatUnit unit)
+    {
+        bool inputReceived = false;
         OnPlayerTurnStart?.Invoke(unit);
+
+        System.Action<SkillData, List<CombatUnit>> onSubmit = null;
+        onSubmit = (skill, targets) =>
+        {
+            // Nếu input đã nhận và skill này không phải doesNotEndTurn, bỏ qua
+            if (inputReceived && !skill.doesNotEndTurn) return;
+
+            if (skill.apCost > CurrentPlayerAP)
+            {
+                Debug.LogWarning($"[AP] Không đủ AP");
+                return;
+            }
+
+            CurrentPlayerAP -= skill.apCost;
+            OnAPChanged?.Invoke(CurrentPlayerAP);
+            unit.SpendAP(skill.apCost);
+            unit.SelectSkill(skill, targets);
+
+            if (skill.doesNotEndTurn)
+            {
+                // Skill không kết thúc turn: thực thi ngay, sau đó chờ input tiếp
+                try { unit.ExecuteSelectedSkill(0); unit.ClearSelection(); }
+                catch (System.Exception e) { Debug.LogError(e); return; }
+                OnPlayerTurnStart?.Invoke(unit);
+            }
+            else
+            {
+                inputReceived = true;
+            }
+        };
+
+        _pendingPlayerSubmit = onSubmit;
+
+        yield return new WaitUntil(() => inputReceived);
+
+        _pendingPlayerSubmit = null;
+    }
+
+    private System.Action<SkillData, List<CombatUnit>> _pendingPlayerSubmit;
+
+    public void SubmitPlayerTurnAction(SkillData skill, List<CombatUnit> targets)
+    {
+        _pendingPlayerSubmit?.Invoke(skill, targets);
     }
 
     public void SpendPlayerAP(int amount) { if (amount <= CurrentPlayerAP) { CurrentPlayerAP -= amount; OnAPChanged?.Invoke(CurrentPlayerAP); } }
     public void GainPlayerAP(int amount) { CurrentPlayerAP = Mathf.Min(CurrentPlayerAP + amount, MAX_PLAYER_AP); OnAPChanged?.Invoke(CurrentPlayerAP); }
+
+    #region Command System
+    public void AddCommand(ICombatCommand command)
+    {
+        _commandQueue.Enqueue(command);
+        if (!_isProcessingCommands) StartCoroutine(ProcessCommandQueue());
+    }
+
+    private IEnumerator ProcessCommandQueue()
+    {
+        _isProcessingCommands = true;
+        while (_commandQueue.Count > 0)
+        {
+            ICombatCommand command = _commandQueue.Dequeue();
+            IEnumerator coroutine = command.Execute();
+            if (coroutine != null) yield return StartCoroutine(coroutine);
+        }
+        _isProcessingCommands = false;
+    }
+    #endregion
 
     private IEnumerator HandleStartOfTurnEffects(CombatUnit unit)
     {
@@ -417,41 +562,6 @@ public class CombatManager : MonoBehaviour
         if (CheckForCombatEnd()) yield break;
     }
 
-    private IEnumerator ExecuteCoreLoop()
-    {
-        OnExecuteStarted?.Invoke();
-        while (true)
-        {
-            if (ActionOrder.Count == 0) RebuildActionOrder();
-            var unit = ActionOrder.FirstOrDefault();
-            if (unit == null) { yield return null; continue; }
-            turnIndex = 0;
-            if (!unit.IsAlive) { RebuildActionOrder(); continue; }
-
-            yield return HandleStartOfTurnEffects(unit);
-            if (!unit.IsAlive) { if (CheckForCombatEnd()) yield break; RebuildActionOrder(); continue; }
-
-            OnUnitTurnStart?.Invoke(unit);
-            unit.TriggerTurnStart();
-
-            if (!unit.IsPlayer) enemyAI.PlanTurn(unit, PlayerUnits);
-            else
-            {
-                if (CurrentPlayerAP < MAX_PLAYER_AP) { CurrentPlayerAP++; OnAPChanged?.Invoke(CurrentPlayerAP); }
-                isWaitingForPlayerInput = true;
-                OnPlayerTurnStart?.Invoke(unit);
-                yield return new WaitUntil(() => !isWaitingForPlayerInput);
-            }
-
-            if (unit.SelectedSkill != null && unit.SelectedTargets.Any())
-                yield return ResolveAction(new PlannedAction(unit, unit.SelectedSkill, unit.SelectedTargets));
-
-            unit.TickStatuses();
-            if (CheckForCombatEnd()) yield break;
-            MoveCurrentUnitToEnd();
-        }
-    }
-
     private bool CheckForCombatEnd()
     {
         if (!EnemyUnits.Any(e => e.IsAlive)) { stateMachine.TransitionTo(CombatPhase.Victory); return true; }
@@ -461,15 +571,15 @@ public class CombatManager : MonoBehaviour
 
     public UnitView GetUnitView(CombatUnit unit) => unitViews.Find(v => v.LinkedUnit == unit);
 
+    public bool WillAttackResultInClash(CombatUnit a, CombatUnit b) => false;
+
     private void DoVictory()
     {
         Debug.Log("=== VICTORY ===");
 
-        // Play victory fanfare nếu có
         if (_currentEnemyGroup != null && _currentEnemyGroup.victoryFanfare != null && AudioManager.Instance != null)
             AudioManager.Instance.PlaySFX2D(_currentEnemyGroup.victoryFanfare, 0.8f);
 
-        // Tính tổng EXP từ enemy
         int totalExp = 0;
         foreach (var enemy in EnemyUnits)
         {
@@ -479,7 +589,6 @@ public class CombatManager : MonoBehaviour
             Debug.Log($"[Exp] {enemy.UnitName} (Lv.{enemy.Level}): {baseReward} base + {bonus} bonus = {baseReward + bonus} EXP");
         }
 
-        // Chia đều cho player còn sống
         var alivePlayers = PlayerUnits.Where(p => p.IsAlive).ToList();
         if (alivePlayers.Count == 0) return;
         int expPerPlayer = totalExp / alivePlayers.Count;
@@ -491,7 +600,6 @@ public class CombatManager : MonoBehaviour
             expGained[player.Data] = expPerPlayer;
         }
 
-        // Gửi event kèm dictionary EXP (KHÔNG cộng vào PlayerProgression ngay)
         OnVictory?.Invoke(expGained);
     }
 
@@ -500,6 +608,4 @@ public class CombatManager : MonoBehaviour
         Debug.Log("=== DEFEAT ===");
         OnDefeat?.Invoke();
     }
-
-    public bool WillAttackResultInClash(CombatUnit a, CombatUnit b) => false;
 }
