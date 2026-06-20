@@ -17,21 +17,28 @@ public class PuzzleData : ScriptableObject
     // Batch 1
     [Header("Symbol Sequence Config")]
     public SymbolSequenceConfig symbolConfig;
+
     [Header("Riddle Gate Config")]
     public RiddleGateConfig riddleConfig;
+
     [Header("Memory Grove Config")]
     public MemoryGroveConfig memoryConfig;
 
     // Batch 2
     [Header("Slide Puzzle Config")]
     public SlidePuzzleConfig slideConfig;
+
     [Header("Spire Puzzle Config")]
     public SpirePuzzleConfig spireConfig;
+
     [Header("Flow Puzzle Config")]
     public FlowPuzzleConfig flowConfig;
 }
 
-// ─── Batch 1 ───
+// ─────────────────────────────
+// Batch 1
+// ─────────────────────────────
+
 [System.Serializable]
 public class SymbolSequenceConfig
 {
@@ -43,24 +50,38 @@ public class SymbolSequenceConfig
 [System.Serializable]
 public class RiddleGateConfig
 {
-    [TextArea(2, 5)] public string[] riddles;
+    [TextArea(2, 5)]
+    public string[] riddles;
+
     public string[] correctAnswers;
     public string[] wrongAnswerA;
     public string[] wrongAnswerB;
     public string[] wrongAnswerC;
+
     public int requiredCorrect = 1;
 }
 
 [System.Serializable]
 public class MemoryGroveConfig
 {
+    [Header("Portrait Pool")]
+    public Sprite[] portraitPool;
+
+    // Giữ lại để tương thích với các Editor Tool cũ
     public CharacterData[] characterPool;
+
+    [Header("Board Size")]
     public int gridCols = 4;
     public int gridRows = 3;
-    public bool showLoreOnMatch = true;
+
+    [Header("Options")]
+    public bool showLoreOnMatch = false;
 }
 
-// ─── Batch 2 ───
+// ─────────────────────────────
+// Batch 2
+// ─────────────────────────────
+
 [System.Serializable]
 public class SlidePuzzleConfig
 {
@@ -71,7 +92,7 @@ public class SlidePuzzleConfig
 [System.Serializable]
 public class SpirePuzzleConfig
 {
-    public int diskCount = 4;   // 3-6
+    public int diskCount = 4; // 3-6
     public int maxMoves = 50;
 }
 

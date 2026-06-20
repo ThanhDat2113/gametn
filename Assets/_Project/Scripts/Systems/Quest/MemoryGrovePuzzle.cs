@@ -1,23 +1,33 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 
+[System.Serializable]
+public class MemoryCardData
+{
+    public Sprite portrait;
+    public string id;
+}
+
 /// <summary>
-/// Puzzle "Khu Rừng Ký Ức" — Lật các ô để tìm cặp portrait nhân vật giống nhau.
-/// Đọc config từ PuzzleData.memoryConfig.
+/// Puzzle "Khu Rừng Ký Ức"
+/// Sử dụng Sprite Pool thay vì CharacterData.
+/// Ưu tiên dùng ảnh khác nhau trước khi tái sử dụng.
 /// </summary>
 public class MemoryGrovePuzzle : PuzzleBase
 {
     [Header("UI References")]
     public GridLayoutGroup cardGrid;
     public Button[] cardButtons;
-    public Image[] cardImages; // Front image của mỗi card
+    public Image[] cardImages;
     public Text matchCountText;
     public Text mismatchCountText;
     public Button closeButton;
 
+    // Giữ lại để tương thích với PuzzlePrefabCreator
     [Header("Lore Popup")]
     public GameObject lorePopup;
     public Text loreCharacterName;
@@ -30,52 +40,62 @@ public class MemoryGrovePuzzle : PuzzleBase
     public float matchPause = 0.6f;
     public float mismatchPause = 0.8f;
 
-    // Internal state
     private int _totalPairs;
-    private int _matchedPairs = 0;
-    private int _mismatches = 0;
+    private int _matchedPairs;
+    private int _mismatches;
+
     private int _firstFlippedIndex = -1;
     private int _secondFlippedIndex = -1;
-    private bool _isChecking = false;
-    private bool _puzzleCompleted = false;
-    private bool[] _isMatched;
-    private CharacterData[] _cardData;
 
-    // Config từ PuzzleData
-    private CharacterData[] _characterPool;
+    private bool _isChecking;
+    private bool _puzzleCompleted;
+
+    private bool[] _isMatched;
+    private MemoryCardData[] _cardData;
+
+    private Sprite[] _portraitPool;
     private int _gridCols = 4;
     private int _gridRows = 3;
     private int _maxMismatches = 10;
-    private bool _showLoreOnMatch = true;
 
     public override void StartPuzzle(PuzzleData data, PuzzleTrigger source)
     {
         base.StartPuzzle(data, source);
 
-        // Đọc config từ PuzzleData
         if (data?.memoryConfig != null)
         {
-            _characterPool = data.memoryConfig.characterPool;
+            _portraitPool = data.memoryConfig.portraitPool;
             _gridCols = data.memoryConfig.gridCols;
             _gridRows = data.memoryConfig.gridRows;
-            _showLoreOnMatch = data.memoryConfig.showLoreOnMatch;
         }
+
         _maxMismatches = data != null ? data.allowedAttempts : 10;
 
         _matchedPairs = 0;
         _mismatches = 0;
+
         _firstFlippedIndex = -1;
         _secondFlippedIndex = -1;
+
         _isChecking = false;
         _puzzleCompleted = false;
 
         int totalCards = _gridCols * _gridRows;
+
+        if (totalCards % 2 != 0)
+        {
+            Debug.LogError("Memory Grove requires an even number of cards.");
+            return;
+        }
+
         _totalPairs = totalCards / 2;
+
         _isMatched = new bool[totalCards];
-        _cardData = new CharacterData[totalCards];
+        _cardData = new MemoryCardData[totalCards];
 
         SetupCards();
         SetupButtons();
+        UpdateUI();
 
         if (lorePopup != null)
             lorePopup.SetActive(false);
@@ -86,34 +106,59 @@ public class MemoryGrovePuzzle : PuzzleBase
         int totalCards = _gridCols * _gridRows;
         int pairCount = totalCards / 2;
 
-        // Lấy danh sách nhân vật
-        List<CharacterData> pool = new List<CharacterData>();
-        if (_characterPool != null && _characterPool.Length > 0)
-            pool = _characterPool.ToList();
+        if (_portraitPool == null || _portraitPool.Length == 0)
+        {
+            Debug.LogError("Memory Grove: Portrait Pool is empty.");
+            return;
+        }
 
-        // Chọn ngẫu nhiên pairCount nhân vật
-        List<CharacterData> selectedChars = new List<CharacterData>();
         System.Random rng = new System.Random();
+
+        List<Sprite> availablePortraits = new List<Sprite>(_portraitPool);
+        List<MemoryCardData> generatedCards = new List<MemoryCardData>();
 
         for (int i = 0; i < pairCount; i++)
         {
-            CharacterData chosen = pool.Count > 0 ? pool[rng.Next(pool.Count)] : null;
-            selectedChars.Add(chosen);
-            selectedChars.Add(chosen); // Mỗi nhân vật xuất hiện 2 lần
+            Sprite selectedPortrait;
+
+            if (availablePortraits.Count > 0)
+            {
+                int randomIndex = rng.Next(availablePortraits.Count);
+
+                selectedPortrait = availablePortraits[randomIndex];
+
+                availablePortraits.RemoveAt(randomIndex);
+            }
+            else
+            {
+                selectedPortrait =
+                    _portraitPool[rng.Next(_portraitPool.Length)];
+            }
+
+            string pairID = Guid.NewGuid().ToString();
+
+            generatedCards.Add(new MemoryCardData
+            {
+                portrait = selectedPortrait,
+                id = pairID
+            });
+
+            generatedCards.Add(new MemoryCardData
+            {
+                portrait = selectedPortrait,
+                id = pairID
+            });
         }
 
-        // Xáo trộn
-        _cardData = selectedChars.OrderBy(x => rng.Next()).ToArray();
+        _cardData = generatedCards
+            .OrderBy(x => rng.Next())
+            .ToArray();
 
-        // Setup images
         for (int i = 0; i < totalCards && i < cardImages.Length; i++)
         {
             if (cardImages[i] != null)
             {
-                if (_cardData[i] != null && _cardData[i].portrait != null)
-                    cardImages[i].sprite = _cardData[i].portrait;
-                else
-                    cardImages[i].sprite = null;
+                cardImages[i].sprite = _cardData[i].portrait;
             }
         }
     }
@@ -123,41 +168,55 @@ public class MemoryGrovePuzzle : PuzzleBase
         for (int i = 0; i < cardButtons.Length; i++)
         {
             int index = i;
+
             cardButtons[i].onClick.RemoveAllListeners();
             cardButtons[i].onClick.AddListener(() => OnCardClicked(index));
 
             SetCardFaceDown(index);
+
             cardButtons[i].interactable = true;
             cardButtons[i].image.color = defaultCardColor;
         }
 
         if (closeButton != null)
+        {
+            closeButton.onClick.RemoveAllListeners();
             closeButton.onClick.AddListener(() => CompletePuzzle(false));
+        }
 
         if (loreCloseButton != null)
+        {
+            loreCloseButton.onClick.RemoveAllListeners();
             loreCloseButton.onClick.AddListener(() =>
             {
                 if (lorePopup != null)
                     lorePopup.SetActive(false);
             });
+        }
     }
 
     private void OnCardClicked(int index)
     {
-        if (_puzzleCompleted || _isChecking || _isMatched[index])
-            return;
+        if (_puzzleCompleted) return;
+        if (_isChecking) return;
+        if (_isMatched[index]) return;
 
         SetCardFaceUp(index);
 
         if (_firstFlippedIndex == -1)
         {
             _firstFlippedIndex = index;
+            return;
         }
-        else if (_secondFlippedIndex == -1 && index != _firstFlippedIndex)
+
+        if (_secondFlippedIndex == -1 && index != _firstFlippedIndex)
         {
             _secondFlippedIndex = index;
+
             _isChecking = true;
+
             SetAllButtonsInteractable(false);
+
             StartCoroutine(CheckMatch());
         }
     }
@@ -169,31 +228,34 @@ public class MemoryGrovePuzzle : PuzzleBase
         int a = _firstFlippedIndex;
         int b = _secondFlippedIndex;
 
-        bool isMatch = _cardData[a] != null && _cardData[b] != null
-                    && _cardData[a].characterName == _cardData[b].characterName;
+        bool isMatch =
+            _cardData[a] != null &&
+            _cardData[b] != null &&
+            _cardData[a].id == _cardData[b].id;
 
         if (isMatch)
         {
             _isMatched[a] = true;
             _isMatched[b] = true;
+
             _matchedPairs++;
 
             cardButtons[a].image.color = matchedColor;
             cardButtons[b].image.color = matchedColor;
-
-            if (_showLoreOnMatch && _cardData[a] != null && lorePopup != null)
-                ShowLorePopup(_cardData[a]);
         }
         else
         {
             _mismatches++;
+
             yield return new WaitForSeconds(mismatchPause);
+
             SetCardFaceDown(a);
             SetCardFaceDown(b);
         }
 
         _firstFlippedIndex = -1;
         _secondFlippedIndex = -1;
+
         _isChecking = false;
 
         UpdateUI();
@@ -201,7 +263,9 @@ public class MemoryGrovePuzzle : PuzzleBase
         if (_matchedPairs >= _totalPairs)
         {
             _puzzleCompleted = true;
+
             yield return new WaitForSeconds(0.5f);
+
             CompletePuzzle(true);
             yield break;
         }
@@ -209,6 +273,7 @@ public class MemoryGrovePuzzle : PuzzleBase
         if (_mismatches >= _maxMismatches)
         {
             yield return new WaitForSeconds(0.5f);
+
             CompletePuzzle(false);
             yield break;
         }
@@ -216,34 +281,22 @@ public class MemoryGrovePuzzle : PuzzleBase
         SetAllButtonsInteractable(true);
     }
 
-    private void ShowLorePopup(CharacterData character)
-    {
-        if (loreCharacterName != null)
-            loreCharacterName.text = character.characterName;
-
-        if (loreText != null)
-        {
-            if (!string.IsNullOrEmpty(character.lore))
-                loreText.text = character.lore;
-            else
-                loreText.text = $"Bạn đã tìm thấy {character.characterName}!";
-        }
-
-        lorePopup.SetActive(true);
-    }
-
     private void SetCardFaceUp(int index)
     {
+        if (index < 0 || index >= cardImages.Length)
+            return;
+
         if (cardImages[index] != null)
             cardImages[index].gameObject.SetActive(true);
-        cardButtons[index].image.color = defaultCardColor;
     }
 
     private void SetCardFaceDown(int index)
     {
+        if (index < 0 || index >= cardImages.Length)
+            return;
+
         if (cardImages[index] != null)
             cardImages[index].gameObject.SetActive(false);
-        cardButtons[index].image.color = defaultCardColor;
     }
 
     private void SetAllButtonsInteractable(bool interactable)
@@ -259,6 +312,7 @@ public class MemoryGrovePuzzle : PuzzleBase
     {
         if (matchCountText != null)
             matchCountText.text = $"Cặp đã tìm: {_matchedPairs}/{_totalPairs}";
+
         if (mismatchCountText != null)
             mismatchCountText.text = $"Sai: {_mismatches}/{_maxMismatches}";
     }
