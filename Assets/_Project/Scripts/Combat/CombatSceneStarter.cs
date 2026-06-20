@@ -5,15 +5,21 @@ public class CombatSceneStarter : MonoBehaviour
 {
     void Start()
     {
-        // 👈 Kiểm tra test starter trước tiên
+        // Nếu combat đã được start (bởi TestStarter), không can thiệp
+        if (CombatManager.Instance != null && CombatManager.Instance.CurrentPhase != CombatPhase.None)
+        {
+            Debug.Log("[CombatSceneStarter] Combat already started. Skipping.");
+            return;
+        }
+
+        // Kiểm tra test starter
         var testStarter = GetComponent<CombatTestStarter>();
         bool hasValidTestStarter = testStarter != null && testStarter.enabled && testStarter.HasTestData();
 
         if (hasValidTestStarter && !CombatSessionData.IsFromMap)
         {
-            // Chỉ ưu tiên test starter khi không phải từ map (tức đang chạy scene test trực tiếp)
             Debug.Log("[CombatSceneStarter] Test starter detected and not from map. Letting it handle combat.");
-            return; // để test starter tự xử lý
+            return;
         }
 
         // Nếu có dữ liệu từ map → chạy bình thường
@@ -30,12 +36,11 @@ public class CombatSceneStarter : MonoBehaviour
 
             combat.StartCombat(CombatSessionData.Formation, CombatSessionData.EnemyGroup);
 
-            combat.OnVictory += (_) => StartCoroutine(HandleVictory());  // SỬA: lambda bỏ qua tham số
+            combat.OnVictory += (_) => StartCoroutine(HandleVictory());
             combat.OnDefeat  += () => StartCoroutine(HandleDefeat());
         }
         else
         {
-            // Không có session data và không có test starter hợp lệ
             if (!hasValidTestStarter)
                 Debug.LogError("[CombatSceneStarter] Không có CombatSessionData và không có TestStarter hợp lệ!");
         }
