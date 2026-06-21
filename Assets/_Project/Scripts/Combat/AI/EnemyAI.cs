@@ -24,11 +24,25 @@ public class EnemyAI
     // ── Chọn skill sẵn sàng ───────────────────────────────────
     private SkillData ChooseSkill(CombatUnit enemy)
     {
-        // AI giờ sẽ chọn ngẫu nhiên từ tất cả các skill có sẵn
-        if (enemy.Data.skills.Length == 0) return null;
+        // Lấy danh sách skills từ AvailableSkills (đã clone) thay vì Data.skills
+        var skillList = enemy.AvailableSkills;
+        if (skillList == null || skillList.Count == 0) return null;
 
-        int chosenIndex = Random.Range(0, enemy.Data.skills.Length);
-        return enemy.Data.skills[chosenIndex];
+        // Kiểm tra nếu enemy có buff ATK (thường là do passive hoặc skill2 kích hoạt)
+        bool hasAtkBuff = enemy.GetStatMultiplier(StatType.ATK) > 1f;
+
+        // Nếu có buff ATK, ưu tiên skill cuối cùng (Skill 3 - Sword Saint Descends) 
+        // bằng cách tăng trọng số
+        if (hasAtkBuff && skillList.Count >= 3)
+        {
+            // 50% chọn skill cuối, 50% chia đều cho các skill còn lại
+            if (Random.value < 0.5f)
+                return skillList[skillList.Count - 1];
+        }
+
+        // Mặc định: random đều
+        int chosenIndex = Random.Range(0, skillList.Count);
+        return skillList[chosenIndex];
     }
 
     // ── Chọn target theo trọng số hàng ───────────────────────
@@ -39,15 +53,17 @@ public class EnemyAI
         var alive = players.Where(p => p.IsAlive).ToList();
         if (alive.Count == 0) return new List<CombatUnit>();
 
-        // 1. Ưu tiên mục tiêu bị Taunt
-        var tauntingUnits = alive.Where(p => p.HasStatus(StatusEffectType.Taunt)).ToList();
-        if (tauntingUnits.Count > 0)
+        // 1. Nếu enemy IgnoreTaunt, bỏ qua bước Taunt
+        if (!enemy.IgnoreTaunt)
         {
-            // Nếu có nhiều mục tiêu Taunt, chọn ngẫu nhiên trong số đó
-            return new List<CombatUnit> { tauntingUnits[Random.Range(0, tauntingUnits.Count)] };
+            var tauntingUnits = alive.Where(p => p.HasStatus(StatusEffectType.Taunt)).ToList();
+            if (tauntingUnits.Count > 0)
+            {
+                return new List<CombatUnit> { tauntingUnits[Random.Range(0, tauntingUnits.Count)] };
+            }
         }
 
-        // 2. Nếu không có ai Taunt, chọn như bình thường
+        // 2. Nếu không có ai Taunt (hoặc IgnoreTaunt), chọn như bình thường
         switch (skill.targetType)
         {
             case TargetType.AllEnemies:  // từ góc nhìn AI, "enemy" = player

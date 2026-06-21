@@ -18,14 +18,16 @@ MonoBehaviour:
   characterName: Edward
   portrait: {fileID: 21300000, guid: afcbda3dbf5c6a6449b36ea57ce06700, type: 3}
   battleSprite: {fileID: 21300000, guid: afcbda3dbf5c6a6449b36ea57ce06700, type: 3}
-  lore: 
-  baseHP: 1000
-  baseATK: 100
-  basePDEF: 20
+  lore: "M\u1ED9t nh\xE0 gi\u1EA3 kim thi\xEAn t\xE0i v\u1EDBi tay ch\xE2n automail,
+    c\xF3 kh\u1EA3 n\u0103ng bi\u1EBFn \u0111\u1ED5i v\u1EADt ch\u1EA5t v\xE0 chi\u1EBFn
+    \u0111\u1EA5u b\u1EC1n b\u1EC9."
+  baseHP: 5000
+  baseATK: 200
+  basePDEF: 35
   baseMDEF: 20
-  baseSpeed: 10
+  baseSpeed: 242
   baseLevel: 1
-  expReward: 100
+  expReward: 800
   baseExpThreshold: 100
   expIncrementPerLevel: 50
   hpPerLevel: 5
@@ -37,7 +39,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 1b749a18aaa40e640a5139e195101bf6, type: 2}
   - {fileID: 11400000, guid: b38dcaef4062ac44f8035fe5dd5985be, type: 2}
   - {fileID: 11400000, guid: f909e78751e2daf4e89063d7749feb5b, type: 2}
-  passiveScript: {fileID: 0}
+  passiveScript: {fileID: 11500000, guid: fed9759cac91add4980ceea005cab7a3, type: 3}
   hitVoiceClips: []
   attackVoiceClips: []
   deathVoiceClips: []

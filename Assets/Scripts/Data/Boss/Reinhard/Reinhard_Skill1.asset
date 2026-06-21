@@ -14,15 +14,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SkillData
   autoConfirmOnSelect: 0
   movementOverride: 0
-  skillName: Smash
-  description: 
+  skillName: Holy Slash
+  description: "Ch\xE9m nhanh 2 nh\xE1t ki\u1EBFm th\xE1nh v\u1EC1 ph\xEDa k\u1EBB
+    \u0111\u1ECBch."
   icon: {fileID: 0}
   type: 0
   targetType: 0
   isChargeable: 0
   doesNotEndTurn: 0
   apCost: 0
-  hitCount: 1
+  hitCount: 2
   vfxEvents:
   - vfxPrefab: {fileID: 1061322828748321392, guid: 3fffccd14ef3dca43b472796396dbc63, type: 3}
     spawnMode: 1
@@ -31,6 +32,8 @@ MonoBehaviour:
   rangedVfxEvents: []
   hitVfxEvents: []
   sfxClips: []
+  chargeSound: {fileID: 0}
+  voiceLines: []
   animationTrigger: Skill1
   isRanged: 0
   projectilePrefab: {fileID: 0}
@@ -39,4 +42,4 @@ MonoBehaviour:
   vfxPrefab: {fileID: 0}
   vfxOffset: 0
   effects:
-  - {fileID: 11400000, guid: 86a1cfdc47336bc40a1baef0f6dd8d0d, type: 2}
+  - {fileID: 11400000, guid: c15c4c690ca7bd74d96226bf9ce3ec8e, type: 2}

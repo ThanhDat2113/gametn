@@ -1,11 +1,12 @@
 using UnityEngine;
 
 /// <summary>
-/// Cập nhật: dùng cơ chế charge giảm sát thương theo đòn thay vì status GiamSatThuong.
-/// Tạo N lớp giáp, mỗi lớp giảm X% sát thương của 1 đòn.
+/// Tạo N lớp giáp hấp thu sát thương.
+/// Mỗi lớp giảm X% sát thương của 1 đòn nhận vào, sau đó biến mất.
+/// Universal cho cả sát thương vật lý và phép thuật.
 /// </summary>
-[CreateAssetMenu(fileName = "DamageReductionEffect", menuName = "RPG/Effects/Damage Reduction")]
-public class DamageReductionEffect : SkillEffect
+[CreateAssetMenu(fileName = "DamageReductionChargeEffect", menuName = "RPG/Effects/Damage Reduction Charge")]
+public class DamageReductionChargeEffect : SkillEffect
 {
     [Tooltip("Số lớp giáp (số đòn được giảm sát thương)")]
     public int charges = 2;
@@ -21,7 +22,7 @@ public class DamageReductionEffect : SkillEffect
             if (target != null && target.IsAlive)
             {
                 target.AddDamageReductionCharges(charges, reductionPercent);
-                Debug.Log($"[DamageReductionEffect] {target.UnitName} nhận {charges} lớp giáp, giảm {reductionPercent*100}% sát thương mỗi đòn.");
+                Debug.Log($"[{target.UnitName}] Nhận {charges} lớp giáp, giảm {reductionPercent*100}% sát thương mỗi đòn.");
             }
         }
     }

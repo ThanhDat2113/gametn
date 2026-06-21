@@ -1,43 +1,49 @@
 using UnityEngine;
 
+/// <summary>
+/// Cập nhật: dùng cơ chế charge giảm sát thương theo đòn.
+/// Mỗi lần bị tấn công hoặc tấn công → +1 charge giảm sát thương.
+/// Tối đa 5 charges, mỗi charge giảm 5% sát thương 1 đòn.
+/// </summary>
 [CreateAssetMenu(fileName = "CelinePassive", menuName = "RPG/Passives/CelinePassive")]
 public class CelinePassive : PassiveAbility
 {
-    private const StatusEffectType EFFECT_TYPE = StatusEffectType.GiamSatThuong;
-    private const float VALUE_PER_STACK = 0.05f;
-    private const int MAX_STACKS = 5;
+    private const int MAX_CHARGES = 5;
+    private const float REDUCTION_PER_CHARGE = 0.05f;
 
     public override void Initialize(CombatUnit owner)
     {
         base.Initialize(owner);
-        // Đăng ký vào các sự kiện cần thiết
         Owner.OnDamageTaken += OnOwnerTakeDamage;
         Owner.OnDealDamage += OnOwnerDealDamage;
     }
 
     private void OnOwnerTakeDamage(CombatUnit attacker, int damage)
     {
-        ApplyStack();
+        ApplyCharge();
     }
 
     private void OnOwnerDealDamage(CombatUnit target, int damage)
     {
-        ApplyStack();
+        ApplyCharge();
     }
 
-    private void ApplyStack()
+    private void ApplyCharge()
     {
-        var existingStatus = Owner.GetActiveStatus(EFFECT_TYPE);
-        if (existingStatus == null || existingStatus.Stacks < MAX_STACKS)
+        if (Owner != null && Owner.IsAlive)
         {
-            Owner.ApplyStatus(EFFECT_TYPE, 999, VALUE_PER_STACK, 1);
+            int currentCharges = Owner.DamageReductionChargesRemaining;
+            if (currentCharges < MAX_CHARGES)
+            {
+                Owner.AddDamageReductionCharges(1, REDUCTION_PER_CHARGE);
+                Debug.Log($"[CelinePassive] {Owner.UnitName} tích lũy giáp! ({currentCharges+1}/{MAX_CHARGES})");
+            }
         }
     }
 
     public override void Cleanup()
     {
         base.Cleanup();
-        // Hủy đăng ký để tránh memory leak
         if (Owner != null)
         {
             Owner.OnDamageTaken -= OnOwnerTakeDamage;
