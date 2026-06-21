@@ -1,6 +1,5 @@
 using UnityEngine;
 using System.Collections;
-using System.Linq;
 
 [System.Serializable]
 public class DialogueEntry
@@ -10,6 +9,7 @@ public class DialogueEntry
     public bool requiredCompleted;
     public DialogueLineData[] lines;
     public bool playOnce = true;
+    public GameObject customPrompt;
 }
 
 public class DialogueTrigger : MonoBehaviour
@@ -24,7 +24,6 @@ public class DialogueTrigger : MonoBehaviour
     public DialogueLineData[] defaultLines;
 
     [Header("Visual")]
-    public KeyCode interactKey = KeyCode.E;
     public GameObject interactionPrompt;
 
     [Header("Black Screen")]
@@ -51,15 +50,14 @@ public class DialogueTrigger : MonoBehaviour
 
     private Camera _mainCamera;
     private DialogueEntry _currentEntry;
+
     private bool sequential = true;
 
-    // Biến lưu trạng thái player trước khi dialogue
-    private bool wasPlayerMovementEnabled = true;
+    private NPCInteraction _npcInteraction;
 
     void Start()
     {
         _mainCamera = Camera.main;
-
         if (mainCameraObject == null && _mainCamera != null)
             mainCameraObject = _mainCamera.gameObject;
 
@@ -71,41 +69,14 @@ public class DialogueTrigger : MonoBehaviour
 
         if (switchCamera && dialogueCameraObject == null)
             Debug.LogError("DialogueTrigger: Dialogue Camera chưa được gán!");
-
         if (switchCamera && dialogueCameraPoint == null)
             Debug.LogError("DialogueTrigger: Dialogue Camera Point chưa được gán!");
-    }
 
-    void Update()
-    {
-        if (!_playerInRange) return;
-        if (!Input.GetKeyDown(interactKey)) return;
-
-        var entry = GetAppropriateEntry();
-        if (entry == null)
-        {
-            Debug.Log("[DialogueTrigger] Không có dialogue phù hợp.");
-            return;
-        }
-
-        if (entry.playOnce && _hasPlayedForCurrentEntry)
-            return;
-
-        _hasPlayedForCurrentEntry = true;
-        _currentEntry = entry;
-
-        if (interactionPrompt != null)
-            interactionPrompt.SetActive(false);
-
-        if (useBlackScreen)
-            StartCoroutine(PlayWithBlackScreenTransition(entry.lines));
-        else
-            StartDialogue(entry.lines);
+        _npcInteraction = GetComponent<NPCInteraction>();
     }
 
     private DialogueEntry GetAppropriateEntry()
     {
-        // (giữ nguyên logic cũ)
         if (dialogueEntries == null || dialogueEntries.Length == 0)
             return null;
 
@@ -116,21 +87,27 @@ public class DialogueTrigger : MonoBehaviour
         {
             if (!string.IsNullOrEmpty(entry.questId))
             {
-                if (currentQuest == null) continue;
-                if (currentQuest.questId != entry.questId) continue;
+                if (currentQuest == null)
+                    continue;
+                if (currentQuest.questId != entry.questId)
+                    continue;
             }
 
             if (entry.requiredStepIndex >= 0)
             {
-                if (qm == null || currentQuest == null) continue;
-                if (entry.requiredStepIndex >= currentQuest.steps.Length) continue;
+                if (qm == null || currentQuest == null)
+                    continue;
+                if (entry.requiredStepIndex >= currentQuest.steps.Length)
+                    continue;
 
                 bool stepCompleted = currentQuest.steps[entry.requiredStepIndex].isCompleted;
-                if (entry.requiredCompleted != stepCompleted) continue;
+                if (entry.requiredCompleted != stepCompleted)
+                    continue;
 
                 if (!entry.requiredCompleted)
                 {
-                    if (qm.CurrentStepIndex != entry.requiredStepIndex) continue;
+                    if (qm.CurrentStepIndex != entry.requiredStepIndex)
+                        continue;
                 }
             }
 
@@ -146,20 +123,46 @@ public class DialogueTrigger : MonoBehaviour
         return null;
     }
 
+    public GameObject GetCurrentPrompt()
+    {
+        var entry = GetAppropriateEntry();
+        return entry != null ? entry.customPrompt : null;
+    }
+
     public void PlayDialogueAuto()
     {
         if (_isPlaying) return;
+        if (string.IsNullOrEmpty(triggerID))
+        {
+            Debug.LogWarning("[DialogueTrigger] triggerID rỗng, không thể chơi dialogue.");
+            return;
+        }
 
         var entry = GetAppropriateEntry();
-        if (entry == null) return;
+
+        if (entry == null)
+        {
+            if (defaultLines != null && defaultLines.Length > 0)
+            {
+                Debug.Log("[DialogueTrigger] Không có entry phù hợp, dùng defaultLines.");
+                StartDialogue(defaultLines);
+                return;
+            }
+            Debug.Log("[DialogueTrigger] Không có dialogue phù hợp.");
+            return;
+        }
 
         if (entry.playOnce && _hasPlayedForCurrentEntry)
+        {
+            Debug.Log("[DialogueTrigger] Entry đã chơi 1 lần và playOnce=true.");
             return;
+        }
 
         _hasPlayedForCurrentEntry = true;
         _currentEntry = entry;
 
-        if (interactionPrompt != null)
+        // 🔥 Nếu có NPCInteraction, KHÔNG tự ẩn prompt (NPCInteraction sẽ lo)
+        if (_npcInteraction == null && interactionPrompt != null)
             interactionPrompt.SetActive(false);
 
         if (useBlackScreen)
@@ -178,7 +181,6 @@ public class DialogueTrigger : MonoBehaviour
             SwitchToDialogueCamera();
 
         yield return new WaitForSeconds(blackScreenDelay);
-
         yield return FadeController.Instance.FadeFromBlack();
 
         StartDialogueInternal(lines);
@@ -187,11 +189,8 @@ public class DialogueTrigger : MonoBehaviour
     private IEnumerator EndWithBlackScreen()
     {
         yield return FadeController.Instance.FadeToBlack();
-
         RestoreCameraState();
-
         yield return new WaitForSeconds(blackScreenDelay);
-
         yield return FadeController.Instance.FadeFromBlack();
     }
 
@@ -245,12 +244,8 @@ public class DialogueTrigger : MonoBehaviour
 
             if (dialogueCameraPoint != null)
             {
-                rig.SetPositionAndRotation(
-                    dialogueCameraPoint.position,
-                    dialogueCameraPoint.rotation
-                );
+                rig.SetPositionAndRotation(dialogueCameraPoint.position, dialogueCameraPoint.rotation);
             }
-
             dialogueCameraObject.SetActive(true);
         }
     }
@@ -265,14 +260,10 @@ public class DialogueTrigger : MonoBehaviour
         if (mainCameraObject != null)
         {
             mainCameraObject.SetActive(true);
-            mainCameraObject.transform.SetPositionAndRotation(
-                _originalMainCamPos,
-                _originalMainCamRot
-            );
+            mainCameraObject.transform.SetPositionAndRotation(_originalMainCamPos, _originalMainCamRot);
         }
     }
 
-    // 🔥 Bắt đầu dialogue: khóa player
     private void StartDialogue(DialogueLineData[] lines)
     {
         ApplyTeleport();
@@ -287,10 +278,8 @@ public class DialogueTrigger : MonoBehaviour
     {
         _isPlaying = true;
 
-        // 🔥 KHÓA PLAYER - ngăn di chuyển
-        LockPlayer();
-
-        if (interactionPrompt != null)
+        // 🔥 Không ẩn prompt ở đây nếu có NPCInteraction (NPCInteraction đã lo)
+        if (_npcInteraction == null && interactionPrompt != null)
             interactionPrompt.SetActive(false);
 
         if (sequential)
@@ -315,9 +304,6 @@ public class DialogueTrigger : MonoBehaviour
     {
         _isPlaying = false;
 
-        // 🔥 MỞ KHÓA PLAYER - cho phép di chuyển lại
-        UnlockPlayer();
-
         if (QuestManager.Instance != null && !string.IsNullOrEmpty(triggerID))
         {
             QuestManager.Instance.OnDialogueEnded(triggerID);
@@ -332,7 +318,12 @@ public class DialogueTrigger : MonoBehaviour
             RestoreCameraState();
         }
 
-        if (_playerInRange)
+        // 🔥 Thông báo cho NPCInteraction (nếu có) để cập nhật lại prompt
+        if (_npcInteraction != null)
+            _npcInteraction.OnDialogueComplete();
+
+        // 🔥 Nếu không có NPCInteraction, tự cập nhật prompt
+        if (_npcInteraction == null && _playerInRange)
         {
             var entry = GetAppropriateEntry();
             if (entry != null && (!entry.playOnce || !_hasPlayedForCurrentEntry))
@@ -343,51 +334,14 @@ public class DialogueTrigger : MonoBehaviour
         }
     }
 
-    // ─── PHƯƠNG THỨC KHÓA/MỞ KHÓA PLAYER ────────────────────
-
-    private void LockPlayer()
-    {
-        if (PlayerManager.Instance == null) return;
-
-        // Lưu trạng thái hiện tại của script điều khiển (nếu có)
-        var movementScript = PlayerManager.Instance.playerMovementScript;
-        if (movementScript != null)
-        {
-            wasPlayerMovementEnabled = movementScript.enabled;
-            movementScript.enabled = false;
-            Debug.Log("[DialogueTrigger] Player movement script disabled.");
-        }
-        else
-        {
-            // Nếu không có script được gán, dùng StopPlayer() để reset velocity (nhưng không tắt script)
-            PlayerManager.Instance.StopPlayer();
-            Debug.Log("[DialogueTrigger] Player stopped (no movement script).");
-        }
-    }
-
-    private void UnlockPlayer()
-    {
-        if (PlayerManager.Instance == null) return;
-
-        var movementScript = PlayerManager.Instance.playerMovementScript;
-        if (movementScript != null)
-        {
-            // Khôi phục trạng thái ban đầu
-            movementScript.enabled = wasPlayerMovementEnabled;
-            Debug.Log($"[DialogueTrigger] Player movement script restored to {(wasPlayerMovementEnabled ? "enabled" : "disabled")}.");
-        }
-        else
-        {
-            // Nếu không có script, chỉ cần bật lại nếu có
-            // (Không cần làm gì thêm vì StopPlayer chỉ reset velocity)
-        }
-    }
-
     void OnTriggerEnter(Collider other)
     {
         if (!other.CompareTag("Player")) return;
 
         _playerInRange = true;
+
+        if (_npcInteraction != null)
+            return;
 
         var entry = GetAppropriateEntry();
         if (entry != null && (!entry.playOnce || !_hasPlayedForCurrentEntry) && !_isPlaying)
@@ -402,6 +356,9 @@ public class DialogueTrigger : MonoBehaviour
         if (!other.CompareTag("Player")) return;
 
         _playerInRange = false;
+
+        if (_npcInteraction != null)
+            return;
 
         if (interactionPrompt != null)
             interactionPrompt.SetActive(false);

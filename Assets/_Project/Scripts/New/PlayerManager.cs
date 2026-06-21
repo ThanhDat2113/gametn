@@ -1,19 +1,15 @@
 using UnityEngine;
+using System.Collections;
 
-/// <summary>
-/// Singleton quản lý player trong toàn bộ game.
-/// Đặt trong Persistent Scene, cung cấp tham chiếu và các tiện ích liên quan đến player.
-/// </summary>
 public class PlayerManager : MonoBehaviour
 {
     public static PlayerManager Instance { get; private set; }
 
     [Header("Player Reference")]
-    [Tooltip("Kéo GameObject player từ Persistent Scene vào đây.")]
     public GameObject player;
 
     [Header("Movement Script Reference")]
-    [Tooltip("Kéo script điều khiển di chuyển của player vào đây (nếu có).")]
+    [Tooltip("Kéo script điều khiển di chuyển của player vào đây (VD: PlayerController)")]
     public MonoBehaviour playerMovementScript;
 
     private void Awake()
@@ -26,7 +22,6 @@ public class PlayerManager : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
-        // Nếu chưa gán player, tự tìm theo tag
         if (player == null)
         {
             player = GameObject.FindGameObjectWithTag("Player");
@@ -35,28 +30,45 @@ public class PlayerManager : MonoBehaviour
         }
     }
 
+    public GameObject GetPlayer() => player;
+
+    public Vector3 GetPlayerPosition() => player != null ? player.transform.position : Vector3.zero;
+
+    public Quaternion GetPlayerRotation() => player != null ? player.transform.rotation : Quaternion.identity;
+
     /// <summary>
-    /// Lấy GameObject của player.
+    /// Dừng player ngay lập tức: tắt script điều khiển, reset Rigidbody, dừng CharacterController.
     /// </summary>
-    public GameObject GetPlayer()
+    public void StopPlayer()
     {
-        return player;
+        if (player == null) return;
+
+        if (playerMovementScript != null && playerMovementScript.enabled)
+            playerMovementScript.enabled = false;
+
+        Rigidbody rb = player.GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+        }
+
+        CharacterController cc = player.GetComponent<CharacterController>();
+        if (cc != null && cc.enabled)
+            cc.Move(Vector3.zero);
     }
 
     /// <summary>
-    /// Lấy vị trí của player.
+    /// Bật lại script điều khiển của player.
     /// </summary>
-    public Vector3 GetPlayerPosition()
+    public void EnableMovement()
     {
-        return player != null ? player.transform.position : Vector3.zero;
-    }
-
-    /// <summary>
-    /// Lấy rotation của player.
-    /// </summary>
-    public Quaternion GetPlayerRotation()
-    {
-        return player != null ? player.transform.rotation : Quaternion.identity;
+        if (player == null) return;
+        if (playerMovementScript != null && !playerMovementScript.enabled)
+        {
+            playerMovementScript.enabled = true;
+            Debug.Log("[PlayerManager] Player movement enabled.");
+        }
     }
 
     /// <summary>
@@ -66,11 +78,9 @@ public class PlayerManager : MonoBehaviour
     {
         if (player == null) return;
 
-        // Tạm thời tắt script điều khiển
         if (playerMovementScript != null && playerMovementScript.enabled)
             playerMovementScript.enabled = false;
 
-        // Xử lý CharacterController
         CharacterController cc = player.GetComponent<CharacterController>();
         bool ccWasEnabled = false;
         if (cc != null && cc.enabled)
@@ -79,7 +89,6 @@ public class PlayerManager : MonoBehaviour
             cc.enabled = false;
         }
 
-        // Xử lý Rigidbody
         Rigidbody rb = player.GetComponent<Rigidbody>();
         bool rbWasKinematic = false;
         bool rbWasGravity = false;
@@ -93,12 +102,10 @@ public class PlayerManager : MonoBehaviour
             rb.angularVelocity = Vector3.zero;
         }
 
-        // Set position
         player.transform.position = position;
         player.transform.rotation = rotation;
         Physics.SyncTransforms();
 
-        // Khôi phục
         if (cc != null && ccWasEnabled)
         {
             cc.enabled = true;
@@ -115,52 +122,13 @@ public class PlayerManager : MonoBehaviour
             }
         }
 
-        // Bật lại script điều khiển sau 2 frame
-        if (playerMovementScript != null)
-            StartCoroutine(EnableMovementDelayed());
-
-        Debug.Log($"[PlayerManager] Teleport player đến {position}");
+        StartCoroutine(EnableMovementDelayed());
     }
 
-    /// <summary>
-    /// Dừng player ngay lập tức (reset velocity, tắt script điều khiển).
-    /// </summary>
-    public void StopPlayer()
-    {
-        if (player == null) return;
-
-        // Tắt script điều khiển
-        if (playerMovementScript != null && playerMovementScript.enabled)
-            playerMovementScript.enabled = false;
-
-        // Reset Rigidbody
-        Rigidbody rb = player.GetComponent<Rigidbody>();
-        if (rb != null)
-        {
-            rb.linearVelocity = Vector3.zero;
-            rb.angularVelocity = Vector3.zero;
-        }
-
-        // Dừng CharacterController
-        CharacterController cc = player.GetComponent<CharacterController>();
-        if (cc != null && cc.enabled)
-            cc.Move(Vector3.zero);
-    }
-
-    /// <summary>
-    /// Kích hoạt lại script điều khiển sau một khoảng thời gian.
-    /// </summary>
-    public void EnableMovement()
-    {
-        if (playerMovementScript != null)
-            playerMovementScript.enabled = true;
-    }
-
-    private System.Collections.IEnumerator EnableMovementDelayed()
+    private IEnumerator EnableMovementDelayed()
     {
         yield return null;
         yield return null;
-        if (playerMovementScript != null)
-            playerMovementScript.enabled = true;
+        EnableMovement();
     }
 }

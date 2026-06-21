@@ -1,39 +1,38 @@
 using UnityEngine;
-using System.Collections;
 
 public class NPCInteraction : MonoBehaviour
 {
     [Header("Identity")]
-    public string triggerID; // Khớp với QuestStep.targetId
+    public string triggerID;
 
     [Header("Dialogue")]
-    public DialogueTrigger dialogueTrigger; // Gán nếu NPC có hội thoại
+    public DialogueTrigger dialogueTrigger;
 
     [Header("Combat")]
-    public EnemyGroupData enemyGroupForCombat; // Nhóm kẻ địch khi combat
+    public EnemyGroupData enemyGroupForCombat;
 
-    [Header("Visual")]
-    public KeyCode interactKey = KeyCode.E;
-    public GameObject interactionPrompt;
+    [Header("Interaction Prompts (Fallback)")]
+    public GameObject talkPrompt;
+    public GameObject combatPrompt;
 
     [Header("Settings")]
-    public bool autoStartCombatOnTouch = false; // Nếu true, chạm là vào combat luôn (không cần E)
+    public KeyCode interactKey = KeyCode.E;
+    public bool autoStartCombatOnTouch = false;
 
     private bool isPlayerInRange = false;
     private bool isProcessing = false;
+    private GameObject currentCustomPrompt = null;
 
     private void Update()
     {
         if (!isPlayerInRange || isProcessing) return;
 
-        // Nếu auto combat khi chạm, thì không cần nhấn E
         if (autoStartCombatOnTouch)
         {
             TryInteract();
             return;
         }
 
-        // Nếu không auto, cần nhấn phím tương tác
         if (Input.GetKeyDown(interactKey))
         {
             TryInteract();
@@ -45,11 +44,12 @@ public class NPCInteraction : MonoBehaviour
         if (isProcessing) return;
         isProcessing = true;
 
-        // Lấy step hiện tại
+        // Ẩn prompt ngay khi bắt đầu tương tác
+        HideAllPrompts();
+
         QuestStep currentStep = QuestManager.Instance?.CurrentStep;
         if (currentStep == null)
         {
-            // Không có quest -> mở dialogue mặc định (nếu có)
             if (dialogueTrigger != null)
                 dialogueTrigger.PlayDialogueAuto();
             else
@@ -58,24 +58,18 @@ public class NPCInteraction : MonoBehaviour
             return;
         }
 
-        // Kiểm tra nếu step hiện tại là Talk và targetId khớp
+        // Talk step
         if (currentStep.type == QuestStepType.Talk && currentStep.targetId == triggerID)
         {
             if (dialogueTrigger != null)
-            {
                 dialogueTrigger.PlayDialogueAuto();
-                // DialogueTrigger sẽ tự gọi OnDialogueEnded khi xong
-            }
             else
-            {
-                // Nếu không có dialogueTrigger, vẫn có thể hoàn thành step (nếu muốn)
                 QuestManager.Instance?.OnDialogueEnded(triggerID);
-            }
             isProcessing = false;
             return;
         }
 
-        // Kiểm tra nếu step hiện tại là Kill và targetId khớp -> bắt đầu combat
+        // Kill step -> combat
         if (currentStep.type == QuestStepType.Kill && currentStep.targetId == triggerID)
         {
             if (enemyGroupForCombat == null)
@@ -84,13 +78,12 @@ public class NPCInteraction : MonoBehaviour
                 isProcessing = false;
                 return;
             }
-
             StartCombatWithNPC();
             isProcessing = false;
             return;
         }
 
-        // Nếu step không khớp, có thể mở dialogue mặc định (nếu có)
+        // Step khác -> dialogue mặc định
         if (dialogueTrigger != null)
             dialogueTrigger.PlayDialogueAuto();
         else
@@ -109,20 +102,10 @@ public class NPCInteraction : MonoBehaviour
         }
         formationManager.SaveFormation();
 
-        // Lưu session data với questTargetId = triggerID
         CombatSessionData.Set(FormationDataStorage.PendingFormation, enemyGroupForCombat, fromMap: true, questTargetId: triggerID);
 
-        // Đăng ký không có MapEnemy, nên không cần RegisterLastEnemy
-        // Bắt đầu transition
-        StartCoroutine(StartCombatTransition());
-    }
+        PlayerManager.Instance?.StopPlayer();
 
-    private IEnumerator StartCombatTransition()
-    {
-        if (FadeController.Instance != null)
-            yield return FadeController.Instance.FadeToBlack();
-
-        // Ẩn MapRoot và PersistentContainer (giống MapEnemy)
         var mapRoot = GameObject.Find("MapRoot");
         if (mapRoot != null)
         {
@@ -137,37 +120,119 @@ public class NPCInteraction : MonoBehaviour
             persistentContainer.SetActive(false);
         }
 
-        // Tạm dừng player (nếu cần)
-        PlayerManager.Instance?.StopPlayer();
-
         SceneLoaderManager.LoadCombatScene();
     }
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("Player"))
-        {
-            isPlayerInRange = true;
-            if (interactionPrompt != null)
-                interactionPrompt.SetActive(true);
-        }
+        if (!other.CompareTag("Player")) return;
+
+        isPlayerInRange = true;
+        // 🔥 Chỉ khi player vào trigger mới hiển thị prompt
+        UpdatePromptVisibility();
     }
 
     private void OnTriggerExit(Collider other)
     {
-        if (other.CompareTag("Player"))
+        if (!other.CompareTag("Player")) return;
+
+        isPlayerInRange = false;
+        HideAllPrompts();
+    }
+
+    /// <summary>
+    /// Cập nhật prompt dựa trên step hiện tại.
+    /// Chỉ được gọi khi player thực sự vào trigger.
+    /// </summary>
+    private void UpdatePromptVisibility()
+    {
+        // Nếu player không ở gần, không hiển thị
+        if (!isPlayerInRange)
         {
-            isPlayerInRange = false;
-            if (interactionPrompt != null)
-                interactionPrompt.SetActive(false);
+            HideAllPrompts();
+            return;
+        }
+
+        // Nếu đang chơi dialogue, không hiển thị prompt
+        if (dialogueTrigger != null && dialogueTrigger.IsPlaying())
+        {
+            HideAllPrompts();
+            return;
+        }
+
+        HideAllPrompts();
+
+        // Kiểm tra customPrompt từ entry
+        GameObject customPrompt = dialogueTrigger != null ? dialogueTrigger.GetCurrentPrompt() : null;
+        if (customPrompt != null)
+        {
+            customPrompt.SetActive(true);
+            currentCustomPrompt = customPrompt;
+            return;
+        }
+
+        // Fallback
+        QuestStep currentStep = QuestManager.Instance?.CurrentStep;
+        if (currentStep == null)
+        {
+            if (talkPrompt != null) talkPrompt.SetActive(true);
+            return;
+        }
+
+        // Kiểm tra targetId có khớp không
+        if (currentStep.targetId != triggerID) return;
+
+        // Hiển thị prompt tương ứng với loại step
+        if (currentStep.type == QuestStepType.Talk)
+        {
+            if (talkPrompt != null) talkPrompt.SetActive(true);
+        }
+        else if (currentStep.type == QuestStepType.Kill)
+        {
+            if (combatPrompt != null) combatPrompt.SetActive(true);
+        }
+        else
+        {
+            if (talkPrompt != null) talkPrompt.SetActive(true);
         }
     }
 
-    // Nếu muốn reset trạng thái khi bị disable
+    /// <summary>
+    /// Gọi từ DialogueTrigger khi dialogue kết thúc.
+    /// 🔥 KHÔNG tự động hiển thị prompt nữa – để player rời khỏi và quay lại trigger.
+    /// </summary>
+    public void OnDialogueComplete()
+    {
+        // Không làm gì với prompt – prompt sẽ chỉ hiển thị khi OnTriggerEnter xảy ra
+        // Bạn có thể thêm logic khác ở đây nếu cần (reset trạng thái, v.v.)
+        Debug.Log("[NPCInteraction] Dialogue complete. Prompt will only show on next trigger enter.");
+    }
+
+    private void HideAllPrompts()
+    {
+        if (talkPrompt != null) talkPrompt.SetActive(false);
+        if (combatPrompt != null) combatPrompt.SetActive(false);
+        if (currentCustomPrompt != null)
+        {
+            currentCustomPrompt.SetActive(false);
+            currentCustomPrompt = null;
+        }
+    }
+
     private void OnDisable()
     {
         isProcessing = false;
-        if (interactionPrompt != null)
-            interactionPrompt.SetActive(false);
+        HideAllPrompts();
+    }
+}
+
+// Extension method để kiểm tra trạng thái playing của DialogueTrigger
+public static class DialogueTriggerExtensions
+{
+    public static bool IsPlaying(this DialogueTrigger trigger)
+    {
+        if (trigger == null) return false;
+        var field = typeof(DialogueTrigger).GetField("_isPlaying", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        return field != null && (bool)field.GetValue(trigger);
     }
 }

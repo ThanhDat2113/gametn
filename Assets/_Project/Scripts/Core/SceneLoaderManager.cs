@@ -9,10 +9,7 @@ public class SceneLoaderManager : MonoBehaviour
     [SerializeField] private string combatSceneName = "CombatScene";
     private bool isCombatLoaded = false;
 
-    // MapRoot: ẩn/hiện map chính
     public static GameObject MapRoot { get; set; }
-
-    // 🔥 PersistentContainer: ẩn/hiện các đối tượng trong Persistent Scene khi vào combat
     public static GameObject PersistentContainer { get; set; }
 
     private void Awake()
@@ -54,18 +51,24 @@ public class SceneLoaderManager : MonoBehaviour
 
         isCombatLoaded = false;
 
-        // 🔥 HIỆN LẠI MAP ROOT
+        // Hiện lại map và persistent container
         if (MapRoot != null)
         {
             MapRoot.SetActive(true);
             Debug.Log("[SceneLoaderManager] MapRoot activated.");
         }
 
-        // 🔥 HIỆN LẠI PERSISTENT CONTAINER
         if (PersistentContainer != null)
         {
             PersistentContainer.SetActive(true);
             Debug.Log("[SceneLoaderManager] PersistentContainer activated.");
+        }
+
+        // 🔥 Bật lại movement cho player
+        if (PlayerManager.Instance != null)
+        {
+            PlayerManager.Instance.EnableMovement();
+            Debug.Log("[SceneLoaderManager] Player movement enabled.");
         }
 
         // Quay lại active scene là map hiện tại
