@@ -12,7 +12,7 @@ public class CombatSceneStarter : MonoBehaviour
             return;
         }
 
-        // Chỉ chạy khi có dữ liệu từ map
+        // Chỉ chạy khi có dữ liệu từ map hoặc NPCInteraction
         if (CombatSessionData.HasData)
         {
             var combat = CombatManager.Instance;
@@ -22,7 +22,7 @@ public class CombatSceneStarter : MonoBehaviour
                 return;
             }
 
-            Debug.Log($"[CombatSceneStarter] StartCombat from Map: formation={CombatSessionData.Formation?.slots?.Length} slots, enemy={CombatSessionData.EnemyGroup?.name}");
+            Debug.Log($"[CombatSceneStarter] StartCombat from {(CombatSessionData.IsFromMap ? "Map" : "NPC")}: formation={CombatSessionData.Formation?.slots?.Length} slots, enemy={CombatSessionData.EnemyGroup?.name}");
 
             combat.StartCombat(CombatSessionData.Formation, CombatSessionData.EnemyGroup);
 
@@ -41,8 +41,19 @@ public class CombatSceneStarter : MonoBehaviour
         if (CombatAudioManager.Instance != null)
             CombatAudioManager.Instance.StopBGM();
 
-        if (LastTouchedEnemy != null)
+        // 🔥 Ưu tiên dùng QuestTargetId nếu có (từ NPCInteraction)
+        if (!string.IsNullOrEmpty(CombatSessionData.QuestTargetId))
         {
+            if (QuestManager.Instance != null)
+            {
+                // Gọi trực tiếp với string targetId (khớp với triggerID của NPC)
+                QuestManager.Instance.OnEnemyGroupDefeated(CombatSessionData.QuestTargetId);
+                Debug.Log($"[CombatSceneStarter] Quest step completed via QuestTargetId: {CombatSessionData.QuestTargetId}");
+            }
+        }
+        else if (LastTouchedEnemy != null)
+        {
+            // Trường hợp từ MapEnemy (có object trong map)
             if (QuestManager.Instance != null && LastTouchedEnemy.enemyGroup != null)
                 QuestManager.Instance.OnEnemyGroupDefeated(LastTouchedEnemy.enemyGroup);
             LastTouchedEnemy.MarkAsDefeated();
@@ -70,7 +81,10 @@ public class CombatSceneStarter : MonoBehaviour
             yield return new WaitForSeconds(2f);
             SceneLoaderManager.UnloadCombatScene();
         }
+
         yield return new WaitForSeconds(0.5f);
+
+        // Chờ cho đến khi DefeatPanel bị hủy hoặc timeout 5s
         float timer = 5f;
         while (timer > 0f)
         {
@@ -79,10 +93,12 @@ public class CombatSceneStarter : MonoBehaviour
             timer -= Time.deltaTime;
             yield return null;
         }
+
         SceneLoaderManager.UnloadCombatScene();
         yield break;
     }
 
+    // MapEnemy duy nhất đã chạm (dùng cho trường hợp từ Map)
     private static MapEnemy LastTouchedEnemy;
     public static void RegisterLastEnemy(MapEnemy enemy) => LastTouchedEnemy = enemy;
 }
