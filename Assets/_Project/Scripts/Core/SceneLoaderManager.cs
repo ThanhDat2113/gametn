@@ -10,6 +10,7 @@ public class SceneLoaderManager : MonoBehaviour
     private bool isCombatLoaded = false;
 
     public static GameObject MapRoot { get; set; }
+    public static GameObject PersistentContainer { get; set; }
 
     private void Awake()
     {
@@ -50,28 +51,42 @@ public class SceneLoaderManager : MonoBehaviour
 
         isCombatLoaded = false;
 
+        // Hiện lại map và persistent container
         if (MapRoot != null)
         {
             MapRoot.SetActive(true);
             Debug.Log("[SceneLoaderManager] MapRoot activated.");
         }
-        else
+
+        if (PersistentContainer != null)
         {
-            Debug.LogWarning("[SceneLoaderManager] MapRoot reference is null, trying to find by name...");
-            Scene mapScene = SceneManager.GetSceneAt(0);
-            GameObject[] roots = mapScene.GetRootGameObjects();
-            foreach (var obj in roots)
+            PersistentContainer.SetActive(true);
+            Debug.Log("[SceneLoaderManager] PersistentContainer activated.");
+        }
+
+        // 🔥 Bật lại movement cho player
+        if (PlayerManager.Instance != null)
+        {
+            PlayerManager.Instance.EnableMovement();
+            Debug.Log("[SceneLoaderManager] Player movement enabled.");
+        }
+
+        // Quay lại active scene là map hiện tại
+        if (SceneTransitionManager.Instance != null)
+        {
+            string mapName = SceneTransitionManager.Instance.GetCurrentMapName();
+            if (!string.IsNullOrEmpty(mapName))
             {
-                if (obj.name == "MapRoot")
-                {
-                    obj.SetActive(true);
-                    break;
-                }
+                Scene mapScene = SceneManager.GetSceneByName(mapName);
+                if (mapScene.IsValid())
+                    SceneManager.SetActiveScene(mapScene);
             }
         }
 
         if (FadeController.Instance != null)
             yield return FadeController.Instance.FadeFromBlack();
+
+        Debug.Log("[SceneLoaderManager] Combat scene unloaded.");
     }
 
     public static void ReloadCombatScene()
@@ -82,14 +97,12 @@ public class SceneLoaderManager : MonoBehaviour
 
     private IEnumerator ReloadAdditive()
     {
-        // Unload current combat scene
         AsyncOperation unload = SceneManager.UnloadSceneAsync(combatSceneName);
         while (!unload.isDone)
             yield return null;
 
         isCombatLoaded = false;
 
-        // Load lại
         AsyncOperation load = SceneManager.LoadSceneAsync(combatSceneName, LoadSceneMode.Additive);
         while (!load.isDone)
             yield return null;

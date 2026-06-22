@@ -9426,6 +9426,154 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+<<<<<<<< HEAD:Assets/_Recovery/0.unity
+========
+--- !u!1 &419533662
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 419533663}
+  - component: {fileID: 419533668}
+  - component: {fileID: 419533667}
+  - component: {fileID: 419533666}
+  - component: {fileID: 419533665}
+  - component: {fileID: 419533664}
+  m_Layer: 0
+  m_Name: Cube (1)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &419533663
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 419533662}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -323.2, y: 112.2, z: 26.4}
+  m_LocalScale: {x: 16.345985, y: 16.345985, z: 16.345985}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 554073902}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &419533664
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 419533662}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 301e6ec3e8a53394688f0578664b8a4f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SceneBootstrapper
+--- !u!114 &419533665
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 419533662}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f3b1ed0510a0e194cb2630d22df561f6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SceneTransfer
+  sceneNameToLoad: MAP2
+  spawnPointName: SpawnPoint_MAP2
+--- !u!65 &419533666
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 419533662}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!23 &419533667
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 419533662}
+  m_Enabled: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 0
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!33 &419533668
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 419533662}
+  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &428101053 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 100000, guid: abc00000000005033114219597360411, type: 3}
+  m_PrefabInstance: {fileID: 1516051055}
+  m_PrefabAsset: {fileID: 0}
+>>>>>>>> questtype:Assets/Scenes/Map1.unity
 --- !u!1 &429273516
 GameObject:
   m_ObjectHideFlags: 0
@@ -25945,8 +26093,13 @@ Light:
   m_Enabled: 1
   serializedVersion: 12
   m_Type: 1
+<<<<<<<< HEAD:Assets/_Recovery/0.unity
   m_Color: {r: 1, g: 0.95686275, b: 0.8392157, a: 1}
   m_Intensity: 1.5
+========
+  m_Color: {r: 0.5639801, g: 0.6221183, b: 0.78867924, a: 1}
+  m_Intensity: 2
+>>>>>>>> questtype:Assets/Scenes/Map1.unity
   m_Range: 10
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
@@ -29481,6 +29634,7 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: e4e569ebf359f834a864b01862722655, type: 3}
   m_PrefabInstance: {fileID: 1325046302}
   m_PrefabAsset: {fileID: 0}
+<<<<<<<< HEAD:Assets/_Recovery/0.unity
 --- !u!1001 &1331431707
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -29563,6 +29717,8 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: e4e569ebf359f834a864b01862722655, type: 3}
   m_PrefabInstance: {fileID: 1331431707}
   m_PrefabAsset: {fileID: 0}
+========
+>>>>>>>> questtype:Assets/Scenes/Map1.unity
 --- !u!4 &1337134580 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 400000, guid: abc00000000016997223646955643502, type: 3}
@@ -42490,6 +42646,8 @@ MonoBehaviour:
   defaultOffset: {x: 0, y: 1.5}
   continueKey: 32
   clickToContinue: 1
+  typingSpeed: 0.03
+  typingSoundEnabled: 1
 --- !u!4 &1998853004
 Transform:
   m_ObjectHideFlags: 0
@@ -45887,7 +46045,11 @@ Transform:
   m_GameObject: {fileID: 2115615241}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+<<<<<<<< HEAD:Assets/_Recovery/0.unity
   m_LocalPosition: {x: 548.64, y: 106.3, z: -96.58}
+========
+  m_LocalPosition: {x: -233.9, y: 112.9, z: 20.4}
+>>>>>>>> questtype:Assets/Scenes/Map1.unity
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:

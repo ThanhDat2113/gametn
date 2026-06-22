@@ -14,8 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SkillData
   autoConfirmOnSelect: 0
   movementOverride: 0
-  skillName: Smash
-  description: 
+  skillName: Dragon Flame Slash
+  description: "\u0110\xF2n ch\xE9m long di\u1EC7m, v\u1EEBa g\xE2y s\xE1t th\u01B0\u01A1ng
+    v\u1EEBa huy \u0111\u1ED9ng long l\u1EF1c t\u0103ng c\u01B0\u1EDDng s\u1EE9c
+    m\u1EA1nh."
   icon: {fileID: 0}
   type: 0
   targetType: 0
@@ -31,7 +33,9 @@ MonoBehaviour:
   rangedVfxEvents: []
   hitVfxEvents: []
   sfxClips: []
-  animationTrigger: Skill1
+  chargeSound: {fileID: 0}
+  voiceLines: []
+  animationTrigger: Skill2
   isRanged: 0
   projectilePrefab: {fileID: 0}
   projectileOffset: {x: 0, y: 0, z: 0}
@@ -39,4 +43,4 @@ MonoBehaviour:
   vfxPrefab: {fileID: 0}
   vfxOffset: 0
   effects:
-  - {fileID: 11400000, guid: 86a1cfdc47336bc40a1baef0f6dd8d0d, type: 2}
+  - {fileID: 11400000, guid: c15c4c690ca7bd74d96226bf9ce3ec8e, type: 2}

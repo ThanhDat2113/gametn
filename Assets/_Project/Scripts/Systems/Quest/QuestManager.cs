@@ -98,7 +98,7 @@ public class QuestManager : MonoBehaviour
         runtimeQuest = CloneQuest(template);
         currentStepIndex = 0;
 
-        // ✅ Hiển thị lại UI trước khi set nội dung
+        // Hiển thị lại UI trước khi set nội dung
         if (questUI != null)
         {
             questUI.Show();
@@ -108,6 +108,8 @@ public class QuestManager : MonoBehaviour
         OnStepChanged?.Invoke(CurrentStep);
         Debug.Log($"[Quest] Started fresh quest: {runtimeQuest.questName}");
     }
+
+    // ─── DIALOGUE ─────────────────────────────────────────────────────────────
 
     public void OnDialogueEnded(string triggerID)
     {
@@ -119,15 +121,55 @@ public class QuestManager : MonoBehaviour
             CompleteCurrentStep();
     }
 
+    // ─── COMBAT ──────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Gọi từ MapEnemy khi đánh bại một enemy group.
+    /// </summary>
     public void OnEnemyGroupDefeated(EnemyGroupData enemyGroup)
     {
-        if (runtimeQuest == null) return;
-        if (currentStepIndex >= runtimeQuest.steps.Length) return;
+        if (enemyGroup == null) return;
+        // Gọi phiên bản string với tên của enemyGroup
+        OnEnemyGroupDefeated(enemyGroup.name);
+    }
+
+    /// <summary>
+    /// Gọi từ CombatSceneStarter khi chiến thắng combat với một targetId cụ thể.
+    /// targetId thường là triggerID của NPC (khớp với quest step targetId).
+    /// </summary>
+    public void OnEnemyGroupDefeated(string targetId)
+    {
+        if (string.IsNullOrEmpty(targetId))
+        {
+            Debug.LogWarning("[QuestManager] OnEnemyGroupDefeated called with null or empty targetId.");
+            return;
+        }
+
+        if (runtimeQuest == null)
+        {
+            Debug.LogWarning("[QuestManager] No active quest.");
+            return;
+        }
+
+        if (currentStepIndex >= runtimeQuest.steps.Length)
+        {
+            Debug.LogWarning($"[QuestManager] Quest already completed. Can't process step.");
+            return;
+        }
 
         var step = runtimeQuest.steps[currentStepIndex];
-        if (step.type == QuestStepType.Kill && step.targetId == enemyGroup.name && !step.isCompleted)
+        if (step.type == QuestStepType.Kill && step.targetId == targetId && !step.isCompleted)
+        {
+            Debug.Log($"[QuestManager] Kill step completed: {step.description}");
             CompleteCurrentStep();
+        }
+        else
+        {
+            Debug.Log($"[QuestManager] Kill step mismatch: step.type={step.type}, step.targetId={step.targetId}, targetId={targetId}");
+        }
     }
+
+    // ─── PUZZLE ──────────────────────────────────────────────────────────────
 
     public void OnPuzzleCompleted(string triggerID)
     {
@@ -144,6 +186,8 @@ public class QuestManager : MonoBehaviour
         if (isPuzzleType && step.targetId == triggerID && !step.isCompleted)
             CompleteCurrentStep();
     }
+
+    // ─── COMPLETE STEP ──────────────────────────────────────────────────────
 
     private void CompleteCurrentStep()
     {
@@ -193,6 +237,8 @@ public class QuestManager : MonoBehaviour
             StartQuest(questChain[currentChainIndex]);
         }
     }
+
+    // ─── REWARDS ─────────────────────────────────────────────────────────────
 
     private void GiveRewards(QuestData quest, System.Action onRewardsClaimed = null)
     {
@@ -260,11 +306,15 @@ public class QuestManager : MonoBehaviour
         }
     }
 
+    // ─── UI ──────────────────────────────────────────────────────────────────
+
     private void UpdateUI()
     {
         if (questUI != null && runtimeQuest != null && currentStepIndex < runtimeQuest.steps.Length)
             questUI.SetObjective(runtimeQuest.steps[currentStepIndex].description);
     }
+
+    // ─── RESET ──────────────────────────────────────────────────────────────
 
     public void ResetQuest()
     {

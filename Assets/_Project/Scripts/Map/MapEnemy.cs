@@ -30,14 +30,13 @@ public class MapEnemy : MonoBehaviour
         }
         formationManager.SaveFormation();
 
-        // ✅ Ghi nhận rằng đây là từ map (tham số thứ ba = true)
         CombatSessionData.Set(FormationDataStorage.PendingFormation, enemyGroup, fromMap: true);
-
         CombatSceneStarter.RegisterLastEnemy(this);
 
         if (FadeController.Instance != null)
             yield return FadeController.Instance.FadeToBlack();
 
+        // --- Ẩn MapRoot ---
         var mapRoot = GameObject.Find("MapRoot");
         if (mapRoot != null)
         {
@@ -48,6 +47,20 @@ public class MapEnemy : MonoBehaviour
         else
         {
             Debug.LogError("[MapEnemy] Không tìm thấy MapRoot! Hãy tạo một GameObject tên 'MapRoot' chứa toàn bộ map.");
+        }
+
+        // 🔥 Ẩn PersistentContainer
+        var persistentContainer = GameObject.Find("PersistentContainer");
+        if (persistentContainer != null)
+        {
+            SceneLoaderManager.PersistentContainer = persistentContainer;
+            persistentContainer.SetActive(false);
+            Debug.Log("[MapEnemy] PersistentContainer found and deactivated.");
+        }
+        else
+        {
+            // Không bắt buộc, nhưng nếu không có thì không ẩn gì
+            Debug.LogWarning("[MapEnemy] Không tìm thấy PersistentContainer (không bắt buộc).");
         }
 
         SceneLoaderManager.LoadCombatScene();
