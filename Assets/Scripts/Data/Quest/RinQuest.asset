@@ -1,0 +1,52 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 01f94a06348b47f49b05724510167e6c, type: 3}
+  m_Name: RinQuest
+  m_EditorClassIdentifier: Assembly-CSharp::QuestData
+  questId: 5
+  questName: "T\xE2y ti\u1EBFn"
+  steps:
+  - stepId: 0
+    type: 3
+    targetId: N_Gate
+    description: "R\u1EDDi kh\u1ECFi Ph\u01B0\u01A1ng B\u1EAFc"
+    isCompleted: 1
+  - stepId: 1
+    type: 3
+    targetId: W_Gate
+    description: "T\u1EDBi Ph\u01B0\u01A1ng T\xE2y"
+    isCompleted: 1
+  - stepId: 2
+    type: 0
+    targetId: 5
+    description: "Tr\xF2 chuy\u1EC7n v\u1EDBi Rin"
+    isCompleted: 1
+  - stepId: 3
+    type: 9
+    targetId: 6
+    description: "Ki\u1EC3m tra \u0111\u01B0\u1EDDng truy\u1EC1n \u0111i\u1EC7n"
+    isCompleted: 1
+  - stepId: 4
+    type: 0
+    targetId: 5
+    description: "Tr\xF2 chuy\u1EC7n v\u1EDBi Rin"
+    isCompleted: 1
+  isRepeatable: 0
+  rewards:
+  - rewardType: 0
+    character: {fileID: 11400000, guid: 65bbda1fd449c8d439d3d269074cf841, type: 2}
+    item: {fileID: 0}
+    amount: 1
+  - rewardType: 2
+    character: {fileID: 0}
+    item: {fileID: 0}
+    amount: 500

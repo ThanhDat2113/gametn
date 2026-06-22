@@ -118,7 +118,10 @@ public class QuestManager : MonoBehaviour
 
         var step = runtimeQuest.steps[currentStepIndex];
         if (step.type == QuestStepType.Talk && step.targetId == triggerID && !step.isCompleted)
+        {
+            Debug.Log($"[QuestManager] Dialogue ended with {triggerID} → completing talk step.");
             CompleteCurrentStep();
+        }
     }
 
     // ─── COMBAT ──────────────────────────────────────────────────────────────
@@ -129,7 +132,6 @@ public class QuestManager : MonoBehaviour
     public void OnEnemyGroupDefeated(EnemyGroupData enemyGroup)
     {
         if (enemyGroup == null) return;
-        // Gọi phiên bản string với tên của enemyGroup
         OnEnemyGroupDefeated(enemyGroup.name);
     }
 
@@ -184,7 +186,47 @@ public class QuestManager : MonoBehaviour
                          || step.type == QuestStepType.SpirePuzzle
                          || step.type == QuestStepType.FlowPuzzle;
         if (isPuzzleType && step.targetId == triggerID && !step.isCompleted)
+        {
+            Debug.Log($"[QuestManager] Puzzle completed: {step.description}");
             CompleteCurrentStep();
+        }
+    }
+
+    // ─── EXPLORE / LOCATION ──────────────────────────────────────────────────
+
+    /// <summary>
+    /// Gọi từ LocationTrigger khi player đến vị trí target.
+    /// </summary>
+    public void OnLocationReached(string locationId)
+    {
+        if (string.IsNullOrEmpty(locationId))
+        {
+            Debug.LogWarning("[QuestManager] OnLocationReached called with null or empty locationId.");
+            return;
+        }
+
+        if (runtimeQuest == null)
+        {
+            Debug.LogWarning("[QuestManager] No active quest.");
+            return;
+        }
+
+        if (currentStepIndex >= runtimeQuest.steps.Length)
+        {
+            Debug.LogWarning($"[QuestManager] Quest already completed. Can't process step.");
+            return;
+        }
+
+        var step = runtimeQuest.steps[currentStepIndex];
+        if (step.type == QuestStepType.Explore && step.targetId == locationId && !step.isCompleted)
+        {
+            Debug.Log($"[QuestManager] Location reached: {locationId} → completing explore step.");
+            CompleteCurrentStep();
+        }
+        else
+        {
+            Debug.Log($"[QuestManager] Explore step mismatch: step.type={step.type}, step.targetId={step.targetId}, locationId={locationId}");
+        }
     }
 
     // ─── COMPLETE STEP ──────────────────────────────────────────────────────
@@ -302,6 +344,10 @@ public class QuestManager : MonoBehaviour
                         Debug.LogWarning($"[Quest Reward] Không thể cộng {reward.amount} EXP: PlayerProgression chưa được khởi tạo.");
                     }
                     break;
+
+                default:
+                    Debug.LogWarning($"[Quest Reward] Unknown reward type: {reward.rewardType}");
+                    break;
             }
         }
     }
@@ -330,6 +376,22 @@ public class QuestManager : MonoBehaviour
         else
         {
             Debug.LogWarning("[QuestManager] Cannot reset because no quest chain or template is set.");
+        }
+    }
+
+    // ─── DEBUG ──────────────────────────────────────────────────────────────
+
+    [ContextMenu("Force Complete Current Step")]
+    public void DebugForceCompleteStep()
+    {
+        if (CurrentStep != null && !CurrentStep.isCompleted)
+        {
+            Debug.Log($"[QuestManager] DEBUG: Force completing step {CurrentStep.stepId}");
+            CompleteCurrentStep();
+        }
+        else
+        {
+            Debug.Log("[QuestManager] DEBUG: No step to complete or step already completed.");
         }
     }
 }
