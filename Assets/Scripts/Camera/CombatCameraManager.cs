@@ -1,148 +1,146 @@
 using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
+using UnityEngine.UI;
 
-/// <summary>
-/// Quản lý camera trong combat:
-/// - Zoom in/out khi clash hoặc damage
-/// - Follow unit hoặc clash target
-/// - Shake effect khi impact
-/// - Smooth transition về default
-///
-/// SETUP:
-/// 1. Gán script vào GameObject có Camera component
-/// 2. Gọi Subscribe event khi CombatManager initialize
-/// 3. Tự động follow khi clash, damage, ...
-/// </summary>
 public class CombatCameraManager : MonoBehaviour
 {
-    // ── Camera Component ──────────────────────────────────────
-    private Camera mainCamera;
-    private Transform cameraTransform;
+    [Header("Intro Settings")]
+    public Image fadePanel;
+    public float fadeDuration = 0.5f;
+    public float panDuration = 2.0f;
+    public float enemyRushDelay = 0.5f;
+    public float finalZoomOutDuration = 1.0f;
 
-    // ── Default State ─────────────────────────────────────────
     [Header("Default State")]
-    [Tooltip("Default camera size khi không zoom (TĂNG NỀU CÒN QUÁZO) - Default: 15-18")]
-    public float defaultOrthoSize = 16f;
+    [Tooltip("Default camera size khi không zoom")]
+    public float defaultOrthoSize = 12f; // FIX: tăng từ 10 lên 12 để bao quát hơn
     public Vector3 defaultPosition = Vector3.zero;
-    [Tooltip("Z position của camera (phía sau sân) - TĂNG NỀU CẬP THẤP")]
-    public float cameraHeight = 8f;  // Z position (tăng từ 5)
+    [Tooltip("Z position của camera")]
+    public float cameraDistance = 15f;
 
-    // ── Zoom Settings ─────────────────────────────────────────
+    [Tooltip("Điều chỉnh camera lên/xuống để căn giữa các nhân vật")]
+    public float verticalOffset = 1.5f;
+
+    [Tooltip("Điều chỉnh camera sang trái/phải")]
+    public float horizontalOffset = -2.0f;
+
     [Header("Zoom Settings")]
-    [Tooltip("Size khi zoom in clash (tương ứng tỉ lệ phóng to) - TĂNG NỀU KHÔNG THẤY UNITS")]
-    public float clashZoomSize = 7f;
-    [Tooltip("Size khi zoom vào unit bị damage - nên > clashZoomSize")]
-    public float damageZoomSize = 8f;
-
-    [Tooltip("Thời gian zoom (giây)")]
+    public float clashZoomSize = 10f;
+    public float damageZoomSize = 10.5f;
+    public float followZoomSize = 9.5f;
     public float zoomInDuration = 0.15f;
     public float zoomOutDuration = 0.2f;
 
-    // ── Follow Settings ───────────────────────────────────────
     [Header("Follow Settings")]
-    [Tooltip("Target khi zoom")]
     private Transform followTarget;
-    
-    [Tooltip("Offset từ target (nên = (0, 0, -cameraHeight))")]
     public Vector3 followOffset = new Vector3(0, 0, -8f);
-
-    [Tooltip("Tốc độ follow (0-1). Càng thấp = càng mượt nhưng chậm. Để 0.08-0.12 cho smooth")]
     public float followSmoothness = 0.10f;
 
-    // ── Shake Settings ────────────────────────────────────────
     [Header("Shake Settings")]
-    [Tooltip("Mức độ rung (0.15-0.25 cho combat normal)")]
     public float shakeIntensity = 0.35f;
-    [Tooltip("Thời gian rung (0.15-0.25s per hit)")]
     public float shakeDuration = 0.35f;
-    [Tooltip("Tốc độ rung (20-25 là normal)")]
     public float shakeFrequency = 22f;
-
-    [Tooltip("Mức độ rung cho final hit (mạnh hơn thường)")]
     public float finalHitShakeIntensity = 0.60f;
-    [Tooltip("Thời gian rung cho final hit")]
     public float finalHitShakeDuration = 0.45f;
 
-    // ── State ─────────────────────────────────────────────────
+    [Header("Player Impact Settings")]
+    public float playerImpactShakeIntensity = 0.5f;
+    public float playerImpactShakeDuration = 0.4f;
+    public float lungeAmount = 1.5f;
+    public float lungeDuration = 0.1f;
+
+    [Header("Slow Motion Settings")]
+    public float hitStopDuration = 0.05f;
+    public float slowMoFactor = 0.1f;
+    public float slowMoDuration = 0.5f;
+
+    private Camera mainCamera;
+    private Transform cameraTransform;
     private float currentOrthoSize;
     private Vector3 targetPosition;
     private Vector3 shakeOffset = Vector3.zero;
     private float shakeElapsed = 0f;
     private bool isShaking = false;
-
     private Coroutine zoomCoroutine;
     private Coroutine followCoroutine;
     private Coroutine shakeCoroutine;
+    private Coroutine slowMoCoroutine;
+    private Coroutine frameTargetsCoroutine;
+    private bool isSlowingDown = false;
+    private List<Behaviour> disabledBehaviours = new List<Behaviour>();
+    private bool isIntroSequenceActive = false;
 
-    // ── Clash tracking (cho múltiples clashes cùng lúc) ─────────
-    private int activeClashCount = 0;
+#if CINEMACHINE_PRESENT
+    private Cinemachine.CinemachineBrain brain;
+    private List<Behaviour> disabledBrains = new List<Behaviour>();
+    private List<GameObject> disabledVcamGameObjects = new List<GameObject>();
+#endif
 
-    // ─────────────────────────────────────────────────────────
     private void Awake()
     {
         mainCamera = GetComponent<Camera>();
         cameraTransform = transform;
-
+#if CINEMACHINE_PRESENT
+        brain = GetComponent<Cinemachine.CinemachineBrain>();
+#endif
         if (mainCamera == null)
         {
             Debug.LogError("[CombatCameraManager] Camera component not found!");
             return;
         }
+        mainCamera.farClipPlane = 4000f; // FIX: Tăng khoảng cách nhìn thấy của camera
+
+        // Đặt góc nghiêng mặc định cho camera
+        transform.rotation = Quaternion.Euler(30f, 0, 0);
 
         currentOrthoSize = defaultOrthoSize;
         mainCamera.orthographicSize = currentOrthoSize;
-        targetPosition = defaultPosition + new Vector3(0, 0, cameraHeight);
+        float angleRad = transform.rotation.eulerAngles.x * Mathf.Deg2Rad;
+        float yOffset = cameraDistance * Mathf.Sin(angleRad);
+        float zOffset = -cameraDistance * Mathf.Cos(angleRad);
+        targetPosition = defaultPosition + new Vector3(0, yOffset, zOffset);
         cameraTransform.position = targetPosition;
     }
 
     private void Start()
     {
-        // Subscribe vào CombatManager events
         if (CombatManager.Instance != null)
         {
             CombatManager.Instance.OnCombatStarted += HandleCombatStarted;
-            CombatManager.Instance.OnClashResolved += HandleClashResolved;
-            CombatManager.Instance.OnRoundEnded += HandleRoundEnded;
+            CombatManager.Instance.OnExecuteStarted += HandleRoundEnded;
             CombatManager.Instance.OnDefeat += HandleCombatEnd;
             CombatManager.Instance.OnVictory += HandleCombatEnd;
         }
-
-        // Lắng nghe phase changes để reset camera khi vào PlayerPlan
         StartCoroutine(MonitorPhaseChanges());
     }
 
     private IEnumerator MonitorPhaseChanges()
     {
         CombatPhase lastPhase = CombatManager.Instance.CurrentPhase;
-
         while (true)
         {
             yield return new WaitForSeconds(0.1f);
-
             if (CombatManager.Instance == null) yield break;
-
             CombatPhase currentPhase = CombatManager.Instance.CurrentPhase;
-
-            // Khi vào PlayerPlan → Reset camera để nhìn toàn bộ
-            if (currentPhase == CombatPhase.PlayerPlan && lastPhase != CombatPhase.PlayerPlan)
+            if (currentPhase == CombatPhase.Execute && lastPhase != CombatPhase.Execute)
             {
-                // Stop existing coroutines
                 StopCoroutineIfRunning(zoomCoroutine);
                 StopCoroutineIfRunning(followCoroutine);
-
-                // Reset immediately
                 followTarget = null;
                 currentOrthoSize = defaultOrthoSize;
-                targetPosition = defaultPosition + new Vector3(0, 0, cameraHeight);
-                shakeOffset = Vector3.zero;
 
-                // Auto fit sau khi reset
+                float angleRad = transform.rotation.eulerAngles.x * Mathf.Deg2Rad;
+                float yOffset = cameraDistance * Mathf.Sin(angleRad);
+                float zOffset = -cameraDistance * Mathf.Cos(angleRad);
+                targetPosition = defaultPosition + new Vector3(0, yOffset, zOffset);
+
+                shakeOffset = Vector3.zero;
                 yield return new WaitForSeconds(0.2f);
                 AutoFitUnitsInView();
-                
                 Debug.Log("[CombatCamera] Entered PlayerPlan - Reset camera to view all units");
             }
-
             lastPhase = currentPhase;
         }
     }
@@ -152,8 +150,7 @@ public class CombatCameraManager : MonoBehaviour
         if (CombatManager.Instance != null)
         {
             CombatManager.Instance.OnCombatStarted -= HandleCombatStarted;
-            CombatManager.Instance.OnClashResolved -= HandleClashResolved;
-            CombatManager.Instance.OnRoundEnded -= HandleRoundEnded;
+            CombatManager.Instance.OnExecuteStarted -= HandleRoundEnded;
             CombatManager.Instance.OnDefeat -= HandleCombatEnd;
             CombatManager.Instance.OnVictory -= HandleCombatEnd;
         }
@@ -161,126 +158,90 @@ public class CombatCameraManager : MonoBehaviour
 
     private void LateUpdate()
     {
-        // Follow target smooth
+        if (isIntroSequenceActive) return;
+
         if (followTarget != null)
         {
             Vector3 desiredPos = followTarget.position + followOffset;
-            cameraTransform.position = Vector3.Lerp(
-                cameraTransform.position,
-                desiredPos,
-                followSmoothness) + shakeOffset;
+            cameraTransform.position = Vector3.Lerp(cameraTransform.position, desiredPos, followSmoothness) + shakeOffset;
         }
         else
         {
-            // Về default position
-            cameraTransform.position = Vector3.Lerp(
-                cameraTransform.position,
-                targetPosition,
-                followSmoothness) + shakeOffset;
+            cameraTransform.position = Vector3.Lerp(cameraTransform.position, targetPosition, followSmoothness) + shakeOffset;
         }
-
-        // Update ortho size
-        mainCamera.orthographicSize = Mathf.Lerp(
-            mainCamera.orthographicSize,
-            currentOrthoSize,
-            0.15f);
+        mainCamera.orthographicSize = Mathf.Lerp(mainCamera.orthographicSize, currentOrthoSize, 0.15f);
     }
 
-    // ── PUBLIC METHODS ────────────────────────────────────────
+    public float GetCurrentOrthoSize()
+    {
+        return currentOrthoSize;
+    }
 
-    /// <summary>
-    /// Zoom vào unit, shake, rồi theo dõi
-    /// </summary>
+    public void SetCameraSize(float newSize)
+    {
+        currentOrthoSize = newSize;
+        mainCamera.orthographicSize = currentOrthoSize;
+    }
+
     public void ZoomToUnit(Transform unit, float zoomSize = 0)
     {
         if (unit == null) return;
-
-        if (zoomSize <= 0) zoomSize = damageZoomSize;
-
+        // FIX: giới hạn zoomSize không được nhỏ hơn 8.5f để tránh crop
+        if (zoomSize <= 0) zoomSize = Mathf.Max(damageZoomSize, 8.5f);
+        else zoomSize = Mathf.Max(zoomSize, 8.5f);
+        
         StopCoroutineIfRunning(zoomCoroutine);
         StopCoroutineIfRunning(followCoroutine);
-
         followTarget = unit;
         zoomCoroutine = StartCoroutine(ZoomInCoroutine(zoomSize));
     }
 
-    /// <summary>
-    /// Clash sequence: zoom vào điểm giữa + freeze + shake + zoom out
-    /// </summary>
-    public void PlayClashZoom(Transform unit1, Transform unit2)
-    {
-        if (unit1 == null || unit2 == null) return;
-
-        // Incrementar số clash đang hoạt động
-        activeClashCount++;
-        Debug.Log($"[CombatCamera] PlayClashZoom started. Active clashes: {activeClashCount}");
-
-        Vector3 midpoint = (unit1.position + unit2.position) * 0.5f;
-        StartCoroutine(ClashZoomSequence(midpoint));
-    }
-
-    /// <summary>
-    /// Kết thúc 1 clash zoom. Chỉ zoom out khi toàn bộ clash kết thúc
-    /// Gọi sau khi hết đòn tấn công của kẻ chiến thắng
-    /// </summary>
-    public void EndClashZoom()
-    {
-        if (activeClashCount > 0)
-        {
-            activeClashCount--;
-            Debug.Log($"[CombatCamera] EndClashZoom. Remaining clashes: {activeClashCount}");
-
-            // Chỉ zoom out khi không còn clash nào
-            if (activeClashCount == 0)
-            {
-                StopCoroutineIfRunning(zoomCoroutine);
-                zoomCoroutine = StartCoroutine(ZoomOutCoroutine());
-            }
-        }
-    }
-
-    /// <summary>
-    /// Shake effect khi impact
-    /// </summary>
     public void PlayImpactShake()
     {
         StopCoroutineIfRunning(shakeCoroutine);
         shakeCoroutine = StartCoroutine(ShakeCoroutine());
     }
 
-    /// <summary>
-    /// Shake effect mạnh hơn cho hit cuối cùng
-    /// </summary>
-    public void PlayFinalImpactShake()
+    public void PlayFinalHitShake()
     {
         StopCoroutineIfRunning(shakeCoroutine);
         shakeCoroutine = StartCoroutine(ShakeCoroutine(true));
     }
 
-    /// <summary>
-    /// Zoom ra thường mặc định
-    /// </summary>
+    public void SetCameraPositionAndSize(Vector3 position, float size)
+    {
+        float angleRad = transform.rotation.eulerAngles.x * Mathf.Deg2Rad;
+        float yOffset = cameraDistance * Mathf.Sin(angleRad);
+        float zOffset = -cameraDistance * Mathf.Cos(angleRad);
+        targetPosition = position + new Vector3(0, yOffset, zOffset);
+
+        currentOrthoSize = size;
+        if (isIntroSequenceActive || followTarget == null)
+        {
+            cameraTransform.position = targetPosition;
+            mainCamera.orthographicSize = currentOrthoSize;
+        }
+        followTarget = null;
+    }
+
     public void ResetCamera()
     {
         StopCoroutineIfRunning(zoomCoroutine);
         StopCoroutineIfRunning(followCoroutine);
-
+        StopCoroutineIfRunning(frameTargetsCoroutine);
         followTarget = null;
         shakeOffset = Vector3.zero;
         isShaking = false;
-        activeClashCount = 0;
-
-        // Reset ngay lập tức về default state
         currentOrthoSize = defaultOrthoSize;
-        targetPosition = defaultPosition + new Vector3(0, 0, cameraHeight);
+
+        float angleRad = transform.rotation.eulerAngles.x * Mathf.Deg2Rad;
+        float yOffset = cameraDistance * Mathf.Sin(angleRad);
+        float zOffset = -cameraDistance * Mathf.Cos(angleRad);
+        targetPosition = defaultPosition + new Vector3(0, yOffset, zOffset);
 
         Debug.Log($"[CombatCamera] Reset: size={currentOrthoSize:F2}, pos={targetPosition}");
     }
 
-    /// <summary>
-    /// AUTO-ADJUST: Tính ortho size để fit toàn bộ units trên sân
-    /// Gọi này nếu camera quá zoom và không thấy units
-    /// </summary>
     public void AutoFitUnitsInView()
     {
         var unitViews = FindObjectsOfType<UnitView>();
@@ -289,78 +250,112 @@ public class CombatCameraManager : MonoBehaviour
             Debug.LogWarning("[CombatCamera] Không tìm thấy units để fit view");
             return;
         }
-
-        // Tính bounding box của tất cả units
         Vector3 min = unitViews[0].transform.position;
         Vector3 max = unitViews[0].transform.position;
-
         foreach (var view in unitViews)
         {
             Vector3 pos = view.transform.position;
             min = Vector3.Min(min, pos);
             max = Vector3.Max(max, pos);
         }
-
-        // Tính center & size
         Vector3 center = (min + max) * 0.5f;
+        center.y += verticalOffset; // Áp dụng offset theo chiều dọc
+        center.x += horizontalOffset; // Áp dụng offset theo chiều ngang
         float width = Mathf.Abs(max.x - min.x);
         float height = Mathf.Abs(max.y - min.y);
+        
+        // FIX: thêm padding dọc rõ ràng (tăng thêm 30% chiều cao)
+        // Tăng padding để đảm bảo không bị cắt xén
+        float horizontalPadding = width * 0.4f; // Thêm 40% padding ngang
+        float verticalPadding = height * 0.6f;  // Thêm 60% padding dọc
 
-        // OrthoSize = height / 2 (vì camera height = full size * 2)
-        // Thêm buffer 40% để thoải mái (tăng từ 30% lên 40%)
-        float requiredSize = Mathf.Max(Mathf.Max(width, height) * 0.6f, 10f);  // Min 10 để safe
-        float bufferSize = Mathf.Max(requiredSize * 1.4f, 14f);  // Min 14 để không quá zoom
+        // Tính toán kích thước camera cần thiết dựa trên chiều rộng và chiều cao đã có padding
+        float requiredWidth = (width + horizontalPadding) * 0.5f / mainCamera.aspect;
+        float requiredHeight = (height + verticalPadding) * 0.5f;
 
+        // Lấy kích thước lớn hơn và đảm bảo không nhỏ hơn một giá trị tối thiểu
+        float bufferSize = Mathf.Max(requiredWidth, requiredHeight, 12f);
+        
         defaultOrthoSize = bufferSize;
         defaultPosition = center;
         currentOrthoSize = bufferSize;
-        targetPosition = center + new Vector3(0, 0, cameraHeight);
-        
-        // Đảm bảo không follow ai
+
+        float angleRad = transform.rotation.eulerAngles.x * Mathf.Deg2Rad;
+        float yOffset = cameraDistance * Mathf.Sin(angleRad);
+        float zOffset = -cameraDistance * Mathf.Cos(angleRad);
+        targetPosition = center + new Vector3(0, yOffset, zOffset);
+
         followTarget = null;
         shakeOffset = Vector3.zero;
-
         Debug.Log($"[CombatCamera] Auto-fit: Size={bufferSize:F2}, Center={center}, Units={unitViews.Length}");
     }
 
-    /// <summary>
-    /// Zoom ra thường mặc định
-    /// </summary>
     public void ZoomToArea(Vector3 center, float radius)
     {
         if (zoomCoroutine != null) StopCoroutine(zoomCoroutine);
-
         followTarget = null;
-        targetPosition = center + new Vector3(0, 0, cameraHeight);
+
+        float angleRad = transform.rotation.eulerAngles.x * Mathf.Deg2Rad;
+        float yOffset = cameraDistance * Mathf.Sin(angleRad);
+        float zOffset = -cameraDistance * Mathf.Cos(angleRad);
+        targetPosition = center + new Vector3(0, yOffset, zOffset);
+
         zoomCoroutine = StartCoroutine(ZoomInCoroutine(damageZoomSize));
     }
 
-    /// <summary>
-    /// Quick adjust camera distance (utility method)
-    /// hệ số > 1 = zoom xa hơn, < 1 = zoom gần hơn
-    /// </summary>
     public void ScamAdjustDistance(float factor)
     {
-        defaultOrthoSize = Mathf.Max(defaultOrthoSize * Mathf.Clamp(factor, 0.5f, 2f), 8f);
+        defaultOrthoSize = Mathf.Max(defaultOrthoSize * Mathf.Clamp(factor, 0.5f, 2f), 10f);
         Debug.Log($"[CombatCamera] Distance adjusted: {defaultOrthoSize:F2}");
     }
 
-    // ── COROUTINES ────────────────────────────────────────────
+    public void PlayPlayerImpactEffect(Transform target)
+    {
+        StopCoroutineIfRunning(shakeCoroutine);
+        shakeCoroutine = StartCoroutine(PlayerImpactCoroutine(target));
+    }
+
+    private IEnumerator PlayerImpactCoroutine(Transform target)
+    {
+        isShaking = true;
+        Vector3 originalPos = cameraTransform.position;
+        Vector3 targetDirection = (target.position - cameraTransform.position).normalized;
+        targetDirection.z = 0;
+        Vector3 lungeTargetPos = originalPos + targetDirection * lungeAmount;
+        float elapsed = 0f;
+        while (elapsed < lungeDuration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / lungeDuration);
+            cameraTransform.position = Vector3.Lerp(originalPos, lungeTargetPos, EaseOutQuad(t));
+            yield return null;
+        }
+        shakeElapsed = 0f;
+        while (shakeElapsed < playerImpactShakeDuration)
+        {
+            shakeElapsed += Time.deltaTime;
+            float decay = 1f - (shakeElapsed / playerImpactShakeDuration);
+            float noiseX = Mathf.PerlinNoise(shakeElapsed * shakeFrequency, 0f) - 0.5f;
+            float noiseY = Mathf.PerlinNoise(shakeElapsed * shakeFrequency, 1f) - 0.5f;
+            shakeOffset = new Vector3(noiseX * playerImpactShakeIntensity * decay, noiseY * playerImpactShakeIntensity * decay, 0f);
+            cameraTransform.position = lungeTargetPos + shakeOffset;
+            yield return null;
+        }
+        shakeOffset = Vector3.zero;
+        isShaking = false;
+    }
 
     private IEnumerator ZoomInCoroutine(float targetSize)
     {
         float startSize = currentOrthoSize;
         float elapsed = 0f;
-
         while (elapsed < zoomInDuration)
         {
             elapsed += Time.deltaTime;
             float t = Mathf.Clamp01(elapsed / zoomInDuration);
-            currentOrthoSize = Mathf.Lerp(startSize, targetSize, 
-                EaseInOutQuad(t));
+            currentOrthoSize = Mathf.Lerp(startSize, targetSize, EaseInOutQuad(t));
             yield return null;
         }
-
         currentOrthoSize = targetSize;
     }
 
@@ -368,165 +363,202 @@ public class CombatCameraManager : MonoBehaviour
     {
         float startSize = currentOrthoSize;
         float elapsed = 0f;
-
         while (elapsed < zoomOutDuration)
         {
             elapsed += Time.deltaTime;
             float t = Mathf.Clamp01(elapsed / zoomOutDuration);
-            currentOrthoSize = Mathf.Lerp(startSize, defaultOrthoSize, 
-                EaseInOutQuad(t));
+            currentOrthoSize = Mathf.Lerp(startSize, defaultOrthoSize, EaseInOutQuad(t));
             yield return null;
         }
-
         currentOrthoSize = defaultOrthoSize;
         followTarget = null;
-        targetPosition = defaultPosition + new Vector3(0, 0, cameraHeight);
-    }
-
-    private IEnumerator ResetCameraSmooth()
-    {
-        // Zoom out smooth
-        yield return StartCoroutine(ZoomOutCoroutine());
-
-        // Return position smooth
-        Vector3 startPos = cameraTransform.position;
-        float elapsed = 0f;
-
-        while (elapsed < zoomOutDuration)
-        {
-            elapsed += Time.deltaTime;
-            float t = Mathf.Clamp01(elapsed / zoomOutDuration);
-            cameraTransform.position = Vector3.Lerp(startPos, targetPosition, t);
-            yield return null;
-        }
-
-        cameraTransform.position = targetPosition;
-    }
-
-    private IEnumerator ClashZoomSequence(Vector3 clashCenter)
-    {
-        // Phase 1: Zoom vào clash point
-        float startSize = currentOrthoSize;
-        float elapsed = 0f;
-
-        targetPosition = clashCenter + new Vector3(0, 0, cameraHeight);
-
-        while (elapsed < zoomInDuration)
-        {
-            elapsed += Time.deltaTime;
-            float t = Mathf.Clamp01(elapsed / zoomInDuration);
-            currentOrthoSize = Mathf.Lerp(startSize, clashZoomSize, 
-                EaseInOutQuad(t));
-            yield return null;
-        }
-
-        currentOrthoSize = clashZoomSize;
-
-        // Phase 2: Shake impact
-        yield return new WaitForSeconds(0.1f);
-        yield return StartCoroutine(ShakeCoroutine());
-
-        // Phase 3: Hold (Giữ camera zoom cho đến khi gọi EndClashZoom)
-        // Không zoom out tự động tại đây nữa
-        yield return new WaitForSeconds(0.3f);
     }
 
     private IEnumerator ShakeCoroutine(bool isFinalHit = false)
     {
         isShaking = true;
         shakeElapsed = 0f;
-
-        float intensity = isFinalHit ? finalHitShakeIntensity : shakeIntensity;
         float duration = isFinalHit ? finalHitShakeDuration : shakeDuration;
-
-        Vector3 originalPos = cameraTransform.position;
+        float intensity = isFinalHit ? finalHitShakeIntensity : shakeIntensity;
 
         while (shakeElapsed < duration)
         {
             shakeElapsed += Time.deltaTime;
             float decay = 1f - (shakeElapsed / duration);
-            
-            // Perlin noise cho smooth shake
-            float noiseX = Mathf.PerlinNoise(shakeElapsed * shakeFrequency, 0f) - 0.5f;
-            float noiseY = Mathf.PerlinNoise(shakeElapsed * shakeFrequency, 1f) - 0.5f;
-
-            shakeOffset = new Vector3(
-                noiseX * intensity * decay,
-                noiseY * intensity * decay,
-                0f);
-
+            float noiseX = Mathf.PerlinNoise(Time.time * shakeFrequency, 0f) * 2f - 1f;
+            float noiseY = Mathf.PerlinNoise(Time.time * shakeFrequency, 1f) * 2f - 1f;
+            shakeOffset = new Vector3(noiseX * intensity * decay, noiseY * intensity * decay, 0f);
             yield return null;
         }
-
         shakeOffset = Vector3.zero;
         isShaking = false;
     }
 
-    // ── EVENT HANDLERS ────────────────────────────────────────
+    private void StopCoroutineIfRunning(Coroutine coroutine)
+    {
+        if (coroutine != null)
+        {
+            StopCoroutine(coroutine);
+        }
+    }
 
     private void HandleCombatStarted()
     {
-        // Auto-fit camera để thấy tất cả units lần đầu
-        Invoke(nameof(AutoFitUnitsInView), 0.2f);
-    }
-
-    private void HandleClashResolved(ClashResult result)
-    {
-        // Zoom vào winner khi clash xong
-        if (result.Winner != null)
-        {
-            // Tìm UnitView của winner
-            var unitView = FindUnitView(result.Winner);
-            if (unitView != null)
-            {
-                ZoomToUnit(unitView.transform, damageZoomSize);
-                PlayImpactShake();
-            }
-        }
+        AutoFitUnitsInView();
     }
 
     private void HandleRoundEnded()
     {
-        // Reset camera cuối vòng
         ResetCamera();
     }
 
     private void HandleCombatEnd()
     {
-        // Reset khi combat kết thúc
         ResetCamera();
     }
 
-    // ── UTILITIES ─────────────────────────────────────────────
-
-    private void StopCoroutineIfRunning(Coroutine coroutine)
-    {
-        if (coroutine != null)
-            StopCoroutine(coroutine);
-    }
-
-    private UnitView FindUnitView(CombatUnit unit)
-    {
-        var unitViews = FindObjectsOfType<UnitView>();
-        foreach (var view in unitViews)
-        {
-            if (view.LinkedUnit == unit)
-                return view;
-        }
-        return null;
-    }
-
-    // ── EASING ────────────────────────────────────────────────
-
     private float EaseInOutQuad(float t)
     {
-        return t < 0.5f
-            ? 2f * t * t
-            : -1f + (4f - 2f * t) * t;
+        return t < 0.5f ? 2 * t * t : 1 - Mathf.Pow(-2 * t + 2, 2) / 2;
     }
 
     private float EaseOutQuad(float t)
     {
-        return 1f - (1f - t) * (1f - t);
+        return 1 - (1 - t) * (1 - t);
     }
+
+    private float EaseInOutCubic(float t)
+    {
+        return t < 0.5f ? 4 * t * t * t : 1 - Mathf.Pow(-2 * t + 2, 3) / 2;
+    }
+
+    private float EaseOutCubic(float t)
+    {
+        return 1 - Mathf.Pow(1 - t, 3);
+    }
+
+    #region Intro Sequence Methods
+
+    public IEnumerator FadeInAndSetPosition(Vector3 focusPoint, float targetSize, Vector3 panFromOffset, float panDuration)
+    {
+        if (fadePanel == null)
+        {
+            Debug.LogError("[CombatCameraManager] Fade Panel is not assigned! Aborting intro.", this);
+            yield break;
+        }
+
+        fadePanel.color = Color.black;
+        fadePanel.gameObject.SetActive(true);
+
+        Vector3 startPanPos = focusPoint + panFromOffset;
+        SetCameraPositionAndSize(startPanPos, targetSize);
+        yield return new WaitForSeconds(0.1f);
+
+        float elapsed = 0f;
+        while (elapsed < fadeDuration)
+        {
+            elapsed += Time.deltaTime;
+            float alpha = Mathf.Lerp(1f, 0f, elapsed / fadeDuration);
+            fadePanel.color = new Color(0, 0, 0, alpha);
+            yield return null;
+        }
+        fadePanel.gameObject.SetActive(false);
+        Debug.Log("[IntroCamera] Fade-in complete.");
+
+        elapsed = 0f;
+        Vector3 currentPos = cameraTransform.position;
+
+        float angleRad = transform.rotation.eulerAngles.x * Mathf.Deg2Rad;
+        float yOffset = cameraDistance * Mathf.Sin(angleRad);
+        float zOffset = -cameraDistance * Mathf.Cos(angleRad);
+        Vector3 targetPanPos = focusPoint + new Vector3(0, yOffset, zOffset);
+
+        while (elapsed < panDuration)
+        {
+            elapsed += Time.deltaTime;
+            float t = EaseOutCubic(elapsed / panDuration);
+            cameraTransform.position = Vector3.Lerp(currentPos, targetPanPos, t);
+            yield return null;
+        }
+        cameraTransform.position = targetPanPos;
+        Debug.Log("[IntroCamera] Pan complete.");
+    }
+
+    public IEnumerator ZoomOutToFinalView(float duration)
+    {
+        Debug.Log("[IntroCamera] Zooming out to final view.");
+        float elapsed = 0f;
+        float startSize = mainCamera.orthographicSize;
+        Vector3 startPos = cameraTransform.position;
+
+        AutoFitUnitsInView();
+        float finalSize = defaultOrthoSize;
+
+        float angleRad = transform.rotation.eulerAngles.x * Mathf.Deg2Rad;
+        float yOffset = cameraDistance * Mathf.Sin(angleRad);
+        float zOffset = -cameraDistance * Mathf.Cos(angleRad);
+        Vector3 finalPos = defaultPosition + new Vector3(0, yOffset, zOffset);
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = EaseOutCubic(elapsed / duration);
+            mainCamera.orthographicSize = Mathf.Lerp(startSize, finalSize, t);
+            cameraTransform.position = Vector3.Lerp(startPos, finalPos, t);
+            yield return null;
+        }
+
+        mainCamera.orthographicSize = finalSize;
+        cameraTransform.position = finalPos;
+        Debug.Log("[IntroCamera] Final zoom-out complete.");
+    }
+
+    public void BeginIntroSequence()
+    {
+        isIntroSequenceActive = true;
+        Debug.Log("[IntroCamera] Intro sequence BEGAN. Camera control is now locked.");
+    }
+
+    public void EndIntroSequence()
+    {
+        isIntroSequenceActive = false;
+        Debug.Log("[IntroCamera] Intro sequence ENDED. Camera control is now unlocked.");
+    }
+
+    public void FrameTargets(List<UnitView> targets, float padding = 1.5f) // FIX: tăng padding mặc định từ 1.2 -> 1.5
+    {
+        StopCoroutineIfRunning(frameTargetsCoroutine);
+        frameTargetsCoroutine = StartCoroutine(FrameTargetsCoroutine(targets, padding));
+    }
+
+    private IEnumerator FrameTargetsCoroutine(List<UnitView> targets, float padding)
+    {
+        if (targets == null || targets.Count == 0)
+            yield break;
+
+        var bounds = new Bounds(targets[0].transform.position, Vector3.zero);
+        for (int i = 1; i < targets.Count; i++)
+        {
+            if (targets[i] != null)
+                bounds.Encapsulate(targets[i].transform.position);
+        }
+        bounds.size *= padding;
+
+        float requiredSizeX = bounds.size.x * Screen.height / Screen.width * 0.5f;
+        float requiredSizeY = bounds.size.y * 0.5f;
+        float targetSize = Mathf.Max(requiredSizeX, requiredSizeY, 7f); // FIX: tăng min lên 7
+
+        float angleRad = transform.rotation.eulerAngles.x * Mathf.Deg2Rad;
+        float yOffset = cameraDistance * Mathf.Sin(angleRad);
+        float zOffset = -cameraDistance * Mathf.Cos(angleRad);
+        Vector3 targetPos = bounds.center + new Vector3(0, yOffset, zOffset);
+
+        StopCoroutineIfRunning(zoomCoroutine);
+        followTarget = null;
+        targetPosition = targetPos;
+        zoomCoroutine = StartCoroutine(ZoomInCoroutine(targetSize));
+        yield return zoomCoroutine;
+    }
+
+    #endregion
 }

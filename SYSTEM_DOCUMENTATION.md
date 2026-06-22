@@ -147,40 +147,6 @@ Victory hoặc Defeat
 event System.Action<CombatPhase, CombatPhase> OnPhaseChanged;
 ```
 
-### 4. ClashResolver (Xử lý va chạm)
-
-**File**: `Assets/Scripts/Combat/ClashResolver.cs`
-
-**Chức năng**: Giải quyết kết quả va chạm giữa hai unit
-
-**Clash Logic** (Cuộc chiến tay đôi):
-1. Cả 2 unit tung xúc xắc (1-6)
-2. Ba số = Base Point + Dice + Luck Bonus
-3. Ai cao hơn thắng
-
-```csharp
-Score = basePoint + dice(1-6) + (luck / 20)
-
-Ví dụ:
-Player: basePoint=4, dice=3, luck=20 → 4 + 3 + 1 = 8
-Enemy:  basePoint=4, dice=2, luck=10 → 4 + 2 + 0 = 6
-→ Player wins!
-```
-
-**ClashResult Output**:
-```csharp
-public class ClashResult
-{
-    public CombatUnit Winner;
-    public CombatUnit Loser;
-    public SkillData WinnerSkill;
-    public SkillData LoserSkill;
-    public int WinnerScore;
-    public int LoserScore;
-    public ClashVisualData VisualData;  // Để hiển thị UI
-}
-```
-
 ---
 
 ## 📦 Dữ liệu & Assets
@@ -243,10 +209,10 @@ public string description;
 public Sprite icon;
 
 // Loại skill
-public SkillType type;              // Clash, Auto, Passive
+public SkillType type;              // Auto, Passive
 public TargetType targetType;       // SingleEnemy, AllEnemies, ...
 
-// Clash settings (nếu type = Clash)
+// Clash settings
 public int basePoint = 4;           // Điểm base khi clash
 
 // Đánh số lần
@@ -265,7 +231,6 @@ public SkillEffect[] effects;       // Mảng effect (damage, heal, buff...)
 ```
 
 **Skill Types**:
-- `Clash`: Skill chiến đấu (va chạm trực tiếp)
 - `Auto`: Skill tự động (thiệt tướng cuối vòng)
 - `Passive`: Kỹ năng thụ động (luôn hoạt động)
 
@@ -463,11 +428,6 @@ public EnemyGroupData enemyGroup;
 
 5. EXECUTE (ExecutePhase)
    ├─ Duyệt theo PlanningOrder
-   │  ├─ Nếu Clash skill → ClashResolver
-   │  │  ├─ Roll dice → Xác định winner/loser
-   │  │  ├─ Phát animation (Rush → ClashIdle → KnockBack → Skill)
-   │  │  └─ Apply damage/effect của winner
-   │  │
    │  ├─ Nếu Auto/Passive → Apply effect ngay
    │  │
    │  └─ Nếu target chết → update UI, trigger OnRoundEnd
@@ -615,75 +575,13 @@ public IEnumerator WaitUntilAnimationDone(string triggerName)
 
 **Animation Triggers**:
 ```
-Rush          → Lao vào (Clash)
-ClashIdle     → Đứng đối mặt
+Rush          → Lao vào
 KnockBack     → Bị đánh lùi
 Skill1-5      → Dùng skill
 Idle          → Đứng yên
 ```
 
-### 2. ClashAnimationSequence (Chuỗi animation chạm)
 
-**File**: `Assets/Scripts/Combat/ClashAnimationSequence.cs`
-
-**Thứ tự animation**:
-```
-1. Rush (2 bên lao vào)
-   ├─ Tính midpoint
-   ├─ Lerp từ current → target (rushDuration)
-   └─ Set ClashIdle
-
-2. ClashVisualController (Hiện xúc xắc)
-   ├─ Roll animation cho cả 2
-   ├─ Hiện tổng điểm
-   └─ Hiện kết quả (WIN/LOSE)
-
-3. KnockBack (Bên thua)
-   └─ Unit loser play animation
-
-4. Skill (Bên thắng)
-   ├─ Trigger skill animation
-   ├─ OnHitFrame → Apply damage
-   └─ Chờ animation xong
-
-5. Return (Cả 2 quay lại)
-   └─ Lerp về vị trí gốc (returnDuration)
-
-6. Idle (Đứng yên)
-```
-
-**Timing Settings**:
-```csharp
-public float rushDuration = 0.5f;
-public float faceOffDistance = 1.2f;
-public float postKnockbackWait = 0.3f;
-public float postSkillWait = 0.3f;
-public float returnDuration = 0.4f;
-```
-
-### 3. ClashVisualController (UI xúc xắc)
-
-**File**: `Assets/Scripts/Combat/ClashVisualController.cs`
-
-**Display**:
-```
-┌──────────────────────┐
-│  Player    vs    Enemy │
-│   Base: 4          Base: 4 │
-│  [?] Dice [?]      │
-│   = Score          = Score │
-│                          │
-│    PLAYER WINS!          │
-└──────────────────────┘
-```
-
-**Animation**:
-1. Roll animation (số nhảy lung tung)
-2. Hiện dice result (1-6)
-3. Tính tổng score
-4. Hiện winner text
-
----
 
 ## 📊 Events & Callbacks
 
@@ -695,7 +593,7 @@ public event System.Action<CombatUnit> OnPlayerUnitPlanning;
 public event System.Action<List<CombatUnit>> OnPlayerPlanStarted;
 public event System.Action OnEnemyPlanDone;
 public event System.Action OnExecuteStarted;
-public event System.Action<ClashResult> OnClashResolved;
+public event System.Action<ActionResult> OnActionResolved;
 public event System.Action OnRoundEnded;
 public event System.Action OnVictory;
 public event System.Action OnDefeat;
@@ -723,7 +621,6 @@ public event System.Action<CombatPhase, CombatPhase> OnPhaseChanged;
 ```csharp
 public enum SkillType 
 {
-    Clash,      // Chiến đấu trực tiếp (clash)
     Auto,       // Tự động (cuối vòng)
     Passive     // Thụ động (luôn hoạt động)
 }
@@ -783,11 +680,7 @@ CombatManager.StartCombat(Formation, EnemyGroup)
         │           └─ BuffEffect.Apply() → AddBuff()
         └─ Events (OnDamageTaken, OnHealed, OnDied)
 
-ClashResolver.Resolve(attacker, defender, atkSkill, defSkill)
-    ├─ Roll xúc xắc
-    ├─ Tính score
-    └─ Return ClashResult
-        └─ Pass vào ClashAnimationSequence
+
             └─ PlayFullClashSequence() → Animation + Apply Effect
 ```
 
@@ -795,7 +688,7 @@ ClashResolver.Resolve(attacker, defender, atkSkill, defSkill)
 
 ## 🎓 Ví dụ luồng thực tế
 
-### Ví dụ 1: Single Clash Attack
+### Ví dụ 1: Đòn tấn công cơ bản
 
 ```
 1. Player Unit "Hero" select Skill "Slash" (Single Enemy)
@@ -803,23 +696,11 @@ ClashResolver.Resolve(attacker, defender, atkSkill, defSkill)
    → SelectedTargets = [Enemy1]
 
 2. Execute Phase:
-   → ClashResolver.Resolve(Hero, Enemy1, SlashSkill, Enemy1DefaultSkill)
-   → Dice: Hero=4, Enemy1=3
-   → Hero wins! Score 6 vs 5
-
-3. Animation:
-   → Hero play Rush animation
-   → Enemy1 play Rush animation
-   → Both play ClashIdle
-   → Show Dice UI + Result
-   → Enemy1 play KnockBack
-   → Hero play "Slash" animation
-   → OnHitFrame trigger → Hero.ExecuteSelectedSkill()
+   → Hero.ExecuteSelectedSkill()
    → SlashSkill effect = Damage x1.5
    → Enemy1.TakeDamage(heroATK * 1.5 - enemy1PDEF)
-   → Both return to Idle
 
-4. Check:
+3. Check:
    → Enemy1.CurrentHP <= 0?
    → If yes → OnDied event → Remove from EnemyUnits
    → Check Victory condition
