@@ -15,17 +15,21 @@ MonoBehaviour:
   characterType: 1
   defaultCombatStyle: 0
   prefab: {fileID: 8396287610354089171, guid: 73e56d83a3c1cc849af095567a2796cd, type: 3}
-  characterName: Slime
+  characterName: Reinhard
   portrait: {fileID: 21300000, guid: 6b0b4a54848b3b3438a2527759839f28, type: 3}
   battleSprite: {fileID: 21300000, guid: 6b0b4a54848b3b3438a2527759839f28, type: 3}
-  lore: 
-  baseHP: 1
-  baseATK: 30
-  basePDEF: 20
-  baseMDEF: 20
-  baseSpeed: 10
+  lore: "M\u1ED9t ki\u1EBFm s\u0129 tr\u1EBB tu\u1ED5i mang d\xF2ng m\xE1u Ki\u1EBFm
+    Th\xE1nh, s\u1EDF h\u1EEFu s\u1EE9c m\u1EA1nh t\u1EEB c\xE1c Ph\xFAc L\xE0nh
+    R\u1ED3ng. D\xF9 ch\u01B0a \u0111\u1EA1t \u0111\u1EBFn \u0111\u1EC9nh cao, h\u1EAFn
+    \u0111\xE3 l\xE0 m\u1ED9t \u0111\u1ED1i th\u1EE7 \u0111\xE1ng g\u1EDDm v\u1EDBi
+    nh\u1EEFng ai xem th\u01B0\u1EDDng."
+  baseHP: 2000
+  baseATK: 40
+  basePDEF: 18
+  baseMDEF: 8
+  baseSpeed: 160
   baseLevel: 1
-  expReward: 100
+  expReward: 500
   baseExpThreshold: 100
   expIncrementPerLevel: 50
   hpPerLevel: 5
@@ -37,7 +41,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 8031a82a3072e0744ace4855df407bd5, type: 2}
   - {fileID: 11400000, guid: fbffb0af633c6bd48957309af60a11f2, type: 2}
   - {fileID: 11400000, guid: 4b186a87e6ab10e4886bf3c6e8f68b44, type: 2}
-  passiveScript: {fileID: 0}
+  passiveScript: {fileID: 11500000, guid: 0ea7e558a876dbd449df5b109114baa9, type: 3}
   hitVoiceClips: []
   attackVoiceClips: []
   deathVoiceClips: []

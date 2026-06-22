@@ -30,9 +30,24 @@ public class CombatUnit
 
     public bool IsAlive => CurrentHP > 0;
 
+    // ── Special Flags ────────────────────────────────────────
+    public bool IgnoreTaunt { get; set; } = false;
+
     // ── Buff & Status ───────────────────────────────────────
     private List<ActiveBuff> activeBuffs = new List<ActiveBuff>();
     private List<ActiveStatus> activeStatuses = new List<ActiveStatus>();
+
+    // ── Damage Reduction Charges (giảm sát thương theo đòn) ──
+    private int _damageReductionCharges = 0;
+    private float _damageReductionPercent = 0f;
+    public int DamageReductionChargesRemaining => _damageReductionCharges;
+
+    public void AddDamageReductionCharges(int charges, float percent)
+    {
+        _damageReductionCharges += charges;
+        _damageReductionPercent = percent;
+        Debug.Log($"[{UnitName}] Nhận {charges} lớp giáp, mỗi lớp giảm {percent*100}% sát thương.");
+    }
 
     // ── Challenge Stack ───────────────────────────────────────
     public ChallengeStack ChallengeStack { get; private set; } = new();
@@ -123,7 +138,17 @@ public class CombatUnit
         // Nếu không phải true damage, tính toán giảm trừ
         if (!isTrueDamage)
         {
-            actualDamage = Mathf.RoundToInt(amount * GetDamageReductionMultiplier());
+            // Ưu tiên dùng damage reduction charges trước
+            if (_damageReductionCharges > 0)
+            {
+                actualDamage = Mathf.RoundToInt(amount * (1f - _damageReductionPercent));
+                _damageReductionCharges--;
+                Debug.Log($"[{UnitName}] Lớp giáp chặn! Còn {_damageReductionCharges} lớp. Sát thương: {amount} → {actualDamage}");
+            }
+            else
+            {
+                actualDamage = Mathf.RoundToInt(amount * GetDamageReductionMultiplier());
+            }
         }
 
         actualDamage = Mathf.Max(1, actualDamage);

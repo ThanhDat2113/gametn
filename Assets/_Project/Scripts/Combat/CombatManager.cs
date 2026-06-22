@@ -196,6 +196,14 @@ public class CombatManager : MonoBehaviour
             unit.Initialize(entry.data, entry.level, isPlayer: false);
             unit.GridRow = SlotToRow(entry.gridSlot);
             unit.GridSlot = entry.gridSlot;
+
+            // Boss Reinhard bỏ qua Taunt — Kiếm Thánh không bị khiêu khích
+            if (entry.data.characterName == "Reinhard")
+            {
+                unit.IgnoreTaunt = true;
+                Debug.Log($"[CombatManager] {unit.UnitName} bỏ qua hiệu ứng Taunt!");
+            }
+
             EnemyUnits.Add(unit);
         }
 
