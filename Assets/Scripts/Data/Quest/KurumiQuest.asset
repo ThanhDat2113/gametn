@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 01f94a06348b47f49b05724510167e6c, type: 3}
+  m_Name: KurumiQuest
+  m_EditorClassIdentifier: Assembly-CSharp::QuestData
+  questId: 6
+  questName: "Chi\u1EBFc nh\u1EABn t\xECnh c\u1EDD"
+  steps:
+  - stepId: 0
+    type: 0
+    targetId: 6
+    description: "Tr\xF2 chuy\u1EC7n v\u1EDBi Kurumi"
+    isCompleted: 1
+  - stepId: 1
+    type: 2
+    targetId: "Nh\u1EABn"
+    description: "T\xECm ki\u1EBFm chi\u1EBFc nh\u1EABn b\u1ECB th\u1EA5t l\u1EA1c"
+    isCompleted: 1
+  - stepId: 2
+    type: 0
+    targetId: 6
+    description: "Tr\xF2 chuy\u1EC7n v\u1EDBi Kurumi"
+    isCompleted: 1
+  isRepeatable: 0
+  rewards:
+  - rewardType: 0
+    character: {fileID: 11400000, guid: 7a9703b94ec6ad5428ede7c0548105a8, type: 2}
+    item: {fileID: 0}
+    amount: 1
+  - rewardType: 2
+    character: {fileID: 0}
+    item: {fileID: 0}
+    amount: 500

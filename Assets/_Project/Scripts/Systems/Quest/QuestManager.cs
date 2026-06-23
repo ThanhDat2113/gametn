@@ -171,6 +171,43 @@ public class QuestManager : MonoBehaviour
         }
     }
 
+    // ─── GATHER / ITEM PICKUP ────────────────────────────────────────────────
+
+    /// <summary>
+    /// Gọi từ ItemPickup khi người chơi nhặt một vật phẩm trên map.
+    /// </summary>
+    public void OnItemPickedUp(string itemId)
+    {
+        if (string.IsNullOrEmpty(itemId))
+        {
+            Debug.LogWarning("[QuestManager] OnItemPickedUp called with null or empty itemId.");
+            return;
+        }
+
+        if (runtimeQuest == null)
+        {
+            Debug.LogWarning("[QuestManager] No active quest to process item pickup.");
+            return;
+        }
+
+        if (currentStepIndex >= runtimeQuest.steps.Length)
+        {
+            Debug.LogWarning("[QuestManager] Quest already completed, cannot process item pickup.");
+            return;
+        }
+
+        var step = runtimeQuest.steps[currentStepIndex];
+        if (step.type == QuestStepType.Gather && step.targetId == itemId && !step.isCompleted)
+        {
+            Debug.Log($"[QuestManager] Item '{itemId}' picked up → completing gather step.");
+            CompleteCurrentStep();
+        }
+        else
+        {
+            Debug.Log($"[QuestManager] Gather step mismatch. Current step type={step.type}, targetId={step.targetId}, itemId={itemId}");
+        }
+    }
+
     // ─── PUZZLE ──────────────────────────────────────────────────────────────
 
     public void OnPuzzleCompleted(string triggerID)

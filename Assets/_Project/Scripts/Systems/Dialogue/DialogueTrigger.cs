@@ -38,7 +38,7 @@ public class DialogueTrigger : MonoBehaviour
     [Header("Dialogue Camera")]
     public bool switchCamera = false;
     public GameObject mainCameraObject;
-    public GameObject dialogueCameraObject;
+    public GameObject dialogueCameraObject; // có thể để trống, script sẽ tự tìm
     public Transform dialogueCameraPoint;
 
     private Vector3 _originalMainCamPos;
@@ -67,12 +67,44 @@ public class DialogueTrigger : MonoBehaviour
             _originalMainCamRot = mainCameraObject.transform.rotation;
         }
 
-        if (switchCamera && dialogueCameraObject == null)
-            Debug.LogError("DialogueTrigger: Dialogue Camera chưa được gán!");
+        // ---- TỰ ĐỘNG TÌM DIALOGUE CAMERA NẾU CHƯA GÁN ----
+        if (switchCamera)
+        {
+            FindDialogueCamera(); // tìm ngay khi Start
+            if (dialogueCameraObject == null)
+            {
+                Debug.LogError("DialogueTrigger: Không tìm thấy DialogueCamera trong scene! Hãy đảm bảo có GameObject với component DialogueCamera.");
+            }
+        }
+
         if (switchCamera && dialogueCameraPoint == null)
-            Debug.LogError("DialogueTrigger: Dialogue Camera Point chưa được gán!");
+        {
+            Debug.LogWarning("DialogueTrigger: Dialogue Camera Point chưa được gán, camera sẽ giữ vị trí hiện tại.");
+        }
 
         _npcInteraction = GetComponent<NPCInteraction>();
+    }
+
+    /// <summary>
+    /// Tự động tìm DialogueCamera trong scene bằng component DialogueCamera.
+    /// Tìm cả GameObject đang inactive (FindObjectsInactive.Include).
+    /// </summary>
+    private void FindDialogueCamera()
+    {
+        if (dialogueCameraObject != null)
+            return;
+
+        DialogueCamera cam = FindFirstObjectByType<DialogueCamera>(FindObjectsInactive.Include);
+
+        if (cam != null)
+        {
+            dialogueCameraObject = cam.gameObject;
+            Debug.Log("[DialogueTrigger] Tự tìm thấy DialogueCamera.");
+        }
+        else
+        {
+            Debug.LogError("Không tìm thấy DialogueCamera trong scene.");
+        }
     }
 
     private DialogueEntry GetAppropriateEntry()
@@ -161,7 +193,6 @@ public class DialogueTrigger : MonoBehaviour
         _hasPlayedForCurrentEntry = true;
         _currentEntry = entry;
 
-        // 🔥 Nếu có NPCInteraction, KHÔNG tự ẩn prompt (NPCInteraction sẽ lo)
         if (_npcInteraction == null && interactionPrompt != null)
             interactionPrompt.SetActive(false);
 
@@ -226,6 +257,15 @@ public class DialogueTrigger : MonoBehaviour
 
     private void SwitchToDialogueCamera()
     {
+        // Tìm camera mỗi khi chuyển (phòng trường hợp scene chưa load kịp ở Start)
+        FindDialogueCamera();
+
+        if (dialogueCameraObject == null)
+        {
+            Debug.LogError("DialogueTrigger: Không thể chuyển sang DialogueCamera vì không tìm thấy!");
+            return;
+        }
+
         if (mainCameraObject != null)
         {
             _originalMainCamPos = mainCameraObject.transform.position;
@@ -233,21 +273,19 @@ public class DialogueTrigger : MonoBehaviour
             mainCameraObject.SetActive(false);
         }
 
-        if (dialogueCameraObject != null)
+        Transform rig = dialogueCameraObject.transform.parent;
+        if (rig == null)
         {
-            Transform rig = dialogueCameraObject.transform.parent;
-            if (rig == null)
-            {
-                Debug.LogError("Dialogue Camera cần có parent rig!");
-                return;
-            }
-
-            if (dialogueCameraPoint != null)
-            {
-                rig.SetPositionAndRotation(dialogueCameraPoint.position, dialogueCameraPoint.rotation);
-            }
-            dialogueCameraObject.SetActive(true);
+            Debug.LogError("Dialogue Camera cần có parent rig!");
+            return;
         }
+
+        if (dialogueCameraPoint != null)
+        {
+            rig.SetPositionAndRotation(dialogueCameraPoint.position, dialogueCameraPoint.rotation);
+        }
+
+        dialogueCameraObject.SetActive(true);
     }
 
     private void RestoreCameraState()
@@ -278,7 +316,6 @@ public class DialogueTrigger : MonoBehaviour
     {
         _isPlaying = true;
 
-        // 🔥 Không ẩn prompt ở đây nếu có NPCInteraction (NPCInteraction đã lo)
         if (_npcInteraction == null && interactionPrompt != null)
             interactionPrompt.SetActive(false);
 
@@ -318,11 +355,9 @@ public class DialogueTrigger : MonoBehaviour
             RestoreCameraState();
         }
 
-        // 🔥 Thông báo cho NPCInteraction (nếu có) để cập nhật lại prompt
         if (_npcInteraction != null)
             _npcInteraction.OnDialogueComplete();
 
-        // 🔥 Nếu không có NPCInteraction, tự cập nhật prompt
         if (_npcInteraction == null && _playerInRange)
         {
             var entry = GetAppropriateEntry();
