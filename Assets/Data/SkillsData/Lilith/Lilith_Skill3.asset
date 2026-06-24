@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1e652bd9dd81c6c48a0d625c3dbd9ff3, type: 3}
+  m_Name: Lilith_Skill3
+  m_EditorClassIdentifier: Assembly-CSharp::SkillData
+  autoConfirmOnSelect: 0
+  movementOverride: 0
+  skillName: Destruction
+  description: "T\u1EA5n c\xF4ng to\xE0n b\u1ED9 k\u1EBB \u0111\u1ECBch b\u1EB1ng
+    1 h\u1ED1 \u0111en g\xE2y s\xE1t th\u01B0\u01A1ng d\u1EF1a v\xE0o m\xE1u t\u1ED1i
+    \u0111a c\u1EE7a \u0111\u1ECBch."
+  icon: {fileID: 0}
+  type: 0
+  targetType: 2
+  isChargeable: 0
+  doesNotEndTurn: 0
+  apCost: 3
+  hitCount: 1
+  vfxEvents:
+  - vfxPrefab: {fileID: 5895721289247199968, guid: 5b3aea2b7b934ca42ad6f56c23ec4765, type: 3}
+    spawnMode: 1
+    offset: {x: 0, y: 0, z: 0}
+    attachToCaster: 0
+  rangedVfxEvents: []
+  hitVfxEvents: []
+  sfxClips: []
+  animationTrigger: Skill3
+  isRanged: 0
+  projectilePrefab: {fileID: 0}
+  projectileOffset: {x: 0, y: 0, z: 0}
+  projectileTravelTime: 0.3
+  vfxPrefab: {fileID: 0}
+  vfxOffset: 0
+  effects:
+  - {fileID: 11400000, guid: 64df6dc08edb8d348a6ef81fda592db5, type: 2}
+  - {fileID: 11400000, guid: dc94b08d21b89d648bb3df394a17a410, type: 2}
+  - {fileID: 11400000, guid: 9b3d4c29ae2bdc84083ab094c5808794, type: 2}

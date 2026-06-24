@@ -1,0 +1,58 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1e652bd9dd81c6c48a0d625c3dbd9ff3, type: 3}
+  m_Name: Aeos_Skill3
+  m_EditorClassIdentifier: Assembly-CSharp::SkillData
+  autoConfirmOnSelect: 0
+  movementOverride: 0
+  skillName: Annihilate
+  description: "T\u1EA5n c\xF4ng c\u1EF1c m\u1EA1nh v\xE0o 1 k\u1EBB \u0111\u1ECBch
+    v\u1EDBi l\u01B0\u1EE3ng s\xE1t th\u01B0\u01A1ng l\u1EDBn, n\u1EBFu k\u1EBB \u0111\u1ECBch
+    \u0111\xE3 b\u1ECB suy y\u1EBFu t\u0103ng s\xE1t th\u01B0\u01A1ng cho k\u1EF9
+    n\u0103ng n\xE0y th\xEAm 20% v\xE0 th\xEAm 10% v\u1EDBi m\u1ED7i hi\u1EC7u \u1EE9ng
+    x\u1EA5u tr\xEAn k\u1EBB \u0111\u1ECBch (t\u1ED1i \u0111a 20%)."
+  icon: {fileID: 0}
+  type: 0
+  targetType: 0
+  isChargeable: 0
+  doesNotEndTurn: 0
+  apCost: 2
+  hitCount: 1
+  vfxEvents:
+  - vfxPrefab: {fileID: 8090668792223139151, guid: c1cb3d3b27e602f40882691cc1a7bd7e, type: 3}
+    spawnMode: 0
+    offset: {x: 0, y: 0, z: 0}
+    attachToCaster: 0
+  - vfxPrefab: {fileID: 4744253883332263761, guid: 1931ca61f3b821a45962b79e07d948bf, type: 3}
+    spawnMode: 0
+    offset: {x: 0, y: 0, z: 0}
+    attachToCaster: 0
+  - vfxPrefab: {fileID: 6763616320409547649, guid: a67b6b57c0abbb64caebd55346fbc883, type: 3}
+    spawnMode: 0
+    offset: {x: 0, y: 0, z: 0}
+    attachToCaster: 0
+  - vfxPrefab: {fileID: 6095979522420474856, guid: 1c5d50382b5df7342803e9f4a262add6, type: 3}
+    spawnMode: 0
+    offset: {x: 0, y: 0, z: 0}
+    attachToCaster: 0
+  rangedVfxEvents: []
+  hitVfxEvents: []
+  sfxClips: []
+  animationTrigger: Skill3
+  isRanged: 0
+  projectilePrefab: {fileID: 0}
+  projectileOffset: {x: 0, y: 0, z: 0}
+  projectileTravelTime: 0.3
+  vfxPrefab: {fileID: 0}
+  vfxOffset: 0
+  effects:
+  - {fileID: 11400000, guid: 58c55de5145477f47858955cfb0bad84, type: 2}

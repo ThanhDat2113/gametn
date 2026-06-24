@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1e652bd9dd81c6c48a0d625c3dbd9ff3, type: 3}
+  m_Name: Hana_Skill3
+  m_EditorClassIdentifier: Assembly-CSharp::SkillData
+  autoConfirmOnSelect: 0
+  movementOverride: 0
+  skillName: Immediate Action
+  description: "Ch\u1ECDn 1 \u0111\u1ED3ng minh, cho ph\xE9p \u0111\u1ED3ng minh
+    \u1EA5y h\xE0nh \u0111\u1ED9ng ngay l\u1EADp t\u1EE9c."
+  icon: {fileID: 0}
+  type: 0
+  targetType: 1
+  isChargeable: 0
+  doesNotEndTurn: 0
+  apCost: 1
+  hitCount: 0
+  vfxEvents:
+  - vfxPrefab: {fileID: 8291135225270637410, guid: f97d4f7433cda9840b8533b047dbe934, type: 3}
+    spawnMode: 1
+    offset: {x: 0, y: -3, z: 0}
+    attachToCaster: 0
+  rangedVfxEvents: []
+  hitVfxEvents: []
+  sfxClips: []
+  animationTrigger: Skill3
+  isRanged: 0
+  projectilePrefab: {fileID: 0}
+  projectileOffset: {x: 0, y: 0, z: 0}
+  projectileTravelTime: 0.3
+  vfxPrefab: {fileID: 0}
+  vfxOffset: 0
+  effects:
+  - {fileID: 11400000, guid: 8c31c6dba84ac6845877e9f93636a6fe, type: 2}

@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1e652bd9dd81c6c48a0d625c3dbd9ff3, type: 3}
+  m_Name: Celine_Skill3
+  m_EditorClassIdentifier: Assembly-CSharp::SkillData
+  autoConfirmOnSelect: 0
+  movementOverride: 2
+  skillName: Look At Me
+  description: "T\u0103ng kh\u1EA3 n\u0103ng khi\xEAu kh\xEDch c\u1EE7a b\u1EA3n
+    th\xE2n th\xE0nh 100% trong v\xF2ng 3 l\u01B0\u1EE3t trong th\u1EDDi gian n\xE0y
+    c\xF4 ph\u1EA3n l\u1EA1i 10% s\xE1t th\u01B0\u01A1ng nh\u1EADn v\xE0o t\u1EEB
+    m\u1ECDi ngu\u1ED3n v\xE0 c\xF4 kh\xF4ng th\u1EC3 h\xE0nh \u0111\u1ED9ng cho
+    \u0111\u1EBFn khi hi\u1EC7u \u1EE9ng n\xE0y h\u1EBFt hi\u1EC7u l\u1EF1c"
+  icon: {fileID: 0}
+  type: 0
+  targetType: 4
+  isChargeable: 0
+  doesNotEndTurn: 0
+  apCost: 1
+  hitCount: 1
+  animationTrigger: Skill3
+  vfxEvents:
+  - vfxPrefab: {fileID: 5901666664903294533, guid: 1f5d0092b1683e84fbde69bffcdf376f, type: 3}
+    offset: {x: 0, y: 0, z: 0}
+    attachToCaster: 0
+  vfxPrefab: {fileID: 0}
+  vfxOffset: 0
+  effects:
+  - {fileID: 11400000, guid: 2923ff57e5acd8f46a373720908ad078, type: 2}
+  - {fileID: 11400000, guid: b6f4265ca7c5b5948846f5e7e6bebfbe, type: 2}
+  - {fileID: 11400000, guid: 9a751e090c0125e438bb63d717adcbe6, type: 2}

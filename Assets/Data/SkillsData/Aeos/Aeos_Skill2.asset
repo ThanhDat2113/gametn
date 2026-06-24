@@ -1,0 +1,55 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1e652bd9dd81c6c48a0d625c3dbd9ff3, type: 3}
+  m_Name: Aeos_Skill2
+  m_EditorClassIdentifier: Assembly-CSharp::SkillData
+  autoConfirmOnSelect: 0
+  movementOverride: 0
+  skillName: Triple Strike
+  description: "T\u1EA5n c\xF4ng 3 \u0111\xF2n li\xEAn ti\u1EBFp v\xE0o 1 k\u1EBB
+    \u0111\u1ECBch l\xE0m gi\u1EA3m s\xE1t th\u01B0\u01A1ng k\u1EBB \u0111\u1ECBch
+    \u0111\xF3 g\xE2y ra trong 2 l\u01B0\u1EE3t, n\u1EBFu k\u1EF9 n\u0103ng n\xE0y
+    t\u1EA5n c\xF4ng m\u1EE5c ti\xEAu \u0111\xE3 b\u1ECB suy y\u1EBFu t\u0103ng s\xE1t
+    th\u01B0\u01A1ng th\xEAm 20%."
+  icon: {fileID: 0}
+  type: 0
+  targetType: 0
+  isChargeable: 0
+  doesNotEndTurn: 0
+  apCost: 1
+  hitCount: 3
+  vfxEvents:
+  - vfxPrefab: {fileID: 1029056478322056218, guid: f224b969a3384304cbf93813081388cf, type: 3}
+    spawnMode: 0
+    offset: {x: 0, y: 0, z: 0}
+    attachToCaster: 0
+  - vfxPrefab: {fileID: 2835014657394952392, guid: edc810b7b590a2248a7373ca91ad4d49, type: 3}
+    spawnMode: 0
+    offset: {x: 0, y: 0, z: 0}
+    attachToCaster: 0
+  - vfxPrefab: {fileID: 5588952770810883930, guid: e9467e7d43e6caa4381065ecd63edd75, type: 3}
+    spawnMode: 0
+    offset: {x: 0, y: 0, z: 0}
+    attachToCaster: 0
+  rangedVfxEvents: []
+  hitVfxEvents: []
+  sfxClips: []
+  animationTrigger: Skill2
+  isRanged: 0
+  projectilePrefab: {fileID: 0}
+  projectileOffset: {x: 0, y: 0, z: 0}
+  projectileTravelTime: 0.3
+  vfxPrefab: {fileID: 0}
+  vfxOffset: 0
+  effects:
+  - {fileID: 11400000, guid: 7b413f6d7865bf242b5560d406ba7037, type: 2}
+  - {fileID: 11400000, guid: ec9de5da924a900408174dfbc879c73a, type: 2}
