@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f9330979f02ddf43a415e7748b42aae, type: 3}
+  m_Name: CHAR_Aqua
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterData
+  characterType: 0
+  defaultCombatStyle: 1
+  prefab: {fileID: 1592895977249800688, guid: 7c83cee0cc810e64ca95e904c25e1b97, type: 3}
+  characterName: Aqua
+  portrait: {fileID: -1571412716, guid: 0ca30b280e5505f4eb1ea2e391458794, type: 3}
+  battleSprite: {fileID: 21300000, guid: 3632c3182dc9ea34d812682634c74bb9, type: 3}
+  lore: 
+  baseHP: 100
+  baseATK: 20
+  basePDEF: 10
+  baseMDEF: 10
+  baseSpeed: 10
+  baseLevel: 1
+  expReward: 100
+  baseExpThreshold: 100
+  expIncrementPerLevel: 50
+  hpPerLevel: 20
+  atkPerLevel: 10
+  pdefPerLevel: 10
+  mdefPerLevel: 10
+  speedPerLevel: 5
+  skills:
+  - {fileID: 11400000, guid: e5c883fdc076c7443b93598a9325383f, type: 2}
+  - {fileID: 11400000, guid: eec67e0fefc5f6e419c2f27c71329968, type: 2}
+  - {fileID: 11400000, guid: b4cfc6d5256b9a8458afcd7a84677a8f, type: 2}
+  passiveScript: {fileID: 11500000, guid: 8212e08f260965a4998e772b62a49b54, type: 3}

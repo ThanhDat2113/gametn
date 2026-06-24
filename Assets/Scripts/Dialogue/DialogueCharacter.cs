@@ -1,57 +1,33 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-[CreateAssetMenu(fileName = "NewCharacter", menuName = "RPG/Dialogue/Character")]
+[CreateAssetMenu(fileName = "NewCharacter", menuName = "Cutscene/Character")]
 public class DialogueCharacter : ScriptableObject
 {
     public string characterName;
     public Color nameColor = Color.white;
-    public AudioClip defaultVoice;
-    public CharacterPosition defaultPosition = CharacterPosition.Center;
-    
-    [Header("Portraits - Có thể thêm không giới hạn")]
     public List<PortraitEntry> portraits = new List<PortraitEntry>();
-    
-    private Dictionary<string, Sprite> portraitDictionary;
-    
-    public void Initialize()
-    {
-        portraitDictionary = new Dictionary<string, Sprite>();
-        foreach (var entry in portraits)
-        {
-            if (!string.IsNullOrEmpty(entry.emotionKey))
-            {
-                portraitDictionary[entry.emotionKey] = entry.sprite;
-            }
-        }
-    }
-    
+
+    private Dictionary<string, Sprite> _portraitDict;
+
     public Sprite GetPortrait(string emotionKey)
     {
-        if (portraitDictionary == null) Initialize();
-        
-        if (portraitDictionary.TryGetValue(emotionKey, out Sprite sprite))
-            return sprite;
-        
-        // Fallback: trả về portrait đầu tiên nếu không tìm thấy
-        if (portraits.Count > 0)
-            return portraits[0].sprite;
-        
-        return null;
-    }
-    
-    // Hàm tiện lợi cho các emotion phổ biến
-    public Sprite GetPortrait(DialogueEmotion emotion)
-    {
-        string key = emotion.ToString().ToLower();
-        return GetPortrait(key);
+        if (_portraitDict == null)
+        {
+            _portraitDict = new Dictionary<string, Sprite>();
+            foreach (var entry in portraits)
+                if (!string.IsNullOrEmpty(entry.emotionKey))
+                    _portraitDict[entry.emotionKey] = entry.sprite;
+        }
+        return _portraitDict.TryGetValue(emotionKey, out Sprite s) ? s : (portraits.Count > 0 ? portraits[0].sprite : null);
     }
 }
 
 [System.Serializable]
 public class PortraitEntry
 {
-    [Tooltip("Tên key: normal, happy, angry, sad, surprised, cry, blush, etc.")]
     public string emotionKey = "normal";
     public Sprite sprite;
 }
+
+public enum DialogueEmotion { Normal, Happy, Angry, Sad, Surprised, Cry, Blush }

@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f9330979f02ddf43a415e7748b42aae, type: 3}
+  m_Name: CHAR_Tohka
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterData
+  characterType: 0
+  defaultCombatStyle: 0
+  prefab: {fileID: 4372764338220409011, guid: c60750495697cc94ba0952a34bac5cc4, type: 3}
+  characterName: Tohka
+  portrait: {fileID: 21300000, guid: 65250d969ab35504792f7f895d17490b, type: 3}
+  battleSprite: {fileID: 21300000, guid: 65250d969ab35504792f7f895d17490b, type: 3}
+  lore: 
+  baseHP: 100
+  baseATK: 100
+  basePDEF: 10
+  baseMDEF: 10
+  baseSpeed: 10
+  baseLevel: 1
+  expReward: 100
+  baseExpThreshold: 100
+  expIncrementPerLevel: 50
+  hpPerLevel: 20
+  atkPerLevel: 10
+  pdefPerLevel: 10
+  mdefPerLevel: 10
+  speedPerLevel: 5
+  skills:
+  - {fileID: 11400000, guid: e523f0f9301d4e74b9e667de2a76f6e8, type: 2}
+  - {fileID: 11400000, guid: 592b123f295f0f4418c878256344ce75, type: 2}
+  - {fileID: 11400000, guid: 388eaa28a0afaab4c87453d6ae1eea4e, type: 2}
+  passiveScript: {fileID: 11500000, guid: 6e4d36e858aff254fbd44ab208c84321, type: 3}

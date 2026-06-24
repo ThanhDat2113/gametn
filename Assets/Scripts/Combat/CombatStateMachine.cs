@@ -1,9 +1,8 @@
 public enum CombatPhase
 {
-    Init,
-    EnemyPlan,
+    None,
+    Intro,
     PlayerPlan,
-    RetargetCheck,
     Execute,
     RoundEnd,
     Victory,
@@ -12,7 +11,7 @@ public enum CombatPhase
 
 public class CombatStateMachine
 {
-    public CombatPhase Current { get; private set; } = CombatPhase.Init;
+    public CombatPhase Current { get; private set; } = CombatPhase.None;
 
     public event System.Action<CombatPhase, CombatPhase> OnPhaseChanged;
 
