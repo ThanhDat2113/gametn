@@ -5,46 +5,56 @@ using System.Collections.Generic;
 /// Singleton manager quản lý toàn bộ quest marker UI.
 /// Đặt trên một GameObject tên "QuestMarkerManager" trong scene.
 ///
-/// TÍCH HỢP WAYPOINT:
-///   Sau khi spawn QuestMarkerUI, thông báo WaypointNavigator để nó
-///   có thể override chế độ hiển thị (waypoint vs NPC trực tiếp).
+/// TÍCH HỢP QUEST SYSTEM:
+///   Nhận Register/Unregister từ QuestMarkerBridge (gắn trên DialogueTrigger)
+///   thay vì NPCInteractable (không còn dùng nữa).
 /// </summary>
 [DisallowMultipleComponent]
 public class QuestMarkerManager : MonoBehaviour
 {
-    // ── Singleton ─────────────────────────────────────────────────────────────
+    // ── Singleton ────────────────────────────────────────────────────────────
 
     public static QuestMarkerManager Instance { get; private set; }
 
-    // ── Serialized ────────────────────────────────────────────────────────────
+    // ── Serialized Fields ────────────────────────────────────────────────────
 
     [Header("Prefab References")]
+    [Tooltip("Prefab chứa QuestMarkerUI component")]
     [SerializeField] private QuestMarkerUI markerPrefab;
 
     [Header("UI Container")]
+    [Tooltip("RectTransform của Canvas dùng để chứa marker. Để trống sẽ tự tìm Canvas.")]
     [SerializeField] private RectTransform markerContainer;
 
-    // ── Private ───────────────────────────────────────────────────────────────
+    // ── Private Fields ───────────────────────────────────────────────────────
 
+    // Key đổi từ NPCInteractable → QuestMarkerBridge
     private readonly Dictionary<QuestMarkerBridge, QuestMarkerUI> _activeMarkers =
         new Dictionary<QuestMarkerBridge, QuestMarkerUI>();
 
-    // ── Lifecycle ─────────────────────────────────────────────────────────────
+    // ── Lifecycle ────────────────────────────────────────────────────────────
 
     private void Awake()
     {
-        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
         Instance = this;
         DontDestroyOnLoad(gameObject);
+
         ResolveReferences();
     }
 
     private void OnDestroy()
     {
-        if (Instance == this) Instance = null;
+        if (Instance == this)
+            Instance = null;
     }
 
-    // ── Private Helpers ───────────────────────────────────────────────────────
+    // ── Private Helpers ──────────────────────────────────────────────────────
 
     private void ResolveReferences()
     {
@@ -66,7 +76,7 @@ public class QuestMarkerManager : MonoBehaviour
             }
             else
             {
-                Debug.LogWarning("[QuestMarkerManager] Canvas not found.");
+                Debug.LogWarning("[QuestMarkerManager] Canvas not found. Hãy gán markerContainer trong Inspector.");
             }
         }
     }
@@ -81,8 +91,12 @@ public class QuestMarkerManager : MonoBehaviour
         return true;
     }
 
-    // ── Public API ────────────────────────────────────────────────────────────
+    // ── Public API (Bridge-based) ─────────────────────────────────────────────
 
+    /// <summary>
+    /// Đăng ký một Bridge → tạo marker trỏ đến NPC đó.
+    /// Gọi bởi QuestMarkerBridge khi step Talk khớp triggerID.
+    /// </summary>
     public void RegisterBridge(QuestMarkerBridge bridge)
     {
         if (bridge == null || _activeMarkers.ContainsKey(bridge)) return;
@@ -93,11 +107,12 @@ public class QuestMarkerManager : MonoBehaviour
         _activeMarkers[bridge] = marker;
 
         Debug.Log($"[QuestMarkerManager] Marker ON → '{bridge.TriggerID}'");
-
-        // Thông báo WaypointNavigator để override chế độ nếu cần
-        WaypointNavigator.Instance?.OnMarkerRegistered(bridge, marker);
     }
 
+    /// <summary>
+    /// Hủy đăng ký Bridge → destroy marker.
+    /// Gọi bởi QuestMarkerBridge khi step hoàn thành hoặc object bị destroy.
+    /// </summary>
     public void UnregisterBridge(QuestMarkerBridge bridge)
     {
         if (bridge == null) return;
@@ -110,19 +125,13 @@ public class QuestMarkerManager : MonoBehaviour
         }
     }
 
-    /// <summary>Lấy QuestMarkerUI đang hiển thị cho một bridge cụ thể.</summary>
-    public QuestMarkerUI GetMarkerUI(QuestMarkerBridge bridge)
-    {
-        if (bridge == null) return null;
-        _activeMarkers.TryGetValue(bridge, out QuestMarkerUI ui);
-        return ui;
-    }
-
+    /// <summary>Bật/tắt tất cả markers (dùng khi mở map, cutscene, v.v.).</summary>
     public void SetAllMarkersActive(bool active)
     {
         foreach (QuestMarkerUI marker in _activeMarkers.Values)
             if (marker != null) marker.SetActive(active);
     }
 
+    /// <summary>Số lượng marker đang hiển thị.</summary>
     public int ActiveMarkerCount => _activeMarkers.Count;
 }
