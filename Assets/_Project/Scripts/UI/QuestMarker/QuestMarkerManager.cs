@@ -22,6 +22,10 @@ public class QuestMarkerManager : MonoBehaviour
     [Tooltip("Prefab chứa QuestMarkerUI component")]
     [SerializeField] private QuestMarkerUI markerPrefab;
 
+    [Tooltip("Prefab chứa MinimapMarkerUI component (marker hiển thị trên minimap). " +
+             "Để trống nếu không dùng minimap.")]
+    [SerializeField] private MinimapMarkerUI minimapMarkerPrefab;
+
     [Header("UI Container")]
     [Tooltip("RectTransform của Canvas dùng để chứa marker. Để trống sẽ tự tìm Canvas.")]
     [SerializeField] private RectTransform markerContainer;
@@ -31,6 +35,10 @@ public class QuestMarkerManager : MonoBehaviour
     // Key đổi từ NPCInteractable → QuestMarkerBridge
     private readonly Dictionary<QuestMarkerBridge, QuestMarkerUI> _activeMarkers =
         new Dictionary<QuestMarkerBridge, QuestMarkerUI>();
+
+    // Marker minimap song song với marker màn hình chính (cùng key, container khác)
+    private readonly Dictionary<QuestMarkerBridge, MinimapMarkerUI> _activeMinimapMarkers =
+        new Dictionary<QuestMarkerBridge, MinimapMarkerUI>();
 
     // ── Lifecycle ────────────────────────────────────────────────────────────
 
@@ -99,14 +107,29 @@ public class QuestMarkerManager : MonoBehaviour
     /// </summary>
     public void RegisterBridge(QuestMarkerBridge bridge)
     {
-        if (bridge == null || _activeMarkers.ContainsKey(bridge)) return;
-        if (!IsReadyToSpawn()) return;
+        if (bridge == null) return;
 
-        QuestMarkerUI marker = Instantiate(markerPrefab, markerContainer);
-        marker.InitializeFromBridge(bridge, markerContainer);
-        _activeMarkers[bridge] = marker;
+        if (!_activeMarkers.ContainsKey(bridge) && IsReadyToSpawn())
+        {
+            QuestMarkerUI marker = Instantiate(markerPrefab, markerContainer);
+            marker.InitializeFromBridge(bridge, markerContainer);
+            _activeMarkers[bridge] = marker;
 
-        Debug.Log($"[QuestMarkerManager] Marker ON → '{bridge.TriggerID}'");
+            Debug.Log($"[QuestMarkerManager] Marker ON → '{bridge.TriggerID}'");
+        }
+
+        // Minimap marker là optional — chỉ spawn nếu đã setup minimap
+        if (!_activeMinimapMarkers.ContainsKey(bridge)
+            && minimapMarkerPrefab != null
+            && MinimapController.Instance != null
+            && MinimapController.Instance.MarkerContainer != null)
+        {
+            MinimapMarkerUI minimapMarker = Instantiate(minimapMarkerPrefab, MinimapController.Instance.MarkerContainer);
+            minimapMarker.InitializeFromBridge(bridge);
+            _activeMinimapMarkers[bridge] = minimapMarker;
+
+            Debug.Log($"[QuestMarkerManager] Minimap Marker ON → '{bridge.TriggerID}'");
+        }
     }
 
     /// <summary>
@@ -123,6 +146,13 @@ public class QuestMarkerManager : MonoBehaviour
             _activeMarkers.Remove(bridge);
             Debug.Log($"[QuestMarkerManager] Marker OFF → '{bridge.TriggerID}'");
         }
+
+        if (_activeMinimapMarkers.TryGetValue(bridge, out MinimapMarkerUI minimapMarker))
+        {
+            if (minimapMarker != null) Destroy(minimapMarker.gameObject);
+            _activeMinimapMarkers.Remove(bridge);
+            Debug.Log($"[QuestMarkerManager] Minimap Marker OFF → '{bridge.TriggerID}'");
+        }
     }
 
     /// <summary>Bật/tắt tất cả markers (dùng khi mở map, cutscene, v.v.).</summary>
@@ -130,8 +160,14 @@ public class QuestMarkerManager : MonoBehaviour
     {
         foreach (QuestMarkerUI marker in _activeMarkers.Values)
             if (marker != null) marker.SetActive(active);
+
+        foreach (MinimapMarkerUI marker in _activeMinimapMarkers.Values)
+            if (marker != null) marker.SetActive(active);
     }
 
-    /// <summary>Số lượng marker đang hiển thị.</summary>
+    /// <summary>Số lượng marker đang hiển thị (màn hình chính).</summary>
     public int ActiveMarkerCount => _activeMarkers.Count;
+
+    /// <summary>Số lượng marker đang hiển thị trên minimap.</summary>
+    public int ActiveMinimapMarkerCount => _activeMinimapMarkers.Count;
 }
