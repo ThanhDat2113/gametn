@@ -31,7 +31,11 @@ public class ClashAnimationSequence : MonoBehaviour
 
     public IEnumerator PlayAction(ActionResult result)
     {
-        allUnitViews = FindObjectsByType<UnitView>(FindObjectsSortMode.None).ToList();
+        // Cache từ CombatManager thay vì FindObjectsByType mỗi lần
+        if (CombatManager.Instance != null)
+            allUnitViews = CombatManager.Instance.GetAllUnitViews();
+        else
+            allUnitViews = FindObjectsByType<UnitView>(FindObjectsSortMode.None).ToList();
 
         var actorView = GetViewForUnit(result.Actor);
         var primaryTargetView = GetViewForUnit(result.InitialTargets.FirstOrDefault());

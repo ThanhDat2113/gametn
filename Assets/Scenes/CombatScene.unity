@@ -1690,7 +1690,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CombatTestStarter
   testPlayerCharacters:
-  - {fileID: 11400000, guid: 97faa5da240c37f4c86aa1e422208619, type: 2}
+  - {fileID: 11400000, guid: 9090a146a49a8a449a784f9bed38c6ac, type: 2}
   - {fileID: 11400000, guid: 3b2e4d3ea37cd094391480ee499bf6d7, type: 2}
   - {fileID: 11400000, guid: ec30fa4ffd05e5f41a38b3c3581af012, type: 2}
   - {fileID: 11400000, guid: d9a02487cd5ceb443a7bfe4ac6df8beb, type: 2}
@@ -2069,6 +2069,62 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1807569791}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1175162912
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1175162914}
+  - component: {fileID: 1175162913}
+  m_Layer: 0
+  m_Name: 'AudioTestController '
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1175162913
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1175162912}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9cdeaed4a69331448bb3e2d19eded338, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AudioTestUI
+  bgmSource: {fileID: 0}
+  sfxSource: {fileID: 0}
+  uiSource: {fileID: 0}
+  ambienceSource: {fileID: 0}
+  testBGMClip: {fileID: 0}
+  testSFXClip: {fileID: 0}
+  testAmbienceClip: {fileID: 0}
+  testSelectClip: {fileID: 8300000, guid: 1b3f39fb4b2399e49adf9394f4db68dd, type: 3}
+  testCancelClip: {fileID: 8300000, guid: f9b81f044f9fa9b4f8dffc0925a143d6, type: 3}
+  testHoverClip: {fileID: 8300000, guid: f93037bdb4521894ead4a5df289d53c4, type: 3}
+  showOnStart: 1
+  toggleKey: 293
+--- !u!4 &1175162914
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1175162912}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 591.6451, y: 0.00005, z: -444.93243}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1181633188
 GameObject:
@@ -3518,3 +3574,4 @@ SceneRoots:
   - {fileID: 1019903367}
   - {fileID: 1910550707}
   - {fileID: 2006244916}
+  - {fileID: 1175162914}

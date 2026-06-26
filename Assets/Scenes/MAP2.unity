@@ -640,6 +640,7 @@ Terrain:
   m_AllowAutoConnect: 1
   m_EnableHeightmapRayTracing: 1
   m_EnableTreesAndDetailsRayTracing: 0
+  m_EnableHeightmapLODFrustumCulling: 1
   m_TreeMotionVectorModeOverride: 3
 --- !u!1001 &12306371
 PrefabInstance:
@@ -7071,6 +7072,7 @@ GameObject:
   - component: {fileID: 230062176}
   - component: {fileID: 230062175}
   - component: {fileID: 230062181}
+  - component: {fileID: 230062182}
   m_Layer: 0
   m_Name: Rin
   m_TagString: Untagged
@@ -7251,6 +7253,7 @@ Transform:
   m_Children:
   - {fileID: 181102934}
   - {fileID: 1255451326}
+  - {fileID: 1831381730}
   m_Father: {fileID: 2118859792}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &230062181
@@ -7272,6 +7275,21 @@ MonoBehaviour:
   combatPrompt: {fileID: 0}
   interactKey: 101
   autoStartCombatOnTouch: 0
+--- !u!114 &230062182
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 230062174}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ab9b14809ca169f4ba53024fe3809516, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestMarkerBridge
+  headPosition: {fileID: 1831381730}
+  defaultHeadOffset: 2
+  playerTransform: {fileID: 0}
 --- !u!1 &231056669
 GameObject:
   m_ObjectHideFlags: 0
@@ -10088,6 +10106,7 @@ Terrain:
   m_AllowAutoConnect: 1
   m_EnableHeightmapRayTracing: 1
   m_EnableTreesAndDetailsRayTracing: 0
+  m_EnableHeightmapLODFrustumCulling: 1
   m_TreeMotionVectorModeOverride: 3
 --- !u!1001 &312504888
 PrefabInstance:
@@ -15928,6 +15947,7 @@ GameObject:
   - component: {fileID: 520263735}
   - component: {fileID: 520263734}
   - component: {fileID: 520263733}
+  - component: {fileID: 520263739}
   m_Layer: 0
   m_Name: Aqua
   m_TagString: Untagged
@@ -15950,6 +15970,7 @@ Transform:
   m_Children:
   - {fileID: 2052345393}
   - {fileID: 167430402}
+  - {fileID: 2037210050}
   m_Father: {fileID: 2118859792}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &520263733
@@ -16128,6 +16149,21 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+--- !u!114 &520263739
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 520263731}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ab9b14809ca169f4ba53024fe3809516, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestMarkerBridge
+  headPosition: {fileID: 2037210050}
+  defaultHeadOffset: 2
+  playerTransform: {fileID: 0}
 --- !u!1001 &527416371
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -20857,6 +20893,7 @@ Terrain:
   m_AllowAutoConnect: 1
   m_EnableHeightmapRayTracing: 1
   m_EnableTreesAndDetailsRayTracing: 0
+  m_EnableHeightmapLODFrustumCulling: 1
   m_TreeMotionVectorModeOverride: 3
 --- !u!1001 &666054830
 PrefabInstance:
@@ -26315,6 +26352,37 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: d108310cd29b11344bed0784832dbce6, type: 3}
   m_PrefabInstance: {fileID: 818405705}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &826061107
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 826061108}
+  m_Layer: 0
+  m_Name: GameObject
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &826061108
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 826061107}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.65, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1373314982}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &837786881
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -40061,6 +40129,7 @@ Terrain:
   m_AllowAutoConnect: 1
   m_EnableHeightmapRayTracing: 1
   m_EnableTreesAndDetailsRayTracing: 0
+  m_EnableHeightmapLODFrustumCulling: 1
   m_TreeMotionVectorModeOverride: 3
 --- !u!1001 &1323627934
 PrefabInstance:
@@ -41723,6 +41792,7 @@ GameObject:
   - component: {fileID: 1373314985}
   - component: {fileID: 1373314984}
   - component: {fileID: 1373314983}
+  - component: {fileID: 1373314989}
   m_Layer: 0
   m_Name: Kurumi
   m_TagString: Untagged
@@ -41745,6 +41815,7 @@ Transform:
   m_Children:
   - {fileID: 647537658}
   - {fileID: 383908405}
+  - {fileID: 826061108}
   m_Father: {fileID: 2118859792}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1373314983
@@ -41926,6 +41997,21 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+--- !u!114 &1373314989
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1373314981}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ab9b14809ca169f4ba53024fe3809516, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestMarkerBridge
+  headPosition: {fileID: 826061108}
+  defaultHeadOffset: 2
+  playerTransform: {fileID: 0}
 --- !u!1 &1375264639
 GameObject:
   m_ObjectHideFlags: 0
@@ -51061,6 +51147,7 @@ Terrain:
   m_AllowAutoConnect: 1
   m_EnableHeightmapRayTracing: 1
   m_EnableTreesAndDetailsRayTracing: 0
+  m_EnableHeightmapLODFrustumCulling: 1
   m_TreeMotionVectorModeOverride: 3
 --- !u!4 &1628801057
 Transform:
@@ -56838,6 +56925,37 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.08786561, y: 0.74243546, z: 2.907196}
   m_Center: {x: -0.041766662, y: 0.37121677, z: 1.3246686}
+--- !u!1 &1831381729
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1831381730}
+  m_Layer: 0
+  m_Name: GameObject
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1831381730
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1831381729}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.032, y: 0.593, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 230062180}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1831599656
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -62671,6 +62789,37 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.087865636, y: 0.74243546, z: 2.9071965}
   m_Center: {x: -0.041766673, y: 0.37121725, z: 1.324791}
+--- !u!1 &2037210049
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2037210050}
+  m_Layer: 0
+  m_Name: GameObject
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2037210050
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2037210049}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.04, y: 0.68, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 520263732}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &2039755235
 PrefabInstance:
   m_ObjectHideFlags: 0
