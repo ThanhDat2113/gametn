@@ -45,7 +45,7 @@ public static class MinimapAutoSetup
         MinimapMarkerUI markerPrefab = EnsureMinimapMarkerPrefab();
         MinimapController controller = EnsureController();
 
-        AssignControllerReferences(controller, rawImage, maskImage, markerContainer, playerIcon);
+        AssignControllerReferences(controller, rawImage, maskImage, markerContainer, playerIcon, minimapRoot.gameObject);
         AssignManagerMinimapPrefab(markerPrefab);
 
         EditorUtility.SetDirty(controller);
@@ -56,14 +56,21 @@ public static class MinimapAutoSetup
         EditorUtility.DisplayDialog(
             "Minimap Auto Setup",
             "Setup minimap hoàn tất!\n\n" +
-            $"• Controller: '{ControllerName}' trong scene\n" +
+            $"• Controller: '{ControllerName}' trong scene (đã DontDestroyOnLoad — sống qua mọi lần đổi map)\n" +
             $"• Marker Prefab: {MarkerPrefabPath}\n" +
             $"• UI Hierarchy: '{minimapRoot.name}' dưới Canvas '{canvas.name}'\n\n" +
             "Tiếp theo:\n" +
             "1. Chọn DisplayMode trên MinimapController (RenderTextureCamera/StaticTexture)\n" +
             "2. Chỉnh mapScale (default 300) theo ý muốn\n" +
             "3. Chọn MaskShape (Circle/Square) + gán sprite mask\n" +
-            "4. Kéo MinimapRoot vào vị trí mong muốn trên màn hình (vd góc trên-trái)",
+            "4. Kéo MinimapRoot vào vị trí mong muốn trên màn hình (vd góc trên-trái)\n\n" +
+            "ĐỔI MAP: Controller tự DontDestroyOnLoad + tự tìm Terrain mới khi load scene khác.\n" +
+            "Nếu dùng StaticTexture cho nhiều map, thêm entry vào list 'Per Map Data' " +
+            "(field perMapData) — mỗi entry gồm tên scene + ảnh snapshot + worldSize/worldCenter riêng.\n\n" +
+            "ẨN KHI COMBAT: Thêm tên scene combat (vd \"CombatScene\") vào list 'Combat Scene Names'. " +
+            "Minimap tự ẩn khi scene đó load (kể cả Additive). Hoặc gọi " +
+            "MinimapController.NotifyCombatStateChanged(true/false) trực tiếp từ " +
+            "FormationManager/SceneLoaderManager/SceneTransitionManager nếu muốn chắc chắn hơn.",
             "OK");
     }
 
@@ -289,7 +296,8 @@ public static class MinimapAutoSetup
         RawImage rawImage,
         Image maskImage,
         RectTransform markerContainer,
-        RectTransform playerIcon)
+        RectTransform playerIcon,
+        GameObject uiRoot)
     {
         SerializedObject so = new SerializedObject(controller);
 
@@ -297,6 +305,7 @@ public static class MinimapAutoSetup
         SetIfEmpty(so, "minimapMaskImage", maskImage);
         SetIfEmpty(so, "markerContainer", markerContainer);
         SetIfEmpty(so, "playerIcon", playerIcon);
+        SetIfEmpty(so, "minimapUIRoot", uiRoot);
 
         // Gán sẵn sprite mask tròn/vuông mặc định nếu trống, để MaskShape switch hoạt động ngay
         Sprite knobSprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Knob.psd");
@@ -305,7 +314,7 @@ public static class MinimapAutoSetup
         SetIfEmpty(so, "squareMaskSprite", uiSpriteSquare);
 
         so.ApplyModifiedPropertiesWithoutUndo();
-        Debug.Log("[MinimapAutoSetup] Đã gán UI references cho MinimapController.");
+        Debug.Log("[MinimapAutoSetup] Đã gán UI references cho MinimapController (kể cả minimapUIRoot cho combat auto-hide).");
     }
 
     private static void SetIfEmpty(SerializedObject so, string propName, Object value)

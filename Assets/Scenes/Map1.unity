@@ -26224,6 +26224,7 @@ Terrain:
   m_AllowAutoConnect: 1
   m_EnableHeightmapRayTracing: 1
   m_EnableTreesAndDetailsRayTracing: 0
+  m_EnableHeightmapLODFrustumCulling: 1
   m_TreeMotionVectorModeOverride: 3
 --- !u!4 &829601830
 Transform:
@@ -26706,6 +26707,7 @@ Terrain:
   m_AllowAutoConnect: 1
   m_EnableHeightmapRayTracing: 1
   m_EnableTreesAndDetailsRayTracing: 0
+  m_EnableHeightmapLODFrustumCulling: 1
   m_TreeMotionVectorModeOverride: 3
 --- !u!4 &855101692
 Transform:
@@ -47122,6 +47124,37 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 0ae3fb08094f94e4ba5da05f37cf3d9a, type: 3}
   m_PrefabInstance: {fileID: 1411807628}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1416189729
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1416189730}
+  m_Layer: 0
+  m_Name: GameObject
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1416189730
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1416189729}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.061, y: 0.558, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2040449515}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1416850035
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -66781,6 +66814,37 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 1031134439, guid: abc00000000010890742120931742386, type: 3}
   m_PrefabInstance: {fileID: 1836621141}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1842215833
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1842215834}
+  m_Layer: 0
+  m_Name: GameObject
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1842215834
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1842215833}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.13, y: 0.478, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2021228286}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1843667248
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -70081,6 +70145,7 @@ Terrain:
   m_AllowAutoConnect: 1
   m_EnableHeightmapRayTracing: 1
   m_EnableTreesAndDetailsRayTracing: 0
+  m_EnableHeightmapLODFrustumCulling: 1
   m_TreeMotionVectorModeOverride: 3
 --- !u!4 &1988827559
 Transform:
@@ -71208,6 +71273,7 @@ GameObject:
   - component: {fileID: 2021228288}
   - component: {fileID: 2021228287}
   - component: {fileID: 2021228292}
+  - component: {fileID: 2021228293}
   m_Layer: 0
   m_Name: Saber
   m_TagString: Untagged
@@ -71230,6 +71296,7 @@ Transform:
   m_Children:
   - {fileID: 13538218}
   - {fileID: 595118832}
+  - {fileID: 1842215834}
   m_Father: {fileID: 554073902}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &2021228287
@@ -71409,6 +71476,21 @@ MonoBehaviour:
   combatPrompt: {fileID: 0}
   interactKey: 101
   autoStartCombatOnTouch: 0
+--- !u!114 &2021228293
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2021228285}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ab9b14809ca169f4ba53024fe3809516, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestMarkerBridge
+  headPosition: {fileID: 1842215834}
+  defaultHeadOffset: 2
+  playerTransform: {fileID: 0}
 --- !u!1001 &2021928539
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -71691,6 +71773,7 @@ GameObject:
   - component: {fileID: 2040449516}
   - component: {fileID: 2040449518}
   - component: {fileID: 2040449519}
+  - component: {fileID: 2040449520}
   m_Layer: 0
   m_Name: Vergil
   m_TagString: Untagged
@@ -71794,6 +71877,7 @@ Transform:
   m_Children:
   - {fileID: 1568441540}
   - {fileID: 850194503}
+  - {fileID: 1416189730}
   m_Father: {fileID: 554073902}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!65 &2040449516
@@ -71891,6 +71975,21 @@ MonoBehaviour:
   combatPrompt: {fileID: 0}
   interactKey: 101
   autoStartCombatOnTouch: 0
+--- !u!114 &2040449520
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2040449512}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ab9b14809ca169f4ba53024fe3809516, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestMarkerBridge
+  headPosition: {fileID: 1416189730}
+  defaultHeadOffset: 2
+  playerTransform: {fileID: 0}
 --- !u!4 &2043171600 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 400000, guid: abc00000000016997223646955643502, type: 3}
