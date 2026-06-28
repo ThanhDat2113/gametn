@@ -3,31 +3,38 @@ using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
 
+public enum InteractionSide
+{
+    Left,
+    Right
+}
+
 public class DialogueBubbleUI : MonoBehaviour
 {
     public static DialogueBubbleUI Instance { get; private set; }
 
-    [Header("UI References")]
-    public GameObject bubbleRoot;
-    public TextMeshProUGUI speakerText;
-    public TextMeshProUGUI contentText;
-    public Image background;
+    [Header("Bubble Prefabs")]
+    public GameObject npcBubblePrefab;
+    public GameObject playerBubblePrefab;
 
     [Header("Settings")]
     public Vector2 defaultOffset = new Vector2(0, 1.5f);
     public KeyCode continueKey = KeyCode.Space;
     public bool clickToContinue = true;
 
+    [Header("Directional Settings")]
+    [Tooltip("Khoảng cách dịch ngang thêm (world units) khi bubble ở bên phải/trái (chỉ áp dụng nếu không dùng offsetRight)")]
+    public float horizontalOffset = 1.5f;
+
     [Header("Typing Effect")]
-    [Tooltip("Tốc độ hiện chữ (giây mỗi ký tự). 0 = hiện ngay lập tức.")]
     public float typingSpeed = 0.03f;
-    [Tooltip("Bật/tắt âm thanh gõ chữ")]
     public bool typingSoundEnabled = true;
 
-    private Camera _cam;
+    private GameObject _currentBubbleInstance;
+    private TextMeshProUGUI _speakerText;
+    private TextMeshProUGUI _contentText;
     private bool _isShowing;
     private System.Action _onHide;
-    private System.Action _onComplete;
     private Coroutine _typingCoroutine;
     private bool _isTyping;
     private string _currentFullText;
@@ -42,70 +49,139 @@ public class DialogueBubbleUI : MonoBehaviour
             return;
         }
         Instance = this;
-        bubbleRoot.SetActive(false);
     }
 
     void Update()
     {
-        if (!_isShowing) return;
-
-        // Quan trọng: KHÔNG để việc xoay bubble theo camera làm gãy việc bắt input.
-        // Nếu Camera.main null/đổi camera (VD: cutscene chuyển sang cutsceneCamera
-        // không gắn tag MainCamera), trước đây dòng xoay sẽ ném NullReferenceException
-        // ngay tại Update() khiến đoạn check click/space phía dưới KHÔNG BAO GIỜ chạy.
+        if (!_isShowing || _currentBubbleInstance == null) return;
         UpdateBillboard();
 
         bool keyPressed = Input.GetKeyDown(continueKey) || (clickToContinue && Input.GetMouseButtonDown(0));
         if (keyPressed)
         {
-            // Nếu đang typing → hiện ngay toàn bộ text thay vì skip dòng
             if (_isTyping)
-            {
                 CompleteTyping();
-            }
             else
-            {
                 Hide();
-            }
         }
     }
 
     private void UpdateBillboard()
     {
-        // Tự refetch nếu cache bị mất, thay vì chỉ lấy 1 lần duy nhất ở Awake.
-        if (_cam == null)
-            _cam = Camera.main;
-
-        if (_cam == null)
-            return; // không có camera hợp lệ -> bỏ qua xoay, không phá input
-
-        bubbleRoot.transform.rotation = _cam.transform.rotation;
+        if (_currentBubbleInstance != null)
+        {
+            Camera cam = Camera.main;
+            if (cam != null)
+                _currentBubbleInstance.transform.rotation = cam.transform.rotation;
+        }
     }
 
-    public void Show(DialogueLineData line, Transform target, System.Action onHide = null)
+    /// <summary>
+    /// Hiển thị một dòng hội thoại với bubble phù hợp.
+    /// </summary>
+    public void Show(DialogueLineData line, Transform npcTarget, Transform playerTarget, InteractionSide? side = null, System.Action onHide = null)
     {
         if (_isShowing) Hide();
-        Vector2 offset = line.offset == Vector2.zero ? defaultOffset : line.offset;
-        bubbleRoot.transform.position = target.position + (Vector3)offset;
-        speakerText.text = line.speakerName;
-        bubbleRoot.SetActive(true);
-        _isShowing = true;
-        _onHide = onHide;
 
+        _onHide = onHide;
         _currentFullText = line.text;
 
-        // Bắt đầu typing effect (hoặc hiện ngay nếu typingSpeed = 0)
+        // Xác định prefab và target
+        GameObject selectedPrefab;
+        Transform target;
+        bool isSwapped = false; // true nếu swap bubble (tương tác phải)
+
+        if (side == InteractionSide.Right)
+        {
+            isSwapped = true;
+            if (line.isPlayerLine)
+            {
+                selectedPrefab = npcBubblePrefab;
+                target = playerTarget;
+            }
+            else
+            {
+                selectedPrefab = playerBubblePrefab;
+                target = npcTarget;
+            }
+        }
+        else
+        {
+            if (line.isPlayerLine)
+            {
+                selectedPrefab = playerBubblePrefab;
+                target = playerTarget;
+            }
+            else
+            {
+                selectedPrefab = npcBubblePrefab;
+                target = npcTarget;
+            }
+        }
+
+        if (selectedPrefab == null)
+        {
+            Debug.LogError("[DialogueBubbleUI] Missing prefab!");
+            return;
+        }
+
+        if (target == null)
+        {
+            Debug.LogWarning("[DialogueBubbleUI] Target is null, cannot display bubble.");
+            return;
+        }
+
+        // Tạo instance
+        _currentBubbleInstance = Instantiate(selectedPrefab, transform);
+        _currentBubbleInstance.name = $"Bubble_{(line.isPlayerLine ? "Player" : "NPC")}";
+
+        // Lấy components
+        _speakerText = GetComponentInChildren<TextMeshProUGUI>(_currentBubbleInstance, "SpeakerName");
+        _contentText = GetComponentInChildren<TextMeshProUGUI>(_currentBubbleInstance, "Content");
+
+        // Set text
+        if (_speakerText != null) _speakerText.text = line.speakerName;
+        if (_contentText != null) _contentText.text = "";
+
+        // --- Xác định offset ---
+        Vector2 offset;
+
+        // Nếu đang swap (tương tác phải) và có offsetRight riêng
+        if (isSwapped && line.offsetRight != Vector2.zero)
+        {
+            // Dùng offsetRight trực tiếp, KHÔNG cộng thêm horizontalOffset
+            offset = line.offsetRight;
+        }
+        else
+        {
+            // Dùng offset mặc định hoặc offset từ line, sau đó cộng thêm horizontalOffset nếu có side
+            offset = line.offset == Vector2.zero ? defaultOffset : line.offset;
+
+            // Thêm horizontalOffset cho cả hai trường hợp (trừ khi đã dùng offsetRight)
+            if (side.HasValue)
+            {
+                float dir = (side.Value == InteractionSide.Right) ? 1f : -1f;
+                offset = new Vector2(offset.x + dir * horizontalOffset, offset.y);
+            }
+        }
+
+        // Đặt vị trí
+        _currentBubbleInstance.transform.position = target.position + (Vector3)offset;
+        _currentBubbleInstance.SetActive(true);
+        _isShowing = true;
+
+        // Bắt đầu typing
         if (typingSpeed > 0f)
         {
             _typingCoroutine = StartCoroutine(TypeText(line.text));
         }
         else
         {
-            contentText.text = line.text;
+            if (_contentText != null) _contentText.text = line.text;
         }
     }
 
-    public void ShowSequential(DialogueLineData[] lines, Transform target, System.Action onComplete = null, int startIndex = 0)
+    public void ShowSequential(DialogueLineData[] lines, Transform npcTarget, Transform playerTarget, System.Action onComplete = null, int startIndex = 0, InteractionSide? side = null)
     {
         if (startIndex >= lines.Length)
         {
@@ -113,24 +189,19 @@ public class DialogueBubbleUI : MonoBehaviour
             onComplete?.Invoke();
             return;
         }
-        Show(lines[startIndex], target, () => ShowSequential(lines, target, onComplete, startIndex + 1));
+        Show(lines[startIndex], npcTarget, playerTarget, side, () => ShowSequential(lines, npcTarget, playerTarget, onComplete, startIndex + 1, side));
     }
 
     private IEnumerator TypeText(string fullText)
     {
         _isTyping = true;
-        contentText.text = "";
+        if (_contentText != null) _contentText.text = "";
 
         foreach (char c in fullText)
         {
-            contentText.text += c;
-
-            // Phát âm thanh gõ chữ (có cooldown bên trong AudioManager)
+            if (_contentText != null) _contentText.text += c;
             if (typingSoundEnabled)
-            {
                 AudioManager.Instance?.PlayUITyping();
-            }
-
             yield return new WaitForSeconds(typingSpeed);
         }
 
@@ -138,9 +209,6 @@ public class DialogueBubbleUI : MonoBehaviour
         _typingCoroutine = null;
     }
 
-    /// <summary>
-    /// Hiện ngay toàn bộ text khi đang typing (click/space giữa chừng).
-    /// </summary>
     private void CompleteTyping()
     {
         if (_typingCoroutine != null)
@@ -148,15 +216,9 @@ public class DialogueBubbleUI : MonoBehaviour
             StopCoroutine(_typingCoroutine);
             _typingCoroutine = null;
         }
-
-        // Đây là phần bị thiếu trước đó: dừng coroutine giữa chừng
-        // nhưng không gán nốt phần text còn lại -> chữ bị cụt.
-        if (!string.IsNullOrEmpty(_currentFullText))
-            contentText.text = _currentFullText;
-
+        if (!string.IsNullOrEmpty(_currentFullText) && _contentText != null)
+            _contentText.text = _currentFullText;
         _isTyping = false;
-
-        // Dừng typing sound ngay lập tức
         AudioManager.Instance?.StopUITyping();
     }
 
@@ -164,14 +226,28 @@ public class DialogueBubbleUI : MonoBehaviour
     {
         if (!_isShowing) return;
         _isShowing = false;
-
-        // Dừng typing + phát advance sound
         CompleteTyping();
         AudioManager.Instance?.PlayUIDialogueAdvance();
 
-        bubbleRoot.SetActive(false);
+        if (_currentBubbleInstance != null)
+        {
+            Destroy(_currentBubbleInstance);
+            _currentBubbleInstance = null;
+        }
+
         var callback = _onHide;
         _onHide = null;
         callback?.Invoke();
+    }
+
+    private T GetComponentInChildren<T>(GameObject root, string name) where T : Component
+    {
+        if (root == null) return null;
+        foreach (T comp in root.GetComponentsInChildren<T>(true))
+        {
+            if (comp.gameObject.name == name)
+                return comp;
+        }
+        return null;
     }
 }

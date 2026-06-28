@@ -25711,6 +25711,37 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 810124032}
   m_Mesh: {fileID: 4300000, guid: abc00000000012094621215988835010, type: 3}
+--- !u!1 &811773637
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 811773638}
+  m_Layer: 0
+  m_Name: PlayerPoint_L
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &811773638
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 811773637}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -0.9510024, y: 0.22555543, z: 0}
+  m_LocalScale: {x: 0.111111134, y: 0.111111134, z: 0.111111134}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2040449515}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &812765873
 GameObject:
   m_ObjectHideFlags: 0
@@ -26531,7 +26562,7 @@ GameObject:
   m_Component:
   - component: {fileID: 850194503}
   m_Layer: 0
-  m_Name: DialogueCameraPoint
+  m_Name: DialogueCameraPoint_L
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -27339,6 +27370,11 @@ MonoBehaviour:
   mainCameraObject: {fileID: 0}
   dialogueCameraObject: {fileID: 0}
   dialogueCameraPoint: {fileID: 630245167}
+  useDirectionalDialogue: 0
+  leftPlayerPoint: {fileID: 0}
+  rightPlayerPoint: {fileID: 0}
+  leftCameraPoint: {fileID: 0}
+  rightCameraPoint: {fileID: 0}
 --- !u!65 &877021555
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -48783,7 +48819,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1478608599}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a275dbc018d7122488c5fce387093502, type: 3}
   m_Name: 
@@ -67494,6 +67530,11 @@ MonoBehaviour:
   mainCameraObject: {fileID: 0}
   dialogueCameraObject: {fileID: 0}
   dialogueCameraPoint: {fileID: 1153651174}
+  useDirectionalDialogue: 0
+  leftPlayerPoint: {fileID: 0}
+  rightPlayerPoint: {fileID: 0}
+  leftCameraPoint: {fileID: 0}
+  rightCameraPoint: {fileID: 0}
 --- !u!65 &1865564056
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -69800,6 +69841,37 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 400000, guid: abc00000000016354491713583997832, type: 3}
   m_PrefabInstance: {fileID: 1978089344}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1980774882
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1980774883}
+  m_Layer: 0
+  m_Name: DialogueCameraPoint_R
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1980774883
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1980774882}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.16865446, y: 0.008945568, z: -0.0015307008, w: 0.9856335}
+  m_LocalPosition: {x: 0.45, y: 0.6431038, z: -1.38}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 1
+  m_Children: []
+  m_Father: {fileID: 2040449515}
+  m_LocalEulerAnglesHint: {x: 19.42, y: 1.04, z: 0}
 --- !u!1001 &1982507809
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -71276,6 +71348,11 @@ MonoBehaviour:
   mainCameraObject: {fileID: 0}
   dialogueCameraObject: {fileID: 0}
   dialogueCameraPoint: {fileID: 595118832}
+  useDirectionalDialogue: 0
+  leftPlayerPoint: {fileID: 0}
+  rightPlayerPoint: {fileID: 0}
+  leftCameraPoint: {fileID: 0}
+  rightCameraPoint: {fileID: 0}
 --- !u!65 &2021228288
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -71794,6 +71871,9 @@ Transform:
   m_Children:
   - {fileID: 1568441540}
   - {fileID: 850194503}
+  - {fileID: 1980774883}
+  - {fileID: 811773638}
+  - {fileID: 2083788807}
   m_Father: {fileID: 554073902}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!65 &2040449516
@@ -71815,8 +71895,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.4600001, y: 0.6259088, z: 0.20000003}
-  m_Center: {x: 0, y: 0.0015911792, z: 0}
+  m_Size: {x: 0.9611545, y: 0.6259088, z: 0.52234566}
+  m_Center: {x: 0.091796875, y: 0.0015911792, z: -0.012836893}
 --- !u!114 &2040449517
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -71872,6 +71952,11 @@ MonoBehaviour:
   mainCameraObject: {fileID: 0}
   dialogueCameraObject: {fileID: 0}
   dialogueCameraPoint: {fileID: 850194503}
+  useDirectionalDialogue: 1
+  leftPlayerPoint: {fileID: 811773638}
+  rightPlayerPoint: {fileID: 2083788807}
+  leftCameraPoint: {fileID: 850194503}
+  rightCameraPoint: {fileID: 1980774883}
 --- !u!114 &2040449519
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -73691,6 +73776,37 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2081429581}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &2083788806
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2083788807}
+  m_Layer: 0
+  m_Name: PlayerPoint_R
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2083788807
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2083788806}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.9510024, y: 0.22555543, z: 0}
+  m_LocalScale: {x: 0.111111134, y: 0.111111134, z: 0.111111134}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2040449515}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!4 &2087243543 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1031134439, guid: abc00000000010890742120931742386, type: 3}
