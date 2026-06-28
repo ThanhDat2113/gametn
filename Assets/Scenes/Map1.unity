@@ -2486,6 +2486,85 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1074045824}
   m_LocalEulerAnglesHint: {x: 0, y: 633.204, z: -90}
+--- !u!1 &86906766
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 86906767}
+  - component: {fileID: 86906769}
+  - component: {fileID: 86906768}
+  m_Layer: 0
+  m_Name: GameObject
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &86906767
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 86906766}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -131.02, y: 110.34, z: 22.4}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 554073902}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &86906768
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 86906766}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 33b7a294a222b214a8d6a376f89a0ce8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EncounterZone
+  encounterPool:
+  - enemyGroup: {fileID: 11400000, guid: 4f070e30182b8494687da0780ce4d0c1, type: 2}
+    weight: 1
+    levelOffsetMin: 1
+    levelOffsetMax: 1
+  triggerMode: 1
+  stepDistance: 1.5
+  stepEncounterChance: 10
+  timeInterval: 1
+  timeEncounterChance: 100
+  useCooldown: 1
+  cooldownDuration: 3
+  fadeDuration: 0.5
+--- !u!65 &86906769
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 86906766}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 151.89, y: 91.41, z: 134.28}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &97010920
 GameObject:
   m_ObjectHideFlags: 0
@@ -19463,6 +19542,7 @@ Transform:
   - {fileID: 532525260}
   - {fileID: 1074045824}
   - {fileID: 368394900}
+  - {fileID: 86906767}
   - {fileID: 1489456898}
   - {fileID: 1767664935}
   - {fileID: 210472824}
@@ -26156,6 +26236,7 @@ Terrain:
   m_AllowAutoConnect: 1
   m_EnableHeightmapRayTracing: 1
   m_EnableTreesAndDetailsRayTracing: 0
+  m_EnableHeightmapLODFrustumCulling: 1
   m_TreeMotionVectorModeOverride: 3
 --- !u!4 &829601830
 Transform:
@@ -26638,6 +26719,7 @@ Terrain:
   m_AllowAutoConnect: 1
   m_EnableHeightmapRayTracing: 1
   m_EnableTreesAndDetailsRayTracing: 0
+  m_EnableHeightmapLODFrustumCulling: 1
   m_TreeMotionVectorModeOverride: 3
 --- !u!4 &855101692
 Transform:
@@ -48996,21 +49078,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a275dbc018d7122488c5fce387093502, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CutsceneIntro
-  mainCamera: {fileID: 0}
-  cutsceneCamera: {fileID: 1183183277}
-  pointA: {fileID: 883781834}
-  pointB: {fileID: 1566292689}
-  moveDuration: 5
-  dialogueLines:
-  - {fileID: 11400000, guid: 28916ae9463dde448bef73a431973127, type: 2}
-  - {fileID: 11400000, guid: 1754dcc7ddfa35343a343be8cfba9f7d, type: 2}
-  - {fileID: 11400000, guid: 44d15273ec1d900449b4e9a4e4611471, type: 2}
-  - {fileID: 11400000, guid: 2116b74293d8a2f4dbbede3932a3976b, type: 2}
-  - {fileID: 11400000, guid: 37ae205869f77484b9328cacc73dd834, type: 2}
-  - {fileID: 11400000, guid: 76e41aab17b460f45bfae7777bd1e424, type: 2}
-  - {fileID: 11400000, guid: c33f9554348c7624395ddf59cff32171, type: 2}
-  dialoguePoint: {fileID: 0}
-  playerController: {fileID: 0}
 --- !u!1 &1483183200
 GameObject:
   m_ObjectHideFlags: 0
@@ -70641,6 +70708,7 @@ Terrain:
   m_AllowAutoConnect: 1
   m_EnableHeightmapRayTracing: 1
   m_EnableTreesAndDetailsRayTracing: 0
+  m_EnableHeightmapLODFrustumCulling: 1
   m_TreeMotionVectorModeOverride: 3
 --- !u!4 &1988827559
 Transform:
