@@ -2,262 +2,326 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 /// <summary>
-/// FlowPuzzle đơn giản hóa — click start → click các ô kề → click end.
-/// Lưu vết đường đi bằng Stack, dễ debug.
+/// FlowPuzzle — Nối dây điện kiểu Among Us (Drag & Drop).
+/// Kéo thả đầu dây trái sang ổ cắm phải cùng màu, tự động vẽ dây nối.
+/// Auto-generate UI từ prefabs.
 /// </summary>
 public class FlowPuzzle : PuzzleBase
 {
-    [Header("UI References")]
-    public GridLayoutGroup gridLayout;
-    public Button[] cellButtons;
+    [Header("=== UI CONTAINERS (Bắt buộc) ===")]
+    public RectTransform leftColumn;
+    public RectTransform rightColumn;
+    public Transform wireContainer;
+
+    [Header("=== PREFABS (Bắt buộc) ===")]
+    public WireDragItem leftItemPrefab;
+    public WireDropTarget rightItemPrefab;
+    public Image wireSegmentPrefab;
+
+    [Header("=== UI TEXT (Optional) ===")]
     public Text instructionText;
     public Text progressText;
     public Button closeButton;
 
-    [Header("Config")]
-    public Color emptyColor = new Color(0.15f, 0.15f, 0.15f);
-    public Color[] defaultPairColors;
+    [Header("=== WIRE THEME ===")]
+    public Color[] wireColors = {
+        new Color(1f, 0.2f, 0.2f),
+        new Color(0.2f, 0.4f, 1f),
+        new Color(1f, 0.8f, 0f),
+        new Color(0.2f, 1f, 0.2f),
+    };
+    public Sprite plugSprite;
+    public Sprite socketSprite;
+    public Sprite connectedSprite;
+    public float wireThickness = 6f;
 
-    private int _gridSize = 5;
-    private int _pairCount = 5;
-
-    private int[,] _owner;
-    private Vector2Int[] _starts;
-    private Vector2Int[] _ends;
-    private Color[] _colors;
-
-    private int _currentPair = -1;
-    // Lưu đường đi hiện tại của cặp đang nối (theo thứ tự)
-    private List<Vector2Int> _currentPath = new List<Vector2Int>();
+    private int _pairCount = 4;
+    private int[] _leftOrder;
+    private int[] _rightOrder;
+    private WireDragItem[] _leftItems;
+    private WireDropTarget[] _rightItems;
+    private int _connectedCount = 0;
     private bool _puzzleCompleted = false;
 
-    private readonly int[] _dr = { -1, 0, 1, 0 };
-    private readonly int[] _dc = { 0, 1, 0, -1 };
+    private Image _currentDragWire;
+    private WireDragItem _currentDragItem;
+    private Vector2 _dragStartPos;
+    public bool IsDragging => _currentDragWire != null;
 
     public override void StartPuzzle(PuzzleData data, PuzzleTrigger source)
     {
         base.StartPuzzle(data, source);
-        _pairCount = 5;
-        if (data?.flowConfig != null)
+        LoadConfig(data);
+        ClearGeneratedItems();
+        _leftOrder = GenerateShuffledOrder(_pairCount);
+        do _rightOrder = GenerateShuffledOrder(_pairCount);
+        while (AreArraysIdentical(_leftOrder, _rightOrder));
+        GenerateUI();
+        if (closeButton != null)
         {
-            _gridSize = Mathf.Clamp(data.flowConfig.gridSize, 4, 7);
-            if (data.flowConfig.pairColors != null && data.flowConfig.pairColors.Length >= 3)
-                _pairCount = Mathf.Min(data.flowConfig.pairColors.Length, _gridSize);
+            closeButton.onClick.RemoveAllListeners();
+            closeButton.onClick.AddListener(() => CompletePuzzle(false));
         }
-
-        _puzzleCompleted = false;
-        _owner = new int[_gridSize, _gridSize];
-        _starts = new Vector2Int[_pairCount];
-        _ends = new Vector2Int[_pairCount];
-        _colors = new Color[_pairCount];
-
-        for (int r = 0; r < _gridSize; r++)
-            for (int c = 0; c < _gridSize; c++)
-                _owner[r, c] = -1;
-
-        InitColors();
-        GenerateBoard();
-        SetupButtons();
-        RefreshUI();
         UpdateUI();
     }
 
-    private void InitColors()
+    private void LoadConfig(PuzzleData data)
     {
-        if (defaultPairColors != null && defaultPairColors.Length >= _pairCount)
-            for (int i = 0; i < _pairCount; i++) _colors[i] = defaultPairColors[i];
+        if (data?.flowConfig == null) return;
+        _pairCount = Mathf.Clamp(data.flowConfig.pairCount, 3, 6);
+        if (data.flowConfig.wireColors != null && data.flowConfig.wireColors.Length >= _pairCount)
+            wireColors = data.flowConfig.wireColors;
+        if (data.flowConfig.plugSprite != null) plugSprite = data.flowConfig.plugSprite;
+        if (data.flowConfig.socketSprite != null) socketSprite = data.flowConfig.socketSprite;
+    }
+
+    private void ClearGeneratedItems()
+    {
+        if (_leftItems != null)
+            foreach (var item in _leftItems)
+                if (item != null) Destroy(item.gameObject);
+        if (_rightItems != null)
+            foreach (var item in _rightItems)
+                if (item != null) Destroy(item.gameObject);
+        if (wireContainer != null)
+        {
+            foreach (Transform child in wireContainer)
+                Destroy(child.gameObject);
+        }
+    }
+
+    private void GenerateUI()
+    {
+        if (leftItemPrefab == null || rightItemPrefab == null)
+        {
+            Debug.LogError("[FlowPuzzle] Thieu leftItemPrefab hoac rightItemPrefab!");
+            CompletePuzzle(false);
+            return;
+        }
+        _leftItems = new WireDragItem[_pairCount];
+        _rightItems = new WireDropTarget[_pairCount];
+        for (int i = 0; i < _pairCount; i++)
+        {
+            int leftColorIdx = _leftOrder[i];
+            var left = Instantiate(leftItemPrefab, leftColumn);
+            left.gameObject.SetActive(true);
+            left.name = "WireLeft_" + i + "_Color" + leftColorIdx;
+            left.colorIndex = leftColorIdx;
+            left.flowPuzzleRef = this;
+            left.image.color = GetWireColor(leftColorIdx);
+            left.image.sprite = plugSprite;
+            left.isConnected = false;
+            left.canvasGroup.blocksRaycasts = true;
+            _leftItems[i] = left;
+
+            int rightColorIdx = _rightOrder[i];
+            var right = Instantiate(rightItemPrefab, rightColumn);
+            right.gameObject.SetActive(true);
+            right.name = "WireRight_" + i + "_Color" + rightColorIdx;
+            right.colorIndex = rightColorIdx;
+            right.flowPuzzleRef = this;
+            right.image.color = GetWireColor(rightColorIdx);
+            right.image.sprite = socketSprite;
+            right.isConnected = false;
+            right.canvasGroup.blocksRaycasts = true;
+            _rightItems[i] = right;
+        }
+    }
+
+    // ═══════════════════════════════════════════
+    //  DRAG HANDLING
+    // ═══════════════════════════════════════════
+
+    public void OnBeginDragWire(WireDragItem item, PointerEventData eventData)
+    {
+        _currentDragItem = item;
+        _dragStartPos = item.GetScreenCenter();
+        if (wireSegmentPrefab != null)
+        {
+            _currentDragWire = Instantiate(wireSegmentPrefab, wireContainer);
+            _currentDragWire.gameObject.SetActive(true);
+            _currentDragWire.name = "DragWire";
+            _currentDragWire.color = GetWireColor(item.colorIndex);
+            _currentDragWire.raycastTarget = false;
+        }
+        if (instructionText != null)
+            instructionText.text = "Keo sang o cung mau...";
+    }
+
+    public void OnDragWire(PointerEventData eventData)
+    {
+        if (_currentDragWire == null) return;
+        UpdateWirePosition(_currentDragWire, _dragStartPos, eventData.position);
+    }
+
+    public void OnEndDragWire(WireDragItem item, PointerEventData eventData)
+    {
+        if (_currentDragWire == null) return;
+        var results = new List<RaycastResult>();
+        EventSystem.current.RaycastAll(eventData, results);
+        bool handled = false;
+        foreach (var hit in results)
+        {
+            var target = hit.gameObject.GetComponent<WireDropTarget>();
+            if (target != null && !target.isConnected)
+            {
+                if (target.colorIndex == item.colorIndex)
+                    StartCoroutine(ConnectWire(item, target));
+                else
+                    StartCoroutine(WrongWire(item, target));
+                handled = true;
+                break;
+            }
+        }
+        if (!handled)
+        {
+            Destroy(_currentDragWire);
+            _currentDragWire = null;
+            _currentDragItem = null;
+            if (instructionText != null)
+                instructionText.text = "Keo dau day sang o cam!";
+        }
+    }
+
+    private void UpdateWirePosition(Image wireImage, Vector2 startPos, Vector2 endPos)
+    {
+        Vector2 dir = endPos - startPos;
+        float distance = dir.magnitude;
+        float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
+        RectTransform rt = wireImage.rectTransform;
+        rt.pivot = new Vector2(0, 0.5f);
+        rt.sizeDelta = new Vector2(distance, wireThickness);
+        rt.position = startPos;
+        rt.rotation = Quaternion.Euler(0, 0, angle);
+    }
+
+    // ═══════════════════════════════════════════
+    //  CONNECT / WRONG
+    // ═══════════════════════════════════════════
+
+    private IEnumerator ConnectWire(WireDragItem left, WireDropTarget right)
+    {
+        Destroy(_currentDragWire);
+        _currentDragWire = null;
+        _currentDragItem = null;
+        Color c = GetWireColor(left.colorIndex);
+        var wire = Instantiate(wireSegmentPrefab, wireContainer);
+        wire.gameObject.SetActive(true);
+        wire.name = "ConnectedWire_" + left.colorIndex;
+        wire.color = c;
+        wire.raycastTarget = false;
+        UpdateWirePosition(wire, left.GetScreenCenter(), right.GetScreenCenter());
+        RectTransform rt = wire.rectTransform;
+        float t = 0;
+        while (t < 0.3f)
+        {
+            t += Time.deltaTime;
+            float scale = Mathf.Lerp(1.5f, 1f, t / 0.3f);
+            rt.localScale = new Vector3(scale, scale, 1);
+            yield return null;
+        }
+        rt.localScale = Vector3.one;
+        left.isConnected = true;
+        right.isConnected = true;
+        _connectedCount++;
+        if (connectedSprite != null)
+        {
+            left.image.sprite = connectedSprite;
+            right.image.sprite = connectedSprite;
+        }
+        left.image.color = Color.white;
+        right.image.color = Color.white;
+        left.canvasGroup.blocksRaycasts = false;
+        right.canvasGroup.blocksRaycasts = false;
+        right.transform.localScale = Vector3.one;
+        if (instructionText != null)
+            instructionText.text = "Ket noi thanh cong!";
+        yield return new WaitForSeconds(0.5f);
+        UpdateUI();
+        if (_connectedCount >= _pairCount)
+        {
+            _puzzleCompleted = true;
+            if (instructionText != null)
+                instructionText.text = "Tat ca da duoc ket noi!";
+            yield return new WaitForSeconds(0.8f);
+            CompletePuzzle(true);
+        }
         else
         {
-            Color[] b = { Color.red, Color.blue, Color.green, Color.yellow, Color.magenta, Color.cyan };
-            for (int i = 0; i < _pairCount; i++) _colors[i] = b[i % b.Length];
+            if (instructionText != null)
+                instructionText.text = "Keo dau day sang o cam!";
         }
     }
 
-    // ──────── SINH BOARD — ĐƠN GIẢN, CHẮC CHẮN GIẢI ĐƯỢC ────────
-    private void GenerateBoard()
+    private IEnumerator WrongWire(WireDragItem left, WireDropTarget right)
     {
-        int pairs = Mathf.Min(_pairCount, _gridSize);
-        _pairCount = pairs;
-
-        // Mỗi cặp nằm trên 1 hàng riêng, start bên trái, end bên phải
-        for (int i = 0; i < pairs; i++)
-        {
-            int col = (i % 2 == 0) ? 0 : _gridSize - 1; // chẵn: trái, lẻ: phải
-            _starts[i] = new Vector2Int(i, col);
-            _ends[i] = new Vector2Int(i, (col == 0) ? _gridSize - 1 : 0);
-            _owner[_starts[i].x, _starts[i].y] = i;
-            _owner[_ends[i].x, _ends[i].y] = i;
-        }
+        Destroy(_currentDragWire);
+        _currentDragWire = null;
+        _currentDragItem = null;
+        Color originalColor = GetWireColor(right.colorIndex);
+        right.image.color = Color.red;
+        right.transform.localScale = Vector3.one * 1.2f;
+        if (instructionText != null)
+            instructionText.text = "Sai mau! Thu lai!";
+        yield return new WaitForSeconds(0.4f);
+        right.image.color = originalColor;
+        right.transform.localScale = Vector3.one;
+        if (instructionText != null)
+            instructionText.text = "Keo dau day sang o cam!";
     }
 
-    // ──────── GAMEPLAY ────────
-    private void SetupButtons()
+    // ═══════════════════════════════════════════
+    //  HELPERS
+    // ═══════════════════════════════════════════
+
+    public Color GetWireColor(int colorIndex)
     {
-        for (int i = 0; i < cellButtons.Length; i++)
-        {
-            int idx = i;
-            cellButtons[i].onClick.RemoveAllListeners();
-            cellButtons[i].onClick.AddListener(() => OnCellClick(idx));
-        }
-        if (closeButton != null)
-            closeButton.onClick.AddListener(() => CompletePuzzle(false));
+        if (wireColors == null || wireColors.Length == 0) return Color.white;
+        return wireColors[colorIndex % wireColors.Length];
     }
 
-    private void OnCellClick(int index)
+    private int[] GenerateShuffledOrder(int count)
     {
-        if (_puzzleCompleted) return;
-
-        int r = index / _gridSize;
-        int c = index % _gridSize;
-
-        // Chưa chọn cặp
-        if (_currentPair == -1)
+        int[] arr = new int[count];
+        for (int i = 0; i < count; i++) arr[i] = i;
+        System.Random rng = new System.Random();
+        for (int i = count - 1; i > 0; i--)
         {
-            if (_owner[r, c] < 0) return;
-            int pp = _owner[r, c];
-            if (IsComplete(pp)) return;
-            _currentPair = pp;
-            _currentPath.Clear();
-            _currentPath.Add(new Vector2Int(r, c));
-            instructionText.text = $"Đang nối cặp {pp + 1}";
-            return;
+            int j = rng.Next(0, i + 1);
+            int temp = arr[i];
+            arr[i] = arr[j];
+            arr[j] = temp;
         }
-
-        int p = _currentPair;
-        Vector2Int last = _currentPath[_currentPath.Count - 1];
-
-        // Click vào end (cùng cặp) → hoàn thành
-        if (r == _ends[p].x && c == _ends[p].y)
-        {
-            if (!IsAdj(last.x, last.y, r, c)) return;
-            _currentPair = -1;
-            _currentPath.Clear();
-            RefreshUI();
-            UpdateUI();
-            if (CheckAllComplete())
-            {
-                _puzzleCompleted = true;
-                instructionText.text = "🎉 Hoàn thành!";
-                StartCoroutine(Delayed());
-            }
-            return;
-        }
-
-        // Click vào ô trống kề → mở rộng
-        if (_owner[r, c] == -1 && IsAdj(last.x, last.y, r, c))
-        {
-            _owner[r, c] = p;
-            _currentPath.Add(new Vector2Int(r, c));
-            RefreshUI();
-            return;
-        }
-
-        // Click vào start (cùng cặp) → hủy đường đã vẽ
-        if (r == _starts[p].x && c == _starts[p].y)
-        {
-            // Xóa toàn bộ đường đã vẽ của cặp này (trừ start và end)
-            for (int rr = 0; rr < _gridSize; rr++)
-                for (int cc = 0; cc < _gridSize; cc++)
-                    if (_owner[rr, cc] == p && !IsSE(p, rr, cc))
-                        _owner[rr, cc] = -1;
-            _currentPath.Clear();
-            _currentPath.Add(new Vector2Int(r, c));
-            RefreshUI();
-            return;
-        }
+        return arr;
     }
 
-    private bool IsAdj(int r1, int c1, int r2, int c2)
+    private bool AreArraysIdentical(int[] a, int[] b)
     {
-        return (Mathf.Abs(r1 - r2) + Mathf.Abs(c1 - c2)) == 1;
-    }
-
-    private bool IsSE(int p, int r, int c)
-    {
-        return (_starts[p].x == r && _starts[p].y == c) || (_ends[p].x == r && _ends[p].y == c);
-    }
-
-    private bool IsComplete(int p)
-    {
-        // BFS
-        bool[,] v = new bool[_gridSize, _gridSize];
-        Queue<Vector2Int> q = new Queue<Vector2Int>();
-        q.Enqueue(_starts[p]); v[_starts[p].x, _starts[p].y] = true;
-        while (q.Count > 0)
-        {
-            var cur = q.Dequeue();
-            if (cur.x == _ends[p].x && cur.y == _ends[p].y) return true;
-            for (int d = 0; d < 4; d++)
-            {
-                int nr = cur.x + _dr[d], nc = cur.y + _dc[d];
-                if (nr < 0 || nr >= _gridSize || nc < 0 || nc >= _gridSize) continue;
-                if (v[nr, nc]) continue;
-                if (_owner[nr, nc] == p) { v[nr, nc] = true; q.Enqueue(new Vector2Int(nr, nc)); }
-            }
-        }
-        return false;
-    }
-
-    private bool CheckAllComplete()
-    {
-        for (int p = 0; p < _pairCount; p++)
-            if (!IsComplete(p)) return false;
+        if (a.Length != b.Length) return false;
+        for (int i = 0; i < a.Length; i++)
+            if (a[i] != b[i]) return false;
         return true;
-    }
-
-    private IEnumerator Delayed()
-    {
-        yield return new WaitForSeconds(0.8f);
-        CompletePuzzle(true);
-    }
-
-    private void RefreshUI()
-    {
-        for (int r = 0; r < _gridSize; r++)
-        {
-            for (int c = 0; c < _gridSize; c++)
-            {
-                int idx = r * _gridSize + c;
-                if (idx >= cellButtons.Length) continue;
-
-                Text txt = cellButtons[idx].GetComponentInChildren<Text>();
-                Image img = cellButtons[idx].image;
-
-                if (_owner[r, c] >= 0)
-                {
-                    int p = _owner[r, c];
-                    img.color = _colors[p % _colors.Length];
-                    bool isS = _starts[p].x == r && _starts[p].y == c;
-                    bool isE = _ends[p].x == r && _ends[p].y == c;
-                    if (txt != null) txt.text = isS ? "●" : isE ? "○" : "·";
-                }
-                else
-                {
-                    img.color = emptyColor;
-                    if (txt != null) txt.text = "";
-                }
-            }
-        }
     }
 
     private void UpdateUI()
     {
         if (instructionText != null && !_puzzleCompleted)
-            instructionText.text = _currentPair >= 0 ? $"Cặp {_currentPair + 1}" : "Chọn ● để nối";
+            instructionText.text = "Keo dau day sang o cam!";
         if (progressText != null)
-        {
-            int d = 0;
-            for (int p = 0; p < _pairCount; p++) if (IsComplete(p)) d++;
-            progressText.text = $"{d}/{_pairCount}";
-        }
+            progressText.text = "Da noi: " + _connectedCount + "/" + _pairCount;
     }
 
     public override void ClosePuzzle()
     {
+        _currentDragWire = null;
+        _currentDragItem = null;
         StopAllCoroutines();
         Destroy(gameObject);
     }
 }
+
+
