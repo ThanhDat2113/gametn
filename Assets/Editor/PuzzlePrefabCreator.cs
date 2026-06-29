@@ -283,16 +283,67 @@ public class PuzzlePrefabCreator : EditorWindow
     {
         var canvas = CreateBaseCanvas("FlowPuzzleCanvas");
         var p = canvas.AddComponent<FlowPuzzle>();
-        CreateTitleText(canvas.transform, "🌈 NỐI MÀU", new Vector2(0, 320));
-        p.instructionText = CreateUIText(canvas.transform, "InstructionText", "Chọn điểm đầu để nối", 22, Color.white, new Vector2(0, 250));
+        CreateTitleText(canvas.transform, "🔌 NỐI DÂY ĐIỆN", new Vector2(0, 400));
+        p.instructionText = CreateUIText(canvas.transform, "InstructionText", "Kéo đầu dây sang ổ cắm!", 22, Color.white, new Vector2(0, 330));
 
-        var grid = new GameObject("GridPanel"); grid.transform.SetParent(canvas.transform, false);
-        var gl = grid.AddComponent<GridLayoutGroup>(); gl.cellSize = new Vector2(50, 50); gl.spacing = new Vector2(4, 4);
-        gl.constraint = GridLayoutGroup.Constraint.FixedColumnCount; gl.constraintCount = 5; gl.childAlignment = TextAnchor.MiddleCenter;
-        grid.GetComponent<RectTransform>().sizeDelta = new Vector2(270, 270); grid.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 10);
-        p.gridLayout = gl; p.cellButtons = new Button[25];
-        for (int i = 0; i < 25; i++) p.cellButtons[i] = CreateButton(grid.transform, $"F{i}", "", 14, 50, 50).GetComponent<Button>();
-        p.progressText = CreateUIText(canvas.transform, "ProgressText", "Đã nối: 0/5", 18, Color.green, new Vector2(0, -200));
+        // Left Column
+        var leftCol = new GameObject("LeftColumn");
+        leftCol.transform.SetParent(canvas.transform, false);
+        var leftRect = leftCol.AddComponent<RectTransform>();
+        leftRect.sizeDelta = new Vector2(120, 320);
+        leftRect.anchoredPosition = new Vector2(-200, 20);
+        var leftLayout = leftCol.AddComponent<VerticalLayoutGroup>();
+        leftLayout.childAlignment = TextAnchor.MiddleCenter;
+        leftLayout.childControlWidth = true;
+        leftLayout.childControlHeight = true;
+        leftLayout.spacing = 10;
+        p.leftColumn = leftRect;
+
+        // Right Column
+        var rightCol = new GameObject("RightColumn");
+        rightCol.transform.SetParent(canvas.transform, false);
+        var rightRect = rightCol.AddComponent<RectTransform>();
+        rightRect.sizeDelta = new Vector2(120, 320);
+        rightRect.anchoredPosition = new Vector2(200, 20);
+        var rightLayout = rightCol.AddComponent<VerticalLayoutGroup>();
+        rightLayout.childAlignment = TextAnchor.MiddleCenter;
+        rightLayout.childControlWidth = true;
+        rightLayout.childControlHeight = true;
+        rightLayout.spacing = 10;
+        p.rightColumn = rightRect;
+
+        // Wire Container
+        var wireCont = new GameObject("WireContainer");
+        wireCont.transform.SetParent(canvas.transform, false);
+        p.wireContainer = wireCont.transform;
+
+        // LeftItem prefab template: Image + CanvasGroup + Button + WireDragItem
+        var leftItemGo = new GameObject("LeftItem_Template", typeof(Image), typeof(CanvasGroup));
+        leftItemGo.transform.SetParent(leftCol.transform, false);
+        leftItemGo.AddComponent<Button>();
+        leftItemGo.AddComponent<WireDragItem>();
+        leftItemGo.GetComponent<RectTransform>().sizeDelta = new Vector2(80, 50);
+        p.leftItemPrefab = leftItemGo.GetComponent<WireDragItem>();
+        leftItemGo.SetActive(false);
+
+        // RightItem prefab template: Image + CanvasGroup + Button + WireDropTarget
+        var rightItemGo = new GameObject("RightItem_Template", typeof(Image), typeof(CanvasGroup));
+        rightItemGo.transform.SetParent(rightCol.transform, false);
+        rightItemGo.AddComponent<Button>();
+        rightItemGo.AddComponent<WireDropTarget>();
+        rightItemGo.GetComponent<RectTransform>().sizeDelta = new Vector2(80, 50);
+        p.rightItemPrefab = rightItemGo.GetComponent<WireDropTarget>();
+        rightItemGo.SetActive(false);
+
+        // Wire segment prefab template
+        var wireSeg = new GameObject("WireSegment_Template", typeof(Image));
+        wireSeg.transform.SetParent(canvas.transform, false);
+        wireSeg.GetComponent<RectTransform>().sizeDelta = new Vector2(1, 1);
+        p.wireSegmentPrefab = wireSeg.GetComponent<Image>();
+        wireSeg.SetActive(false);
+         
+
+        p.progressText = CreateUIText(canvas.transform, "ProgressText", "Đã nối: 0/4", 20, Color.green, new Vector2(0, -250));
         p.closeButton = CreateCloseButton(canvas.transform);
         SavePrefab(canvas, "FlowPuzzleCanvas");
     }

@@ -99,6 +99,16 @@ public class SpirePuzzleConfig
 [System.Serializable]
 public class FlowPuzzleConfig
 {
+    [Header("Wire Drag & Drop")]
+    [Range(3, 6)]
+    public int pairCount = 4;
+    public Color[] wireColors;
+
+    [Header("Sprites (Optional)")]
+    public Sprite plugSprite;
+    public Sprite socketSprite;
+
+    // Keep legacy fields
     public int gridSize = 5;
     public Color[] pairColors;
 }
