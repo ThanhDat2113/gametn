@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 6146045532919713025}
   - component: {fileID: 104376012768274228}
   - component: {fileID: 3478571687934000073}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Ambient Dust
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4847,7 +4847,7 @@ GameObject:
   - component: {fileID: 8926162285105954578}
   - component: {fileID: 8456110880504184366}
   - component: {fileID: 7391883295487811422}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Point Light
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5014,6 +5014,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 8dfe62bd249ca1844927fe304156656a, type: 3}
       propertyPath: m_Name
       value: LampVFX
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 8dfe62bd249ca1844927fe304156656a, type: 3}
+      propertyPath: m_Layer
+      value: 3
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
