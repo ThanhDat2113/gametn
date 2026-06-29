@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.Events;
+using System.Collections.Generic;
 
 public class QuestManager : MonoBehaviour
 {
@@ -23,6 +24,9 @@ public class QuestManager : MonoBehaviour
     private int currentStepIndex = 0;
     private int currentChainIndex = 0;
 
+    // Danh sách các Quest đã hoàn thành (lưu questId)
+    private List<string> _completedQuestIds = new List<string>();
+
     public QuestStep CurrentStep => (runtimeQuest != null && currentStepIndex < runtimeQuest.steps.Length)
         ? runtimeQuest.steps[currentStepIndex]
         : null;
@@ -41,6 +45,12 @@ public class QuestManager : MonoBehaviour
     {
         if (runtimeQuest == null) return false;
         return currentStepIndex >= runtimeQuest.steps.Length;
+    }
+
+    // Kiểm tra xem một quest (theo ID) đã hoàn thành chưa (từ lịch sử)
+    public bool IsQuestCompleted(string questId)
+    {
+        return _completedQuestIds.Contains(questId);
     }
 
     private void Awake()
@@ -87,7 +97,9 @@ public class QuestManager : MonoBehaviour
                 type        = original.steps[i].type,
                 targetId    = original.steps[i].targetId,
                 description = original.steps[i].description,
-                isCompleted = false
+                isCompleted = false,
+                requiredAmount = original.steps[i].requiredAmount,
+                currentAmount = 0
             };
         }
         return clone;
@@ -98,7 +110,6 @@ public class QuestManager : MonoBehaviour
         runtimeQuest = CloneQuest(template);
         currentStepIndex = 0;
 
-        // Hiển thị lại UI trước khi set nội dung
         if (questUI != null)
         {
             questUI.Show();
@@ -124,26 +135,13 @@ public class QuestManager : MonoBehaviour
         }
     }
 
-    // ─── COMBAT ──────────────────────────────────────────────────────────────
+    // ─── COMBAT (KILL COUNT) ─────────────────────────────────────────────────
 
-    /// <summary>
-    /// Gọi từ MapEnemy khi đánh bại một enemy group.
-    /// </summary>
-    public void OnEnemyGroupDefeated(EnemyGroupData enemyGroup)
+    public void OnEnemyDefeated(string enemyId)
     {
-        if (enemyGroup == null) return;
-        OnEnemyGroupDefeated(enemyGroup.name);
-    }
-
-    /// <summary>
-    /// Gọi từ CombatSceneStarter khi chiến thắng combat với một targetId cụ thể.
-    /// targetId thường là triggerID của NPC (khớp với quest step targetId).
-    /// </summary>
-    public void OnEnemyGroupDefeated(string targetId)
-    {
-        if (string.IsNullOrEmpty(targetId))
+        if (string.IsNullOrEmpty(enemyId))
         {
-            Debug.LogWarning("[QuestManager] OnEnemyGroupDefeated called with null or empty targetId.");
+            Debug.LogWarning("[QuestManager] OnEnemyDefeated called with null or empty enemyId.");
             return;
         }
 
@@ -160,22 +158,68 @@ public class QuestManager : MonoBehaviour
         }
 
         var step = runtimeQuest.steps[currentStepIndex];
-        if (step.type == QuestStepType.Kill && step.targetId == targetId && !step.isCompleted)
+        if (step.type == QuestStepType.Kill && step.targetId == enemyId && !step.isCompleted)
         {
-            Debug.Log($"[QuestManager] Kill step completed: {step.description}");
-            CompleteCurrentStep();
+            step.currentAmount++;
+            Debug.Log($"[QuestManager] Kill progress: {step.currentAmount}/{step.requiredAmount} for {enemyId}");
+
+            UpdateUI();
+
+            if (step.currentAmount >= step.requiredAmount)
+            {
+                Debug.Log($"[QuestManager] Kill step completed: {step.description}");
+                CompleteCurrentStep();
+            }
         }
         else
         {
-            Debug.Log($"[QuestManager] Kill step mismatch: step.type={step.type}, step.targetId={step.targetId}, targetId={targetId}");
+            Debug.Log($"[QuestManager] Kill step mismatch: step.type={step.type}, step.targetId={step.targetId}, enemyId={enemyId}");
+        }
+    }
+
+    // ─── BACKWARD COMPATIBILITY (old OnEnemyGroupDefeated) ─────────────────
+
+    public void OnEnemyGroupDefeated(EnemyGroupData enemyGroup)
+    {
+        if (enemyGroup == null) return;
+        OnEnemyGroupDefeated(enemyGroup.name);
+    }
+
+    public void OnEnemyGroupDefeated(string targetId)
+    {
+        if (string.IsNullOrEmpty(targetId))
+        {
+            Debug.LogWarning("[QuestManager] OnEnemyGroupDefeated called with null or empty targetId.");
+            return;
+        }
+
+        // Nếu step hiện tại là Kill với requiredAmount > 1, thì không xử lý ở đây (dùng OnEnemyDefeated)
+        if (runtimeQuest != null && currentStepIndex < runtimeQuest.steps.Length)
+        {
+            var currentStep = runtimeQuest.steps[currentStepIndex];
+            if (currentStep.type == QuestStepType.Kill && currentStep.requiredAmount > 1)
+            {
+                Debug.Log("[QuestManager] OnEnemyGroupDefeated ignored because Kill step uses count.");
+                return;
+            }
+        }
+
+        // Fallback: Kill step với requiredAmount = 1 (kiểu cũ)
+        if (runtimeQuest == null) return;
+        if (currentStepIndex >= runtimeQuest.steps.Length) return;
+
+        var step = runtimeQuest.steps[currentStepIndex];
+        if (step.type == QuestStepType.Kill && step.targetId == targetId && !step.isCompleted)
+        {
+            if (step.requiredAmount <= 1)
+            {
+                CompleteCurrentStep();
+            }
         }
     }
 
     // ─── GATHER / ITEM PICKUP ────────────────────────────────────────────────
 
-    /// <summary>
-    /// Gọi từ ItemPickup khi người chơi nhặt một vật phẩm trên map.
-    /// </summary>
     public void OnItemPickedUp(string itemId)
     {
         if (string.IsNullOrEmpty(itemId))
@@ -184,27 +228,14 @@ public class QuestManager : MonoBehaviour
             return;
         }
 
-        if (runtimeQuest == null)
-        {
-            Debug.LogWarning("[QuestManager] No active quest to process item pickup.");
-            return;
-        }
-
-        if (currentStepIndex >= runtimeQuest.steps.Length)
-        {
-            Debug.LogWarning("[QuestManager] Quest already completed, cannot process item pickup.");
-            return;
-        }
+        if (runtimeQuest == null) return;
+        if (currentStepIndex >= runtimeQuest.steps.Length) return;
 
         var step = runtimeQuest.steps[currentStepIndex];
         if (step.type == QuestStepType.Gather && step.targetId == itemId && !step.isCompleted)
         {
             Debug.Log($"[QuestManager] Item '{itemId}' picked up → completing gather step.");
             CompleteCurrentStep();
-        }
-        else
-        {
-            Debug.Log($"[QuestManager] Gather step mismatch. Current step type={step.type}, targetId={step.targetId}, itemId={itemId}");
         }
     }
 
@@ -231,9 +262,6 @@ public class QuestManager : MonoBehaviour
 
     // ─── EXPLORE / LOCATION ──────────────────────────────────────────────────
 
-    /// <summary>
-    /// Gọi từ LocationTrigger khi player đến vị trí target.
-    /// </summary>
     public void OnLocationReached(string locationId)
     {
         if (string.IsNullOrEmpty(locationId))
@@ -242,27 +270,14 @@ public class QuestManager : MonoBehaviour
             return;
         }
 
-        if (runtimeQuest == null)
-        {
-            Debug.LogWarning("[QuestManager] No active quest.");
-            return;
-        }
-
-        if (currentStepIndex >= runtimeQuest.steps.Length)
-        {
-            Debug.LogWarning($"[QuestManager] Quest already completed. Can't process step.");
-            return;
-        }
+        if (runtimeQuest == null) return;
+        if (currentStepIndex >= runtimeQuest.steps.Length) return;
 
         var step = runtimeQuest.steps[currentStepIndex];
         if (step.type == QuestStepType.Explore && step.targetId == locationId && !step.isCompleted)
         {
             Debug.Log($"[QuestManager] Location reached: {locationId} → completing explore step.");
             CompleteCurrentStep();
-        }
-        else
-        {
-            Debug.Log($"[QuestManager] Explore step mismatch: step.type={step.type}, step.targetId={step.targetId}, locationId={locationId}");
         }
     }
 
@@ -282,6 +297,12 @@ public class QuestManager : MonoBehaviour
             OnQuestCompleted?.Invoke(runtimeQuest);
             Debug.Log($"[Quest] Quest completed: {runtimeQuest.questName}");
             questUI?.Hide();
+
+            // Thêm vào danh sách quest đã hoàn thành
+            if (!_completedQuestIds.Contains(runtimeQuest.questId))
+            {
+                _completedQuestIds.Add(runtimeQuest.questId);
+            }
 
             CompleteQuestAndAdvance();
         }
@@ -349,15 +370,12 @@ public class QuestManager : MonoBehaviour
                     if (reward.character != null && formationMgr != null)
                     {
                         formationMgr.UnlockCharacter(reward.character);
-
-                        // Scale level nhân vật mới = level trung bình của party
                         int avgLevel = 1;
                         if (PlayerProgression.Instance != null)
                         {
                             avgLevel = PlayerProgression.Instance.GetAveragePartyLevel();
                             PlayerProgression.Instance.SetLevel(reward.character, avgLevel);
                         }
-
                         Debug.Log($"[Quest Reward] Mở khóa nhân vật: {reward.character.characterName} (Lv.{avgLevel})");
                     }
                     break;
@@ -376,10 +394,6 @@ public class QuestManager : MonoBehaviour
                         PlayerProgression.Instance.AddPartyExperience(reward.amount);
                         Debug.Log($"[Quest Reward] Party nhận {reward.amount} kinh nghiệm!");
                     }
-                    else
-                    {
-                        Debug.LogWarning($"[Quest Reward] Không thể cộng {reward.amount} EXP: PlayerProgression chưa được khởi tạo.");
-                    }
                     break;
 
                 default:
@@ -394,7 +408,19 @@ public class QuestManager : MonoBehaviour
     private void UpdateUI()
     {
         if (questUI != null && runtimeQuest != null && currentStepIndex < runtimeQuest.steps.Length)
-            questUI.SetObjective(runtimeQuest.steps[currentStepIndex].description);
+        {
+            var step = runtimeQuest.steps[currentStepIndex];
+            string displayText = step.description;
+
+            // Thay thế placeholder cho Kill step
+            if (step.type == QuestStepType.Kill && step.requiredAmount > 1)
+            {
+                displayText = displayText.Replace("{current}", step.currentAmount.ToString())
+                                         .Replace("{required}", step.requiredAmount.ToString());
+            }
+
+            questUI.SetObjective(displayText);
+        }
     }
 
     // ─── RESET ──────────────────────────────────────────────────────────────

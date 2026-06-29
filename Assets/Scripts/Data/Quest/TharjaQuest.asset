@@ -13,23 +13,29 @@ MonoBehaviour:
   m_Name: TharjaQuest
   m_EditorClassIdentifier: Assembly-CSharp::QuestData
   questId: 3
-  questName: "T\u01B0\u01A1ng tr\u1EE3"
+  questName: Tharja
   steps:
   - stepId: 0
     type: 0
     targetId: 3
-    description: "T\xECm v\xE0 tr\xF2 chuy\u1EC7n v\u1EDBi Tharja"
+    description: "T\xECm th\xE1nh k\u1EF5 s\u0129 Tharja"
     isCompleted: 0
+    requiredAmount: 1
+    currentAmount: 0
   - stepId: 1
-    type: 6
-    targetId: 101
-    description: "Chi\u1EBFn th\u1EAFng tr\xF2 ch\u01A1i c\u1EE7a Tharja"
+    type: 2
+    targetId: "S\xE1ch ph\xE9p"
+    description: "T\xECm ki\u1EBFm s\xE1ch ph\xE9p"
     isCompleted: 0
+    requiredAmount: 1
+    currentAmount: 0
   - stepId: 2
     type: 0
     targetId: 3
     description: "Tr\xF2 chuy\u1EC7n v\u1EDBi Tharja"
     isCompleted: 0
+    requiredAmount: 1
+    currentAmount: 0
   isRepeatable: 0
   rewards:
   - rewardType: 0

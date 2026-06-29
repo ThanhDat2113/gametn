@@ -22,8 +22,12 @@ public class DialogueBubbleUI : MonoBehaviour
     public KeyCode continueKey = KeyCode.Space;
     public bool clickToContinue = true;
 
+    [Header("Skip")]
+    [Tooltip("Nhấn phím này để skip toàn bộ sequence hội thoại hiện tại")]
+    public KeyCode skipKey = KeyCode.Backspace;
+
     [Header("Directional Settings")]
-    [Tooltip("Khoảng cách dịch ngang thêm (world units) khi bubble ở bên phải/trái (chỉ áp dụng nếu không dùng offsetRight)")]
+    [Tooltip("Khoảng cách dịch ngang thêm (world units) khi bubble ở bên phải/trái")]
     public float horizontalOffset = 1.5f;
 
     [Header("Typing Effect")]
@@ -34,7 +38,8 @@ public class DialogueBubbleUI : MonoBehaviour
     private TextMeshProUGUI _speakerText;
     private TextMeshProUGUI _contentText;
     private bool _isShowing;
-    private System.Action _onHide;
+    private System.Action _onHide;                    // callback mỗi bước (advance dòng tiếp theo)
+    private System.Action _sequenceCompleteCallback;  // callback khi toàn bộ sequence kết thúc
     private Coroutine _typingCoroutine;
     private bool _isTyping;
     private string _currentFullText;
@@ -54,8 +59,10 @@ public class DialogueBubbleUI : MonoBehaviour
     void Update()
     {
         if (!_isShowing || _currentBubbleInstance == null) return;
+
         UpdateBillboard();
 
+        // Advance / complete typing
         bool keyPressed = Input.GetKeyDown(continueKey) || (clickToContinue && Input.GetMouseButtonDown(0));
         if (keyPressed)
         {
@@ -64,6 +71,10 @@ public class DialogueBubbleUI : MonoBehaviour
             else
                 Hide();
         }
+
+        // Skip toàn bộ sequence
+        if (Input.GetKeyDown(skipKey))
+            SkipAll();
     }
 
     private void UpdateBillboard()
@@ -77,19 +88,20 @@ public class DialogueBubbleUI : MonoBehaviour
     }
 
     /// <summary>
-    /// Hiển thị một dòng hội thoại với bubble phù hợp.
+    /// Hiển thị một dòng hội thoại. onHide gọi khi dòng này kết thúc (advance sang dòng tiếp).
     /// </summary>
-    public void Show(DialogueLineData line, Transform npcTarget, Transform playerTarget, InteractionSide? side = null, System.Action onHide = null)
+    public void Show(DialogueLineData line, Transform npcTarget, Transform playerTarget,
+                     InteractionSide? side = null, System.Action onHide = null)
     {
         if (_isShowing) Hide();
 
         _onHide = onHide;
         _currentFullText = line.text;
 
-        // Xác định prefab và target
+        // Xác định prefab và target theo side
         GameObject selectedPrefab;
         Transform target;
-        bool isSwapped = false; // true nếu swap bubble (tương tác phải)
+        bool isSwapped = false;
 
         if (side == InteractionSide.Right)
         {
@@ -119,77 +131,128 @@ public class DialogueBubbleUI : MonoBehaviour
             }
         }
 
+        if (target == null)
+        {
+            Debug.LogWarning("[DialogueBubbleUI] Target is null, using fallback.");
+            target = (line.isPlayerLine) ? playerTarget : npcTarget;
+            if (target == null)
+            {
+                Debug.LogError("[DialogueBubbleUI] Both targets are null! Cannot display bubble.");
+                return;
+            }
+        }
+
         if (selectedPrefab == null)
         {
             Debug.LogError("[DialogueBubbleUI] Missing prefab!");
             return;
         }
 
-        if (target == null)
-        {
-            Debug.LogWarning("[DialogueBubbleUI] Target is null, cannot display bubble.");
-            return;
-        }
-
-        // Tạo instance
         _currentBubbleInstance = Instantiate(selectedPrefab, transform);
         _currentBubbleInstance.name = $"Bubble_{(line.isPlayerLine ? "Player" : "NPC")}";
 
-        // Lấy components
         _speakerText = GetComponentInChildren<TextMeshProUGUI>(_currentBubbleInstance, "SpeakerName");
-        _contentText = GetComponentInChildren<TextMeshProUGUI>(_currentBubbleInstance, "Content");
-
-        // Set text
-        if (_speakerText != null) _speakerText.text = line.speakerName;
-        if (_contentText != null) _contentText.text = "";
-
-        // --- Xác định offset ---
-        Vector2 offset;
-
-        // Nếu đang swap (tương tác phải) và có offsetRight riêng
-        if (isSwapped && line.offsetRight != Vector2.zero)
+        if (_speakerText == null)
         {
-            // Dùng offsetRight trực tiếp, KHÔNG cộng thêm horizontalOffset
-            offset = line.offsetRight;
+            var allTexts = _currentBubbleInstance.GetComponentsInChildren<TextMeshProUGUI>(true);
+            if (allTexts.Length >= 2)
+            {
+                _speakerText = allTexts[0];
+                _contentText = allTexts[1];
+            }
+            else if (allTexts.Length == 1)
+            {
+                _contentText = allTexts[0];
+            }
         }
         else
         {
-            // Dùng offset mặc định hoặc offset từ line, sau đó cộng thêm horizontalOffset nếu có side
-            offset = line.offset == Vector2.zero ? defaultOffset : line.offset;
-
-            // Thêm horizontalOffset cho cả hai trường hợp (trừ khi đã dùng offsetRight)
-            if (side.HasValue)
-            {
-                float dir = (side.Value == InteractionSide.Right) ? 1f : -1f;
-                offset = new Vector2(offset.x + dir * horizontalOffset, offset.y);
-            }
+            _contentText = GetComponentInChildren<TextMeshProUGUI>(_currentBubbleInstance, "Content");
         }
 
-        // Đặt vị trí
+        if (_speakerText != null)
+            _speakerText.text = line.speakerName;
+        else
+            Debug.LogWarning("[DialogueBubbleUI] SpeakerName TextMeshProUGUI not found!");
+
+        if (_contentText != null)
+            _contentText.text = "";
+        else
+            Debug.LogWarning("[DialogueBubbleUI] Content TextMeshProUGUI not found!");
+
+        Vector2 offset;
+        if (isSwapped && line.offsetRight != Vector2.zero)
+            offset = line.offsetRight;
+        else
+            offset = line.offset == Vector2.zero ? defaultOffset : line.offset;
+
+        if (side.HasValue)
+        {
+            float dir = (side.Value == InteractionSide.Right) ? 1f : -1f;
+            offset = new Vector2(offset.x + dir * horizontalOffset, offset.y);
+        }
+
         _currentBubbleInstance.transform.position = target.position + (Vector3)offset;
         _currentBubbleInstance.SetActive(true);
         _isShowing = true;
 
-        // Bắt đầu typing
         if (typingSpeed > 0f)
-        {
             _typingCoroutine = StartCoroutine(TypeText(line.text));
-        }
-        else
-        {
-            if (_contentText != null) _contentText.text = line.text;
-        }
+        else if (_contentText != null)
+            _contentText.text = line.text;
     }
 
-    public void ShowSequential(DialogueLineData[] lines, Transform npcTarget, Transform playerTarget, System.Action onComplete = null, int startIndex = 0, InteractionSide? side = null)
+    /// <summary>
+    /// Hiển thị tuần tự nhiều dòng. onComplete gọi khi toàn bộ sequence kết thúc (kể cả khi skip).
+    /// </summary>
+    public void ShowSequential(DialogueLineData[] lines, Transform npcTarget, Transform playerTarget,
+                               System.Action onComplete = null, int startIndex = 0, InteractionSide? side = null)
     {
+        // Lưu callback kết thúc sequence để SkipAll có thể gọi trực tiếp
+        if (startIndex == 0)
+            _sequenceCompleteCallback = onComplete;
+
         if (startIndex >= lines.Length)
         {
+            _sequenceCompleteCallback = null;
             Hide();
             onComplete?.Invoke();
             return;
         }
-        Show(lines[startIndex], npcTarget, playerTarget, side, () => ShowSequential(lines, npcTarget, playerTarget, onComplete, startIndex + 1, side));
+
+        Show(lines[startIndex], npcTarget, playerTarget, side,
+             () => ShowSequential(lines, npcTarget, playerTarget, onComplete, startIndex + 1, side));
+    }
+
+    /// <summary>
+    /// Skip toàn bộ sequence hiện tại, huỷ bubble và gọi callback kết thúc (OnDialogueComplete).
+    /// </summary>
+    public void SkipAll()
+    {
+        if (!_isShowing) return;
+
+        CompleteTyping();
+
+        // Destroy bubble ngay lập tức
+        if (_currentBubbleInstance != null)
+        {
+            Destroy(_currentBubbleInstance);
+            _currentBubbleInstance = null;
+        }
+
+        _isShowing = false;
+
+        // Clear toàn bộ chain để không trigger từng bước
+        _onHide = null;
+
+        // Lấy và clear sequenceCompleteCallback trước khi invoke (tránh gọi lại)
+        var finalCallback = _sequenceCompleteCallback;
+        _sequenceCompleteCallback = null;
+
+        AudioManager.Instance?.PlayUIDialogueAdvance();
+
+        // Gọi OnDialogueComplete trên DialogueTrigger
+        finalCallback?.Invoke();
     }
 
     private IEnumerator TypeText(string fullText)

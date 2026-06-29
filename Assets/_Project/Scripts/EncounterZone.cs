@@ -5,86 +5,53 @@ using System.Linq;
 
 /// <summary>
 /// Vùng encounter ngẫu nhiên kiểu "cỏ dại Pokémon" — gắn lên GameObject có Collider (isTrigger=true).
-/// Khi player ở trong vùng, hệ thống tự roll % để bắt đầu combat với 1 enemy group
-/// được chọn ngẫu nhiên theo trọng số (weight) trong list cấu hình.
-///
-/// TÁI SỬ DỤNG TOÀN BỘ pipeline có sẵn của MapEnemy:
-///   FormationManager.SaveFormation() → CombatSessionData.Set() → FadeController →
-///   ẩn MapRoot/PersistentContainer → SceneLoaderManager.LoadCombatScene()
-///
-/// LEVEL SCALING: vì EnemyGroupData là ScriptableObject (asset chung, có thể được
-/// nhiều EncounterZone/MapEnemy khác tham chiếu), KHÔNG sửa trực tiếp asset gốc.
-/// Thay vào đó, tạo 1 RUNTIME CLONE (ScriptableObject.Instantiate) mỗi khi trigger
-/// combat, áp dụng level scaling lên bản clone, rồi truyền clone đó vào CombatSessionData.
-/// Asset gốc trên disk không bao giờ bị thay đổi.
+/// Khi player di chuyển trong vùng, hệ thống tích lũy thời gian:
+///   - 0 → 5 giây: không thể gặp quái (an toàn).
+///   - 5 → 8 giây: có xác suất gặp quái (theo encounterChance).
+///   - Sau 8 giây: chắc chắn gặp quái.
+/// Đứng yên thì tạm dừng timer.
 /// </summary>
 [RequireComponent(typeof(Collider))]
 public class EncounterZone : MonoBehaviour
 {
-    public enum TriggerMode
-    {
-        ByStep,   // roll % mỗi khi player di chuyển qua 1 khoảng cách nhất định
-        ByTime,   // roll % mỗi X giây khi đang ở trong vùng
-        Both      // roll cả 2 cách — gặp ở bất kỳ điều kiện nào trước
-    }
-
     [System.Serializable]
     public class WeightedEncounter
     {
-        [Tooltip("Enemy group dùng làm nguồn dữ liệu (asset gốc, KHÔNG bị sửa khi scale level).")]
         public EnemyGroupData enemyGroup;
-
-        [Tooltip("Trọng số xuất hiện so với các entry khác trong list. " +
-                 "Trọng số càng cao, tỉ lệ được chọn càng lớn. Vd: weight=50 xuất hiện gấp 5 lần weight=10.")]
         [Min(0.01f)] public float weight = 1f;
-
-        [Header("Level Scaling (áp dụng lên bản clone runtime)")]
-        [Tooltip("Level tối thiểu sẽ cộng thêm vào level gốc của mỗi enemy trong group.")]
         public int levelOffsetMin = 0;
-        [Tooltip("Level tối đa sẽ cộng thêm vào level gốc của mỗi enemy trong group.")]
         public int levelOffsetMax = 0;
     }
 
     [Header("Encounter Pool")]
-    [Tooltip("Danh sách enemy group có thể gặp trong vùng này, kèm trọng số + level scaling riêng.")]
     [SerializeField] private List<WeightedEncounter> encounterPool = new List<WeightedEncounter>();
 
-    [Header("Trigger Mode")]
-    [Tooltip("ByStep: roll theo khoảng cách di chuyển. ByTime: roll theo thời gian. Both: cả 2.")]
-    [SerializeField] private TriggerMode triggerMode = TriggerMode.Both;
-
-    [Header("By Step Settings")]
-    [Tooltip("Khoảng cách (world units) player phải di chuyển trong vùng trước khi roll 1 lần.")]
-    [SerializeField] private float stepDistance = 1.5f;
-    [Tooltip("Tỉ lệ % (0-100) gặp encounter mỗi lần roll theo step.")]
-    [Range(0f, 100f)] [SerializeField] private float stepEncounterChance = 10f;
-
-    [Header("By Time Settings")]
-    [Tooltip("Khoảng thời gian (giây) giữa mỗi lần roll theo thời gian.")]
-    [SerializeField] private float timeInterval = 2f;
-    [Tooltip("Tỉ lệ % (0-100) gặp encounter mỗi lần roll theo thời gian.")]
-    [Range(0f, 100f)] [SerializeField] private float timeEncounterChance = 8f;
+    [Header("Movement Time Encounter")]
+    [Tooltip("Thời gian di chuyển an toàn tối thiểu (giây) — không thể gặp quái trước khi đạt mốc này.")]
+    [SerializeField] private float safeTime = 5f;
+    [Tooltip("Thời gian di chuyển tối đa (giây) — sau mốc này sẽ chắc chắn gặp quái.")]
+    [SerializeField] private float maxTime = 8f;
+    [Tooltip("Xác suất gặp quái (%) trong khoảng thời gian từ safeTime đến maxTime.")]
+    [Range(0f, 100f)] [SerializeField] private float encounterChance = 30f;
 
     [Header("Cooldown")]
-    [Tooltip("Bật cooldown sau mỗi lần encounter (hoặc sau khi rời vùng) để tránh combat liên tục.")]
     [SerializeField] private bool useCooldown = true;
-    [Tooltip("Thời gian (giây) phải chờ sau 1 lần encounter trước khi có thể roll lại — " +
-             "tính từ lúc PLAYER QUAY LẠI vùng (sau combat) hoặc từ lúc rời vùng rồi vào lại.")]
     [SerializeField] private float cooldownDuration = 3f;
 
     [Header("Transition")]
-    [Tooltip("LƯU Ý: field này hiện KHÔNG được dùng trực tiếp — FadeController.Instance.FadeToBlack() " +
-             "dùng fadeDuration riêng của chính FadeController (giống pattern trong MapEnemy.cs gốc). " +
-             "Giữ field này để dễ mở rộng sau nếu muốn override fade duration theo từng zone.")]
     [SerializeField] private float fadeDuration = 0.5f;
 
     // ── Runtime state ────────────────────────────────────────────────────────
     private bool _playerInZone = false;
     private Transform _playerTransform;
-    private Vector3 _lastStepCheckPosition;
-    private float _timeSinceLastTimeRoll = 0f;
+    private Vector3 _lastPosition;
+    private float _movingTimeAccumulated = 0f;
     private float _cooldownTimer = 0f;
-    private bool _isTransitioning = false; // chặn double-trigger trong lúc đang fade/load scene
+    private bool _isTransitioning = false;
+    private bool _hasTriggeredEncounter = false;
+
+    // Theo dõi trạng thái đã dừng player để restore đúng cách
+    private bool _hasStoppedPlayer = false;
 
     private void Awake()
     {
@@ -92,8 +59,7 @@ public class EncounterZone : MonoBehaviour
         if (col != null && !col.isTrigger)
         {
             col.isTrigger = true;
-            Debug.LogWarning($"[EncounterZone] Collider trên '{gameObject.name}' chưa set isTrigger=true — " +
-                              "đã tự động bật để vùng hoạt động đúng.");
+            Debug.LogWarning($"[EncounterZone] Collider trên '{gameObject.name}' chưa set isTrigger=true — đã tự động bật.");
         }
     }
 
@@ -103,8 +69,9 @@ public class EncounterZone : MonoBehaviour
 
         _playerInZone = true;
         _playerTransform = other.transform;
-        _lastStepCheckPosition = _playerTransform.position;
-        _timeSinceLastTimeRoll = 0f;
+        _lastPosition = _playerTransform.position;
+        _movingTimeAccumulated = 0f;
+        _hasTriggeredEncounter = false;
     }
 
     private void OnTriggerExit(Collider other)
@@ -114,68 +81,140 @@ public class EncounterZone : MonoBehaviour
 
         _playerInZone = false;
         _playerTransform = null;
+        _movingTimeAccumulated = 0f;
+        _hasTriggeredEncounter = false;
     }
 
     private void Update()
     {
-        // Cooldown đếm ngược liên tục, không phụ thuộc việc player có trong vùng hay không —
-        // để player rời vùng rồi vào lại vẫn phải tôn trọng cooldown nếu chưa hết giờ.
         if (_cooldownTimer > 0f) _cooldownTimer -= Time.deltaTime;
 
         if (!_playerInZone || _isTransitioning || _playerTransform == null) return;
         if (useCooldown && _cooldownTimer > 0f) return;
         if (encounterPool == null || encounterPool.Count == 0) return;
-
-        // An toàn bổ sung: nếu EncounterZone KHÔNG phải con của MapRoot (nên không tự
-        // deactivate cùng map khi vào combat), vẫn phải chặn roll khi đang trong combat —
-        // CombatSessionData.HasData = true nghĩa là 1 session combat đang chờ/đang diễn ra.
         if (CombatSessionData.HasData) return;
+        if (_hasTriggeredEncounter) return;
 
-        bool checkByStep = triggerMode == TriggerMode.ByStep || triggerMode == TriggerMode.Both;
-        bool checkByTime = triggerMode == TriggerMode.ByTime || triggerMode == TriggerMode.Both;
+        Vector3 currentPos = _playerTransform.position;
+        float distanceMoved = Vector3.Distance(currentPos, _lastPosition);
+        _lastPosition = currentPos;
 
-        if (checkByStep) TickStepCheck();
-        if (checkByTime) TickTimeCheck();
-    }
+        if (distanceMoved < 0.001f) return;
 
-    private void TickStepCheck()
-    {
-        float distMoved = Vector3.Distance(_playerTransform.position, _lastStepCheckPosition);
-        if (distMoved < stepDistance) return;
+        _movingTimeAccumulated += Time.deltaTime;
 
-        _lastStepCheckPosition = _playerTransform.position;
-        RollEncounter(stepEncounterChance);
-    }
+        if (_movingTimeAccumulated < safeTime)
+            return;
 
-    private void TickTimeCheck()
-    {
-        _timeSinceLastTimeRoll += Time.deltaTime;
-        if (_timeSinceLastTimeRoll < timeInterval) return;
-
-        _timeSinceLastTimeRoll = 0f;
-        RollEncounter(timeEncounterChance);
-    }
-
-    /// <summary>Roll % để xem có gặp encounter không. Nếu trúng, chọn enemy group theo weight và bắt đầu combat.</summary>
-    private void RollEncounter(float chancePercent)
-    {
-        if (_isTransitioning) return;
+        if (_movingTimeAccumulated >= maxTime)
+        {
+            TriggerEncounter();
+            return;
+        }
 
         float roll = Random.Range(0f, 100f);
-        if (roll > chancePercent) return; // không trúng lần này
+        if (roll <= encounterChance)
+            TriggerEncounter();
+    }
+
+    private void TriggerEncounter()
+    {
+        if (_isTransitioning || _hasTriggeredEncounter) return;
 
         WeightedEncounter chosen = PickWeightedEncounter();
         if (chosen == null || chosen.enemyGroup == null)
         {
-            Debug.LogWarning("[EncounterZone] Roll trúng nhưng encounterPool rỗng hoặc enemyGroup null — bỏ qua.");
+            Debug.LogWarning("[EncounterZone] Không có enemy group hợp lệ.");
             return;
         }
 
+        _hasTriggeredEncounter = true;
         _isTransitioning = true;
+
+        // Dừng player ngay lập tức trước khi fade
+        StopPlayer();
+
         StartCoroutine(StartRandomCombatTransition(chosen));
     }
 
-    /// <summary>Random weighted pick — trọng số càng cao, khả năng được chọn càng lớn.</summary>
+    // ==================== PLAYER STOP / RESTORE ====================
+
+    /// <summary>
+    /// Dừng player ngay lập tức: tắt script điều khiển, reset velocity, set idle animation.
+    /// </summary>
+    private void StopPlayer()
+    {
+        if (_hasStoppedPlayer) return;
+
+        GameObject player = PlayerManager.Instance?.GetPlayer();
+        if (player == null) return;
+
+        // Reset animation về Idle trước khi disable script
+        // (OnDisable() trong HSRPlayerController cũng sẽ gọi ResetToIdle() tự động)
+        var hsrController = player.GetComponent<HSRPlayerController>();
+        if (hsrController != null)
+            hsrController.ResetToIdle();
+
+        // Tắt script điều khiển
+        var movementScript = PlayerManager.Instance?.playerMovementScript;
+        if (movementScript != null && movementScript.enabled)
+        {
+            movementScript.enabled = false;
+            Debug.Log("[EncounterZone] Disabled player movement script.");
+        }
+
+        // Disable CharacterController
+        var cc = player.GetComponent<CharacterController>();
+        if (cc != null && cc.enabled)
+        {
+            cc.enabled = false;
+            Debug.Log("[EncounterZone] Disabled CharacterController.");
+        }
+
+        // Reset Rigidbody velocity
+        var rb = player.GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+        }
+
+        _hasStoppedPlayer = true;
+        Debug.Log("[EncounterZone] Player stopped for encounter.");
+    }
+
+    /// <summary>
+    /// Khôi phục movement sau khi quay về từ combat scene.
+    /// </summary>
+    private void RestorePlayer()
+    {
+        if (!_hasStoppedPlayer) return;
+
+        GameObject player = PlayerManager.Instance?.GetPlayer();
+        if (player == null) return;
+
+        // Bật lại CharacterController
+        var cc = player.GetComponent<CharacterController>();
+        if (cc != null && !cc.enabled)
+        {
+            cc.enabled = true;
+            Debug.Log("[EncounterZone] Re-enabled CharacterController.");
+        }
+
+        // Bật lại script điều khiển
+        var movementScript = PlayerManager.Instance?.playerMovementScript;
+        if (movementScript != null && !movementScript.enabled)
+        {
+            movementScript.enabled = true;
+            Debug.Log("[EncounterZone] Re-enabled player movement script.");
+        }
+
+        _hasStoppedPlayer = false;
+        Debug.Log("[EncounterZone] Player movement restored.");
+    }
+
+    // ==================== ENCOUNTER FLOW ====================
+
     private WeightedEncounter PickWeightedEncounter()
     {
         var validEntries = encounterPool.Where(e => e.enemyGroup != null && e.weight > 0f).ToList();
@@ -190,7 +229,7 @@ public class EncounterZone : MonoBehaviour
             cumulative += entry.weight;
             if (roll <= cumulative) return entry;
         }
-        return validEntries[validEntries.Count - 1]; // fallback an toàn cho sai số float
+        return validEntries[validEntries.Count - 1];
     }
 
     private IEnumerator StartRandomCombatTransition(WeightedEncounter chosen)
@@ -200,17 +239,15 @@ public class EncounterZone : MonoBehaviour
         {
             Debug.LogError("[EncounterZone] Không tìm thấy FormationManager!");
             _isTransitioning = false;
+            RestorePlayer(); // Đảm bảo player được restore nếu có lỗi
             yield break;
         }
         formationManager.SaveFormation();
 
-        // Tạo runtime clone của EnemyGroupData để scale level mà KHÔNG sửa asset gốc.
         EnemyGroupData scaledGroup = CreateScaledClone(chosen);
-
         CombatSessionData.Set(FormationDataStorage.PendingFormation, scaledGroup, fromMap: true);
-        // Lưu ý: KHÔNG gọi CombatSceneStarter.RegisterLastEnemy vì đây không phải MapEnemy cố định
-        // trong scene — không cần MarkAsDefeated sau combat (zone vẫn còn để gặp lại lần khác).
 
+        // Fade to black — player đã đứng yên từ TriggerEncounter()
         if (FadeController.Instance != null)
             yield return FadeController.Instance.FadeToBlack();
 
@@ -219,11 +256,10 @@ public class EncounterZone : MonoBehaviour
         {
             SceneLoaderManager.MapRoot = mapRoot;
             mapRoot.SetActive(false);
-            Debug.Log("[EncounterZone] MapRoot found and deactivated.");
         }
         else
         {
-            Debug.LogError("[EncounterZone] Không tìm thấy MapRoot! Hãy tạo một GameObject tên 'MapRoot' chứa toàn bộ map.");
+            Debug.LogError("[EncounterZone] Không tìm thấy MapRoot!");
         }
 
         var persistentContainer = GameObject.Find("PersistentContainer");
@@ -231,29 +267,18 @@ public class EncounterZone : MonoBehaviour
         {
             SceneLoaderManager.PersistentContainer = persistentContainer;
             persistentContainer.SetActive(false);
-            Debug.Log("[EncounterZone] PersistentContainer found and deactivated.");
         }
         else
         {
-            Debug.LogWarning("[EncounterZone] Không tìm thấy PersistentContainer (không bắt buộc).");
+            Debug.LogWarning("[EncounterZone] Không tìm thấy PersistentContainer.");
         }
 
         SceneLoaderManager.LoadCombatScene();
 
         if (useCooldown) _cooldownTimer = cooldownDuration;
-
-        // Cooldown bắt đầu tính ngay từ lúc này (không chờ quay lại map) — vì Update() của
-        // EncounterZone sẽ tự dừng khi MapRoot.SetActive(false) (GameObject bị deactivate
-        // cùng toàn bộ children). Time.deltaTime cũng dừng tính theo. Khi quay lại map,
-        // MapRoot.SetActive(true) → EncounterZone active lại → OnEnable() reset _isTransitioning,
-        // còn _cooldownTimer (đã set ở trên) tiếp tục đếm ngược đúng từ giá trị cũ trong Update().
+        _movingTimeAccumulated = 0f;
     }
 
-    /// <summary>
-    /// Tạo bản sao runtime của EnemyGroupData, áp dụng level offset ngẫu nhiên
-    /// (trong khoảng [levelOffsetMin, levelOffsetMax]) lên từng enemy. Bản clone này
-    /// chỉ tồn tại trong RAM của session combat hiện tại — không ghi vào asset trên disk.
-    /// </summary>
     private EnemyGroupData CreateScaledClone(WeightedEncounter chosen)
     {
         EnemyGroupData clone = ScriptableObject.Instantiate(chosen.enemyGroup);
@@ -263,9 +288,6 @@ public class EncounterZone : MonoBehaviour
 
         if (clone.enemies != null)
         {
-            // Deep-copy từng EnemyEntry để không vô tình share reference với asset gốc
-            // (ScriptableObject.Instantiate chỉ shallow-copy array of class, các EnemyEntry
-            // bên trong VẪN LÀ CÙNG REFERENCE với asset gốc nếu không deep-copy thủ công).
             var clonedEntries = new EnemyGroupData.EnemyEntry[clone.enemies.Length];
             for (int i = 0; i < clone.enemies.Length; i++)
             {
@@ -280,17 +302,37 @@ public class EncounterZone : MonoBehaviour
             clone.enemies = clonedEntries;
         }
 
-        Debug.Log($"[EncounterZone] Tạo encounter '{clone.name}' với level offset +{offset} " +
-                  $"(min={chosen.levelOffsetMin}, max={chosen.levelOffsetMax}).");
-
+        Debug.Log($"[EncounterZone] Tạo encounter '{clone.name}' với level offset +{offset}.");
         return clone;
     }
 
+    /// <summary>
+    /// OnEnable được gọi khi MapRoot được bật lại sau khi quay về từ combat scene.
+    /// Đây là thời điểm khôi phục movement cho player.
+    /// </summary>
     private void OnEnable()
     {
-        // Reset transition flag khi zone được active lại (vd map hiện lại sau khi unload combat scene).
-        // Quan trọng: nếu không reset, zone sẽ bị "khóa" vĩnh viễn sau lần encounter đầu tiên.
         _isTransitioning = false;
+
+        // Khôi phục movement nếu đã bị dừng trước đó
+        // Dùng coroutine để đảm bảo PlayerManager và các component đã sẵn sàng
+        StartCoroutine(RestorePlayerDelayed());
+
+        if (_playerInZone)
+        {
+            _movingTimeAccumulated = 0f;
+            _hasTriggeredEncounter = false;
+        }
+    }
+
+    /// <summary>
+    /// Chờ 1 frame để đảm bảo tất cả component (PlayerManager, CharacterController...)
+    /// đã được khởi tạo/enable trước khi restore.
+    /// </summary>
+    private IEnumerator RestorePlayerDelayed()
+    {
+        yield return null; // Chờ 1 frame
+        RestorePlayer();
     }
 
 #if UNITY_EDITOR
@@ -311,7 +353,7 @@ public class EncounterZone : MonoBehaviour
 
         UnityEditor.Handles.color = Color.yellow;
         UnityEditor.Handles.Label(transform.position + Vector3.up * 1.5f,
-            $"EncounterZone\nMode: {triggerMode}\nPool: {(encounterPool?.Count ?? 0)} groups");
+            $"EncounterZone\nSafe: {safeTime}s | Max: {maxTime}s\nChance: {encounterChance}%");
     }
 #endif
 }
