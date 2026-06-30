@@ -38,8 +38,19 @@ public class CombatPlanningUI : MonoBehaviour
     public TextMeshProUGUI apDisplay;
 
     private CombatManager combat;
-    private Camera mainCam;
     private CanvasGroup planningCanvasGroup;
+    private Camera MainCam 
+    { 
+        get 
+        {
+            if (CombatManager.Instance?.cameraManager != null)
+            {
+                var cm = CombatManager.Instance.cameraManager;
+                return cm.GetComponent<Camera>();
+            }
+            return Camera.main;
+        }
+    }
 
     private CombatUnit currentUnit;
     private List<Coroutine> skillButtonAnimations = new List<Coroutine>();
@@ -51,7 +62,6 @@ public class CombatPlanningUI : MonoBehaviour
 
     private void Start()
     {
-        mainCam = Camera.main;
         combat = CombatManager.Instance;
         if (combat == null)
         {
@@ -153,7 +163,7 @@ public class CombatPlanningUI : MonoBehaviour
 
     private void HandleWorldClick(Vector3 mousePos)
     {
-        Ray ray = mainCam.ScreenPointToRay(mousePos);
+        Ray ray = MainCam.ScreenPointToRay(mousePos);
         RaycastHit2D[] hits2D = Physics2D.GetRayIntersectionAll(ray);
         UnitView clickedView = null;
         foreach (var hit in hits2D)
@@ -176,7 +186,7 @@ public class CombatPlanningUI : MonoBehaviour
     {
         CloseSkillWheel();
         var skills = unit.AvailableSkills.Count > 0 ? unit.AvailableSkills.ToArray() : unit.Data.skills;
-        Vector2 screenPos = mainCam.WorldToScreenPoint(view.transform.position);
+        Vector2 screenPos = MainCam.WorldToScreenPoint(view.transform.position);
         RectTransform canvasRect = planningCanvas.GetComponent<RectTransform>();
         RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, screenPos, planningCanvas.worldCamera, out Vector2 canvasPos);
 

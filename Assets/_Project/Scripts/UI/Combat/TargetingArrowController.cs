@@ -24,7 +24,7 @@ public class TargetingArrowController : MonoBehaviour
 
     private void Start()
     {
-        mainCamera = Camera.main;
+        // Không cache Camera.main - dùng fresh mỗi lần trong Update
         CreateMaterials();
     }
 
@@ -59,7 +59,9 @@ public class TargetingArrowController : MonoBehaviour
 
     private void CheckForHover()
     {
-        var ray = mainCamera.ScreenPointToRay(Input.mousePosition);
+        var cam = Camera.main;
+        if (cam == null) return;
+        var ray = cam.ScreenPointToRay(Input.mousePosition);
         if (Physics.Raycast(ray, out RaycastHit hit, 200f))
         {
             if (hit.collider.GetComponentInParent<UnitView>() != null)

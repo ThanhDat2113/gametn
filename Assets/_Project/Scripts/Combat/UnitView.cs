@@ -124,6 +124,16 @@ public class UnitView : MonoBehaviour
             
             healthBar.value = (float)unit.CurrentHP / unit.MaxHP;
         }
+
+        // Gán combat camera cho World Space canvas (fix skeleton health bar bị null camera)
+        var worldCanvas = GetComponentInChildren<Canvas>();
+        if (worldCanvas != null && worldCanvas.renderMode == RenderMode.WorldSpace && worldCanvas.worldCamera == null)
+        {
+            if (cameraManager != null)
+                worldCanvas.worldCamera = cameraManager.GetComponent<Camera>();
+            else
+                worldCanvas.worldCamera = Camera.main;
+        }
     }
 
     private void OnDestroy()
