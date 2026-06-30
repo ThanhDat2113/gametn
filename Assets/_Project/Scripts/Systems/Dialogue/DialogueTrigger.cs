@@ -41,8 +41,7 @@ public class DialogueTrigger : MonoBehaviour
     public GameObject dialogueCameraObject;
     public Transform dialogueCameraPoint;
 
-    [Header("Directional Dialogue")]
-    public bool useDirectionalDialogue = false;
+    [Header("Directional Points")]
     public Transform leftPlayerPoint;
     public Transform rightPlayerPoint;
     public Transform leftCameraPoint;
@@ -58,6 +57,21 @@ public class DialogueTrigger : MonoBehaviour
     private DialogueEntry _currentEntry;
     private bool sequential = true;
     private NPCInteraction _npcInteraction;
+
+    // Lưu trạng thái gốc
+    private bool _originalPlayerFacingRight;
+    private Vector3 _originalNPCScale;
+    private bool _scalesSaved = false;
+
+    // Khóa di chuyển
+    private bool _movementLocked = false;
+    private bool _isDialogueTriggered = false;
+
+    // Tham chiếu component
+    private MonoBehaviour _playerMovementScript;
+    private CharacterController _playerCharacterController;
+    private Rigidbody _playerRigidbody;
+    private HSRPlayerController _hsrController;
 
     void Start()
     {
@@ -78,10 +92,58 @@ public class DialogueTrigger : MonoBehaviour
                 Debug.LogError("DialogueTrigger: Không tìm thấy DialogueCamera!");
         }
 
-        if (switchCamera && dialogueCameraPoint == null)
-            Debug.LogWarning("DialogueTrigger: Dialogue Camera Point chưa được gán.");
+        if (switchCamera && dialogueCameraPoint == null && leftCameraPoint == null && rightCameraPoint == null)
+            Debug.LogWarning("DialogueTrigger: Chưa gán camera point nào.");
 
         _npcInteraction = GetComponent<NPCInteraction>();
+        FindPlayerComponents();
+    }
+
+    private void FindPlayerComponents()
+    {
+        GameObject player = PlayerManager.Instance?.GetPlayer();
+        if (player == null)
+        {
+            Debug.LogWarning("[DialogueTrigger] Player not found.");
+            return;
+        }
+
+        _playerCharacterController = player.GetComponent<CharacterController>();
+        _playerRigidbody = player.GetComponent<Rigidbody>();
+
+        // Lấy HSRPlayerController trực tiếp — dùng để gọi ResetToIdle()
+        _hsrController = player.GetComponent<HSRPlayerController>();
+
+        // Ưu tiên script được gán trong PlayerManager
+        if (PlayerManager.Instance != null && PlayerManager.Instance.playerMovementScript != null)
+        {
+            _playerMovementScript = PlayerManager.Instance.playerMovementScript;
+            Debug.Log($"[DialogueTrigger] Movement script from PlayerManager: {_playerMovementScript.GetType().Name}");
+            return;
+        }
+
+        // Fallback: tự tìm
+        var scripts = player.GetComponents<MonoBehaviour>();
+        foreach (var script in scripts)
+        {
+            if (script == null || !script.enabled) continue;
+            string typeName = script.GetType().Name;
+            if (typeName.Contains("Controller") || typeName.Contains("Movement") || typeName.Contains("Input") || typeName.Contains("Player"))
+            {
+                _playerMovementScript = script;
+                Debug.Log($"[DialogueTrigger] Movement script found: {typeName}");
+                break;
+            }
+        }
+
+        if (_playerMovementScript == null)
+            Debug.LogWarning("[DialogueTrigger] Could not find player movement script.");
+    }
+
+    void Update()
+    {
+        if (_isPlaying && !_movementLocked)
+            StopPlayerImmediately();
     }
 
     private void FindDialogueCamera()
@@ -143,7 +205,6 @@ public class DialogueTrigger : MonoBehaviour
 
     private InteractionSide DetermineInteractionSide()
     {
-        if (!useDirectionalDialogue) return InteractionSide.Left;
         GameObject player = PlayerManager.Instance?.GetPlayer();
         if (player == null) return InteractionSide.Left;
         float diff = player.transform.position.x - transform.position.x;
@@ -152,10 +213,11 @@ public class DialogueTrigger : MonoBehaviour
 
     public void PlayDialogueAuto()
     {
-        if (_isPlaying) return;
+        if (_isPlaying || _isDialogueTriggered) return;
+
         if (string.IsNullOrEmpty(triggerID))
         {
-            Debug.LogWarning("[DialogueTrigger] triggerID rỗng, không thể chơi dialogue.");
+            Debug.LogWarning("[DialogueTrigger] triggerID rỗng.");
             return;
         }
 
@@ -166,20 +228,19 @@ public class DialogueTrigger : MonoBehaviour
         {
             if (defaultLines != null && defaultLines.Length > 0)
             {
-                Debug.Log("[DialogueTrigger] Không có entry phù hợp, dùng defaultLines.");
+                StopPlayerImmediately();
+                _isDialogueTriggered = true;
                 StartDialogue(defaultLines);
                 return;
             }
-            Debug.Log("[DialogueTrigger] Không có dialogue phù hợp.");
             return;
         }
 
         if (entry.playOnce && _hasPlayedForCurrentEntry)
-        {
-            Debug.Log("[DialogueTrigger] Entry đã chơi 1 lần và playOnce=true.");
             return;
-        }
 
+        StopPlayerImmediately();
+        _isDialogueTriggered = true;
         _hasPlayedForCurrentEntry = true;
         _currentEntry = entry;
 
@@ -192,59 +253,127 @@ public class DialogueTrigger : MonoBehaviour
             StartDialogue(entry.lines);
     }
 
-    private IEnumerator PlayWithBlackScreenTransition(DialogueLineData[] lines)
-    {
-        yield return FadeController.Instance.FadeToBlack();
-        ApplyTeleport();
-        if (switchCamera) SwitchToDialogueCamera();
-        yield return new WaitForSeconds(blackScreenDelay);
-        yield return FadeController.Instance.FadeFromBlack();
-        StartDialogueInternal(lines);
-    }
+    // ==================== PLAYER STOP ====================
 
-    private IEnumerator EndWithBlackScreen()
+    private void StopPlayerImmediately()
     {
-        yield return FadeController.Instance.FadeToBlack();
-        RestoreCameraState();
-        yield return new WaitForSeconds(blackScreenDelay);
-        yield return FadeController.Instance.FadeFromBlack();
-    }
+        if (_movementLocked) return;
 
-    private void ApplyTeleport()
-    {
-        if (!teleportPlayer) return;
         GameObject player = PlayerManager.Instance?.GetPlayer();
         if (player == null) return;
 
-        Vector3 targetPos = targetPlayerPosition;
-        if (useDirectionalDialogue)
+        // Tắt script điều khiển — OnDisable() trong HSRPlayerController sẽ tự gọi ResetToIdle()
+        if (_playerMovementScript != null && _playerMovementScript.enabled)
         {
-            if (_currentSide == InteractionSide.Left && leftPlayerPoint != null)
-                targetPos = leftPlayerPoint.position;
-            else if (_currentSide == InteractionSide.Right && rightPlayerPoint != null)
-                targetPos = rightPlayerPoint.position;
+            _playerMovementScript.enabled = false;
+            Debug.Log("[DialogueTrigger] Disabled movement script.");
         }
 
-        MonoBehaviour controller = player.GetComponent<MonoBehaviour>();
-        if (controller != null) controller.enabled = false;
-
-        CharacterController cc = player.GetComponent<CharacterController>();
-        if (cc != null && cc.enabled)
+        // Disable CharacterController
+        if (_playerCharacterController != null && _playerCharacterController.enabled)
         {
-            cc.enabled = false;
-            player.transform.position = targetPos;
-            cc.enabled = true;
-            cc.Move(Vector3.zero);
-        }
-        else
-        {
-            player.transform.position = targetPos;
+            _playerCharacterController.enabled = false;
+            Debug.Log("[DialogueTrigger] Disabled CharacterController.");
         }
 
-        if (controller != null) controller.enabled = true;
+        // Reset Rigidbody
+        if (_playerRigidbody != null)
+        {
+            _playerRigidbody.linearVelocity = Vector3.zero;
+            _playerRigidbody.angularVelocity = Vector3.zero;
+        }
+
+        // Gọi thêm ResetToIdle() phòng trường hợp script đã tắt từ trước
+        // và OnDisable() không được kích hoạt lần này
+        if (_hsrController != null)
+            _hsrController.ResetToIdle();
+
+        _movementLocked = true;
     }
 
-    private void SwitchToDialogueCamera()
+    private void UnlockPlayerMovement()
+    {
+        if (!_movementLocked) return;
+
+        if (_playerMovementScript != null && !_playerMovementScript.enabled)
+        {
+            _playerMovementScript.enabled = true;
+            Debug.Log("[DialogueTrigger] Re-enabled movement script.");
+        }
+
+        if (_playerCharacterController != null && !_playerCharacterController.enabled)
+        {
+            _playerCharacterController.enabled = true;
+            Debug.Log("[DialogueTrigger] Re-enabled CharacterController.");
+        }
+
+        _movementLocked = false;
+    }
+
+    // ==================== TELEPORT & CAMERA ====================
+
+    private Vector3? GetTeleportTarget()
+    {
+        if (!teleportPlayer) return null;
+
+        if (_currentSide == InteractionSide.Left && leftPlayerPoint != null)
+            return leftPlayerPoint.position;
+        if (_currentSide == InteractionSide.Right && rightPlayerPoint != null)
+            return rightPlayerPoint.position;
+
+        return targetPlayerPosition;
+    }
+
+    private bool GetCameraPointTarget(out Vector3 position, out Quaternion rotation)
+    {
+        position = Vector3.zero;
+        rotation = Quaternion.identity;
+        if (!switchCamera) return false;
+
+        if (_currentSide == InteractionSide.Left && leftCameraPoint != null)
+        {
+            position = leftCameraPoint.position;
+            rotation = leftCameraPoint.rotation;
+            return true;
+        }
+        if (_currentSide == InteractionSide.Right && rightCameraPoint != null)
+        {
+            position = rightCameraPoint.position;
+            rotation = rightCameraPoint.rotation;
+            return true;
+        }
+        if (dialogueCameraPoint != null)
+        {
+            position = dialogueCameraPoint.position;
+            rotation = dialogueCameraPoint.rotation;
+            return true;
+        }
+
+        return false;
+    }
+
+    private void ApplyTeleportToPosition(Vector3? target)
+    {
+        if (!teleportPlayer || target == null) return;
+
+        GameObject player = PlayerManager.Instance?.GetPlayer();
+        if (player == null) return;
+
+        bool ccWasEnabled = _playerCharacterController != null && _playerCharacterController.enabled;
+        if (ccWasEnabled) _playerCharacterController.enabled = false;
+
+        player.transform.position = target.Value;
+
+        if (_playerCharacterController != null)
+        {
+            _playerCharacterController.enabled = true;
+            _playerCharacterController.Move(Vector3.zero);
+            // Tắt lại vì movement vẫn đang bị lock
+            _playerCharacterController.enabled = false;
+        }
+    }
+
+    private void SwitchToDialogueCameraAtPoint(Vector3 position, Quaternion rotation)
     {
         FindDialogueCamera();
         if (dialogueCameraObject == null) return;
@@ -257,21 +386,87 @@ public class DialogueTrigger : MonoBehaviour
         }
 
         Transform rig = dialogueCameraObject.transform.parent;
-        if (rig == null) return;
-
-        Transform cameraPoint = dialogueCameraPoint;
-        if (useDirectionalDialogue)
-        {
-            if (_currentSide == InteractionSide.Left && leftCameraPoint != null)
-                cameraPoint = leftCameraPoint;
-            else if (_currentSide == InteractionSide.Right && rightCameraPoint != null)
-                cameraPoint = rightCameraPoint;
-        }
-
-        if (cameraPoint != null)
-            rig.SetPositionAndRotation(cameraPoint.position, cameraPoint.rotation);
+        if (rig != null)
+            rig.SetPositionAndRotation(position, rotation);
 
         dialogueCameraObject.SetActive(true);
+    }
+
+    // ==================== DIALOGUE FLOW ====================
+
+    private IEnumerator PlayWithBlackScreenTransition(DialogueLineData[] lines)
+    {
+        Vector3? teleportTarget = GetTeleportTarget();
+        bool hasCamPoint = GetCameraPointTarget(out Vector3 camPos, out Quaternion camRot);
+
+        yield return FadeController.Instance.FadeToBlack();
+
+        ApplyCharacterFlips();
+        ApplyTeleportToPosition(teleportTarget);
+        if (hasCamPoint) SwitchToDialogueCameraAtPoint(camPos, camRot);
+
+        yield return new WaitForSeconds(blackScreenDelay);
+        yield return FadeController.Instance.FadeFromBlack();
+        StartDialogueInternal(lines);
+    }
+
+    private void StartDialogue(DialogueLineData[] lines)
+    {
+        Vector3? teleportTarget = GetTeleportTarget();
+        bool hasCamPoint = GetCameraPointTarget(out Vector3 camPos, out Quaternion camRot);
+
+        ApplyCharacterFlips();
+        ApplyTeleportToPosition(teleportTarget);
+        if (hasCamPoint) SwitchToDialogueCameraAtPoint(camPos, camRot);
+        StartDialogueInternal(lines);
+    }
+
+    private void StartDialogueInternal(DialogueLineData[] lines)
+    {
+        _isPlaying = true;
+
+        if (_npcInteraction == null && interactionPrompt != null)
+            interactionPrompt.SetActive(false);
+
+        Transform playerTarget = null;
+        if (PlayerManager.Instance?.GetPlayer() != null)
+            playerTarget = PlayerManager.Instance.GetPlayer().transform;
+        else
+        {
+            GameObject playerGO = GameObject.FindGameObjectWithTag("Player");
+            if (playerGO != null) playerTarget = playerGO.transform;
+        }
+
+        if (sequential)
+        {
+            DialogueBubbleUI.Instance.ShowSequential(
+                lines,
+                transform,
+                playerTarget,
+                OnDialogueComplete,
+                0,
+                _currentSide
+            );
+        }
+        else
+        {
+            DialogueBubbleUI.Instance.Show(
+                lines[0],
+                transform,
+                playerTarget,
+                _currentSide,
+                OnDialogueComplete
+            );
+        }
+    }
+
+    private IEnumerator EndWithBlackScreen()
+    {
+        yield return FadeController.Instance.FadeToBlack();
+        RestoreOriginalScales();
+        RestoreCameraState();
+        yield return new WaitForSeconds(blackScreenDelay);
+        yield return FadeController.Instance.FadeFromBlack();
     }
 
     private void RestoreCameraState()
@@ -285,58 +480,79 @@ public class DialogueTrigger : MonoBehaviour
         }
     }
 
-    private void StartDialogue(DialogueLineData[] lines)
+    // ==================== FLIP LOGIC ====================
+
+    private void ApplyCharacterFlips()
     {
-        if (_currentSide == InteractionSide.Left)
-            _currentSide = DetermineInteractionSide();
+        GameObject player = PlayerManager.Instance?.GetPlayer();
+        if (player == null) return;
 
-        ApplyTeleport();
-        if (switchCamera) SwitchToDialogueCamera();
-        StartDialogueInternal(lines);
-    }
+        var playerController = player.GetComponent<HSRPlayerController>();
 
-    private void StartDialogueInternal(DialogueLineData[] lines)
-    {
-        _isPlaying = true;
-        if (_npcInteraction == null && interactionPrompt != null)
-            interactionPrompt.SetActive(false);
-
-        Transform playerTarget = PlayerManager.Instance?.GetPlayer()?.transform;
-
-        if (sequential)
+        if (!_scalesSaved)
         {
-            DialogueBubbleUI.Instance.ShowSequential(
-                lines,
-                transform,          // npcTarget
-                playerTarget,       // playerTarget
-                OnDialogueComplete,
-                0,
-                useDirectionalDialogue ? _currentSide : (InteractionSide?)null
+            _originalPlayerFacingRight = playerController != null
+                ? playerController.IsFacingRight()
+                : true;
+            _originalNPCScale = transform.localScale;
+            _scalesSaved = true;
+        }
+
+        if (_currentSide == InteractionSide.Left)
+        {
+            if (playerController != null)
+                playerController.SetFacingDirection(true);
+
+            transform.localScale = new Vector3(
+                Mathf.Abs(_originalNPCScale.x) * (_originalNPCScale.x >= 0 ? -1f : 1f),
+                _originalNPCScale.y,
+                _originalNPCScale.z
             );
         }
         else
         {
-            DialogueBubbleUI.Instance.Show(
-                lines[0],
-                transform,
-                playerTarget,
-                useDirectionalDialogue ? _currentSide : (InteractionSide?)null,
-                OnDialogueComplete
-            );
+            if (playerController != null)
+                playerController.SetFacingDirection(false);
+
+            transform.localScale = _originalNPCScale;
         }
     }
+
+    private void RestoreOriginalScales()
+    {
+        if (!_scalesSaved) return;
+
+        GameObject player = PlayerManager.Instance?.GetPlayer();
+        if (player != null)
+        {
+            var playerController = player.GetComponent<HSRPlayerController>();
+            if (playerController != null)
+                playerController.SetFacingDirection(_originalPlayerFacingRight);
+        }
+
+        transform.localScale = _originalNPCScale;
+        _scalesSaved = false;
+    }
+
+    // ==================== COMPLETE ====================
 
     private void OnDialogueComplete()
     {
         _isPlaying = false;
+        _isDialogueTriggered = false;
 
-        if (QuestManager.Instance != null && !string.IsNullOrEmpty(triggerID))
-            QuestManager.Instance.OnDialogueEnded(triggerID);
+        UnlockPlayerMovement();
 
         if (useBlackScreenOnEnd)
             StartCoroutine(EndWithBlackScreen());
         else
+        {
+            RestoreOriginalScales();
             RestoreCameraState();
+        }
+
+        if (QuestManager.Instance != null && !string.IsNullOrEmpty(triggerID))
+            QuestManager.Instance.OnDialogueEnded(triggerID);
 
         if (_npcInteraction != null)
             _npcInteraction.OnDialogueComplete();
@@ -359,7 +575,7 @@ public class DialogueTrigger : MonoBehaviour
         if (_npcInteraction != null) return;
 
         var entry = GetAppropriateEntry();
-        if (entry != null && (!entry.playOnce || !_hasPlayedForCurrentEntry) && !_isPlaying)
+        if (entry != null && (!entry.playOnce || !_hasPlayedForCurrentEntry) && !_isPlaying && !_isDialogueTriggered)
         {
             if (interactionPrompt != null)
                 interactionPrompt.SetActive(true);
@@ -373,5 +589,17 @@ public class DialogueTrigger : MonoBehaviour
         if (_npcInteraction != null) return;
         if (interactionPrompt != null)
             interactionPrompt.SetActive(false);
+    }
+
+    private void OnDestroy()
+    {
+        RestoreOriginalScales();
+        UnlockPlayerMovement();
+    }
+
+    private void OnDisable()
+    {
+        RestoreOriginalScales();
+        UnlockPlayerMovement();
     }
 }

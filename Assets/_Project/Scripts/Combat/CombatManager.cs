@@ -241,6 +241,20 @@ public class CombatManager : MonoBehaviour
             InitializePassives(unit);
             view.StoreOriginalPosition(finalPos);
             unitViews.Add(view);
+
+            // === THÊM ĐĂNG KÝ SỰ KIỆN KILL ===
+            unit.OnKill += (target) => {
+                if (target != null && !target.IsPlayer && target.Data != null)
+                {
+                    // Gọi QuestManager khi player giết enemy
+                    if (unit.IsPlayer)
+                    {
+                        Debug.Log($"[CombatManager] Player {unit.UnitName} killed {target.UnitName}");
+                        QuestManager.Instance?.OnEnemyDefeated(target.Data.characterName);
+                    }
+                }
+            };
+            // =================================
         }
     }
 

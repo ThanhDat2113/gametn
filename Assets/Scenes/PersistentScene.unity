@@ -293,10 +293,11 @@ GameObject:
   - component: {fileID: 43899151}
   - component: {fileID: 43899156}
   - component: {fileID: 43899155}
+  - component: {fileID: 43899158}
   - component: {fileID: 43899154}
   - component: {fileID: 43899153}
   - component: {fileID: 43899152}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Camera
   m_TagString: MainCamera
   m_Icon: {fileID: 0}
@@ -311,8 +312,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 43899150}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.20325963, y: -0.71842456, z: 0.2345753, w: 0.6225159}
-  m_LocalPosition: {x: 50.419067, y: 37.233074, z: 7.2493896}
+  m_LocalRotation: {x: -0.27671552, y: 0.6507817, z: -0.6506161, w: -0.2767859}
+  m_LocalPosition: {x: 0.00077056885, y: 2.5702057, z: 0.00011253357}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -336,7 +337,13 @@ MonoBehaviour:
   rotateLeft: 0
   rotateRight: 0
   heightOffset: 3
-  smoothTime: 0.001
+  smoothTime: 0.1
+  obstacleLayers:
+    serializedVersion: 2
+    m_Bits: 1
+  cameraRadius: 0.25
+  minDistance: 0.5
+  playerPivotHeight: 0.67
 --- !u!114 &43899153
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -452,11 +459,11 @@ Camera:
     y: 0
     width: 1
     height: 1
-  near clip plane: 5
-  far clip plane: 555
-  field of view: 60.000004
+  near clip plane: 0.05
+  far clip plane: 5000
+  field of view: 43.72401
   orthographic: 0
-  orthographic size: 8
+  orthographic size: 10
   m_Depth: 0
   m_CullingMask:
     serializedVersion: 2
@@ -472,6 +479,49 @@ Camera:
   m_OcclusionCulling: 0
   m_StereoConvergence: 10
   m_StereoSeparation: 0.022
+--- !u!114 &43899158
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 43899150}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f9dfa5b682dcd46bda6128250e975f58, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachineCamera
+  Priority:
+    Enabled: 0
+    m_Value: 0
+  OutputChannel: 1
+  StandbyUpdate: 2
+  m_StreamingVersion: 20241001
+  m_LegacyPriority: 0
+  Target:
+    TrackingTarget: {fileID: 0}
+    LookAtTarget: {fileID: 0}
+    CustomLookAtTarget: 0
+  Lens:
+    FieldOfView: 43.72401
+    OrthographicSize: 10
+    NearClipPlane: 0.05
+    FarClipPlane: 5000
+    Dutch: 0
+    ModeOverride: 0
+    PhysicalProperties:
+      GateFit: 2
+      SensorSize: {x: 21.946, y: 16.002}
+      LensShift: {x: 0, y: 0}
+      FocusDistance: 10
+      Iso: 200
+      ShutterSpeed: 0.005
+      Aperture: 16
+      BladeCount: 5
+      Curvature: {x: 2, y: 11}
+      BarrelClipping: 0.25
+      Anamorphism: 0
+  BlendHint: 0
 --- !u!1 &57524853
 GameObject:
   m_ObjectHideFlags: 0
@@ -2229,7 +2279,6 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 4a22cca2d28019a4a9664ad4a2bb4ddd, type: 2}
   - {fileID: 11400000, guid: 70a9fd08aa8b6214d998611c1bbcc303, type: 2}
   - {fileID: 11400000, guid: 7e22d93a7600a184abfd40abca4049ba, type: 2}
-  - {fileID: 11400000, guid: fb7f4d5fe5a0b5e46bc2a2d326887039, type: 2}
   - {fileID: 11400000, guid: dd40492da13afee4882a98c22fd4d6f7, type: 2}
   questUI: {fileID: 1060176369}
   rewardUI: {fileID: 1380480495}
@@ -2570,7 +2619,7 @@ GameObject:
   - component: {fileID: 478603518}
   - component: {fileID: 478603519}
   - component: {fileID: 478603517}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Mouse-Teeth
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3116,7 +3165,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 696864161}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: DialoguePoint
   m_TagString: DialoguePoint
   m_Icon: {fileID: 0}
@@ -3629,7 +3678,7 @@ GameObject:
   - component: {fileID: 985476670}
   - component: {fileID: 985476672}
   - component: {fileID: 985476671}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Ambient Dust
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9037,7 +9086,7 @@ GameObject:
   - component: {fileID: 1264433185}
   - component: {fileID: 1264433184}
   - component: {fileID: 1264433183}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Player
   m_TagString: Player
   m_Icon: {fileID: 0}
@@ -9829,7 +9878,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1505394824}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: VFX_Ambient_Manager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10689,6 +10738,7 @@ MonoBehaviour:
   defaultOffset: {x: 0, y: 1}
   continueKey: 32
   clickToContinue: 1
+  skipKey: 8
   horizontalOffset: -1
   typingSpeed: 0.03
   typingSoundEnabled: 1

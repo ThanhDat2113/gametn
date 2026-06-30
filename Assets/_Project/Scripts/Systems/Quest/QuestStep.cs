@@ -1,19 +1,19 @@
+using UnityEngine; // Thêm dòng này để sử dụng HeaderAttribute
+
 public enum QuestStepType
 {
     Talk,           // Nói chuyện với NPC (triggerID)
-    Kill,           // Đánh bại EnemyGroup (tên asset)
-    Gather,         // Thu thập vật phẩm (mở rộng)
+    Kill,           // Đánh bại EnemyGroup hoặc số lượng quái
+    Gather,         // Thu thập vật phẩm
     Explore,        // Đến một địa điểm
-
-    // 🧩 Puzzle types (batch 1)
-    SymbolSequence, // Nhấn lại sequence ký hiệu phát sáng
-    RiddleGate,     // Trả lời câu đố
-    MemoryGrove,    // Lật ô tìm cặp portrait nhân vật
-
-    // 🧩 Puzzle types (batch 2)
-    SlidePuzzle,    // Xếp hình trượt 3x3
-    SpirePuzzle,    // Tháp Huyền Thoại (Hanoi Tower)
-    FlowPuzzle      // Nối các cặp màu không chồng chéo
+    
+    // Puzzle types
+    SymbolSequence,
+    RiddleGate,
+    MemoryGrove,
+    SlidePuzzle,
+    SpirePuzzle,
+    FlowPuzzle
 }
 
 [System.Serializable]
@@ -21,7 +21,11 @@ public class QuestStep
 {
     public string stepId;
     public QuestStepType type;
-    public string targetId;
-    public string description;
+    public string targetId;          // ID của NPC, enemy, item, location, puzzle
+    public string description;       // Mô tả hiển thị, có thể dùng placeholder {current}/{required}
     public bool isCompleted = false;
+
+    [Header("Kill Count Settings")] // Cần using UnityEngine để sử dụng Header
+    public int requiredAmount = 1;   // Số lượng cần tiêu diệt (chỉ dùng cho Kill)
+    public int currentAmount = 0;    // Số lượng đã tiêu diệt (runtime)
 }

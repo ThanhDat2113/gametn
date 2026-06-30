@@ -35,7 +35,6 @@ public class HSRPlayerController : MonoBehaviour
         if (cameraTransform == null)
             cameraTransform = Camera.main.transform;
 
-        // Tạo AudioSource riêng cho footstep để có thể stop ngay khi dừng
         _footstepSource = gameObject.AddComponent<AudioSource>();
         _footstepSource.playOnAwake = false;
         _footstepSource.spatialBlend = 1f;
@@ -67,12 +66,11 @@ public class HSRPlayerController : MonoBehaviour
                 float moveX = _moveDir.x;
                 if (moveX != 0)
                 {
-                    float flipX = Mathf.Sign(moveX) * _initialScale.x;
+                    float flipX = Mathf.Sign(moveX) * Mathf.Abs(_initialScale.x);
                     spriteContainer.localScale = new Vector3(flipX, _initialScale.y, _initialScale.z);
                 }
             }
 
-            // Footstep — không delay, play footstep lần đầu ngay
             footstepTimer -= Time.deltaTime;
             if (!_wasMoving)
             {
@@ -99,7 +97,6 @@ public class HSRPlayerController : MonoBehaviour
             if (_wasMoving)
             {
                 _wasMoving = false;
-                // Dừng footstep ngay lập tức
                 _footstepSource.Stop();
             }
             footstepTimer = 0f;
@@ -116,6 +113,32 @@ public class HSRPlayerController : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Khi script bị disable (VD: do DialogueTrigger tắt để dừng player),
+    /// reset animation về Idle ngay lập tức để tránh bị kẹt ở trạng thái Run.
+    /// </summary>
+    private void OnDisable()
+    {
+        ResetToIdle();
+    }
+
+    /// <summary>
+    /// Reset tất cả animation state về Idle và dừng footstep.
+    /// Gọi được từ bên ngoài (VD: DialogueTrigger) nếu cần.
+    /// </summary>
+    public void ResetToIdle()
+    {
+        // Dừng footstep sound
+        if (_footstepSource != null && _footstepSource.isPlaying)
+            _footstepSource.Stop();
+
+        _wasMoving = false;
+        footstepTimer = 0f;
+
+        // Reset animation về idle
+        UpdateAnimation(false, 0, 0);
+    }
+
     void UpdateAnimation(bool isMoving, float x, float y)
     {
         if (animator == null) return;
@@ -124,6 +147,12 @@ public class HSRPlayerController : MonoBehaviour
         {
             animator.SetFloat("MoveX", x);
             animator.SetFloat("MoveY", y);
+        }
+        else
+        {
+            // Khi về idle, reset MoveX/MoveY về 0 tránh bị blend tree giữ animation chạy
+            animator.SetFloat("MoveX", 0f);
+            animator.SetFloat("MoveY", 0f);
         }
     }
 
@@ -140,5 +169,31 @@ public class HSRPlayerController : MonoBehaviour
 
         lastFootstepIndex = index;
         return footstepSounds[index];
+    }
+
+    // ==================== DIALOGUE FLIP API ====================
+
+    /// <summary>
+    /// Trả về true nếu spriteContainer đang nhìn sang phải (scale.x dương).
+    /// </summary>
+    public bool IsFacingRight()
+    {
+        if (spriteContainer == null) return true;
+        return spriteContainer.localScale.x > 0;
+    }
+
+    /// <summary>
+    /// Đặt hướng nhìn của spriteContainer.
+    /// facingRight=true → scale.x dương; facingRight=false → scale.x âm.
+    /// </summary>
+    public void SetFacingDirection(bool facingRight)
+    {
+        if (spriteContainer == null) return;
+        float absX = Mathf.Abs(_initialScale.x);
+        spriteContainer.localScale = new Vector3(
+            facingRight ? absX : -absX,
+            _initialScale.y,
+            _initialScale.z
+        );
     }
 }

@@ -56,7 +56,16 @@ public class UnitView : MonoBehaviour
 
         if (unit.Data.battleSprite != null)
             spriteRenderer.sprite = unit.Data.battleSprite;
-        spriteRenderer.flipX = !unit.IsPlayer;
+
+        // Flip logic based on flipOnSpawn
+        if (unit.Data.flipOnSpawn)
+        {
+            spriteRenderer.flipX = !unit.IsPlayer;
+        }
+        else
+        {
+            spriteRenderer.flipX = false; // Keep original sprite facing
+        }
 
         if (cameraManager == null)
             cameraManager = FindFirstObjectByType<CombatCameraManager>();
@@ -254,8 +263,6 @@ public class UnitView : MonoBehaviour
                 }
                 Debug.Log(logMessage + $" HP: {outcome.Target.CurrentHP}");
             }
-
-            // VFX spawning is now handled by ClashAnimationSequence.SpawnHitVFX
         }
         currentHitIndex++;
     }
@@ -332,8 +339,6 @@ public class UnitView : MonoBehaviour
     private UnitView FindViewForUnit(CombatUnit unit)
     {
         if (unit == null) return null;
-        // This can be slow, but it's a reliable way to find the view
-        // Called infrequently from animation events, so performance impact is minimal.
         foreach (var view in FindObjectsByType<UnitView>(FindObjectsSortMode.None))
         {
             if (view.LinkedUnit == unit)
