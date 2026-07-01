@@ -35,7 +35,7 @@ public class TargetingArrowController : MonoBehaviour
             SubscribeToEvents();
         }
 
-        if (combat != null && combat.CurrentPhase == CombatPhase.Execute)
+        if (combat != null && (combat.CurrentPhase == CombatPhase.PlayerTurn || combat.CurrentPhase == CombatPhase.EnemyTurn))
         {
             CheckForHover();
             UpdateLineVisuals();
@@ -107,12 +107,11 @@ public class TargetingArrowController : MonoBehaviour
         combat = CombatManager.Instance;
         if (combat == null) return;
 
-        combat.OnPlanChanged += DrawAllArrows;
-        combat.OnExecuteStarted += HideAllArrows;
+        combat.OnActionResolved += OnActionResolved;
         combat.OnVictory += HideAllArrows;
         combat.OnDefeat += HideAllArrows;
 
-        if (combat.CurrentPhase == CombatPhase.Execute)
+        if (combat.CurrentPhase == CombatPhase.PlayerTurn || combat.CurrentPhase == CombatPhase.EnemyTurn)
         {
             DrawAllArrows();
         }
@@ -124,11 +123,15 @@ public class TargetingArrowController : MonoBehaviour
     {
         if (combat != null)
         {
-            combat.OnPlanChanged -= DrawAllArrows;
-            combat.OnExecuteStarted -= HideAllArrows;
+            combat.OnActionResolved -= OnActionResolved;
             combat.OnVictory -= HideAllArrows;
             combat.OnDefeat -= HideAllArrows;
         }
+    }
+
+    private void OnActionResolved(ActionResult _)
+    {
+        HideAllArrows();
     }
 
     // Overload cho OnVictory (có tham số) gọi HideAllArrows gốc

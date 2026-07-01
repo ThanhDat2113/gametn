@@ -92,9 +92,10 @@ public class CombatCameraManager : MonoBehaviour
         if (CombatManager.Instance != null)
         {
             CombatManager.Instance.OnCombatStarted += HandleCombatStarted;
-            CombatManager.Instance.OnExecuteStarted += HandleRoundEnded;
+            CombatManager.Instance.OnPlayerTurnEnd += HandleRoundEnded;
+            CombatManager.Instance.OnEnemyTurnEnd += HandleRoundEnded;
             CombatManager.Instance.OnDefeat += HandleCombatEnd;
-            CombatManager.Instance.OnVictory += (_) => HandleCombatEnd(); // ✅ lambda cho OnVictory
+            CombatManager.Instance.OnVictory += (_) => HandleCombatEnd();
         }
         StartCoroutine(MonitorPhaseChanges());
     }
@@ -107,7 +108,7 @@ public class CombatCameraManager : MonoBehaviour
             yield return new WaitForSeconds(0.1f);
             if (CombatManager.Instance == null) yield break;
             CombatPhase currentPhase = CombatManager.Instance.CurrentPhase;
-            if (currentPhase == CombatPhase.Execute && lastPhase != CombatPhase.Execute)
+            if (currentPhase == CombatPhase.PlayerTurn && lastPhase != CombatPhase.PlayerTurn)
             {
                 StopCoroutineIfRunning(zoomCoroutine);
                 StopCoroutineIfRunning(followCoroutine);
@@ -120,7 +121,7 @@ public class CombatCameraManager : MonoBehaviour
                 shakeOffset = Vector3.zero;
                 yield return new WaitForSeconds(0.2f);
                 AutoFitUnitsInView();
-                Debug.Log("[CombatCamera] Entered PlayerPlan - Reset camera to view all units");
+                Debug.Log("[CombatCamera] Entered PlayerTurn - Reset camera to view all units");
             }
             lastPhase = currentPhase;
         }
@@ -131,7 +132,8 @@ public class CombatCameraManager : MonoBehaviour
         if (CombatManager.Instance != null)
         {
             CombatManager.Instance.OnCombatStarted -= HandleCombatStarted;
-            CombatManager.Instance.OnExecuteStarted -= HandleRoundEnded;
+            CombatManager.Instance.OnPlayerTurnEnd -= HandleRoundEnded;
+            CombatManager.Instance.OnEnemyTurnEnd -= HandleRoundEnded;
             CombatManager.Instance.OnDefeat -= HandleCombatEnd;
             CombatManager.Instance.OnVictory -= (_) => HandleCombatEnd();
         }

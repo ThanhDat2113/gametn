@@ -32,9 +32,9 @@ public class CombatTestUI : MonoBehaviour
     {
         combat = CombatManager.Instance;
 
-        combat.OnPlayerTurnStart += unit =>
+        combat.OnPlayerTurnStart += units =>
         {
-            planningUnit = unit;
+            planningUnit = units.FirstOrDefault();
             selectedSkill = null;
         };
         combat.OnVictory += (expDict) => planningUnit = null;  // SỬA: nhận tham số
@@ -68,8 +68,8 @@ public class CombatTestUI : MonoBehaviour
         DrawUnitList("── ENEMY ──", combat.EnemyUnits);
         GUILayout.Space(8);
 
-        // ── Chọn skill (chỉ khi đang Execute và có planningUnit) ──
-        if (combat.CurrentPhase == CombatPhase.Execute &&
+        // ── Chọn skill (chỉ khi đang PlayerTurn và có planningUnit) ──
+        if (combat.CurrentPhase == CombatPhase.PlayerTurn &&
             planningUnit != null)
         {
             DrawSkillSelection();
@@ -161,7 +161,7 @@ public class CombatTestUI : MonoBehaviour
     {
         if (skill == null || targets == null || targets.Count == 0) return;
         selectedSkill = null;
-        combat.SubmitPlayerTurnAction(skill, targets);
+        combat.SubmitPlayerAction(planningUnit, skill, targets);
     }
 
     // ─────────────────────────────────────────────────────────

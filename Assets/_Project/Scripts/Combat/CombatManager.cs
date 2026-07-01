@@ -35,8 +35,8 @@ public class CombatManager : MonoBehaviour
 
     public List<CombatUnit> PlayerUnits { get; private set; } = new();
     public List<CombatUnit> EnemyUnits { get; private set; } = new();
-    public List<CombatUnit> ActionOrder { get; private set; } = new();
 
+    // ── AP System (Shared Pool) ───────────────────────────────
     public int CurrentPlayerAP { get; private set; }
     private const int MAX_PLAYER_AP = 5;
     private const int STARTING_PLAYER_AP = 3;
@@ -48,24 +48,23 @@ public class CombatManager : MonoBehaviour
     private List<UnitView> unitViews = new();
     public List<UnitView> GetAllUnitViews() { return unitViews; }
 
-    [Header("Turn Meter Settings")]
-    public float actionValueTickRate = 10f;
-
-    private bool _isExecutingTurn = false;
-    private CombatUnit _currentActingUnit = null;
+    // ── Side-Based Turn State ─────────────────────────────────
+    private bool _playerEndedTurn = false;
+    private bool _isWaitingForPlayerSelection = false;
+    private CombatUnit _selectedUnit = null;
+    private SkillData _selectedSkill = null;
+    private List<CombatUnit> _selectedTargets = null;
 
     // ── Events ─────────────────────────────────────────────────
     public event System.Action OnCombatStarted;
-    public event System.Action<CombatUnit> OnPlayerUnitPlanning;
-    public event System.Action<CombatUnit> OnPlayerTurnStart;
+    public event System.Action<List<CombatUnit>> OnPlayerTurnStart;
     public event System.Action<CombatUnit> OnUnitTurnStart;
-    public event System.Action<List<CombatUnit>> OnTurnOrderUpdated;
-    public event System.Action OnExecuteStarted;
-    public event System.Action OnRoundEnded;
+    public event System.Action OnPlayerTurnEnd;
+    public event System.Action OnEnemyTurnStart;
+    public event System.Action OnEnemyTurnEnd;
     public event System.Action<ActionResult> OnActionResolved;
     public event System.Action<Dictionary<CharacterData, int>> OnVictory;
     public event System.Action OnDefeat;
-    public event System.Action OnPlanChanged;
     public event System.Action<int> OnAPChanged;
 
     public delegate void DamageModificationHandler(ActionOutcome outcome, CombatUnit actor);
@@ -108,32 +107,10 @@ public class CombatManager : MonoBehaviour
         if (stateMachine != null) stateMachine.OnPhaseChanged -= HandlePhaseChanged;
     }
 
-    public void GrantExtraTurn(CombatUnit unit)
-    {
-        Debug.Log($"[CombatManager] Cấp thêm lượt cho {unit.UnitName}");
-        unit.CurrentActionValue = CombatUnit.ACTION_THRESHOLD - 1f;
-    }
-
-    public void GrantImmediateTurn(CombatUnit unit)
-    {
-        Debug.Log($"[CombatManager] Cấp lượt hành động ngay lập tức cho {unit.UnitName}");
-        unit.CurrentActionValue = CombatUnit.ACTION_THRESHOLD;
-    }
-
     public List<CombatUnit> GetTeam(bool isPlayer) => isPlayer ? PlayerUnits : EnemyUnits;
     public List<CombatUnit> GetOpposingTeam(bool isPlayer) => isPlayer ? EnemyUnits : PlayerUnits;
 
     private static int SlotToRow(int slot) => 2 - (slot / 3);
-
-    private void UpdateActionOrderForUI()
-    {
-        var alive = GetAllAliveUnits();
-        ActionOrder = alive
-            .OrderByDescending(u => u.CurrentActionValue)
-            .ThenByDescending(u => u.Speed)
-            .ToList();
-        OnTurnOrderUpdated?.Invoke(ActionOrder);
-    }
 
     private List<CombatUnit> GetAllAliveUnits()
     {
@@ -156,7 +133,7 @@ public class CombatManager : MonoBehaviour
             if (slot?.data == null) continue;
             int level = slot.level;
             CharacterData charData = slot.data;
-            int hpBonus = 0, atkBonus = 0, pdefBonus = 0, mdefBonus = 0, speedBonus = 0;
+            int hpBonus = 0, atkBonus = 0, pdefBonus = 0, mdefBonus = 0;
             if (EquipmentManager.Instance != null)
             {
                 var equipment = EquipmentManager.Instance.GetEquipment(charData);
@@ -166,11 +143,10 @@ public class CombatManager : MonoBehaviour
                     atkBonus = equipment.GetATKBonus();
                     pdefBonus = equipment.GetPDEFBonus();
                     mdefBonus = equipment.GetMDEFBonus();
-                    speedBonus = equipment.GetSpeedBonus();
                 }
             }
             var unit = new CombatUnit();
-            unit.Initialize(charData, level, isPlayer: true, hpBonus, atkBonus, pdefBonus, mdefBonus, speedBonus);
+            unit.Initialize(charData, level, isPlayer: true, hpBonus, atkBonus, pdefBonus, mdefBonus);
             unit.GridRow = SlotToRow(slot.gridSlot);
             unit.GridSlot = slot.gridSlot;
             PlayerUnits.Add(unit);
@@ -242,11 +218,10 @@ public class CombatManager : MonoBehaviour
             view.StoreOriginalPosition(finalPos);
             unitViews.Add(view);
 
-            // === THÊM ĐĂNG KÝ SỰ KIỆN KILL ===
+            // Đăng ký sự kiện kill
             unit.OnKill += (target) => {
                 if (target != null && !target.IsPlayer && target.Data != null)
                 {
-                    // Gọi QuestManager khi player giết enemy
                     if (unit.IsPlayer)
                     {
                         Debug.Log($"[CombatManager] Player {unit.UnitName} killed {target.UnitName}");
@@ -254,7 +229,6 @@ public class CombatManager : MonoBehaviour
                     }
                 }
             };
-            // =================================
         }
     }
 
@@ -278,12 +252,14 @@ public class CombatManager : MonoBehaviour
         switch (next)
         {
             case CombatPhase.Intro: StartCoroutine(DoIntro()); break;
-            case CombatPhase.Execute: StartCoroutine(TurnMeterLoop()); break;
+            case CombatPhase.PlayerTurn: StartCoroutine(DoPlayerTurn()); break;
+            case CombatPhase.EnemyTurn: StartCoroutine(DoEnemyTurn()); break;
             case CombatPhase.Victory: DoVictory(); break;
             case CombatPhase.Defeat: DoDefeat(); break;
         }
     }
 
+    // ── INTRO ─────────────────────────────────────────────────
     private IEnumerator DoIntro()
     {
         cameraManager.BeginIntroSequence();
@@ -312,9 +288,8 @@ public class CombatManager : MonoBehaviour
         yield return FadeUI(1f, 0.5f);
         cameraManager.EndIntroSequence();
 
-        foreach (var unit in GetAllAliveUnits()) { unit.CurrentActionValue = 0f; }
-        UpdateActionOrderForUI();
-        stateMachine.TransitionTo(CombatPhase.Execute);
+        // Bắt đầu lượt Player
+        stateMachine.TransitionTo(CombatPhase.PlayerTurn);
     }
 
     private IEnumerator FadeUI(float target, float duration)
@@ -334,107 +309,183 @@ public class CombatManager : MonoBehaviour
         view.SetAnimationTrigger("Idle");
     }
 
-    private IEnumerator TurnMeterLoop()
+    // ── PLAYER TURN (Side-Based) ──────────────────────────────
+    private IEnumerator DoPlayerTurn()
     {
-        OnExecuteStarted?.Invoke();
-        _isExecutingTurn = false;
+        Debug.Log("=== PLAYER TURN ===");
 
-        while (true)
+        // Reset AP mỗi đầu lượt Player
+        CurrentPlayerAP = STARTING_PLAYER_AP;
+        OnAPChanged?.Invoke(CurrentPlayerAP);
+
+        // Reset HasActedThisTurn cho tất cả player units
+        foreach (var unit in PlayerUnits)
         {
-            if (!_isExecutingTurn)
-            {
-                AccumulateActionValues();
-                var readyUnit = GetAllAliveUnits()
-                    .Where(u => u.IsActionReady)
-                    .OrderByDescending(u => u.CurrentActionValue)
-                    .FirstOrDefault();
-
-                if (readyUnit != null)
-                {
-                    _isExecutingTurn = true;
-                    _currentActingUnit = readyUnit;
-                    yield return StartCoroutine(ProcessUnitTurn(readyUnit));
-                    _isExecutingTurn = false;
-                    _currentActingUnit = null;
-                    if (CheckForCombatEnd()) yield break;
-                }
-                else yield return null;
-            }
-            else yield return null;
+            unit.HasActedThisTurn = false;
         }
+
+        _playerEndedTurn = false;
+
+        // Vòng lặp: player chọn unit → chọn skill → target → resolve
+        while (!_playerEndedTurn)
+        {
+            // Lấy danh sách unit còn có thể act
+            var unitsCanAct = PlayerUnits.Where(u => u.IsAlive && !u.HasActedThisTurn).ToList();
+            if (unitsCanAct.Count == 0)
+            {
+                Debug.Log("[PlayerTurn] Không còn unit nào có thể hành động.");
+                break;
+            }
+
+            // Chờ player chọn unit + skill + target
+            _isWaitingForPlayerSelection = true;
+            _selectedUnit = null;
+            _selectedSkill = null;
+            _selectedTargets = null;
+
+            // Gửi danh sách unit có thể act để UI cho player chọn
+            OnPlayerTurnStart?.Invoke(unitsCanAct);
+
+            yield return new WaitUntil(() => !_isWaitingForPlayerSelection);
+
+            if (_playerEndedTurn) break;
+            if (_selectedUnit == null || _selectedSkill == null || _selectedTargets == null) continue;
+
+            // Kiểm tra AP
+            if (_selectedSkill.apCost > CurrentPlayerAP)
+            {
+                Debug.LogWarning($"[AP] Không đủ AP! Cần {_selectedSkill.apCost}, có {CurrentPlayerAP}");
+                _isWaitingForPlayerSelection = true;
+                continue;
+            }
+
+            // Trừ AP
+            CurrentPlayerAP -= _selectedSkill.apCost;
+            OnAPChanged?.Invoke(CurrentPlayerAP);
+            _selectedUnit.SpendAP(_selectedSkill.apCost);
+
+            // Chọn skill + target
+            _selectedUnit.SelectSkill(_selectedSkill, _selectedTargets);
+
+            // Resolve action
+            yield return ResolveAction(new PlannedAction(_selectedUnit, _selectedSkill, _selectedTargets));
+
+            // Kiểm tra kết thúc combat
+            if (CheckForCombatEnd()) yield break;
+
+            // Đánh dấu unit đã act
+            _selectedUnit.HasActedThisTurn = true;
+
+            // TickStatuses cho tất cả unit sau mỗi lượt act
+            TickAllStatuses();
+            if (CheckForCombatEnd()) yield break;
+
+            // Nếu skill có doesNotEndTurn, unit đó vẫn có thể act tiếp
+            if (_selectedSkill.doesNotEndTurn)
+            {
+                _selectedUnit.HasActedThisTurn = false;
+                _selectedUnit.ClearSelection();
+            }
+        }
+
+        // Reset HasActedThisTurn cho lượt sau
+        foreach (var unit in PlayerUnits) unit.HasActedThisTurn = false;
+
+        Debug.Log("=== END PLAYER TURN ===");
+        OnPlayerTurnEnd?.Invoke();
+        stateMachine.TransitionTo(CombatPhase.EnemyTurn);
     }
 
-    private void AccumulateActionValues()
+    // ── ENEMY TURN (Side-Based) ───────────────────────────────
+    private IEnumerator DoEnemyTurn()
     {
-        float delta = Time.deltaTime * actionValueTickRate;
+        Debug.Log("=== ENEMY TURN ===");
+        OnEnemyTurnStart?.Invoke();
+
+        // Reset HasActedThisTurn cho tất cả enemy units
+        foreach (var unit in EnemyUnits) unit.HasActedThisTurn = false;
+
+        // Lần lượt từng enemy hành động
+        foreach (var enemy in EnemyUnits.Where(e => e.IsAlive))
+        {
+            enemy.HasActedThisTurn = true;
+
+            // Handle start-of-turn effects (burn, etc.)
+            yield return HandleStartOfTurnEffects(enemy);
+            if (!enemy.IsAlive)
+            {
+                if (CheckForCombatEnd()) yield break;
+                continue;
+            }
+
+            OnUnitTurnStart?.Invoke(enemy);
+            enemy.TriggerTurnStart();
+
+            // AI chọn skill + target
+            enemyAI.PlanTurn(enemy, PlayerUnits);
+
+            if (enemy.SelectedSkill != null && enemy.SelectedTargets.Any())
+            {
+                yield return ResolveAction(new PlannedAction(enemy, enemy.SelectedSkill, enemy.SelectedTargets));
+                if (CheckForCombatEnd()) yield break;
+            }
+
+            // TickStatuses sau mỗi enemy act
+            TickAllStatuses();
+            if (CheckForCombatEnd()) yield break;
+        }
+
+        Debug.Log("=== END ENEMY TURN ===");
+        OnEnemyTurnEnd?.Invoke();
+
+        // Quay lại PlayerTurn
+        stateMachine.TransitionTo(CombatPhase.PlayerTurn);
+    }
+
+    // ── TickStatuses cho tất cả unit ──────────────────────────
+    private void TickAllStatuses()
+    {
         foreach (var unit in GetAllAliveUnits())
         {
-            if (unit.HasStatus(StatusEffectType.Stun))
-                unit.AddActionValue(unit.Speed * delta * 0.5f);
-            else
-                unit.AddActionValue(unit.Speed * delta);
+            unit.TickStatuses();
         }
     }
 
-    private IEnumerator ProcessUnitTurn(CombatUnit unit)
+    // ── Player Selection (gọi từ UI) ──────────────────────────
+    /// <summary>
+    /// UI gọi hàm này khi player chọn unit + skill + target.
+    /// </summary>
+    public void SubmitPlayerAction(CombatUnit unit, SkillData skill, List<CombatUnit> targets)
     {
-        unit.ConsumeActionValue();
-        Debug.Log($"[TurnMeter] {unit.UnitName} hành động (Speed={unit.Speed}, AV còn lại={unit.CurrentActionValue:F1})");
-        UpdateActionOrderForUI();
+        if (!_isWaitingForPlayerSelection) return;
+        _selectedUnit = unit;
+        _selectedSkill = skill;
+        _selectedTargets = targets;
+        _isWaitingForPlayerSelection = false;
+    }
 
-        yield return HandleStartOfTurnEffects(unit);
-        if (!unit.IsAlive) { if (CheckForCombatEnd()) yield break; yield break; }
+    /// <summary>
+    /// UI gọi hàm này khi player bấm "End Turn".
+    /// </summary>
+    public void EndPlayerTurn()
+    {
+        if (!_isWaitingForPlayerSelection) return;
+        _playerEndedTurn = true;
+        _isWaitingForPlayerSelection = false;
+    }
 
-        OnUnitTurnStart?.Invoke(unit);
-        unit.TriggerTurnStart();
-
-        if (!unit.IsPlayer) enemyAI.PlanTurn(unit, PlayerUnits);
-        else
+    /// <summary>
+    /// Cho phép unit hành động thêm 1 lần nữa trong lượt hiện tại.
+    /// </summary>
+    public void GrantExtraAction(CombatUnit unit)
+    {
+        if (unit != null && unit.IsAlive)
         {
-            if (CurrentPlayerAP < MAX_PLAYER_AP) { CurrentPlayerAP++; OnAPChanged?.Invoke(CurrentPlayerAP); }
-            yield return StartCoroutine(WaitForPlayerInput(unit));
+            unit.HasActedThisTurn = false;
+            Debug.Log($"[CombatManager] {unit.UnitName} được act thêm lần nữa!");
         }
-
-        if (unit.SelectedSkill != null && unit.SelectedTargets.Any())
-            yield return ResolveAction(new PlannedAction(unit, unit.SelectedSkill, unit.SelectedTargets));
-
-        unit.TickStatuses();
-        if (CheckForCombatEnd()) yield break;
-        UpdateActionOrderForUI();
     }
 
-    private IEnumerator WaitForPlayerInput(CombatUnit unit)
-    {
-        bool inputReceived = false;
-        OnPlayerTurnStart?.Invoke(unit);
-
-        System.Action<SkillData, List<CombatUnit>> onSubmit = null;
-        onSubmit = (skill, targets) =>
-        {
-            if (inputReceived && !skill.doesNotEndTurn) return;
-            if (skill.apCost > CurrentPlayerAP) { Debug.LogWarning($"[AP] Không đủ AP"); return; }
-
-            CurrentPlayerAP -= skill.apCost;
-            OnAPChanged?.Invoke(CurrentPlayerAP);
-            unit.SpendAP(skill.apCost);
-            unit.SelectSkill(skill, targets);
-
-            if (skill.doesNotEndTurn)
-            {
-                try { unit.ExecuteSelectedSkill(0); unit.ClearSelection(); }
-                catch (System.Exception e) { Debug.LogError(e); return; }
-                OnPlayerTurnStart?.Invoke(unit);
-            }
-            else inputReceived = true;
-        };
-
-        _pendingPlayerSubmit = onSubmit;
-        yield return new WaitUntil(() => inputReceived);
-        _pendingPlayerSubmit = null;
-    }
-
-    private System.Action<SkillData, List<CombatUnit>> _pendingPlayerSubmit;
-    public void SubmitPlayerTurnAction(SkillData skill, List<CombatUnit> targets) => _pendingPlayerSubmit?.Invoke(skill, targets);
     public void SpendPlayerAP(int amount) { if (amount <= CurrentPlayerAP) { CurrentPlayerAP -= amount; OnAPChanged?.Invoke(CurrentPlayerAP); } }
     public void GainPlayerAP(int amount) { CurrentPlayerAP = Mathf.Min(CurrentPlayerAP + amount, MAX_PLAYER_AP); OnAPChanged?.Invoke(CurrentPlayerAP); }
 

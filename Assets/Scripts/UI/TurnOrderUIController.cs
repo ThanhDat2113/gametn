@@ -3,6 +3,10 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 
+/// <summary>
+/// UI hiển thị thứ tự turn cho side-based system.
+/// Hiển thị danh sách unit còn có thể hành động trong lượt hiện tại.
+/// </summary>
 public class TurnOrderUIController : MonoBehaviour
 {
     [Header("UI References")]
@@ -12,20 +16,14 @@ public class TurnOrderUIController : MonoBehaviour
     [Header("Colors")]
     public Color playerColor = new Color(0.2f, 0.3f, 0.8f, 1f);
     public Color enemyColor = new Color(0.8f, 0.2f, 0.2f, 1f);
-    public Color currentTurnColor = Color.yellow;
-
-    [Header("Action Value Bar")]
-    public bool showActionValueBar = true;
-    public Slider actionValueSliderPrefab;
+    public Color actedColor = new Color(0.4f, 0.4f, 0.4f, 0.5f);
 
     private List<TurnOrderIcon> allIcons = new List<TurnOrderIcon>();
     private CombatManager combatManager;
 
-    // Lớp nội bộ để lưu icon + action value bar
     private class TurnOrderIcon
     {
         public ActionSlotUI Icon { get; set; }
-        public Slider AvBar { get; set; }
         public CombatUnit LinkedUnit { get; set; }
     }
 
@@ -41,8 +39,9 @@ public class TurnOrderUIController : MonoBehaviour
         combatManager = CombatManager.Instance;
         if (combatManager != null)
         {
-            combatManager.OnTurnOrderUpdated += RebuildTurnOrderUI;
-            combatManager.OnUnitTurnStart += OnUnitTurnStart;
+            combatManager.OnPlayerTurnStart += OnPlayerTurnStart;
+            combatManager.OnPlayerTurnEnd += OnPlayerTurnEnd;
+            combatManager.OnEnemyTurnStart += OnEnemyTurnStart;
             combatManager.OnActionResolved += OnActionResolved;
         }
     }
@@ -51,99 +50,73 @@ public class TurnOrderUIController : MonoBehaviour
     {
         if (combatManager != null)
         {
-            combatManager.OnTurnOrderUpdated -= RebuildTurnOrderUI;
-            combatManager.OnUnitTurnStart -= OnUnitTurnStart;
+            combatManager.OnPlayerTurnStart -= OnPlayerTurnStart;
+            combatManager.OnPlayerTurnEnd -= OnPlayerTurnEnd;
+            combatManager.OnEnemyTurnStart -= OnEnemyTurnStart;
             combatManager.OnActionResolved -= OnActionResolved;
         }
     }
 
-    void Update()
+    private void RebuildUI()
     {
-        // Cập nhật action value bar mỗi frame
-        if (showActionValueBar && allIcons.Count > 0)
-        {
-            foreach (var entry in allIcons)
-            {
-                if (entry.LinkedUnit != null && entry.AvBar != null)
-                {
-                    entry.AvBar.value = entry.LinkedUnit.CurrentActionValue / CombatUnit.ACTION_THRESHOLD;
-                }
-            }
-        }
-    }
-
-    public void RebuildTurnOrderUI(List<CombatUnit> turnOrder)
-    {
-        if (turnOrder == null) return;
-
         // Xóa icon cũ
         foreach (var entry in allIcons)
         {
             if (entry.Icon != null) Destroy(entry.Icon.gameObject);
-            if (entry.AvBar != null) Destroy(entry.AvBar.gameObject);
         }
         allIcons.Clear();
 
-        // Tạo icon cho tất cả unit, sắp xếp theo action value giảm dần
-        foreach (var unit in turnOrder)
+        if (combatManager == null) return;
+
+        // Hiển thị player units còn có thể act
+        bool isPlayerTurn = combatManager.CurrentPhase == CombatPhase.PlayerTurn;
+        var unitsToShow = isPlayerTurn
+            ? combatManager.PlayerUnits.Where(u => u.IsAlive).ToList()
+            : combatManager.EnemyUnits.Where(u => u.IsAlive).ToList();
+
+        foreach (var unit in unitsToShow)
         {
             if (unit == null) continue;
 
-            // Tạo icon
             ActionSlotUI newIcon = Instantiate(iconPrefab, iconContainer);
-            newIcon.SetupForTurnOrder(unit, unit.IsPlayer ? playerColor : enemyColor);
+            bool hasActed = unit.HasActedThisTurn;
+            Color iconColor = hasActed ? actedColor : (unit.IsPlayer ? playerColor : enemyColor);
+            newIcon.SetupForTurnOrder(unit, iconColor);
             newIcon.gameObject.SetActive(true);
-
-            // Tạo action value bar nếu được bật
-            Slider avBar = null;
-            if (showActionValueBar && actionValueSliderPrefab != null)
-            {
-                avBar = Instantiate(actionValueSliderPrefab, iconContainer);
-                avBar.gameObject.SetActive(true);
-                avBar.minValue = 0f;
-                avBar.maxValue = 1f;
-                avBar.value = unit.CurrentActionValue / CombatUnit.ACTION_THRESHOLD;
-
-                // Đặt màu cho bar
-                var fillImage = avBar.fillRect?.GetComponent<Image>();
-                if (fillImage != null)
-                {
-                    fillImage.color = unit.IsPlayer ? playerColor : enemyColor;
-                }
-            }
 
             allIcons.Add(new TurnOrderIcon
             {
                 Icon = newIcon,
-                AvBar = avBar,
                 LinkedUnit = unit
             });
         }
     }
 
-    private void OnUnitTurnStart(CombatUnit currentUnit)
+    private void OnPlayerTurnStart(List<CombatUnit> units)
     {
-        // Highlight icon của lượt hiện tại
-        int currentIndex = allIcons.FindIndex(entry => entry.LinkedUnit == currentUnit);
-        if (currentIndex == -1) return;
+        RebuildUI();
+    }
 
-        for (int i = 0; i < allIcons.Count; i++)
-        {
-            var entry = allIcons[i];
-            if (i == currentIndex)
-                entry.Icon.SetBorderColor(currentTurnColor);
-            else
-                entry.Icon.SetBorderColor(entry.LinkedUnit.IsPlayer ? playerColor : enemyColor);
-        }
+    private void OnPlayerTurnEnd()
+    {
+        // Chuẩn bị cho enemy turn
+    }
+
+    private void OnEnemyTurnStart()
+    {
+        RebuildUI();
     }
 
     private void OnActionResolved(ActionResult result)
     {
-        // Không xóa icon nữa - Turn Meter system tự cập nhật lại toàn bộ
-        // Chỉ cập nhật highlight
+        // Cập nhật icon: đánh dấu unit đã act
         if (result.Actor != null)
         {
-            OnUnitTurnStart(result.Actor);
+            var entry = allIcons.Find(e => e.LinkedUnit == result.Actor);
+            if (entry != null && entry.Icon != null)
+            {
+                entry.Icon.SetBorderColor(actedColor);
+            }
         }
     }
 }

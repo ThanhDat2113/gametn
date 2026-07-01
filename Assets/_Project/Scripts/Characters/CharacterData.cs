@@ -30,7 +30,6 @@ public class CharacterData : ScriptableObject
     public int baseATK = 20;
     public int basePDEF = 10;
     public int baseMDEF = 10;
-    public int baseSpeed = 10;
 
     [Header("Level Settings")]
     public int baseLevel = 1;
@@ -45,7 +44,6 @@ public class CharacterData : ScriptableObject
     public int atkPerLevel = 2;
     public int pdefPerLevel = 1;
     public int mdefPerLevel = 1;
-    public int speedPerLevel = 1;
 
     [Header("Skills")]
     public SkillData[] skills;
@@ -69,5 +67,4 @@ public class CharacterData : ScriptableObject
     public int GetATK(int level) => baseATK + atkPerLevel * (level - 1);
     public int GetPDEF(int level) => basePDEF + pdefPerLevel * (level - 1);
     public int GetMDEF(int level) => baseMDEF + mdefPerLevel * (level - 1);
-    public int GetSpeed(int level) => baseSpeed + speedPerLevel * (level - 1);
 }

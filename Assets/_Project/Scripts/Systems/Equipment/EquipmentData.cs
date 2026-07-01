@@ -10,7 +10,6 @@ public class EquipmentData : ItemData
     public int atkBonus;
     public int pdefBonus;
     public int mdefBonus;
-    public int speedBonus;
 
     void OnEnable()
     {

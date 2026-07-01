@@ -26,7 +26,6 @@ public class EquipmentPanel : MonoBehaviour
     public TextMeshProUGUI statAtkText;
     public TextMeshProUGUI statPdefText;
     public TextMeshProUGUI statMdefText;
-    public TextMeshProUGUI statSpeedText;
 
     private List<CharacterSlotUI> characterSlots = new List<CharacterSlotUI>();
     private CharacterData selectedCharacter;
@@ -144,14 +143,13 @@ public class EquipmentPanel : MonoBehaviour
         previewSlot = equip.slot;
         isPreviewing = true;
 
-        GetCurrentTotalStats(selectedCharacter, out int curHp, out int curAtk, out int curPdef, out int curMdef, out int curSpeed);
-        GetStatsWithEquipment(selectedCharacter, equip, previewSlot, out int newHp, out int newAtk, out int newPdef, out int newMdef, out int newSpeed);
+        GetCurrentTotalStats(selectedCharacter, out int curHp, out int curAtk, out int curPdef, out int curMdef);
+        GetStatsWithEquipment(selectedCharacter, equip, previewSlot, out int newHp, out int newAtk, out int newPdef, out int newMdef);
 
         UpdateStatText(statHpText, curHp, newHp, "HP");
         UpdateStatText(statAtkText, curAtk, newAtk, "ATK");
         UpdateStatText(statPdefText, curPdef, newPdef, "P.DEF");
         UpdateStatText(statMdefText, curMdef, newMdef, "M.DEF");
-        UpdateStatText(statSpeedText, curSpeed, newSpeed, "SPD");
     }
 
     public void ClearPreview()
@@ -165,15 +163,14 @@ public class EquipmentPanel : MonoBehaviour
     private void RefreshStatsDisplay()
     {
         if (selectedCharacter == null) return;
-        GetCurrentTotalStats(selectedCharacter, out int hp, out int atk, out int pdef, out int mdef, out int speed);
+        GetCurrentTotalStats(selectedCharacter, out int hp, out int atk, out int pdef, out int mdef);
         SetStatText(statHpText, hp, "HP");
         SetStatText(statAtkText, atk, "ATK");
         SetStatText(statPdefText, pdef, "P.DEF");
         SetStatText(statMdefText, mdef, "M.DEF");
-        SetStatText(statSpeedText, speed, "SPD");
     }
 
-    private void GetCurrentTotalStats(CharacterData character, out int hp, out int atk, out int pdef, out int mdef, out int speed)
+    private void GetCurrentTotalStats(CharacterData character, out int hp, out int atk, out int pdef, out int mdef)
     {
         int level = 1;
         if (PlayerProgression.Instance != null)
@@ -183,7 +180,6 @@ public class EquipmentPanel : MonoBehaviour
         int baseAtk = character.GetATK(level);
         int basePdef = character.GetPDEF(level);
         int baseMdef = character.GetMDEF(level);
-        int baseSpeed = character.GetSpeed(level);
 
         var equipment = EquipmentManager.Instance?.GetEquipment(character);
         if (equipment != null)
@@ -192,7 +188,6 @@ public class EquipmentPanel : MonoBehaviour
             atk = baseAtk + equipment.GetATKBonus();
             pdef = basePdef + equipment.GetPDEFBonus();
             mdef = baseMdef + equipment.GetMDEFBonus();
-            speed = baseSpeed + equipment.GetSpeedBonus();
         }
         else
         {
@@ -200,14 +195,13 @@ public class EquipmentPanel : MonoBehaviour
             atk = baseAtk;
             pdef = basePdef;
             mdef = baseMdef;
-            speed = baseSpeed;
         }
     }
 
     private void GetStatsWithEquipment(CharacterData character, EquipmentData newEquip, EquipmentSlot slot,
-        out int hp, out int atk, out int pdef, out int mdef, out int speed)
+        out int hp, out int atk, out int pdef, out int mdef)
     {
-        GetCurrentTotalStats(character, out hp, out atk, out pdef, out mdef, out speed);
+        GetCurrentTotalStats(character, out hp, out atk, out pdef, out mdef);
 
         var currentEquip = EquipmentManager.Instance?.GetEquipment(character)?.GetEquipment(slot);
         if (currentEquip != null)
@@ -216,14 +210,12 @@ public class EquipmentPanel : MonoBehaviour
             atk -= currentEquip.atkBonus;
             pdef -= currentEquip.pdefBonus;
             mdef -= currentEquip.mdefBonus;
-            speed -= currentEquip.speedBonus;
         }
 
         hp += newEquip.hpBonus;
         atk += newEquip.atkBonus;
         pdef += newEquip.pdefBonus;
         mdef += newEquip.mdefBonus;
-        speed += newEquip.speedBonus;
     }
 
     private void UpdateStatText(TextMeshProUGUI text, int currentValue, int newValue, string statName)
