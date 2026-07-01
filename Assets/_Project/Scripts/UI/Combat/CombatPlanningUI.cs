@@ -413,19 +413,33 @@ public class CombatPlanningUI : MonoBehaviour
     {
         if (isChoosingTarget)
         {
+            // Đang chọn target → quay lại skill wheel
             AudioManager.Instance?.PlayUICancel();
             isChoosingTarget = false;
             selectedSkill = null;
             ClearTargetHighlights();
-            UpdateUnitEmphasis(null);
             var view = combat.GetAllUnitViews().FirstOrDefault(v => v.LinkedUnit == currentUnit);
             if (view != null) OpenSkillWheel(currentUnit, view);
             else SetInstruction("Action canceled. Select a unit.");
+            return;
         }
-        else if (isSelectingUnit)
+
+        if (!isSelectingUnit && currentUnit != null)
         {
-            // Đang chọn unit → không làm gì
+            // Đang ở skill wheel → quay lại chọn unit
+            AudioManager.Instance?.PlayUICancel();
+            CloseSkillWheel();
+            ClearTargetHighlights();
+            currentUnit = null;
+            selectedSkill = null;
+            isSelectingUnit = true;
+            var remaining = combat.PlayerUnits.Where(u => u.IsAlive && !u.HasActedThisTurn).ToList();
+            SetInstruction("Click vào unit để chọn hành động");
+            UpdateUnitEmphasis(remaining);
+            return;
         }
+
+        // Đang chọn unit → không làm gì (hoặc có thể thêm sau)
     }
 
     private void HighlightValidTargets(SkillData skill)

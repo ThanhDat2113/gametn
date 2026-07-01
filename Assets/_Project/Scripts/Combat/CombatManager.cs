@@ -474,6 +474,18 @@ public class CombatManager : MonoBehaviour
         _isWaitingForPlayerSelection = false;
     }
 
+    /// <summary>
+    /// Cho phép unit hành động thêm 1 lần nữa trong lượt hiện tại.
+    /// </summary>
+    public void GrantExtraAction(CombatUnit unit)
+    {
+        if (unit != null && unit.IsAlive)
+        {
+            unit.HasActedThisTurn = false;
+            Debug.Log($"[CombatManager] {unit.UnitName} được act thêm lần nữa!");
+        }
+    }
+
     public void SpendPlayerAP(int amount) { if (amount <= CurrentPlayerAP) { CurrentPlayerAP -= amount; OnAPChanged?.Invoke(CurrentPlayerAP); } }
     public void GainPlayerAP(int amount) { CurrentPlayerAP = Mathf.Min(CurrentPlayerAP + amount, MAX_PLAYER_AP); OnAPChanged?.Invoke(CurrentPlayerAP); }
 

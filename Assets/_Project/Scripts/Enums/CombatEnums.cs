@@ -33,8 +33,7 @@ public enum StatType
     MaxHP,
     ATK, 
     PDEF, 
-    MDEF, 
-    Speed       // Thay Luck bằng Speed (vì có buff/debuff speed)
+    MDEF
 }
 
 public enum SkillEffectTrigger 
