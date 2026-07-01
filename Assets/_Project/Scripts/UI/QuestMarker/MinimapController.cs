@@ -122,6 +122,12 @@ public class MinimapController : MonoBehaviour
              "GameObject cha gần nhất chứa minimapMaskImage, hoặc gameObject này nếu không tìm được.")]
     [SerializeField] private GameObject minimapUIRoot;
 
+    [Header("Auto-Hide khi UI Panel mở")]
+    [Tooltip("Kéo các panel UI vào đây (vd mainPanel, characterPanel, equipmentPanel của MapMenuManager). " +
+             "Minimap tự ẩn khi BẤT KỲ panel nào trong list đang active, hiện lại khi TẤT CẢ đã đóng. " +
+             "Không cần sửa script của các panel đó — MinimapController tự poll mỗi frame.")]
+    [SerializeField] private GameObject[] uiPanelsToWatch;
+
     [Header("Auto-Hide trong Combat Scene")]
     [Tooltip("Bật để tự ẩn minimap khi vào scene combat.")]
     [SerializeField] private bool autoHideInCombat = true;
@@ -135,6 +141,7 @@ public class MinimapController : MonoBehaviour
     private Camera _minimapCamera;
     private CanvasGroup _uiRootCanvasGroup; // dùng cho DisableUpdatesOnly
     private bool _isHiddenByCombat = false;
+    private bool _isHiddenByUI = false;     // ẩn do MapMenuManager/UI panel đang mở
     private bool _externalCombatFlag = false; // set bởi NotifyCombatStateChanged từ bên ngoài
 
     /// <summary>Fire sau khi minimap đã refresh xong cho map mới (terrain/player/data đã cập nhật).</summary>
@@ -245,9 +252,11 @@ public class MinimapController : MonoBehaviour
     {
         if (player == null) return;
 
-        // Khi đang ẩn do combat, bỏ qua toàn bộ update (camera follow, rotation, v.v.)
-        // để đỡ tốn performance — không có ý nghĩa cập nhật UI không hiển thị.
-        if (_isHiddenByCombat) return;
+        // Poll trạng thái UI panels — cập nhật _isHiddenByUI mỗi frame, rẻ vì chỉ check activeInHierarchy.
+        CheckUIPanelVisibility();
+
+        // Khi đang ẩn do combat hoặc UI panel mở, bỏ qua update để đỡ tốn performance.
+        if (_isHiddenByCombat || _isHiddenByUI) return;
 
         if (displayMode == DisplayMode.RenderTextureCamera && _minimapCamera != null)
             UpdateCameraFollow();
@@ -364,45 +373,67 @@ public class MinimapController : MonoBehaviour
     /// </summary>
     private void RefreshCombatVisibility()
     {
-        if (!autoHideInCombat)
-        {
-            if (_isHiddenByCombat) SetCombatHidden(false);
-            return;
-        }
-
-        bool shouldHide = _externalCombatFlag || IsAnyCombatSceneLoaded();
+        bool shouldHide = autoHideInCombat && (_externalCombatFlag || IsAnyCombatSceneLoaded());
 
         if (shouldHide != _isHiddenByCombat)
-            SetCombatHidden(shouldHide);
+        {
+            _isHiddenByCombat = shouldHide;
+            ApplyMinimapVisibility();
+            OnCombatVisibilityChanged?.Invoke(shouldHide);
+            Debug.Log($"[MinimapController] Combat visibility → {(shouldHide ? "ẨN" : "HIỆN")} minimap.");
+        }
     }
 
-    private void SetCombatHidden(bool hide)
-    {
-        _isHiddenByCombat = hide;
 
-        Debug.Log($"[MinimapController] Combat visibility → {(hide ? "ẨN minimap" : "HIỆN minimap")} " +
-                  $"(behavior={hideBehavior}).");
+    /// <summary>
+    /// Poll activeInHierarchy của từng panel trong uiPanelsToWatch mỗi frame.
+    /// Gọi từ LateUpdate — rẻ vì chỉ là property access, không có Reflection hay FindObject.
+    /// Cập nhật _isHiddenByUI và gọi ApplyMinimapVisibility nếu trạng thái thay đổi.
+    /// </summary>
+    private void CheckUIPanelVisibility()
+    {
+        if (uiPanelsToWatch == null || uiPanelsToWatch.Length == 0) return;
+
+        bool anyPanelOpen = false;
+        foreach (var panel in uiPanelsToWatch)
+        {
+            if (panel != null && panel.activeInHierarchy)
+            {
+                anyPanelOpen = true;
+                break;
+            }
+        }
+
+        if (anyPanelOpen == _isHiddenByUI) return; // không đổi → không làm gì
+        _isHiddenByUI = anyPanelOpen;
+        ApplyMinimapVisibility();
+    }
+
+    /// <summary>
+    /// Áp dụng trạng thái ẩn/hiện minimap dựa trên TẤT CẢ lý do hiện tại.
+    /// Minimap ẩn nếu BẤT KỲ lý do nào đúng (combat, menu UI, v.v.).
+    /// </summary>
+    private void ApplyMinimapVisibility()
+    {
+        bool shouldHide = _isHiddenByCombat || _isHiddenByUI;
 
         switch (hideBehavior)
         {
             case HideBehavior.DeactivateRoot:
-                if (minimapUIRoot != null) minimapUIRoot.SetActive(!hide);
-                if (_minimapCamera != null) _minimapCamera.enabled = !hide;
+                if (minimapUIRoot != null) minimapUIRoot.SetActive(!shouldHide);
+                if (_minimapCamera != null) _minimapCamera.enabled = !shouldHide;
                 break;
 
             case HideBehavior.DisableUpdatesOnly:
                 if (_uiRootCanvasGroup != null)
                 {
-                    _uiRootCanvasGroup.alpha = hide ? 0f : 1f;
-                    _uiRootCanvasGroup.blocksRaycasts = !hide;
-                    _uiRootCanvasGroup.interactable = !hide;
+                    _uiRootCanvasGroup.alpha = shouldHide ? 0f : 1f;
+                    _uiRootCanvasGroup.blocksRaycasts = !shouldHide;
+                    _uiRootCanvasGroup.interactable = !shouldHide;
                 }
-                // Tắt camera render để đỡ tốn perf dù UI vẫn active
-                if (_minimapCamera != null) _minimapCamera.enabled = !hide;
+                if (_minimapCamera != null) _minimapCamera.enabled = !shouldHide;
                 break;
         }
-
-        OnCombatVisibilityChanged?.Invoke(hide);
     }
 
     /// <summary>Quét root objects của ĐÚNG scene này để tìm Terrain — an toàn với Additive.</summary>
