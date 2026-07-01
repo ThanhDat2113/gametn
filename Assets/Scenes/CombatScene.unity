@@ -1519,7 +1519,6 @@ MonoBehaviour:
   - {fileID: 1039118417}
   - {fileID: 874683034}
   enemyRallyPoint: {fileID: 0}
-  actionValueTickRate: 10
   clashSequence: {fileID: 551415321}
   cameraManager: {fileID: 844719901}
   combatUICanvasGroup: {fileID: 0}
@@ -1569,7 +1568,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: d9a02487cd5ceb443a7bfe4ac6df8beb, type: 2}
   testPlayerLevels: 0a0000000a0000000a0000000a0000000a000000
   testPlayerSlots: 0000000009000000040000000600000008000000
-  testEnemyGroup: {fileID: 11400000, guid: ee9828e0bc3916d4caa43ebd6fd209c7, type: 2}
+  testEnemyGroup: {fileID: 11400000, guid: 7befe0299fdbea34eac765e18b14e5b4, type: 2}
   autoStartOnAwake: 1
   startKey: 116
 --- !u!1 &1019903363
@@ -2857,6 +2856,7 @@ MonoBehaviour:
   targetHighlightPrefab: {fileID: 0}
   instructionText: {fileID: 1900633178}
   apDisplay: {fileID: 1851854652}
+  endTurnButton: {fileID: 0}
 --- !u!1 &1861474306
 GameObject:
   m_ObjectHideFlags: 0
@@ -3545,9 +3545,7 @@ MonoBehaviour:
   iconContainer: {fileID: 454989945}
   playerColor: {r: 0.2, g: 0.3, b: 0.8, a: 0.5}
   enemyColor: {r: 0.8, g: 0.2, b: 0.2, a: 0.5}
-  currentTurnColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
-  showActionValueBar: 1
-  actionValueSliderPrefab: {fileID: 0}
+  actedColor: {r: 0.4, g: 0.4, b: 0.4, a: 0.5}
 --- !u!1 &2136036713
 GameObject:
   m_ObjectHideFlags: 0
