@@ -31,9 +31,7 @@ public class DamageByStatEffect : SkillEffect
             case StatType.MDEF:
                 baseValue = caster.MDEF;
                 break;
-            case StatType.Speed:
-                baseValue = caster.Speed;
-                break;
+            // Speed đã bị xóa khỏi hệ thống
         }
 
         // Lấy hệ số nhân từ Empowered stacks mà không xóa chúng

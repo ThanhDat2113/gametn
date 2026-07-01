@@ -37,5 +37,4 @@ public class CharacterEquipment
     public int GetATKBonus() => (weapon?.atkBonus ?? 0) + (helmet?.atkBonus ?? 0) + (armor?.atkBonus ?? 0) + (accessory?.atkBonus ?? 0);
     public int GetPDEFBonus() => (weapon?.pdefBonus ?? 0) + (helmet?.pdefBonus ?? 0) + (armor?.pdefBonus ?? 0) + (accessory?.pdefBonus ?? 0);
     public int GetMDEFBonus() => (weapon?.mdefBonus ?? 0) + (helmet?.mdefBonus ?? 0) + (armor?.mdefBonus ?? 0) + (accessory?.mdefBonus ?? 0);
-    public int GetSpeedBonus() => (weapon?.speedBonus ?? 0) + (helmet?.speedBonus ?? 0) + (armor?.speedBonus ?? 0) + (accessory?.speedBonus ?? 0);
 }

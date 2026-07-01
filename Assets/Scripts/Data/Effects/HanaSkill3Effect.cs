@@ -8,10 +8,9 @@ namespace Game.Effects
         public override void Apply(CombatUnit caster, CombatUnit[] targets)
         {
             // targets[0] là đồng minh được chọn
-            if (targets.Length > 0)
-            {
-                CombatManager.Instance.GrantImmediateTurn(targets[0]);
-            }
+            // Trong side-based system, effect này không còn ý nghĩa đẩy lượt
+            // Có thể thay bằng buff hành động khác nếu cần
+            Debug.Log($"[HanaSkill3] Không còn hỗ trợ GrantImmediateTurn trong side-based system.");
         }
     }
 }

@@ -37,6 +37,9 @@ public class CombatPlanningUI : MonoBehaviour
     [Header("AP Display")]
     public TextMeshProUGUI apDisplay;
 
+    [Header("End Turn Button")]
+    public Button endTurnButton;
+
     private CombatManager combat;
     private CanvasGroup planningCanvasGroup;
     private Camera MainCam 
@@ -56,6 +59,7 @@ public class CombatPlanningUI : MonoBehaviour
     private List<Coroutine> skillButtonAnimations = new List<Coroutine>();
     private SkillData selectedSkill;
     private bool isChoosingTarget;
+    private bool isSelectingUnit; // true = đang chọn unit, false = đang chọn skill/target
 
     private List<GameObject> activeSkillButtons = new();
     private List<GameObject> targetHighlights = new();
@@ -72,7 +76,7 @@ public class CombatPlanningUI : MonoBehaviour
 
         combat.OnPlayerTurnStart += OnPlayerTurn;
         combat.OnActionResolved += OnActionResolved;
-        combat.OnVictory += (_) => HideUI();   // ✅ lambda bỏ qua tham số
+        combat.OnVictory += (_) => HideUI();
         combat.OnDefeat += HideUI;
         combat.OnCombatStarted += OnCombatStarted;
 
@@ -89,6 +93,13 @@ public class CombatPlanningUI : MonoBehaviour
         if (leftSkillContainer != null) leftSkillContainer.gameObject.SetActive(false);
         if (rightSkillContainer != null) rightSkillContainer.gameObject.SetActive(false);
         SetInstruction("");
+
+        // End Turn button
+        if (endTurnButton != null)
+        {
+            endTurnButton.onClick.AddListener(OnEndTurnClicked);
+            endTurnButton.gameObject.SetActive(false);
+        }
     }
 
     private void OnDestroy()
@@ -103,35 +114,104 @@ public class CombatPlanningUI : MonoBehaviour
 
     private void Update()
     {
-        if (planningCanvas == null || !planningCanvas.gameObject.activeSelf || !isChoosingTarget) return;
-        if (Input.GetMouseButtonDown(0) && !EventSystem.current.IsPointerOverGameObject())
+        if (planningCanvas == null || !planningCanvas.gameObject.activeSelf) return;
+
+        // Xử lý click chọn unit trên world
+        if (isSelectingUnit && Input.GetMouseButtonDown(0) && !EventSystem.current.IsPointerOverGameObject())
+            HandleUnitSelectionClick(Input.mousePosition);
+
+        // Xử lý click chọn target
+        if (isChoosingTarget && Input.GetMouseButtonDown(0) && !EventSystem.current.IsPointerOverGameObject())
             HandleWorldClick(Input.mousePosition);
+
         if (Input.GetMouseButtonDown(1) || Input.GetKeyDown(KeyCode.Escape))
             CancelCurrentAction();
     }
     
     private void OnCombatStarted() { }
 
-    private void OnPlayerTurn(CombatUnit unit)
+    // ── NHẬN DANH SÁCH UNIT CÓ THỂ ACT ──────────────────────
+    private void OnPlayerTurn(List<CombatUnit> unitsCanAct)
     {
-        Debug.Log($"[PlanUI] OnPlayerTurn event received for {unit.UnitName}.");
+        Debug.Log($"[PlanUI] Player turn bắt đầu. {unitsCanAct.Count} unit có thể hành động.");
+
+        // Reset trạng thái
+        currentUnit = null;
+        selectedSkill = null;
+        isChoosingTarget = false;
+        isSelectingUnit = true; // Bắt đầu chế độ chọn unit
+
+        ShowUI();
+        SetInstruction("Click vào unit để chọn hành động");
+        UpdateAPDisplay();
+        UpdateUnitEmphasis(unitsCanAct);
+    }
+
+    // ── XỬ LÝ CLICK CHỌN UNIT TRÊN WORLD ────────────────────
+    private void HandleUnitSelectionClick(Vector3 mousePos)
+    {
+        Ray ray = MainCam.ScreenPointToRay(mousePos);
+        RaycastHit2D[] hits2D = Physics2D.GetRayIntersectionAll(ray);
+        UnitView clickedView = null;
+        foreach (var hit in hits2D)
+        {
+            var view = hit.collider?.GetComponent<UnitView>();
+            if (view != null && view.LinkedUnit.IsAlive && view.LinkedUnit.IsPlayer && !view.LinkedUnit.HasActedThisTurn)
+            { clickedView = view; break; }
+        }
+        if (clickedView == null)
+        {
+            if (Physics.Raycast(ray, out RaycastHit hit3D, 100f))
+            {
+                clickedView = hit3D.collider?.GetComponent<UnitView>();
+                if (clickedView != null && (!clickedView.LinkedUnit.IsAlive || !clickedView.LinkedUnit.IsPlayer || clickedView.LinkedUnit.HasActedThisTurn))
+                    clickedView = null;
+            }
+        }
+
+        if (clickedView != null)
+        {
+            AudioManager.Instance?.PlayUISelect();
+            SelectUnit(clickedView.LinkedUnit);
+        }
+    }
+
+    private void SelectUnit(CombatUnit unit)
+    {
         currentUnit = unit;
+        isSelectingUnit = false;
         isChoosingTarget = false;
         var view = combat.GetAllUnitViews().FirstOrDefault(v => v.LinkedUnit == unit);
         if (view == null)
         {
-            Debug.LogError($"[PlanUI] Could not find UnitView for {unit.UnitName}. UI will not be shown.");
+            Debug.LogError($"[PlanUI] Could not find UnitView for {unit.UnitName}.");
             return;
         }
-        ShowUI();
         OpenSkillWheel(unit, view);
         UpdateAPDisplay();
+    }
+
+    private void OnEndTurnClicked()
+    {
+        Debug.Log("[PlanUI] Player clicked End Turn.");
+        HideUI();
+        combat.EndPlayerTurn();
     }
     
     private void OnActionResolved(ActionResult result)
     {
+        // Sau khi resolve xong, quay lại chế độ chọn unit
         if (currentUnit != null && result.Actor == currentUnit)
-            HideUI();
+        {
+            // Kiểm tra còn unit nào có thể act không
+            var remaining = combat.PlayerUnits.Where(u => u.IsAlive && !u.HasActedThisTurn).ToList();
+            if (remaining.Count > 0)
+            {
+                isSelectingUnit = true;
+                SetInstruction("Click vào unit để chọn hành động");
+                UpdateUnitEmphasis(remaining);
+            }
+        }
     }
 
     private void ShowUI()
@@ -141,6 +221,7 @@ public class CombatPlanningUI : MonoBehaviour
             planningCanvasGroup.alpha = 1;
             planningCanvasGroup.interactable = true;
         }
+        if (endTurnButton != null) endTurnButton.gameObject.SetActive(true);
     }
 
     private void HideUI(ActionResult _ = null)
@@ -152,14 +233,16 @@ public class CombatPlanningUI : MonoBehaviour
             planningCanvasGroup.alpha = 0;
             planningCanvasGroup.interactable = false;
         }
+        if (endTurnButton != null) endTurnButton.gameObject.SetActive(false);
         currentUnit = null;
         selectedSkill = null;
         isChoosingTarget = false;
+        isSelectingUnit = false;
         SetInstruction("");
-        UpdateUnitEmphasis();
+        UpdateUnitEmphasis(null);
     }
     
-    private void HideUI() => HideUI(null); // để gọi từ lambda
+    private void HideUI() => HideUI(null);
 
     private void HandleWorldClick(Vector3 mousePos)
     {
@@ -274,11 +357,15 @@ public class CombatPlanningUI : MonoBehaviour
 
     private void OnSkillSelected(SkillData skill)
     {
-        if (combat.CurrentPlayerAP < skill.apCost) { Debug.LogWarning($"[AP] Không đủ AP để dùng {skill.skillName}."); return; }
+        if (combat.CurrentPlayerAP < skill.apCost)
+        {
+            Debug.LogWarning($"[AP] Không đủ AP để dùng {skill.skillName}.");
+            return;
+        }
         AudioManager.Instance?.PlayUISelect();
         if (skill.autoConfirmOnSelect)
         {
-            combat.SubmitPlayerTurnAction(skill, new List<CombatUnit> { currentUnit });
+            combat.SubmitPlayerAction(currentUnit, skill, new List<CombatUnit> { currentUnit });
             UpdateAPDisplay();
         }
         else
@@ -316,7 +403,7 @@ public class CombatPlanningUI : MonoBehaviour
             if (finalTargets.Count > 0)
             {
                 AudioManager.Instance?.PlayUITargetConfirm();
-                combat.SubmitPlayerTurnAction(selectedSkill, finalTargets);
+                combat.SubmitPlayerAction(currentUnit, selectedSkill, finalTargets);
                 UpdateAPDisplay();
             }
         }
@@ -330,17 +417,21 @@ public class CombatPlanningUI : MonoBehaviour
             isChoosingTarget = false;
             selectedSkill = null;
             ClearTargetHighlights();
-            UpdateUnitEmphasis();
+            UpdateUnitEmphasis(null);
             var view = combat.GetAllUnitViews().FirstOrDefault(v => v.LinkedUnit == currentUnit);
             if (view != null) OpenSkillWheel(currentUnit, view);
             else SetInstruction("Action canceled. Select a unit.");
+        }
+        else if (isSelectingUnit)
+        {
+            // Đang chọn unit → không làm gì
         }
     }
 
     private void HighlightValidTargets(SkillData skill)
     {
         ClearTargetHighlights();
-        UpdateUnitEmphasis();
+        UpdateUnitEmphasis(null);
         if (targetHighlightPrefab == null) return;
         IEnumerable<CombatUnit> pool;
         switch (skill.targetType)
@@ -376,14 +467,11 @@ public class CombatPlanningUI : MonoBehaviour
         enterEntry.callback.AddListener(_ =>
         {
             if (!canAfford) return;
-            // Hover scale effect
             var rect = go.GetComponent<RectTransform>();
             if (rect != null && gameObject.activeInHierarchy)
                 StartCoroutine(HoverScaleCoroutine(rect, 1f, 1.15f));
-            // Hover color
             var img = go.GetComponent<Image>();
             if (img != null) img.color = skillHoverColor;
-            // Hover sound (cooldown inside AudioManager)
             AudioManager.Instance?.PlayUIHover();
         });
         trigger.triggers.Add(enterEntry);
@@ -392,11 +480,9 @@ public class CombatPlanningUI : MonoBehaviour
         exitEntry.callback.AddListener(_ =>
         {
             if (!canAfford) return;
-            // Unhover scale
             var rect = go.GetComponent<RectTransform>();
             if (rect != null && gameObject.activeInHierarchy)
                 StartCoroutine(HoverScaleCoroutine(rect, rect.localScale.x, 1f));
-            // Revert color
             var img = go.GetComponent<Image>();
             if (img != null) img.color = (selectedSkill == skill) ? skillSelectedColor : skillNormalColor;
         });
@@ -418,21 +504,36 @@ public class CombatPlanningUI : MonoBehaviour
         rect.localScale = new Vector3(to, to, to);
     }
 
-    private void UpdateUnitEmphasis()
+    private void UpdateUnitEmphasis(List<CombatUnit> selectableUnits = null)
     {
         var allViews = combat.GetAllUnitViews();
-        float unfocusedAlpha = 0.5f;
+        
+        if (isSelectingUnit && selectableUnits != null)
+        {
+            // Chế độ chọn unit: highlight unit có thể chọn, dim unit đã act
+            foreach (var view in allViews)
+            {
+                if (view.LinkedUnit.IsPlayer && view.LinkedUnit.IsAlive && !view.LinkedUnit.HasActedThisTurn)
+                    view.SetAlpha(1f); // Có thể chọn
+                else
+                    view.SetAlpha(0.4f); // Đã act / enemy / dead
+            }
+            return;
+        }
+
         if (!isChoosingTarget || selectedSkill == null)
         {
             foreach (var view in allViews) view.SetAlpha(1f);
             return;
         }
+
+        // Chế độ chọn target
         bool isTargetingEnemies = (selectedSkill.targetType == TargetType.SingleEnemy || selectedSkill.targetType == TargetType.AllEnemies);
         foreach (var view in allViews)
         {
             bool isTargetGroup = (isTargetingEnemies && !view.LinkedUnit.IsPlayer) || (!isTargetingEnemies && view.LinkedUnit.IsPlayer);
             bool isCaster = (view.LinkedUnit == currentUnit);
-            view.SetAlpha((isTargetGroup || isCaster) ? 1f : unfocusedAlpha);
+            view.SetAlpha((isTargetGroup || isCaster) ? 1f : 0.4f);
         }
     }
 

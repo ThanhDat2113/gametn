@@ -12,12 +12,10 @@ public class ReinhardPassive : PassiveAbility
     private const float ATK_BUFF_MULTIPLIER = 1.15f;
     private const int BUFF_DURATION = 2;
 
-    private const float TURN_PUSH_CHANCE = 0.10f;
-
     public override void Initialize(CombatUnit owner)
     {
         base.Initialize(owner);
-        Debug.Log($"[{Owner.UnitName}'s Passive] Huyết Mạch Kiếm Thánh kích hoạt! 20% buff ATK, 10% đẩy lượt khi bị đánh.");
+        Debug.Log($"[{Owner.UnitName}'s Passive] Huyết Mạch Kiếm Thánh kích hoạt! 20% buff ATK khi bị đánh.");
     }
 
     public override void OnTakeDamage(CombatUnit attacker, int damage)
@@ -29,16 +27,6 @@ public class ReinhardPassive : PassiveAbility
         {
             Owner.ApplyBuff(StatType.ATK, ATK_BUFF_MULTIPLIER, BUFF_DURATION);
             Debug.Log($"[{Owner.UnitName}'s Passive] Huyết Mạch Kiếm Thánh thức tỉnh! ATK +15% trong {BUFF_DURATION} lượt.");
-        }
-
-        // 10% đẩy lượt
-        if (Random.value < TURN_PUSH_CHANCE)
-        {
-            if (CombatManager.Instance != null)
-            {
-                CombatManager.Instance.GrantImmediateTurn(Owner);
-                Debug.Log($"[{Owner.UnitName}'s Passive] Huyết Mạch Kiếm Thánh phản đòn! Đẩy lượt hành động ngay lập tức.");
-            }
         }
     }
 }

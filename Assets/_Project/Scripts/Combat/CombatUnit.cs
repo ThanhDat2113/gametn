@@ -22,7 +22,6 @@ public class CombatUnit
     public int ATK { get; private set; }
     public int PDEF { get; private set; }
     public int MDEF { get; private set; }
-    public int Speed { get; private set; }
 
     public float CritChance { get; set; } = 0f;
     public float CritDamage { get; set; } = 1.5f;
@@ -32,6 +31,13 @@ public class CombatUnit
 
     // ── Special Flags ────────────────────────────────────────
     public bool IgnoreTaunt { get; set; } = false;
+
+    // ── Side-Based Turn Tracking ─────────────────────────────
+    /// <summary>
+    /// Đánh dấu unit đã hành động trong lượt hiện tại (PlayerTurn hoặc EnemyTurn).
+    /// Reset mỗi đầu lượt.
+    /// </summary>
+    public bool HasActedThisTurn { get; set; } = false;
 
     // ── Buff & Status ───────────────────────────────────────
     private List<ActiveBuff> activeBuffs = new List<ActiveBuff>();
@@ -51,22 +57,6 @@ public class CombatUnit
 
     // ── Challenge Stack ───────────────────────────────────────
     public ChallengeStack ChallengeStack { get; private set; } = new();
-
-    // ── Action Value (Turn Meter) ─────────────────────────────
-    public float CurrentActionValue { get; set; } = 0f;
-    public const float ACTION_THRESHOLD = 100f;
-    public bool IsActionReady => CurrentActionValue >= ACTION_THRESHOLD;
-
-    public void AddActionValue(float amount)
-    {
-        CurrentActionValue += amount;
-    }
-
-    public void ConsumeActionValue()
-    {
-        CurrentActionValue -= ACTION_THRESHOLD;
-        if (CurrentActionValue < 0) CurrentActionValue = 0;
-    }
 
     // ── Round selection ───────────────────────────────────────
     public List<SkillData> AvailableSkills { get; private set; } = new();
@@ -92,9 +82,9 @@ public class CombatUnit
     public event System.Action OnTurnStart;
 
     // ── Initialize ────────────────────────────────────────────
-    // ĐÃ SỬA: hỗ trợ 5 chỉ số riêng: HP, ATK, PDEF, MDEF, Speed
+    // ĐÃ SỬA: hỗ trợ 4 chỉ số riêng: HP, ATK, PDEF, MDEF (đã xóa Speed)
     public void Initialize(CharacterData data, int level, bool isPlayer, 
-        int hpBonus = 0, int atkBonus = 0, int pdefBonus = 0, int mdefBonus = 0, int speedBonus = 0)
+        int hpBonus = 0, int atkBonus = 0, int pdefBonus = 0, int mdefBonus = 0)
     {
         Id = nextId++;
         Data = data;
@@ -107,7 +97,6 @@ public class CombatUnit
         ATK = data.GetATK(level) + atkBonus;
         PDEF = data.GetPDEF(level) + pdefBonus;
         MDEF = data.GetMDEF(level) + mdefBonus;
-        Speed = data.GetSpeed(level) + speedBonus;
 
         // Instantiate skills to make them unique to this unit
         AvailableSkills.Clear();
@@ -355,6 +344,10 @@ public class CombatUnit
         Passive?.OnTurnStart();
     }
 
+    /// <summary>
+    /// TickStatuses: giảm duration của buffs/statuses.
+    /// Được gọi sau mỗi lượt act (khi 1 unit hoàn thành hành động).
+    /// </summary>
     public void TickStatuses()
     {
         // Buffs
@@ -398,8 +391,7 @@ public class CombatUnit
         ATK = Data.GetATK(Level);
         PDEF = Data.GetPDEF(Level);
         MDEF = Data.GetMDEF(Level);
-        Speed = Data.GetSpeed(Level);
-        Debug.Log($"[{UnitName}] Level Up stats: HP {MaxHP} | ATK {ATK} | PDEF {PDEF} | MDEF {MDEF} | Speed {Speed}");
+        Debug.Log($"[{UnitName}] Level Up stats: HP {MaxHP} | ATK {ATK} | PDEF {PDEF} | MDEF {MDEF}");
     }
 
     /// <summary>
