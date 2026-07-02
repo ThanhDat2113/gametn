@@ -1,9 +1,7 @@
 using UnityEngine;
 
 /// <summary>
-/// Static utility: tính toán vị trí marker trên màn hình.
-/// Marker chỉ cần ĐÚNG VỊ TRÍ (bám theo NPC khi visible, clamp về mép khi ngoài khung hình).
-/// Không xử lý rotation/arrow direction.
+/// Static utility: tính toán vị trí VÀ hướng xoay (rotation) của marker trên màn hình.
 /// </summary>
 public static class ScreenEdgeMarkerCalculator
 {
@@ -18,10 +16,10 @@ public static class ScreenEdgeMarkerCalculator
     }
 
     /// <summary>
-    /// Tính hướng screen-space (từ tâm màn hình) đến target — dùng nội bộ
-    /// để clamp marker về đúng cạnh màn hình khi target ngoài khung hình.
+    /// Tính hướng screen-space (từ tâm màn hình) đến target — dùng để clamp marker
+    /// về đúng cạnh màn hình, và làm cơ sở tính góc xoay cho CalculateArrowRotation.
     /// </summary>
-    private static Vector2 GetScreenDirection(Vector3 targetWorldPos, Camera mainCamera)
+    public static Vector2 GetScreenDirection(Vector3 targetWorldPos, Camera mainCamera)
     {
         Vector3 toVP = mainCamera.WorldToViewportPoint(targetWorldPos);
 
@@ -61,5 +59,18 @@ public static class ScreenEdgeMarkerCalculator
             Mathf.Abs(dir.y) > 0.0001f ? halfH / Mathf.Abs(dir.y) : float.MaxValue);
 
         return center + dir * scale;
+    }
+
+    /// <summary>
+    /// Tính góc quay (degrees) cho mũi tên hướng về target, dựa trên hướng screen-space
+    /// tính từ tâm màn hình. Dùng Atan2 chuẩn — kết hợp với spriteAngleOffset trên
+    /// QuestMarkerUI để căn đúng theo hướng gốc của sprite mũi tên.
+    /// </summary>
+    public static float CalculateArrowRotation(Vector3 targetWorldPos, Camera mainCamera)
+    {
+        if (mainCamera == null) return 0f;
+
+        Vector2 dir = GetScreenDirection(targetWorldPos, mainCamera);
+        return Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
     }
 }

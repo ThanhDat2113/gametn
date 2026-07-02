@@ -12,6 +12,15 @@ public class QuestMarkerUI : MonoBehaviour
     [Header("Settings")]
     [SerializeField] private float edgePadding = 20f;
 
+    [Header("Rotation")]
+    [Tooltip("Bật để marker xoay chỉ hướng về NPC khi NPC ở ngoài khung hình (kiểu mũi tên edge). " +
+             "Khi NPC visible trên màn hình, marker không xoay (đứng thẳng).")]
+    [SerializeField] private bool enableRotation = true;
+
+    [Tooltip("Offset góc để căn sprite gốc về đúng hướng.\n" +
+             "Sprite chỉ RIGHT(→): 0°  |  UP(↑): -90°  |  LEFT(←): 180°  |  DOWN(↓): 90°")]
+    [SerializeField] private float spriteAngleOffset = 0f;
+
     private RectTransform _rectTransform;
     private CanvasGroup   _canvasGroup;
 
@@ -49,16 +58,38 @@ public class QuestMarkerUI : MonoBehaviour
         Vector3 targetPos = _targetBridge.MarkerPosition;
         bool inView = ScreenEdgeMarkerCalculator.IsInViewFrustum(targetPos, _mainCamera);
 
-        // NPC visible → đặt marker đúng vị trí NPC trên màn hình.
-        // NPC ngoài khung hình → clamp về mép gần nhất theo hướng NPC.
-        Vector2 screenPos = inView
-            ? (Vector2)_mainCamera.WorldToScreenPoint(targetPos)
-            : ScreenEdgeMarkerCalculator.CalculateEdgeScreenPos(targetPos, _mainCamera, edgePadding);
+        Vector2 screenPos;
+        if (inView)
+        {
+            // NPC visible → đặt marker đúng vị trí NPC trên màn hình, không xoay.
+            Vector3 sp = _mainCamera.WorldToScreenPoint(targetPos);
+            screenPos = new Vector2(sp.x, sp.y);
 
-        RectTransformUtility.ScreenPointToLocalPointInRectangle(
-            _canvasRect, screenPos, _uiCamera, out Vector2 canvasPos);
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                _canvasRect, screenPos, _uiCamera, out Vector2 canvasPos);
 
-        _rectTransform.anchoredPosition = canvasPos;
+            _rectTransform.anchoredPosition = canvasPos;
+            if (enableRotation) _rectTransform.localRotation = Quaternion.identity;
+        }
+        else
+        {
+            // NPC ngoài khung hình → clamp về mép, xoay chỉ hướng về NPC.
+            screenPos = ScreenEdgeMarkerCalculator.CalculateEdgeScreenPos(targetPos, _mainCamera, edgePadding);
+
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                _canvasRect, screenPos, _uiCamera, out Vector2 canvasPos);
+
+            _rectTransform.anchoredPosition = canvasPos;
+
+            if (enableRotation)
+            {
+                float angle = ScreenEdgeMarkerCalculator.CalculateArrowRotation(targetPos, _mainCamera);
+                // localRotation (không phải rotation) để xoay đúng trong không gian local của
+                // canvas, không bị ảnh hưởng bởi rotation của parent (vd minimap container xoay).
+                _rectTransform.localRotation = Quaternion.AngleAxis(angle + spriteAngleOffset, Vector3.forward);
+            }
+        }
+
         _canvasGroup.alpha = 1f;
     }
 
