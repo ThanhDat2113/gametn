@@ -23,11 +23,10 @@ MonoBehaviour:
     R\u1ED3ng. D\xF9 ch\u01B0a \u0111\u1EA1t \u0111\u1EBFn \u0111\u1EC9nh cao, h\u1EAFn
     \u0111\xE3 l\xE0 m\u1ED9t \u0111\u1ED1i th\u1EE7 \u0111\xE1ng g\u1EDDm v\u1EDBi
     nh\u1EEFng ai xem th\u01B0\u1EDDng."
-  baseHP: 2000
-  baseATK: 40
+  baseHP: 1000
+  baseATK: 20
   basePDEF: 18
   baseMDEF: 8
-  baseSpeed: 160
   baseLevel: 1
   expReward: 500
   baseExpThreshold: 100
@@ -36,7 +35,6 @@ MonoBehaviour:
   atkPerLevel: 2
   pdefPerLevel: 1
   mdefPerLevel: 1
-  speedPerLevel: 1
   skills:
   - {fileID: 11400000, guid: 8031a82a3072e0744ace4855df407bd5, type: 2}
   - {fileID: 11400000, guid: fbffb0af633c6bd48957309af60a11f2, type: 2}
@@ -46,3 +44,4 @@ MonoBehaviour:
   attackVoiceClips: []
   deathVoiceClips: []
   footstepSound: {fileID: 0}
+  flipOnSpawn: 1
