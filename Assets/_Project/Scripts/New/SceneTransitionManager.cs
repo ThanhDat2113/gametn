@@ -26,6 +26,9 @@ public class SceneTransitionManager : MonoBehaviour
     private GameObject player;
     private List<MonoBehaviour> playerScripts = new List<MonoBehaviour>();
 
+    // Track loaded maps để tránh reload lại map đã load
+    private HashSet<string> loadedMaps = new HashSet<string>();
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -49,15 +52,50 @@ public class SceneTransitionManager : MonoBehaviour
             yield break;
         }
 
-        // Lưu tất cả MonoBehaviour trên player (để tạm thời disable)
         playerScripts.Clear();
         playerScripts.AddRange(player.GetComponents<MonoBehaviour>());
 
-        // Load map đầu tiên
         if (string.IsNullOrEmpty(currentMapName))
         {
-            yield return TransitionCoroutine(initialMapName, initialSpawnID, null);
+            // Load map đầu tiên KHÔNG fade để CutsceneIntro có thể xử lý fade
+            yield return LoadFirstMap(initialMapName, initialSpawnID);
         }
+    }
+
+    private IEnumerator LoadFirstMap(string newMapName, string spawnPointID)
+    {
+        isTransitioning = true;
+        Debug.Log($"[SceneTransition] Load map đầu tiên: '{newMapName}'");
+
+        // Load map additive
+        AsyncOperation load = SceneManager.LoadSceneAsync(newMapName, LoadSceneMode.Additive);
+        yield return load;
+
+        Scene newScene = SceneManager.GetSceneByName(newMapName);
+        if (!newScene.IsValid())
+        {
+            Debug.LogError($"[SceneTransition] Không tìm thấy scene: {newMapName}");
+            isTransitioning = false;
+            yield break;
+        }
+        SceneManager.SetActiveScene(newScene);
+
+        // Teleport player đến spawn
+        Vector3 targetPosition = Vector3.zero;
+        Quaternion targetRotation = Quaternion.identity;
+        if (!FindSpawnPoint(newScene, spawnPointID, out targetPosition, out targetRotation))
+            FindSpawnPoint(newScene, null, out targetPosition, out targetRotation);
+
+        TeleportPlayerTo(targetPosition, targetRotation);
+        currentMapName = newMapName;
+        loadedMaps.Add(newMapName); // Track map đầu tiên
+
+        // Chờ 2 frame cho CutsceneIntro khởi tạo
+        yield return null;
+        yield return null;
+
+        isTransitioning = false;
+        Debug.Log($"[SceneTransition] ✅ Đã load map: {newMapName}");
     }
 
     public void TransitionToMap(string mapName, string spawnPointID = null, Action onComplete = null)
@@ -93,43 +131,71 @@ public class SceneTransitionManager : MonoBehaviour
         else
             yield return new WaitForSeconds(fadeDuration);
 
-        // 2. Unload map cũ
+        // 2. Kiểm tra xem map mới đã load chưa
+        bool mapAlreadyLoaded = loadedMaps.Contains(newMapName);
+        Scene newScene = SceneManager.GetSceneByName(newMapName);
+
+        if (mapAlreadyLoaded && newScene.IsValid())
+        {
+            // Map đã load rồi - chỉ cần active nó lên
+            Debug.Log($"[SceneTransition] Map '{newMapName}' đã load trước đó. Active lại...");
+            // SetActive(true) tất cả root objects trong scene
+            foreach (var root in newScene.GetRootGameObjects())
+            {
+                root.SetActive(true);
+            }
+        }
+        else
+        {
+            // Map chưa load - load lần đầu
+            AsyncOperation load = SceneManager.LoadSceneAsync(newMapName, LoadSceneMode.Additive);
+            yield return load;
+
+            newScene = SceneManager.GetSceneByName(newMapName);
+            if (!newScene.IsValid())
+            {
+                Debug.LogError($"[SceneTransition] Không tìm thấy scene: {newMapName}");
+                isTransitioning = false;
+                yield break;
+            }
+            loadedMaps.Add(newMapName);
+        }
+
+        // 3. Unload/Deactivate map cũ (giữ trong loadedMaps để không cần load lại)
         if (!string.IsNullOrEmpty(currentMapName))
         {
-            AsyncOperation unload = SceneManager.UnloadSceneAsync(currentMapName);
-            yield return unload;
-            Debug.Log($"[SceneTransition] Unloaded map: {currentMapName}");
+            Scene oldScene = SceneManager.GetSceneByName(currentMapName);
+            if (oldScene.IsValid())
+            {
+                // Ẩn tất cả root objects trong map cũ thay vì unload
+                foreach (var root in oldScene.GetRootGameObjects())
+                {
+                    // Không ẩn PersistentContainer và các object DontDestroyOnLoad
+                    if (!root.CompareTag("Persistent") && root.name != "PersistentContainer")
+                    {
+                        root.SetActive(false);
+                    }
+                }
+                Debug.Log($"[SceneTransition] Deactivated old map: {currentMapName}");
+            }
         }
 
-        // 3. Load map mới
-        AsyncOperation load = SceneManager.LoadSceneAsync(newMapName, LoadSceneMode.Additive);
-        yield return load;
-
-        Scene newScene = SceneManager.GetSceneByName(newMapName);
-        if (!newScene.IsValid())
-        {
-            Debug.LogError($"[SceneTransition] Không tìm thấy scene: {newMapName}");
-            isTransitioning = false;
-            yield break;
-        }
         SceneManager.SetActiveScene(newScene);
         Debug.Log($"[SceneTransition] Active scene: {newMapName}");
 
-        // 4. Đưa player đến spawn point (sau khi scene đã active và các Awake/Start đã chạy)
+        // 4. Đưa player đến spawn point
         Vector3 targetPosition = Vector3.zero;
         Quaternion targetRotation = Quaternion.identity;
         bool spawnFound = FindSpawnPoint(newScene, spawnPointID, out targetPosition, out targetRotation);
 
         if (!spawnFound)
         {
-            // Thử tìm spawn mặc định
             spawnFound = FindSpawnPoint(newScene, null, out targetPosition, out targetRotation);
         }
 
         if (spawnFound)
         {
             Debug.Log($"[SceneTransition] Spawn point tìm thấy tại {targetPosition}");
-            // Teleport ngay lập tức
             TeleportPlayerTo(targetPosition, targetRotation);
         }
         else
@@ -154,7 +220,6 @@ public class SceneTransitionManager : MonoBehaviour
         if (player != null)
         {
             Vector3 finalPos = player.transform.position;
-            Debug.Log($"[SceneTransition] Vị trí Player cuối cùng: {finalPos} (dự kiến: {targetPosition})");
             if (Vector3.Distance(finalPos, targetPosition) > 0.5f)
             {
                 Debug.LogWarning($"[SceneTransition] Player vẫn ở sai vị trí! Đang teleport lần cuối...");

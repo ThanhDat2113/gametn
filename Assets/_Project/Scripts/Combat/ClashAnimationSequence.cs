@@ -20,7 +20,6 @@ public class ClashAnimationSequence : MonoBehaviour
     public float dimAlpha = 0.5f;
 
     private List<UnitView> allUnitViews = new();
-    // Track hit counter từ ExecutePhase để fallback trong PlayAction
     private int _lastHitCounter = 0;
 
     private void Awake()
@@ -31,7 +30,6 @@ public class ClashAnimationSequence : MonoBehaviour
 
     public IEnumerator PlayAction(ActionResult result)
     {
-        // Cache từ CombatManager thay vì FindObjectsByType mỗi lần
         if (CombatManager.Instance != null)
             allUnitViews = CombatManager.Instance.GetAllUnitViews();
         else
@@ -47,18 +45,15 @@ public class ClashAnimationSequence : MonoBehaviour
             yield break;
         }
 
-        // Cho phép animation chạy ngay cả khi không có target (ví dụ: kỹ năng tự buff)
         if (primaryTargetView == null)
         {
             Debug.Log("[ActionAnimation] Không có Target View (có thể là kỹ năng tự buff). Vẫn tiếp tục animation.");
         }
 
         bool shouldMove = ShouldCharacterMove(result.Actor, result.Skill);
-
         yield return StartCoroutine(SetupPhase(actorView, result, shouldMove));
 
         Vector3 actorOrigin = actorView.transform.position;
-
         if (shouldMove)
         {
             Vector3 targetPosition = primaryTargetView.transform.position;
@@ -67,38 +62,20 @@ public class ClashAnimationSequence : MonoBehaviour
             yield return StartCoroutine(ApproachPhase(actorView, attackPosition));
         }
 
-        // Reset hit counter và chạy execute phase
         _lastHitCounter = 0;
         float animationLength = ExecutePhase(result);
         yield return new WaitForSeconds(animationLength + postSkillWait);
 
-        // Fallback: nếu animation không có OnHit event, force flush ngay
         if (_lastHitCounter == 0 && actorView != null)
         {
             Debug.Log($"[Anim] {result.Skill?.skillName} không có Hit event — force flush fallback.");
-            // Force apply damage + VFX + SFX ngay lập tức
             if (CombatAudioManager.Instance != null && result.Skill != null)
                 CombatAudioManager.Instance.PlaySkillSFX(result.Skill.sfxClips, 0);
-
-            foreach (var outcome in result.Outcomes)
-            {
-                var targetView = GetViewForUnit(outcome.Target);
-                if (targetView == null) continue;
-                if (cameraManager != null) cameraManager.PlayImpactShake();
-                targetView.SetAnimationTrigger(AnimationConstants.Hurt);
-                SpawnHitVFX(result.Skill, targetView);
-            }
             actorView.FlushPendingOutcomes();
         }
 
         if (shouldMove)
-        {
             yield return StartCoroutine(ReturnPhase(actorView, actorOrigin, result));
-        }
-
-        // KHÔNG apply non-damage effects ở đây! ResolveAction() đã apply chúng rồi.
-        // Nếu apply lại sẽ gây double buff/heal.
-        Debug.Log($"[ActionAnimation] Non-damage effects were already applied in ResolveAction. Skipping.");
 
         yield return StartCoroutine(CleanupPhase());
     }
@@ -117,14 +94,11 @@ public class ClashAnimationSequence : MonoBehaviour
     private IEnumerator SetupPhase(UnitView actorView, ActionResult result, bool isMoving)
     {
         SetAllUnitAlphas(1.0f);
-
         var involvedUnits = new HashSet<CombatUnit>(result.Outcomes.Select(o => o.Target));
         involvedUnits.Add(result.Actor);
         foreach (var view in allUnitViews)
-        {
             if (view.LinkedUnit != null && !involvedUnits.Contains(view.LinkedUnit))
                 view.SetAlpha(dimAlpha);
-        }
 
         if (cameraManager != null)
         {
@@ -154,48 +128,37 @@ public class ClashAnimationSequence : MonoBehaviour
         var actorView = GetViewForUnit(result.Actor);
         var skill = result.Skill;
         var targets = result.InitialTargets;
-
         if (actorView == null) return 0.5f;
 
-        // Gán skill và target để UnitView có thể truy cập nếu cần
         actorView.SetCurrentSkill(skill);
         if (targets.Any())
             actorView.SetCurrentTarget(targets.First());
 
-        // 1. Spawn VFX for AtCaster and AtTarget modes
-        SpawnSkillVFX(skill, actorView, targets);
-
-        // 2. Handle Ranged Projectiles
-        if (skill != null && skill.isRanged && skill.projectilePrefab != null && targets.Any())
-        {
-            StartCoroutine(FireProjectile(actorView, targets.First(), skill));
-        }
-
-        // 3. Setup Hit Handler to spawn VFX and play SFX
+        // 1. Hit Handler - VFX (hit đầu) + SFX + shake + hurt
+        // Hit đầu: SpawnSkillVFX spawn tất cả VFX AtCaster + AtTarget
+        // Các hit sau: VFX từ animation event OnSpawnVFX trong UnitView.ProcessVFXAtFrame (nếu có)
         _lastHitCounter = 0;
         Action onHitHandler = () => {
             int currentHit = _lastHitCounter++;
 
-            // Play skill SFX mỗi hit
-            if (CombatAudioManager.Instance != null && skill != null)
+            // Hit đầu tiên (hit 0) spawn VFX qua SpawnSkillVFX
+            // vì animation clip không có OnSpawnVFX event cho hit đầu
+            if (currentHit == 0)
             {
-                CombatAudioManager.Instance.PlaySkillSFX(skill.sfxClips, currentHit);
+                SpawnSkillVFX(skill, actorView, targets);
             }
 
+            if (CombatAudioManager.Instance != null && skill != null)
+                CombatAudioManager.Instance.PlaySkillSFX(skill.sfxClips, currentHit);
             foreach (var outcome in result.Outcomes)
             {
                 var targetView = GetViewForUnit(outcome.Target);
                 if (targetView == null) continue;
-
                 if (cameraManager != null) cameraManager.PlayImpactShake();
                 targetView.SetAnimationTrigger(AnimationConstants.Hurt);
-                
-                // Spawn VFX for HitOnEachTarget mode
-                SpawnHitVFX(skill, targetView);
             }
         };
 
-        // Register and cleanup handlers
         actorView.OnHitAnimationEvent += onHitHandler;
         Action cleanupHandler = null;
         cleanupHandler = () => {
@@ -208,7 +171,6 @@ public class ClashAnimationSequence : MonoBehaviour
         };
         actorView.OnAnimationEndEvent += cleanupHandler;
 
-        // 4. Play Animation
         if (!string.IsNullOrEmpty(skill.animationTrigger))
         {
             actorView.SetAnimationTrigger(skill.animationTrigger);
@@ -224,32 +186,34 @@ public class ClashAnimationSequence : MonoBehaviour
     private void SpawnSkillVFX(SkillData skill, UnitView actorView, List<CombatUnit> targets)
     {
         if (skill == null) return;
-
-        // Auto-spawn AtCaster và AtTarget VFX cho tất cả skills (melee, ranged, buff)
-        // HitOnEachTarget VFX được spawn bởi onHit handler qua animation event
         if (skill.vfxEvents != null)
         {
-            foreach (var evt in skill.vfxEvents)
+            for (int i = 0; i < skill.vfxEvents.Length; i++)
             {
-                // For self-skills, AtCaster and AtTarget are effectively the same.
-                if (evt.spawnMode == VFXSpawnMode.AtCaster || evt.spawnMode == VFXSpawnMode.AtTarget)
+                var evt = skill.vfxEvents[i];
+                if (evt == null || evt.vfxPrefab == null) continue;
+
+                // AtCaster: luôn spawn (startup VFX như aura, glow)
+                if (evt.spawnMode == VFXSpawnMode.AtCaster)
+                {
+                    Vector3 pos = GetVFXPosition(skill, evt, actorView, targets);
+                    InstantiateVFX(evt, pos, actorView.transform);
+                }
+                // AtTarget/HitOnEachTarget: chỉ spawn VFX đầu tiên (index 0) ở hit đầu
+                // Các hit sau được xử lý bởi animation event OnSpawnVFX trong ProcessVFXAtFrame
+                else if (i == 0)
                 {
                     Vector3 pos = GetVFXPosition(skill, evt, actorView, targets);
                     InstantiateVFX(evt, pos, actorView.transform);
                 }
             }
         }
-
-        // --- Backward Compatibility ---
-        // 1. Legacy single vfxPrefab (treated as AtTarget)
         if (skill.vfxPrefab != null)
         {
             var fakeEvent = new VFXEvent { vfxPrefab = skill.vfxPrefab, offset = new Vector3(0, skill.vfxOffset, 0), spawnMode = VFXSpawnMode.AtTarget };
             Vector3 pos = GetVFXPosition(skill, fakeEvent, actorView, targets);
             InstantiateVFX(fakeEvent, pos, null);
         }
-
-        // 2. Legacy rangedVfxEvents (treated as AtCaster)
         if (skill.rangedVfxEvents != null)
         {
             foreach (var evt in skill.rangedVfxEvents)
@@ -262,67 +226,17 @@ public class ClashAnimationSequence : MonoBehaviour
         }
     }
 
-    private void SpawnHitVFX(SkillData skill, UnitView targetView)
-    {
-        if (skill == null || targetView == null) return;
-
-        // --- New Unified System ---
-        if (skill.vfxEvents != null)
-        {
-            foreach (var evt in skill.vfxEvents)
-            {
-                if (evt.spawnMode == VFXSpawnMode.HitOnEachTarget)
-                {
-                    InstantiateVFX(evt, targetView.transform.position + evt.offset, targetView.transform);
-                }
-            }
-        }
-
-        // --- Backward Compatibility ---
-        // 1. Legacy hitVfxEvents
-        if (skill.hitVfxEvents != null)
-        {
-            foreach (var evt in skill.hitVfxEvents)
-            {
-                if (evt == null || evt.vfxPrefab == null) continue;
-                InstantiateVFX(evt, targetView.transform.position + evt.offset, targetView.transform);
-            }
-        }
-    }
-
     private Vector3 GetVFXPosition(SkillData skill, VFXEvent evt, UnitView actorView, List<CombatUnit> targets)
     {
         switch (evt.spawnMode)
         {
             case VFXSpawnMode.AtCaster:
                 return actorView.transform.position + evt.offset;
-
             case VFXSpawnMode.AtTarget:
                 if (targets == null || !targets.Any())
-                    return actorView.transform.position + evt.offset; // Fallback to caster if no target
-
-                // For single target or non-AoE, use the first target
-                if (skill == null || targets.Count == 1 || (targets.Count > 1 && skill.targetType != TargetType.AllEnemies && skill.targetType != TargetType.AllAllies))
-                {
-                    var targetView = GetViewForUnit(targets.First());
-                    return targetView != null ? targetView.transform.position + evt.offset : actorView.transform.position + evt.offset;
-                }
-                else // AoE: find center point
-                {
-                    Vector3 center = Vector3.zero;
-                    int count = 0;
-                    foreach (var unit in targets)
-                    {
-                        var view = GetViewForUnit(unit);
-                        if (view != null)
-                        {
-                            center += view.transform.position;
-                            count++;
-                        }
-                    }
-                    return count > 0 ? (center / count) + evt.offset : actorView.transform.position + evt.offset;
-                }
-
+                    return actorView.transform.position + evt.offset;
+                var targetView = GetViewForUnit(targets.First());
+                return targetView != null ? targetView.transform.position + evt.offset : actorView.transform.position + evt.offset;
             default:
                 return actorView.transform.position + evt.offset;
         }
@@ -331,66 +245,12 @@ public class ClashAnimationSequence : MonoBehaviour
     private void InstantiateVFX(VFXEvent evt, Vector3 position, Transform potentialParent)
     {
         if (evt.vfxPrefab == null) return;
-
         var vfx = Instantiate(evt.vfxPrefab, position, Quaternion.identity);
         if (evt.attachToCaster && potentialParent != null)
-        {
             vfx.transform.SetParent(potentialParent);
-        }
-
         var visualEffect = vfx.GetComponent<UnityEngine.VFX.VisualEffect>();
-        if (visualEffect != null)
-        {
-            visualEffect.Play();
-        }
+        if (visualEffect != null) visualEffect.Play();
         Destroy(vfx, 2f);
-    }
-
-    private IEnumerator FireProjectile(UnitView casterView, CombatUnit targetUnit, SkillData skill)
-    {
-        var targetView = GetViewForUnit(targetUnit);
-        if (targetView == null) yield break;
-
-        Vector3 startPos = casterView.transform.position + skill.projectileOffset;
-        var projectile = UnityEngine.Object.Instantiate(skill.projectilePrefab, startPos, Quaternion.identity);
-
-        float elapsed = 0f;
-        while (elapsed < skill.projectileTravelTime)
-        {
-            elapsed += Time.deltaTime;
-            float t = Mathf.Clamp01(elapsed / skill.projectileTravelTime);
-            projectile.transform.position = Vector3.Lerp(startPos, targetView.transform.position, t);
-            yield return null;
-        }
-
-        projectile.transform.position = targetView.transform.position;
-        
-        // Hit VFX is now handled by the OnHit event, which is triggered after the projectile lands.
-        // We just need to spawn the "HitOnEachTarget" VFX here for ranged attacks.
-        SpawnHitVFX(skill, targetView);
-
-        Destroy(projectile, 2f);
-    }
-
-    // Return the caster to its original position after the attack
-    private IEnumerator ReturnPhase(UnitView actorView, Vector3 originPosition, ActionResult result)
-    {
-        // Move actor back to original position
-        yield return StartCoroutine(MoveCoroutine(actorView, originPosition, returnDuration));
-        // Play idle animation after return
-        actorView.SetAnimationTrigger(AnimationConstants.Idle);
-    }
-
-    private IEnumerator CleanupPhase()
-    {
-        foreach (var view in allUnitViews)
-            if (view != null) view.PlayAnimation(AnimationConstants.Idle);
-        SetAllUnitAlphas(1.0f);
-        if (cameraManager != null)
-        {
-            cameraManager.ResetCamera();
-            yield return new WaitForSeconds(cameraManager.zoomOutDuration);
-        }
     }
 
     private IEnumerator MoveCoroutine(UnitView view, Vector3 targetPos, float duration)
@@ -417,5 +277,23 @@ public class ClashAnimationSequence : MonoBehaviour
     {
         foreach (var view in allUnitViews)
             if (view != null) view.SetAlpha(alpha);
+    }
+
+    private IEnumerator ReturnPhase(UnitView actorView, Vector3 originPosition, ActionResult result)
+    {
+        yield return StartCoroutine(MoveCoroutine(actorView, originPosition, returnDuration));
+        actorView.SetAnimationTrigger(AnimationConstants.Idle);
+    }
+
+    private IEnumerator CleanupPhase()
+    {
+        foreach (var view in allUnitViews)
+            if (view != null) view.PlayAnimation(AnimationConstants.Idle);
+        SetAllUnitAlphas(1.0f);
+        if (cameraManager != null)
+        {
+            cameraManager.ResetCamera();
+            yield return new WaitForSeconds(cameraManager.zoomOutDuration);
+        }
     }
 }

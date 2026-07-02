@@ -40,9 +40,11 @@ public class QuestMarkerManager : MonoBehaviour
 
     private void Start()
     {
+        // Chờ QuestManager sẵn sàng (có thể chưa kịp Start quest)
         if (QuestManager.Instance == null)
         {
-            Debug.LogError("[QuestMarkerManager] QuestManager.Instance is NULL!");
+            Debug.LogWarning("[QuestMarkerManager] QuestManager.Instance is NULL! Sẽ thử lại sau 0.5s...");
+            Invoke(nameof(DelayedStart), 0.5f);
             return;
         }
 
@@ -53,6 +55,20 @@ public class QuestMarkerManager : MonoBehaviour
         SceneManager.sceneLoaded += OnSceneLoaded;
 
         // Quest có thể đã start trước khi manager này Awake — evaluate ngay
+        EvaluateCurrentStep();
+    }
+
+    private void DelayedStart()
+    {
+        if (QuestManager.Instance == null)
+        {
+            Debug.LogError("[QuestMarkerManager] QuestManager.Instance vẫn NULL sau delay!");
+            return;
+        }
+
+        QuestManager.Instance.OnStepChanged.AddListener(OnStepChanged);
+        QuestManager.Instance.OnStepCompleted.AddListener(OnStepCompleted);
+        SceneManager.sceneLoaded += OnSceneLoaded;
         EvaluateCurrentStep();
     }
 

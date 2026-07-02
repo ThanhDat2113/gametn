@@ -21,6 +21,21 @@ public class MapEnemyPatrol : MonoBehaviour
         patrolRoutine = StartCoroutine(PatrolLoop());
     }
 
+    void OnEnable()
+    {
+        // Khi map được reactivate sau combat, resume patrol
+        if (patrolRoutine == null && startPos != Vector3.zero)
+        {
+            patrolRoutine = StartCoroutine(PatrolLoop());
+        }
+    }
+
+    void OnDisable()
+    {
+        // Khi map bị deactivate (vào combat hoặc chuyển map), dừng patrol
+        StopPatrol();
+    }
+
     IEnumerator PatrolLoop()
     {
         while (true)

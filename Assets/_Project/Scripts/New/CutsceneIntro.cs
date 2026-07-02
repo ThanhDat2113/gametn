@@ -3,14 +3,6 @@ using System.Collections;
 
 public class CutsceneIntro : MonoBehaviour
 {
-    private static bool _hasPlayed = false;
-
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-    private static void ResetPlayedFlag()
-    {
-        _hasPlayed = false;
-    }
-
     [Header("Camera")]
     public GameObject mainCamera;
     public GameObject cutsceneCamera;
@@ -35,12 +27,6 @@ public class CutsceneIntro : MonoBehaviour
 
     private void Awake()
     {
-        if (_hasPlayed)
-        {
-            Destroy(gameObject);
-            return;
-        }
-
         if (mainCamera == null)
             mainCamera = Camera.main?.gameObject;
 
@@ -74,16 +60,30 @@ public class CutsceneIntro : MonoBehaviour
 
     private void Start()
     {
-        if (_hasPlayed) return;
         StartCoroutine(PlayCutscene());
     }
 
     private IEnumerator PlayCutscene()
     {
+        // Chờ một frame để các hệ thống khác ổn định (SceneTransitionManager, FadeController, v.v.)
+        yield return null;
+        yield return new WaitForSeconds(0.2f);
+
         if (playerController != null)
             playerController.enabled = false;
 
-        yield return FadeController.Instance.FadeFromBlack();
+        if (FadeController.Instance == null)
+        {
+            Debug.LogError("[CutsceneIntro] FadeController.Instance == null!");
+        }
+        else
+        {
+            // Đảm bảo màn hình đang đen trước khi fade từ đen ra
+            // (FadeController mới khởi tạo có alpha = 0, cần set về 1 để thấy hiệu ứng fade)
+            FadeController.Instance.SetAlpha(1f);
+            yield return new WaitForSeconds(0.1f);
+            yield return FadeController.Instance.FadeFromBlack();
+        }
 
         if (mainCamera != null) mainCamera.SetActive(false);
         if (cutsceneCamera != null)
@@ -111,7 +111,6 @@ public class CutsceneIntro : MonoBehaviour
         dialogueFinished = false;
         if (DialogueBubbleUI.Instance != null && dialogueLines != null && dialogueLines.Length > 0)
         {
-            // Nếu forceNPCBubble, clone các line và set isPlayerLine = false
             DialogueLineData[] linesToUse = dialogueLines;
             if (forceNPCBubble)
             {
@@ -121,10 +120,10 @@ public class CutsceneIntro : MonoBehaviour
             DialogueBubbleUI.Instance.ShowSequential(
                 linesToUse,
                 dialoguePoint != null ? dialoguePoint : transform,
-                null, // playerTarget (cutscene không cần)
+                null,
                 OnDialogueFinished,
-                0,    // startIndex
-                null  // side (không cần)
+                0,
+                null
             );
         }
         else
@@ -133,17 +132,18 @@ public class CutsceneIntro : MonoBehaviour
         }
         yield return new WaitUntil(() => dialogueFinished);
 
-        yield return FadeController.Instance.FadeToBlack();
+        if (FadeController.Instance != null)
+            yield return FadeController.Instance.FadeToBlack();
 
         if (cutsceneCamera != null) cutsceneCamera.SetActive(false);
         if (mainCamera != null) mainCamera.SetActive(true);
 
-        yield return FadeController.Instance.FadeFromBlack();
+        if (FadeController.Instance != null)
+            yield return FadeController.Instance.FadeFromBlack();
 
         if (playerController != null)
             playerController.enabled = true;
 
-        _hasPlayed = true;
     }
 
     private void OnDialogueFinished()
@@ -151,21 +151,17 @@ public class CutsceneIntro : MonoBehaviour
         dialogueFinished = true;
     }
 
-    // Helper để clone các line và set isPlayerLine = false
     private DialogueLineData[] CloneLinesWithNPCBubble(DialogueLineData[] original)
     {
         DialogueLineData[] clones = new DialogueLineData[original.Length];
         for (int i = 0; i < original.Length; i++)
         {
-            // Tạo một instance mới từ ScriptableObject (không nên dùng Instantiate vì sẽ tạo asset mới)
-            // Thay vào đó, tạo một đối tượng tạm thời và copy dữ liệu
-            // Cách đơn giản: tạo một ScriptableObject mới và gán giá trị
             DialogueLineData clone = ScriptableObject.CreateInstance<DialogueLineData>();
             clone.speakerName = original[i].speakerName;
             clone.text = original[i].text;
             clone.offset = original[i].offset;
             clone.offsetRight = original[i].offsetRight;
-            clone.isPlayerLine = false; // Luôn false để dùng NPC Bubble
+            clone.isPlayerLine = false;
             clones[i] = clone;
         }
         return clones;

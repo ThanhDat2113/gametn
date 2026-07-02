@@ -336,6 +336,12 @@ public class QuestManager : MonoBehaviour
             Debug.Log($"[Quest] Starting next quest: {questChain[currentChainIndex].questName}");
             StartQuest(questChain[currentChainIndex]);
         }
+        else
+        {
+            // Hết chuỗi quest - thông báo để marker biết không còn quest active
+            Debug.Log("[Quest] Quest chain completed. No more quests.");
+            OnStepChanged?.Invoke(null);
+        }
     }
 
     // ─── REWARDS ─────────────────────────────────────────────────────────────
