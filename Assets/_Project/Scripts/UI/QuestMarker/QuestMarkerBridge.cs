@@ -3,10 +3,10 @@ using UnityEngine;
 /// <summary>
 /// Gắn lên NPC hoặc object trong scene.
 /// Khai báo bridge này thuộc về quest nào (questId) và step thứ mấy (stepIndex).
-/// QuestMarkerManager sẽ tự tìm bridge khớp với quest/step đang chạy và spawn marker.
-/// Không còn phụ thuộc vào DialogueTrigger hay TriggerID.
+///
+/// MỘT NPC CÓ THỂ XUẤT HIỆN Ở NHIỀU STEP: gắn nhiều QuestMarkerBridge lên cùng GameObject
+/// (mỗi cái một questId/stepIndex khác nhau). DisallowMultipleComponent đã được bỏ.
 /// </summary>
-[DisallowMultipleComponent]
 public class QuestMarkerBridge : MonoBehaviour
 {
     [Header("Quest Binding")]
@@ -20,21 +20,14 @@ public class QuestMarkerBridge : MonoBehaviour
     [SerializeField] private Transform headPosition;
     [SerializeField] private float defaultHeadOffset = 2f;
 
-    /// <summary>Quest ID khai báo trong Inspector.</summary>
-    public string QuestId  => questId;
+    public string  QuestId    => questId;
+    public int     StepIndex  => stepIndex;
 
-    /// <summary>Step index khai báo trong Inspector.</summary>
-    public int    StepIndex => stepIndex;
-
-    /// <summary>Vị trí world-space dùng để vẽ marker (đầu NPC / object).</summary>
     public Vector3 MarkerPosition =>
         headPosition != null
             ? headPosition.position
             : transform.position + Vector3.up * defaultHeadOffset;
 
-    /// <summary>
-    /// Kiểm tra bridge này có khớp với quest + step đang chạy không.
-    /// </summary>
     public bool MatchesCurrentStep(string runningQuestId, int runningStepIndex)
         => questId == runningQuestId && stepIndex == runningStepIndex;
 

@@ -2,6 +2,14 @@ using UnityEngine;
 
 /// <summary>
 /// Static utility: tính toán vị trí VÀ hướng xoay (rotation) của marker trên màn hình.
+///
+/// CHIẾN LƯỢC CHO CAMERA 2.5D/ISOMETRIC (pitch lớn, nhìn xuống):
+///   Chiếu vector "player → target" lên mặt phẳng ngang XZ, sau đó
+///   dùng góc giữa vector đó và hướng "camera forward trên mặt phẳng XZ"
+///   để xác định trái/phải (X) và trước/sau (Y trên màn hình).
+///
+///   Cách này hoạt động đúng cho mọi pitch camera vì không dùng
+///   WorldToViewportPoint (bị méo khi pitch lớn hoặc target sau lưng).
 /// </summary>
 public static class ScreenEdgeMarkerCalculator
 {
@@ -16,25 +24,52 @@ public static class ScreenEdgeMarkerCalculator
     }
 
     /// <summary>
-    /// Tính hướng screen-space (từ tâm màn hình) đến target — dùng để clamp marker
-    /// về đúng cạnh màn hình, và làm cơ sở tính góc xoay cho CalculateArrowRotation.
+    /// Tính hướng screen-space 2D từ tâm màn hình đến target.
+    ///
+    /// Dùng camera forward/right đã được flatten xuống mặt phẳng XZ,
+    /// phù hợp với camera 2.5D/isometric nhìn xuống với bất kỳ pitch nào.
+    /// Xử lý đúng cả khi target ở sau lưng camera (vd player quay lưng về Vergil).
     /// </summary>
     public static Vector2 GetScreenDirection(Vector3 targetWorldPos, Camera mainCamera)
     {
-        Vector3 toVP = mainCamera.WorldToViewportPoint(targetWorldPos);
+        // Vector từ camera đến target trên mặt phẳng XZ (bỏ Y)
+        Vector3 toTarget = targetWorldPos - mainCamera.transform.position;
+        Vector3 toTargetFlat = new Vector3(toTarget.x, 0f, toTarget.z);
 
-        // Target ở sau camera → flip qua tâm viewport để clamp về đúng phía
-        if (toVP.z < 0f)
+        // Forward của camera flatten xuống XZ (hướng camera nhìn về phía trước trên map)
+        Vector3 camForwardFlat = mainCamera.transform.forward;
+        camForwardFlat.y = 0f;
+
+        // Right của camera flatten xuống XZ
+        Vector3 camRightFlat = mainCamera.transform.right;
+        camRightFlat.y = 0f;
+
+        // Edge case: camera nhìn thẳng đứng (overhead 90°) → forward flat = zero
+        // Fallback về world forward/right
+        if (camForwardFlat.sqrMagnitude < 0.001f)
         {
-            toVP.x = 1f - toVP.x;
-            toVP.y = 1f - toVP.y;
+            camForwardFlat = Vector3.forward;
+            camRightFlat   = Vector3.right;
+        }
+        else
+        {
+            camForwardFlat.Normalize();
+            camRightFlat.Normalize();
         }
 
-        Vector2 dir = new Vector2(
-            (toVP.x - 0.5f) * mainCamera.pixelWidth,
-            (toVP.y - 0.5f) * mainCamera.pixelHeight);
+        // Edge case: target thẳng đứng phía trên/dưới camera (flat = zero)
+        // → không có thông tin hướng ngang, trả về Vector2.up (chỉ lên)
+        if (toTargetFlat.sqrMagnitude < 0.001f)
+            return Vector2.up;
 
-        if (dir.sqrMagnitude < 0.0001f) return Vector2.right;
+        // Chiếu toTargetFlat lên right/forward của camera
+        // → x: dương = target bên phải camera, âm = bên trái
+        // → y: dương = target phía trước camera (lên trên màn hình), âm = phía sau
+        float x = Vector3.Dot(toTargetFlat, camRightFlat);
+        float y = Vector3.Dot(toTargetFlat, camForwardFlat);
+
+        Vector2 dir = new Vector2(x, y);
+        if (dir.sqrMagnitude < 0.0001f) return Vector2.up;
         return dir.normalized;
     }
 
@@ -62,14 +97,12 @@ public static class ScreenEdgeMarkerCalculator
     }
 
     /// <summary>
-    /// Tính góc quay (degrees) cho mũi tên hướng về target, dựa trên hướng screen-space
-    /// tính từ tâm màn hình. Dùng Atan2 chuẩn — kết hợp với spriteAngleOffset trên
-    /// QuestMarkerUI để căn đúng theo hướng gốc của sprite mũi tên.
+    /// Tính góc quay (degrees) cho mũi tên hướng về target.
+    /// Kết hợp với spriteAngleOffset trên QuestMarkerUI để căn đúng sprite.
     /// </summary>
     public static float CalculateArrowRotation(Vector3 targetWorldPos, Camera mainCamera)
     {
         if (mainCamera == null) return 0f;
-
         Vector2 dir = GetScreenDirection(targetWorldPos, mainCamera);
         return Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
     }

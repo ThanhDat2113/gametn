@@ -36,7 +36,10 @@ public class QuestMarkerUI : MonoBehaviour
         _rectTransform = GetComponent<RectTransform>();
         _canvasGroup   = GetComponent<CanvasGroup>();
         if (arrowIcon == null) arrowIcon = GetComponent<Image>();
-        _mainCamera = Camera.main;
+        // KHÔNG cache Camera.main ở đây — nếu marker spawn lúc Camera.main đang null
+        // (chưa gán tag, hoặc bị camera khác tạm chiếm tag "MainCamera" như DialogueCameraRig/
+        // cutsceneCamera), _mainCamera sẽ bị null/sai VĨNH VIỄN vì Awake chỉ chạy 1 lần.
+        // Resolve động mỗi frame trong Update() thay vì cache cứng ở đây.
     }
 
     public void InitializeFromBridge(QuestMarkerBridge bridge, RectTransform canvasParent)
@@ -53,6 +56,12 @@ public class QuestMarkerUI : MonoBehaviour
 
     private void Update()
     {
+        // Resolve lại mỗi frame — rẻ (Camera.main chỉ là tra cứu theo tag), nhưng đảm bảo
+        // luôn bám đúng camera đang active hiện tại, kể cả khi camera bị đổi/tắt/bật
+        // giữa game (dialogue camera, cutscene camera, combat camera, v.v.).
+        if (_mainCamera == null || !_mainCamera.gameObject.activeInHierarchy)
+            _mainCamera = Camera.main;
+
         if (_targetBridge == null || _mainCamera == null || _canvasRect == null) return;
 
         Vector3 targetPos = _targetBridge.MarkerPosition;
