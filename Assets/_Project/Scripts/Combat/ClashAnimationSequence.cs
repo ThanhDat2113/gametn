@@ -69,7 +69,8 @@ public class ClashAnimationSequence : MonoBehaviour
         if (_lastHitCounter == 0 && actorView != null)
         {
             Debug.Log($"[Anim] {result.Skill?.skillName} không có Hit event — force flush fallback.");
-            // SFX hit 0 đã phát trong ExecutePhase, không phát lại
+            if (CombatAudioManager.Instance != null && result.Skill != null)
+                CombatAudioManager.Instance.PlaySkillSFX(result.Skill.sfxClips, 0);
             actorView.FlushPendingOutcomes();
         }
 
@@ -129,28 +130,19 @@ public class ClashAnimationSequence : MonoBehaviour
         var targets = result.InitialTargets;
         if (actorView == null) return 0.5f;
 
-        // KHÔNG set currentSkill để vô hiệu hóa ProcessVFXAtFrame (tránh duplicate VFX)
-        // VFX được spawn hoàn toàn từ SpawnHitVFX
+        actorView.SetCurrentSkill(skill);
         if (targets.Any())
             actorView.SetCurrentTarget(targets.First());
 
-        // Spawn VFX + SFX hit 0 ngay (cho skill buff không có OnHit event)
-        SpawnHitVFX(skill, actorView, targets, 0);
-        if (CombatAudioManager.Instance != null && skill != null)
-            CombatAudioManager.Instance.PlaySkillSFX(skill.sfxClips, 0);
+        // 1. Spawn VFX AtCaster + AtTarget + legacy - chạy 1 lần khi skill bắt đầu
+        SpawnSkillVFX(skill, actorView, targets);
 
-        // Hit Handler - VFX hit 1+ + SFX hit 1+ + shake + hurt
+        // 2. Hit Handler - chỉ SFX + shake + hurt (KHÔNG spawn VFX, VFX từ SpawnSkillVFX + animation event)
         _lastHitCounter = 0;
         Action onHitHandler = () => {
             int currentHit = _lastHitCounter++;
-
-            // Hit 0 đã spawn VFX + SFX ở trên, handler chỉ xử lý hit 1+
-            if (currentHit > 0)
-            {
-                SpawnHitVFX(skill, actorView, targets, currentHit);
-                if (CombatAudioManager.Instance != null && skill != null)
-                    CombatAudioManager.Instance.PlaySkillSFX(skill.sfxClips, currentHit);
-            }
+            if (CombatAudioManager.Instance != null && skill != null)
+                CombatAudioManager.Instance.PlaySkillSFX(skill.sfxClips, currentHit);
             foreach (var outcome in result.Outcomes)
             {
                 var targetView = GetViewForUnit(outcome.Target);
@@ -184,46 +176,28 @@ public class ClashAnimationSequence : MonoBehaviour
         }
     }
 
-    private void SpawnHitVFX(SkillData skill, UnitView actorView, List<CombatUnit> targets, int hitIndex)
+    private void SpawnSkillVFX(SkillData skill, UnitView actorView, List<CombatUnit> targets)
     {
         if (skill == null) return;
-
-        // Legacy vfxPrefab: spawn ở hit 0
-        if (hitIndex == 0 && skill.vfxPrefab != null)
+        if (skill.vfxEvents != null)
+        {
+            foreach (var evt in skill.vfxEvents)
+            {
+                if (evt == null || evt.vfxPrefab == null) continue;
+                if (evt.spawnMode == VFXSpawnMode.AtCaster || evt.spawnMode == VFXSpawnMode.AtTarget)
+                {
+                    Vector3 pos = GetVFXPosition(skill, evt, actorView, targets);
+                    InstantiateVFX(evt, pos, actorView.transform);
+                }
+            }
+        }
+        if (skill.vfxPrefab != null)
         {
             var fakeEvent = new VFXEvent { vfxPrefab = skill.vfxPrefab, offset = new Vector3(0, skill.vfxOffset, 0), spawnMode = VFXSpawnMode.AtTarget };
             Vector3 pos = GetVFXPosition(skill, fakeEvent, actorView, targets);
             InstantiateVFX(fakeEvent, pos, null);
         }
-
-        if (skill.vfxEvents != null)
-        {
-            for (int i = 0; i < skill.vfxEvents.Length; i++)
-            {
-                var evt = skill.vfxEvents[i];
-                if (evt == null || evt.vfxPrefab == null) continue;
-
-                if (hitIndex == 0)
-                {
-                    // Hit 0: spawn AtCaster (tất cả) + AtTarget[0] (VFX đầu)
-                    if (evt.spawnMode == VFXSpawnMode.AtCaster || (evt.spawnMode == VFXSpawnMode.AtTarget && i == 0))
-                    {
-                        Vector3 pos = GetVFXPosition(skill, evt, actorView, targets);
-                        InstantiateVFX(evt, pos, actorView.transform);
-                    }
-                }
-                else
-                {
-                    // Hit 1+: spawn AtTarget tương ứng với hitIndex
-                    if (evt.spawnMode == VFXSpawnMode.AtTarget && i == hitIndex)
-                    {
-                        Vector3 pos = GetVFXPosition(skill, evt, actorView, targets);
-                        InstantiateVFX(evt, pos, actorView.transform);
-                    }
-                }
-            }
-        }
-        if (skill.rangedVfxEvents != null && hitIndex == 0)
+        if (skill.rangedVfxEvents != null)
         {
             foreach (var evt in skill.rangedVfxEvents)
             {
