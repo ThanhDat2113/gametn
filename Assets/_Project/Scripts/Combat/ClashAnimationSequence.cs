@@ -134,10 +134,10 @@ public class ClashAnimationSequence : MonoBehaviour
         if (targets.Any())
             actorView.SetCurrentTarget(targets.First());
 
-        // 1. Spawn VFX AtCaster + AtTarget + legacy - chạy 1 lần khi skill bắt đầu
+        // 1. Spawn VFX AtCaster + AtTarget (chỉ VFX đầu, index 0) - chạy 1 lần khi skill bắt đầu
         SpawnSkillVFX(skill, actorView, targets);
 
-        // 2. Hit Handler - chỉ SFX + shake + hurt (KHÔNG spawn VFX, VFX từ SpawnSkillVFX + animation event)
+        // 2. Hit Handler - chỉ SFX + shake + hurt (VFX per-hit từ animation event OnSpawnVFX)
         _lastHitCounter = 0;
         Action onHitHandler = () => {
             int currentHit = _lastHitCounter++;
@@ -181,10 +181,14 @@ public class ClashAnimationSequence : MonoBehaviour
         if (skill == null) return;
         if (skill.vfxEvents != null)
         {
-            foreach (var evt in skill.vfxEvents)
+            for (int i = 0; i < skill.vfxEvents.Length; i++)
             {
+                var evt = skill.vfxEvents[i];
                 if (evt == null || evt.vfxPrefab == null) continue;
-                if (evt.spawnMode == VFXSpawnMode.AtCaster || evt.spawnMode == VFXSpawnMode.AtTarget)
+                // AtCaster: spawn tất cả (startup VFX)
+                // AtTarget: chỉ spawn VFX đầu tiên (index 0) ở hit đầu
+                // Các VFX AtTarget còn lại (index 1+) được spawn từ animation event OnSpawnVFX
+                if (evt.spawnMode == VFXSpawnMode.AtCaster || (evt.spawnMode == VFXSpawnMode.AtTarget && i == 0))
                 {
                     Vector3 pos = GetVFXPosition(skill, evt, actorView, targets);
                     InstantiateVFX(evt, pos, actorView.transform);
