@@ -134,20 +134,13 @@ public class ClashAnimationSequence : MonoBehaviour
         if (targets.Any())
             actorView.SetCurrentTarget(targets.First());
 
-        // 1. Hit Handler - VFX (hit đầu) + SFX + shake + hurt
-        // Hit đầu: SpawnSkillVFX spawn tất cả VFX AtCaster + AtTarget
-        // Các hit sau: VFX từ animation event OnSpawnVFX trong UnitView.ProcessVFXAtFrame (nếu có)
+        // 1. Spawn VFX AtCaster + AtTarget + legacy - chạy 1 lần khi skill bắt đầu
+        SpawnSkillVFX(skill, actorView, targets);
+
+        // 2. Hit Handler - chỉ SFX + shake + hurt (KHÔNG spawn VFX, VFX từ SpawnSkillVFX + animation event)
         _lastHitCounter = 0;
         Action onHitHandler = () => {
             int currentHit = _lastHitCounter++;
-
-            // Hit đầu tiên (hit 0) spawn VFX qua SpawnSkillVFX
-            // vì animation clip không có OnSpawnVFX event cho hit đầu
-            if (currentHit == 0)
-            {
-                SpawnSkillVFX(skill, actorView, targets);
-            }
-
             if (CombatAudioManager.Instance != null && skill != null)
                 CombatAudioManager.Instance.PlaySkillSFX(skill.sfxClips, currentHit);
             foreach (var outcome in result.Outcomes)
@@ -188,20 +181,10 @@ public class ClashAnimationSequence : MonoBehaviour
         if (skill == null) return;
         if (skill.vfxEvents != null)
         {
-            for (int i = 0; i < skill.vfxEvents.Length; i++)
+            foreach (var evt in skill.vfxEvents)
             {
-                var evt = skill.vfxEvents[i];
                 if (evt == null || evt.vfxPrefab == null) continue;
-
-                // AtCaster: luôn spawn (startup VFX như aura, glow)
-                if (evt.spawnMode == VFXSpawnMode.AtCaster)
-                {
-                    Vector3 pos = GetVFXPosition(skill, evt, actorView, targets);
-                    InstantiateVFX(evt, pos, actorView.transform);
-                }
-                // AtTarget/HitOnEachTarget: chỉ spawn VFX đầu tiên (index 0) ở hit đầu
-                // Các hit sau được xử lý bởi animation event OnSpawnVFX trong ProcessVFXAtFrame
-                else if (i == 0)
+                if (evt.spawnMode == VFXSpawnMode.AtCaster || evt.spawnMode == VFXSpawnMode.AtTarget)
                 {
                     Vector3 pos = GetVFXPosition(skill, evt, actorView, targets);
                     InstantiateVFX(evt, pos, actorView.transform);
