@@ -734,7 +734,6 @@ Terrain:
   m_AllowAutoConnect: 1
   m_EnableHeightmapRayTracing: 1
   m_EnableTreesAndDetailsRayTracing: 0
-  m_EnableHeightmapLODFrustumCulling: 1
   m_TreeMotionVectorModeOverride: 3
 --- !u!1001 &12086862
 PrefabInstance:
@@ -8759,6 +8758,7 @@ GameObject:
   - component: {fileID: 230062181}
   - component: {fileID: 230062182}
   - component: {fileID: 230062183}
+  - component: {fileID: 230062184}
   m_Layer: 7
   m_Name: Rin
   m_TagString: Untagged
@@ -9033,6 +9033,22 @@ MonoBehaviour:
   stepIndex: 5
   headPosition: {fileID: 493030961}
   defaultHeadOffset: 0
+--- !u!114 &230062184
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 230062174}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ab9b14809ca169f4ba53024fe3809516, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestMarkerBridge
+  questId: 5
+  stepIndex: 7
+  headPosition: {fileID: 493030961}
+  defaultHeadOffset: 2
 --- !u!1 &231056669
 GameObject:
   m_ObjectHideFlags: 0
@@ -12232,7 +12248,6 @@ Terrain:
   m_AllowAutoConnect: 1
   m_EnableHeightmapRayTracing: 1
   m_EnableTreesAndDetailsRayTracing: 0
-  m_EnableHeightmapLODFrustumCulling: 1
   m_TreeMotionVectorModeOverride: 3
 --- !u!1001 &312504888
 PrefabInstance:
@@ -26163,7 +26178,6 @@ Terrain:
   m_AllowAutoConnect: 1
   m_EnableHeightmapRayTracing: 1
   m_EnableTreesAndDetailsRayTracing: 0
-  m_EnableHeightmapLODFrustumCulling: 1
   m_TreeMotionVectorModeOverride: 3
 --- !u!1001 &666054830
 PrefabInstance:
@@ -45502,6 +45516,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 5f1a5e9f4414cc1419bb668d9cb8a7f0, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1171929645}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 5f1a5e9f4414cc1419bb668d9cb8a7f0, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1171929647}
   m_SourcePrefab: {fileID: 100100000, guid: 5f1a5e9f4414cc1419bb668d9cb8a7f0, type: 3}
 --- !u!4 &1171929643 stripped
 Transform:
@@ -45550,6 +45567,22 @@ MonoBehaviour:
   puzzleUIPrefab: {fileID: 54916936864323970, guid: ffccd0a5d06174e42a9fa0c38d3d8013, type: 3}
   interactKey: 101
   interactionPrompt: {fileID: 0}
+--- !u!114 &1171929647
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1171929644}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ab9b14809ca169f4ba53024fe3809516, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestMarkerBridge
+  questId: 5
+  stepIndex: 6
+  headPosition: {fileID: 0}
+  defaultHeadOffset: 2
 --- !u!64 &1174769751
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -50914,7 +50947,6 @@ Terrain:
   m_AllowAutoConnect: 1
   m_EnableHeightmapRayTracing: 1
   m_EnableTreesAndDetailsRayTracing: 0
-  m_EnableHeightmapLODFrustumCulling: 1
   m_TreeMotionVectorModeOverride: 3
 --- !u!1001 &1323627934
 PrefabInstance:
@@ -64420,7 +64452,6 @@ Terrain:
   m_AllowAutoConnect: 1
   m_EnableHeightmapRayTracing: 1
   m_EnableTreesAndDetailsRayTracing: 0
-  m_EnableHeightmapLODFrustumCulling: 1
   m_TreeMotionVectorModeOverride: 3
 --- !u!4 &1628801057
 Transform:
