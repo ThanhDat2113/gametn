@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f9330979f02ddf43a415e7748b42aae, type: 3}
+  m_Name: ENEMY_Tales Wendigo
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterData
+  characterType: 1
+  defaultCombatStyle: 0
+  prefab: {fileID: 7850509950937586201, guid: 2ea6e4963e25fd3418729f939a395422, type: 3}
+  characterName: Tales Wendigo
+  portrait: {fileID: 1058059592, guid: 9ae586889549d314698102cdbd823a31, type: 3}
+  battleSprite: {fileID: 1058059592, guid: 9ae586889549d314698102cdbd823a31, type: 3}
+  lore: 
+  baseHP: 100
+  baseATK: 90
+  basePDEF: 8
+  baseMDEF: 4
+  baseLevel: 1
+  expReward: 100
+  baseExpThreshold: 100
+  expIncrementPerLevel: 50
+  hpPerLevel: 5
+  atkPerLevel: 2
+  pdefPerLevel: 1
+  mdefPerLevel: 1
+  skills:
+  - {fileID: 11400000, guid: b4907fe8c70f97643928897b8d000c85, type: 2}
+  - {fileID: 11400000, guid: daaf5d11489ff1648a47829cc36462e5, type: 2}
+  passiveScript: {fileID: 0}
+  hitVoiceClips: []
+  attackVoiceClips: []
+  deathVoiceClips: []
+  footstepSound: {fileID: 0}
+  flipOnSpawn: 1

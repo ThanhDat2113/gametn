@@ -103,5 +103,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::QuestMarkerUI
   arrowIcon: {fileID: 7440328424434479994}
   edgePadding: 20
+  avoidUIElements: 1
+  ignoreCanvasTags:
+  - UICanvas
+  - MarkerCanvas
+  maxAvoidIterations: 5
+  uiAvoidPadding: 5
+  scanInterval: 10
   enableRotation: 1
   spriteAngleOffset: 90

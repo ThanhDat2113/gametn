@@ -1,28 +1,20 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using System.Collections;
 using System.Collections.Generic;
 
-/// <summary>
-/// Singleton manager quản lý quest marker UI.
-///
-/// LUỒNG:
-///   1. Lắng nghe QuestManager.OnStepChanged.
-///   2. Lấy questId của quest đang chạy + currentStepIndex.
-///   3. Tìm tất cả QuestMarkerBridge trong scene khớp (questId + stepIndex).
-///   4. Spawn marker cho từng bridge tìm được.
-///   5. Khi OnStepCompleted → xóa toàn bộ marker.
-/// </summary>
 [DisallowMultipleComponent]
 public class QuestMarkerManager : MonoBehaviour
 {
     public static QuestMarkerManager Instance { get; private set; }
 
     [Header("Prefab References")]
-    [SerializeField] private QuestMarkerUI    markerPrefab;
-    [SerializeField] private MinimapMarkerUI  minimapMarkerPrefab;
+    [SerializeField] private QuestMarkerUI   markerPrefab;
+    [SerializeField] private MinimapMarkerUI minimapMarkerPrefab;
 
     [Header("UI Container")]
-    [Tooltip("RectTransform của Canvas chứa marker. Để trống sẽ tự tìm Canvas.")]
+    [Tooltip("Gán tay Canvas cụ thể trong Inspector. Để trống sẽ tự tìm — nhưng nên gán tay " +
+             "để tránh tìm sai Canvas sau scene transition.")]
     [SerializeField] private RectTransform markerContainer;
 
     private readonly Dictionary<QuestMarkerBridge, QuestMarkerUI>   _activeMarkers        = new();
@@ -40,22 +32,13 @@ public class QuestMarkerManager : MonoBehaviour
 
     private void Start()
     {
-        // Chờ QuestManager sẵn sàng (có thể chưa kịp Start quest)
         if (QuestManager.Instance == null)
         {
             Debug.LogWarning("[QuestMarkerManager] QuestManager.Instance is NULL! Sẽ thử lại sau 0.5s...");
             Invoke(nameof(DelayedStart), 0.5f);
             return;
         }
-
-        QuestManager.Instance.OnStepChanged.AddListener(OnStepChanged);
-        QuestManager.Instance.OnStepCompleted.AddListener(OnStepCompleted);
-        
-        // Lắng nghe scene load — khi Map load xong, re-evaluate để tìm bridge
-        SceneManager.sceneLoaded += OnSceneLoaded;
-
-        // Quest có thể đã start trước khi manager này Awake — evaluate ngay
-        EvaluateCurrentStep();
+        SubscribeAndEvaluate();
     }
 
     private void DelayedStart()
@@ -65,7 +48,11 @@ public class QuestMarkerManager : MonoBehaviour
             Debug.LogError("[QuestMarkerManager] QuestManager.Instance vẫn NULL sau delay!");
             return;
         }
+        SubscribeAndEvaluate();
+    }
 
+    private void SubscribeAndEvaluate()
+    {
         QuestManager.Instance.OnStepChanged.AddListener(OnStepChanged);
         QuestManager.Instance.OnStepCompleted.AddListener(OnStepCompleted);
         SceneManager.sceneLoaded += OnSceneLoaded;
@@ -85,7 +72,21 @@ public class QuestMarkerManager : MonoBehaviour
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        Debug.Log($"[QuestMarkerManager] Scene loaded: '{scene.name}' — re-evaluating current step.");
+        Debug.Log($"[QuestMarkerManager] Scene loaded: '{scene.name}' — queuing re-evaluate.");
+
+        // Re-resolve container sau scene load (canvas cũ có thể đã bị destroy)
+        if (markerContainer == null)
+            ResolveMarkerContainer();
+
+        // FIX: Delay 1 frame để các QuestMarkerBridge trong scene mới kịp Awake()
+        // trước khi FindObjectsByType chạy. Nếu gọi ngay thì sẽ tìm được 0 bridges.
+        StartCoroutine(EvaluateNextFrame());
+    }
+
+    private IEnumerator EvaluateNextFrame()
+    {
+        yield return null;
+        ClearAllMarkers();
         EvaluateCurrentStep();
     }
 
@@ -114,17 +115,13 @@ public class QuestMarkerManager : MonoBehaviour
 
         Debug.Log($"[QuestMarkerManager] Looking for bridges: questId='{questId}' stepIndex={stepIndex}");
 
-        // Tìm tất cả bridge trong scene khớp quest + step
         var allBridges = FindObjectsByType<QuestMarkerBridge>(FindObjectsSortMode.None);
         Debug.Log($"[QuestMarkerManager] Found {allBridges.Length} bridges total in scene");
-        
-        foreach (var bridge in allBridges)
-        {
-            Debug.Log($"[QuestMarkerManager] Bridge '{bridge.name}': questId='{bridge.QuestId}' stepIndex={bridge.StepIndex}");
-        }
-        
-        bool anyFound  = false;
 
+        foreach (var bridge in allBridges)
+            Debug.Log($"[QuestMarkerManager] Bridge '{bridge.name}': questId='{bridge.QuestId}' stepIndex={bridge.StepIndex}");
+
+        bool anyFound = false;
         foreach (var bridge in allBridges)
         {
             if (!bridge.MatchesCurrentStep(questId, stepIndex)) continue;
@@ -133,22 +130,23 @@ public class QuestMarkerManager : MonoBehaviour
         }
 
         if (!anyFound)
-            Debug.LogWarning($"[QuestMarkerManager] Không tìm thấy QuestMarkerBridge nào cho questId='{questId}' stepIndex={stepIndex}.");
+            Debug.LogWarning($"[QuestMarkerManager] Không tìm thấy bridge nào cho questId='{questId}' stepIndex={stepIndex}.");
     }
 
     private void SpawnMarker(QuestMarkerBridge bridge)
     {
         if (_activeMarkers.ContainsKey(bridge)) return;
+
+        // FIX: Re-resolve container nếu bị null sau scene transition
+        if (markerContainer == null) ResolveMarkerContainer();
         if (!IsReadyToSpawn()) return;
 
-        // Màn hình chính
         var marker = Instantiate(markerPrefab, markerContainer);
         marker.InitializeFromBridge(bridge, markerContainer);
         _activeMarkers[bridge] = marker;
 
-        // Minimap (optional)
         if (minimapMarkerPrefab != null
-            && MinimapController.Instance      != null
+            && MinimapController.Instance != null
             && MinimapController.Instance.MarkerContainer != null)
         {
             var mm = Instantiate(minimapMarkerPrefab, MinimapController.Instance.MarkerContainer);
@@ -162,8 +160,8 @@ public class QuestMarkerManager : MonoBehaviour
 
     private void ClearAllMarkers()
     {
-        foreach (var m in _activeMarkers.Values)        if (m  != null) Destroy(m.gameObject);
-        foreach (var m in _activeMinimapMarkers.Values) if (m  != null) Destroy(m.gameObject);
+        foreach (var m in _activeMarkers.Values)        if (m != null) Destroy(m.gameObject);
+        foreach (var m in _activeMinimapMarkers.Values) if (m != null) Destroy(m.gameObject);
         _activeMarkers.Clear();
         _activeMinimapMarkers.Clear();
         Debug.Log("[QuestMarkerManager] Cleared all markers.");
@@ -174,14 +172,17 @@ public class QuestMarkerManager : MonoBehaviour
     private void ResolveMarkerContainer()
     {
         if (markerContainer != null) return;
-        var canvas = FindFirstObjectByType<Canvas>();
-        if (canvas != null)
+
+        // Tìm Canvas trong scene thường (bỏ qua DontDestroyOnLoad scene)
+        var allCanvases = FindObjectsByType<Canvas>(FindObjectsSortMode.None);
+        foreach (var c in allCanvases)
         {
-            markerContainer = canvas.GetComponent<RectTransform>();
-            Debug.Log($"[QuestMarkerManager] Auto-found Canvas: {canvas.name}");
+            if (c.gameObject.scene.buildIndex == -1) continue; // skip DontDestroyOnLoad
+            markerContainer = c.GetComponent<RectTransform>();
+            Debug.Log($"[QuestMarkerManager] Auto-found Canvas: '{c.name}' in '{c.gameObject.scene.name}'");
+            return;
         }
-        else
-            Debug.LogWarning("[QuestMarkerManager] Canvas not found. Hãy gán markerContainer trong Inspector.");
+        Debug.LogWarning("[QuestMarkerManager] Canvas not found. Gán markerContainer trong Inspector.");
     }
 
     private bool IsReadyToSpawn()

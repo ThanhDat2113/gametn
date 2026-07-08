@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro; // ← THÊM DÒNG NÀY
 
 public class UnitView : MonoBehaviour
 {
@@ -11,6 +12,18 @@ public class UnitView : MonoBehaviour
     public Animator animator;
     public HitEventReceiver hitReceiver;
     public Slider healthBar;
+
+    [Header("Health Bar Text")] // ← THÊM HEADER MỚI
+    [Tooltip("Text hiển thị HP dạng '100/200'")]
+    public TextMeshProUGUI healthText;
+    [Tooltip("Định dạng hiển thị: {0}=CurrentHP, {1}=MaxHP")]
+    public string healthTextFormat = "{0}/{1}";
+    [Tooltip("Màu text khi HP > 50%")]
+    public Color healthyColor = Color.white;
+    [Tooltip("Màu text khi HP <= 50%")]
+    public Color warningColor = Color.yellow;
+    [Tooltip("Màu text khi HP <= 25%")]
+    public Color dangerColor = Color.red;
 
     public event System.Action OnHitAnimationEvent;
     public event System.Action OnAnimationEndEvent;
@@ -64,7 +77,7 @@ public class UnitView : MonoBehaviour
         }
         else
         {
-            spriteRenderer.flipX = false; // Keep original sprite facing
+            spriteRenderer.flipX = false;
         }
 
         if (cameraManager == null)
@@ -107,8 +120,10 @@ public class UnitView : MonoBehaviour
             hitReceiver.OnVFXFrame += ProcessVFXAtFrame;
         }
 
+        // ─── SETUP HEALTH BAR ──────────────────────────────────
         if (healthBar != null)
         {
+            // Tìm fill image để set màu
             Image fillImage = null;
             if (healthBar.fillRect != null)
                 fillImage = healthBar.fillRect.GetComponentInChildren<Image>();
@@ -124,6 +139,21 @@ public class UnitView : MonoBehaviour
             
             healthBar.value = (float)unit.CurrentHP / unit.MaxHP;
         }
+
+        // ─── SETUP HEALTH TEXT ─────────────────────────────────
+        // Nếu chưa gán healthText, tự tìm trong children
+        if (healthText == null)
+        {
+            healthText = GetComponentInChildren<TextMeshProUGUI>();
+            if (healthText == null)
+            {
+                // Thử tìm trong healthBar GameObject
+                if (healthBar != null)
+                    healthText = healthBar.GetComponentInChildren<TextMeshProUGUI>();
+            }
+        }
+
+        UpdateHealthBar(); // Cập nhật lần đầu
 
         // Gán combat camera cho World Space canvas (fix skeleton health bar bị null camera)
         var worldCanvas = GetComponentInChildren<Canvas>();
@@ -145,10 +175,35 @@ public class UnitView : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Cập nhật thanh HP và text HP.
+    /// </summary>
     public void UpdateHealthBar()
     {
-        if (healthBar != null && LinkedUnit != null)
+        if (LinkedUnit == null) return;
+
+        // Cập nhật slider
+        if (healthBar != null)
+        {
             healthBar.value = (float)LinkedUnit.CurrentHP / LinkedUnit.MaxHP;
+        }
+
+        // Cập nhật text HP
+        if (healthText != null)
+        {
+            int currentHP = LinkedUnit.CurrentHP;
+            int maxHP = LinkedUnit.MaxHP;
+            healthText.text = string.Format(healthTextFormat, currentHP, maxHP);
+
+            // Đổi màu dựa trên tỷ lệ HP
+            float ratio = (float)currentHP / maxHP;
+            if (ratio <= 0.25f)
+                healthText.color = dangerColor;
+            else if (ratio <= 0.5f)
+                healthText.color = warningColor;
+            else
+                healthText.color = healthyColor;
+        }
     }
 
     public void SetCurrentSkill(SkillData skill) { currentSkill = skill; }
@@ -283,25 +338,22 @@ public class UnitView : MonoBehaviour
 
         VFXEvent evt = null;
 
-        // 1. Get VFXEvent from the new unified array
         if (currentSkill.vfxEvents != null && vfxIndex >= 0 && vfxIndex < currentSkill.vfxEvents.Length)
         {
             evt = currentSkill.vfxEvents[vfxIndex];
         }
-        // 2. Fallback for legacy vfxPrefab (if index is 0)
         else if (vfxIndex == 0 && currentSkill.vfxPrefab != null)
         {
             evt = new VFXEvent 
             { 
                 vfxPrefab = currentSkill.vfxPrefab, 
                 offset = new Vector3(0, currentSkill.vfxOffset, 0),
-                spawnMode = VFXSpawnMode.AtTarget // Legacy behavior was always at target
+                spawnMode = VFXSpawnMode.AtTarget
             };
         }
 
         if (evt == null || evt.vfxPrefab == null) return;
 
-        // 3. Determine spawn position based on spawnMode
         Vector3 spawnPos;
         Transform parent = null;
 
@@ -313,14 +365,14 @@ public class UnitView : MonoBehaviour
                 break;
 
             case VFXSpawnMode.AtTarget:
-            case VFXSpawnMode.HitOnEachTarget: // In anim events, these are treated the same
+            case VFXSpawnMode.HitOnEachTarget:
                 var targetView = FindViewForUnit(currentTarget);
                 if (targetView != null)
                 {
                     spawnPos = targetView.transform.position + evt.offset;
                     parent = evt.attachToCaster ? transform : null;
                 }
-                else // Fallback to caster if target is somehow null
+                else
                 {
                     spawnPos = transform.position + evt.offset;
                     parent = transform;
@@ -333,7 +385,6 @@ public class UnitView : MonoBehaviour
                 break;
         }
 
-        // 4. Instantiate VFX
         GameObject vfx = Instantiate(evt.vfxPrefab, spawnPos, Quaternion.identity);
         if (evt.attachToCaster && parent != null)
         {
