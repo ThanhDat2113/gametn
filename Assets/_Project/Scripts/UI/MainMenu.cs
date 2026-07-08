@@ -12,6 +12,6 @@ public class MainMenu : MonoBehaviour
     public void OnNewGameButton()
     {
         // Load qua BootScene để đảm bảo singleton được init đúng thứ tự
-        SceneManager.LoadScene("BootScene");
+        SceneManager.LoadScene("Intro");
     }
 }
