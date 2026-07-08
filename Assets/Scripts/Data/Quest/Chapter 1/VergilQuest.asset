@@ -1,0 +1,55 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 01f94a06348b47f49b05724510167e6c, type: 3}
+  m_Name: VergilQuest
+  m_EditorClassIdentifier: Assembly-CSharp::QuestData
+  questId: 1
+  questName: "Ph\u01B0\u01A1ng B\u1EAFc 1"
+  steps:
+  - stepId: 0
+    type: 0
+    targetId: 1
+    description: "T\xECm ki\u1EBFm th\xF4ng tin v\u1EC1 th\xE1nh k\u1EF5 s\u0129"
+    isCompleted: 1
+    requiredAmount: 1
+    currentAmount: 0
+  - stepId: 1
+    type: 0
+    targetId: 1
+    description: "T\xECm ki\u1EBFm th\xF4ng tin v\u1EC1 th\xE1nh k\u1EF5 s\u0129"
+    isCompleted: 1
+    requiredAmount: 1
+    currentAmount: 0
+  - stepId: 2
+    type: 1
+    targetId: Slime
+    description: "Ti\xEAu di\u1EC7t Slime"
+    isCompleted: 1
+    requiredAmount: 2
+    currentAmount: 0
+  - stepId: 3
+    type: 0
+    targetId: 1
+    description: "N\xF3i chuy\u1EC7n v\u1EDBi Vergil"
+    isCompleted: 1
+    requiredAmount: 1
+    currentAmount: 0
+  isRepeatable: 0
+  rewards:
+  - rewardType: 0
+    character: {fileID: 11400000, guid: d9a02487cd5ceb443a7bfe4ac6df8beb, type: 2}
+    item: {fileID: 0}
+    amount: 1
+  - rewardType: 2
+    character: {fileID: 0}
+    item: {fileID: 0}
+    amount: 500
