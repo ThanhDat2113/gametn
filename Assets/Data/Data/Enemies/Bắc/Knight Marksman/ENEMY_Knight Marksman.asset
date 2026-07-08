@@ -1,0 +1,41 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f9330979f02ddf43a415e7748b42aae, type: 3}
+  m_Name: ENEMY_Knight Marksman
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterData
+  characterType: 1
+  defaultCombatStyle: 0
+  prefab: {fileID: 7850509950937586201, guid: 2a84a0b611e4cce4c8b73d2babe65166, type: 3}
+  characterName: Knight Marksman
+  portrait: {fileID: -855477737, guid: e736e2fe62c1f8a4bbb504280920142a, type: 3}
+  battleSprite: {fileID: -855477737, guid: e736e2fe62c1f8a4bbb504280920142a, type: 3}
+  lore: 
+  baseHP: 80
+  baseATK: 18
+  basePDEF: 8
+  baseMDEF: 4
+  baseLevel: 1
+  expReward: 100
+  baseExpThreshold: 100
+  expIncrementPerLevel: 50
+  hpPerLevel: 5
+  atkPerLevel: 2
+  pdefPerLevel: 1
+  mdefPerLevel: 1
+  skills:
+  - {fileID: 11400000, guid: 9693e03493d0e70498b24caa16973a9a, type: 2}
+  passiveScript: {fileID: 0}
+  hitVoiceClips: []
+  attackVoiceClips: []
+  deathVoiceClips: []
+  footstepSound: {fileID: 0}
+  flipOnSpawn: 1

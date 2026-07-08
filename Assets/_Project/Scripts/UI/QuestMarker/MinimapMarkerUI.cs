@@ -1,14 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>
-/// Marker NPC hiển thị trên Minimap. Tái sử dụng QuestMarkerBridge (cùng nguồn
-/// dữ liệu với marker chỉ đường trên màn hình chính) để không cần hệ thống quest riêng.
-///
-/// OUT-OF-RANGE BEHAVIOR (chọn qua enum trong Inspector):
-///   • Clamp — kẹp marker vào mép minimap (giống edge marker màn hình chính)
-///   • Hide  — ẩn marker hoàn toàn khi NPC ngoài phạm vi minimap
-/// </summary>
 [RequireComponent(typeof(RectTransform))]
 [RequireComponent(typeof(CanvasGroup))]
 [DisallowMultipleComponent]
@@ -17,14 +9,11 @@ public class MinimapMarkerUI : MonoBehaviour
     public enum OutOfRangeBehavior { Clamp, Hide }
 
     [Header("Out-of-range Behavior")]
-    [Tooltip("Clamp: kẹp marker vào mép minimap khi NPC ngoài phạm vi.\n" +
-             "Hide: ẩn marker hoàn toàn khi NPC ngoài phạm vi.")]
     [SerializeField] private OutOfRangeBehavior outOfRangeBehavior = OutOfRangeBehavior.Clamp;
 
     [Header("UI References")]
     [SerializeField] private Image markerIcon;
 
-    [Tooltip("Padding tính từ mép minimap khi clamp (UI units).")]
     [SerializeField] private float edgePadding = 8f;
 
     private RectTransform _rectTransform;
@@ -49,6 +38,14 @@ public class MinimapMarkerUI : MonoBehaviour
     private void Update()
     {
         if (_targetBridge == null || MinimapController.Instance == null) return;
+
+        // Ẩn marker minimap khi đang có dialogue — đọc trực tiếp từ DialogueBubbleUI
+        bool dialogueActive = DialogueBubbleUI.Instance != null && DialogueBubbleUI.Instance.IsShowing;
+        if (dialogueActive)
+        {
+            _canvasGroup.alpha = 0f;
+            return;
+        }
 
         Vector2 mapPos = MinimapController.Instance.WorldToMinimapPosition(
             _targetBridge.MarkerPosition, out bool isWithinRange);
