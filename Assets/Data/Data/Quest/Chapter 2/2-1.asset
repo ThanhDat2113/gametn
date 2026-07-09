@@ -10,42 +10,53 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 01f94a06348b47f49b05724510167e6c, type: 3}
-  m_Name: 1-1
+  m_Name: 2-1
   m_EditorClassIdentifier: Assembly-CSharp::QuestData
-  questId: 1
-  questName: "Ph\u01B0\u01A1ng B\u1EAFc"
+  questId: 5
+  questName: "Ph\u01B0\u01A1ng T\xE2y"
   steps:
   - stepId: 0
-    type: 0
-    targetId: 1
-    description: "H\u1ECFi th\u0103m v\u1EC1 th\xE1nh k\u1EF5 s\u0129"
+    type: 3
+    targetId: 5
+    description: "R\u1EDDi kh\u1ECFi Ph\u01B0\u01A1ng B\u1EAFc"
     isCompleted: 1
     requiredAmount: 1
     currentAmount: 0
   - stepId: 1
     type: 0
-    targetId: 1
-    description: "H\u1ECFi th\u0103m v\u1EC1 th\xE1nh k\u1EF5 s\u0129"
+    targetId: 5
+    description: "T\u1EDBi Ph\u01B0\u01A1ng T\xE2y"
     isCompleted: 1
     requiredAmount: 1
     currentAmount: 0
   - stepId: 2
     type: 0
-    targetId: 1
-    description: "Ti\xEAu di\u1EC7t qu\xE1i v\u1EADt trong r\u1EEBng"
+    targetId: 5
+    description: "Ti\xEAu di\u1EC7t qu\xE1i v\u1EADt "
     isCompleted: 1
     requiredAmount: 2
     currentAmount: 0
   - stepId: 3
+    type: 1
+    targetId: TrollB
+    description: "Ti\xEAu di\u1EC7t qu\xE1i v\u1EADt "
+    isCompleted: 1
+    requiredAmount: 1
+    currentAmount: 0
+  - stepId: 4
     type: 0
-    targetId: 1
-    description: "B\xE1o c\xE1o t\xECnh h\xECnh cho hi\u1EC7p s\u0129"
+    targetId: 5
+    description: "N\xF3i chuy\u1EC7n v\u1EDBi Kurumi"
     isCompleted: 1
     requiredAmount: 1
     currentAmount: 0
   isRepeatable: 0
   rewards:
+  - rewardType: 0
+    character: {fileID: 11400000, guid: 7a9703b94ec6ad5428ede7c0548105a8, type: 2}
+    item: {fileID: 0}
+    amount: 1
   - rewardType: 2
     character: {fileID: 0}
     item: {fileID: 0}
-    amount: 500
+    amount: 3000

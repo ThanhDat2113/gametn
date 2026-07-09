@@ -10,42 +10,40 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 01f94a06348b47f49b05724510167e6c, type: 3}
-  m_Name: 1-1
+  m_Name: 1-3
   m_EditorClassIdentifier: Assembly-CSharp::QuestData
-  questId: 1
+  questId: 3
   questName: "Ph\u01B0\u01A1ng B\u1EAFc"
   steps:
   - stepId: 0
     type: 0
-    targetId: 1
-    description: "H\u1ECFi th\u0103m v\u1EC1 th\xE1nh k\u1EF5 s\u0129"
+    targetId: 3
+    description: "Ti\u1EBFp t\u1EE5i ti\u1EBFn s\xE2u v\xE0o r\u1EEBng"
     isCompleted: 1
     requiredAmount: 1
     currentAmount: 0
   - stepId: 1
     type: 0
-    targetId: 1
-    description: "H\u1ECFi th\u0103m v\u1EC1 th\xE1nh k\u1EF5 s\u0129"
+    targetId: 2
+    description: "\u0110\xE1nh b\u1EA1i binh l\xEDnh"
     isCompleted: 1
     requiredAmount: 1
     currentAmount: 0
   - stepId: 2
     type: 0
-    targetId: 1
-    description: "Ti\xEAu di\u1EC7t qu\xE1i v\u1EADt trong r\u1EEBng"
+    targetId: 2
+    description: "N\xF3i chuy\u1EC7n v\u1EDBi \u0111\u1ED3ng \u0111\u1ED9i c\u1EE7a
+      ki\u1EBFm s\u0129"
     isCompleted: 1
     requiredAmount: 2
     currentAmount: 0
-  - stepId: 3
-    type: 0
-    targetId: 1
-    description: "B\xE1o c\xE1o t\xECnh h\xECnh cho hi\u1EC7p s\u0129"
-    isCompleted: 1
-    requiredAmount: 1
-    currentAmount: 0
   isRepeatable: 0
   rewards:
+  - rewardType: 0
+    character: {fileID: 11400000, guid: 97faa5da240c37f4c86aa1e422208619, type: 2}
+    item: {fileID: 0}
+    amount: 0
   - rewardType: 2
     character: {fileID: 0}
     item: {fileID: 0}
-    amount: 500
+    amount: 1000
