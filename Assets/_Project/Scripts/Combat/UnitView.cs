@@ -155,6 +155,9 @@ public class UnitView : MonoBehaviour
 
         UpdateHealthBar(); // Cập nhật lần đầu
 
+        // Bắt đầu coroutine monitor stun visual
+        StartCoroutine(MonitorStunStatus());
+
         // Gán combat camera cho World Space canvas (fix skeleton health bar bị null camera)
         var worldCanvas = GetComponentInChildren<Canvas>();
         if (worldCanvas != null && worldCanvas.renderMode == RenderMode.WorldSpace && worldCanvas.worldCamera == null)
@@ -423,11 +426,11 @@ public class UnitView : MonoBehaviour
     {
         spriteRenderer.color = Color.red;
         yield return new WaitForSeconds(0.08f);
-        spriteRenderer.color = Color.white;
+        RestoreColorAfterFlash();
         yield return new WaitForSeconds(0.05f);
         spriteRenderer.color = Color.red;
         yield return new WaitForSeconds(0.08f);
-        spriteRenderer.color = Color.white;
+        RestoreColorAfterFlash();
     }
 
     public void TriggerHealFlash() => StartCoroutine(HealFlash());
@@ -435,11 +438,66 @@ public class UnitView : MonoBehaviour
     {
         spriteRenderer.color = Color.green;
         yield return new WaitForSeconds(0.08f);
-        spriteRenderer.color = Color.white;
+        RestoreColorAfterFlash();
         yield return new WaitForSeconds(0.05f);
         spriteRenderer.color = Color.green;
         yield return new WaitForSeconds(0.08f);
-        spriteRenderer.color = Color.white;
+        RestoreColorAfterFlash();
+    }
+
+    /// <summary>Khôi phục màu sau flash - nếu đang Stun thì tím, nếu không thì trắng.</summary>
+    private void RestoreColorAfterFlash()
+    {
+        if (LinkedUnit != null && LinkedUnit.HasStatus(StatusEffectType.Stun) && LinkedUnit.IsAlive)
+            spriteRenderer.color = new Color(0.7f, 0.4f, 0.9f, 1f); // Tím
+        else
+            spriteRenderer.color = Color.white;
+    }
+
+    /// <summary>
+    /// Hiệu ứng nháy vàng - dùng cho Skeleton hồi sinh.
+    /// </summary>
+    public void TriggerReviveFlash() => StartCoroutine(ReviveFlash());
+    private IEnumerator ReviveFlash()
+    {
+        // Nháy vàng 3 lần
+        for (int i = 0; i < 3; i++)
+        {
+            spriteRenderer.color = Color.yellow;
+            yield return new WaitForSeconds(0.12f);
+            spriteRenderer.color = Color.white;
+            yield return new WaitForSeconds(0.12f);
+        }
+    }
+
+    /// <summary>
+    /// Hiệu ứng tím cho trạng thái Stun - persistent (duy trì đến khi hết choáng).
+    /// </summary>
+    public void SetStunVisual(bool isStunned)
+    {
+        if (spriteRenderer == null) return;
+        if (isStunned)
+            spriteRenderer.color = new Color(0.7f, 0.4f, 0.9f, 1f); // Tím
+        else
+            spriteRenderer.color = Color.white;
+    }
+
+    /// <summary>
+    /// Coroutine monitor trạng thái Stun, tự động cập nhật visual.
+    /// </summary>
+    private IEnumerator MonitorStunStatus()
+    {
+        bool wasStunned = false;
+        while (LinkedUnit != null)
+        {
+            bool isStunned = LinkedUnit.IsAlive && LinkedUnit.HasStatus(StatusEffectType.Stun);
+            if (isStunned != wasStunned)
+            {
+                SetStunVisual(isStunned);
+                wasStunned = isStunned;
+            }
+            yield return new WaitForSeconds(0.2f);
+        }
     }
 
     private IEnumerator DeathFade()
