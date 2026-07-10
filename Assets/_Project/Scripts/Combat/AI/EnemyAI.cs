@@ -63,7 +63,33 @@ public class EnemyAI
             }
         }
 
-        // 2. Nếu không có ai Taunt (hoặc IgnoreTaunt), chọn như bình thường
+        // 2. Boss priority: khi dùng skill cuối (skill 3 - mạnh nhất), 
+        //    ưu tiên target player có HP% thấp nhất
+        if (enemy.AvailableSkills != null && enemy.AvailableSkills.Count > 0)
+        {
+            SkillData lastSkill = enemy.AvailableSkills[enemy.AvailableSkills.Count - 1];
+            if (skill == lastSkill)
+            {
+                // Skill mạnh nhất → target player yếu máu nhất
+                var lowestHpTarget = alive
+                    .OrderBy(p => (float)p.CurrentHP / p.MaxHP)
+                    .FirstOrDefault();
+                if (lowestHpTarget != null)
+                {
+                    Debug.Log($"[AI] {enemy.UnitName} dùng skill mạnh nhất [{skill.skillName}] → ưu tiên target yếu máu: {lowestHpTarget.UnitName} (HP: {lowestHpTarget.CurrentHP}/{lowestHpTarget.MaxHP})");
+                    switch (skill.targetType)
+                    {
+                        case TargetType.AllEnemies:
+                            return alive;
+                        case TargetType.SingleEnemy:
+                        default:
+                            return new List<CombatUnit> { lowestHpTarget };
+                    }
+                }
+            }
+        }
+
+        // 3. Nếu không có ai Taunt (hoặc IgnoreTaunt), chọn như bình thường
         switch (skill.targetType)
         {
             case TargetType.AllEnemies:  // từ góc nhìn AI, "enemy" = player

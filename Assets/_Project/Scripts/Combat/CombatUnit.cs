@@ -32,12 +32,37 @@ public class CombatUnit
     // ── Special Flags ────────────────────────────────────────
     public bool IgnoreTaunt { get; set; } = false;
 
+    /// <summary>
+    /// Nếu true, unit này sẽ hành động trước tất cả (kể cả player) ngay sau Intro phase.
+    /// Dùng cho Wolf-type enemies.
+    /// </summary>
+    public bool AlwaysActsFirst { get; set; } = false;
+
     // ── Side-Based Turn Tracking ─────────────────────────────
     /// <summary>
     /// Đánh dấu unit đã hành động trong lượt hiện tại (PlayerTurn hoặc EnemyTurn).
     /// Reset mỗi đầu lượt.
     /// </summary>
     public bool HasActedThisTurn { get; set; } = false;
+
+    // ── Multi-Action System ──────────────────────────────────
+    /// <summary>
+    /// Số hành động tối đa mỗi turn (mặc định 1, boss có thể 2+).
+    /// Được set khi khởi tạo unit (ví dụ: Edward có 2 actions/turn).
+    /// </summary>
+    public int MaxActionsPerTurn { get; set; } = 1;
+
+    /// <summary>
+    /// Số hành động còn lại trong turn hiện tại.
+    /// Reset mỗi đầu turn enemy trong DoEnemyTurn().
+    /// </summary>
+    public int ActionsRemainingThisTurn { get; set; } = 1;
+
+    /// <summary>
+    /// Unit có thể hành động trong turn này không?
+    /// (Còn action, còn sống, và không bị Stun)
+    /// </summary>
+    public bool CanActThisTurn => ActionsRemainingThisTurn > 0 && IsAlive && !HasStatus(StatusEffectType.Stun);
 
     // ── Buff & Status ───────────────────────────────────────
     private List<ActiveBuff> activeBuffs = new List<ActiveBuff>();

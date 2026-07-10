@@ -55,6 +55,12 @@ public class CombatManager : MonoBehaviour
     private SkillData _selectedSkill = null;
     private List<CombatUnit> _selectedTargets = null;
 
+    // ── Interrupt System (Counter Attack giữa turn) ───────────
+    private bool _isInterrupting = false;
+    private bool _interruptPending = false;
+    private CombatUnit _interruptAttacker = null;
+    private CombatUnit _interruptTarget = null;
+
     // ── Events ─────────────────────────────────────────────────
     public event System.Action OnCombatStarted;
     public event System.Action<List<CombatUnit>> OnPlayerTurnStart;
@@ -215,6 +221,11 @@ public class CombatManager : MonoBehaviour
             if (view == null) continue;
             view.Setup(unit);
             InitializePassives(unit);
+            // Debug: verify passive đã được set
+            if (unit.Passive != null)
+                Debug.Log($"[CM] {unit.UnitName} passive loaded: {unit.Passive.GetType().Name}, MaxActions={unit.MaxActionsPerTurn}");
+            else
+                Debug.LogWarning($"[CM] {unit.UnitName} KHÔNG có passive! Kiểm tra InitializePassives.");
             view.StoreOriginalPosition(finalPos);
             unitViews.Add(view);
 
@@ -234,16 +245,38 @@ public class CombatManager : MonoBehaviour
 
     private void InitializePassives(CombatUnit unit)
     {
-        if (unit.Data.passiveScript == null) return;
-        string className = unit.Data.passiveScript.name;
+        // Thử lấy className từ passiveScript (nếu MonoScript còn tồn tại)
+        string className = null;
+
+        if (unit.Data.passiveScript != null)
+        {
+            className = unit.Data.passiveScript.name;
+        }
+
+        // Fallback: nếu MonoScript bị null (Unity fake null) hoặc broken reference (name rỗng)
+        if (string.IsNullOrEmpty(className))
+        {
+            className = unit.UnitName + "Passive";
+            Debug.Log($"[CM] passiveScript cho {unit.UnitName} bị missing, fallback: '{className}'");
+        }
+
         var passiveType = System.Type.GetType(className);
         if (passiveType == null)
             foreach (var asm in System.AppDomain.CurrentDomain.GetAssemblies())
             { passiveType = asm.GetType(className); if (passiveType != null) break; }
+
         if (passiveType != null && typeof(PassiveAbility).IsAssignableFrom(passiveType))
         {
             var instance = System.Activator.CreateInstance(passiveType) as PassiveAbility;
-            if (instance != null) unit.SetPassive(instance);
+            if (instance != null)
+            {
+                unit.SetPassive(instance);
+                Debug.Log($"[CM] Đã khởi tạo passive '{className}' cho {unit.UnitName}");
+            }
+        }
+        else
+        {
+            Debug.LogWarning($"[CM] Không tìm thấy passive class '{className}' cho {unit.UnitName}. Bỏ qua.");
         }
     }
 
@@ -288,6 +321,41 @@ public class CombatManager : MonoBehaviour
         yield return FadeUI(1f, 0.5f);
         cameraManager.EndIntroSequence();
 
+        // Kiểm tra enemy nào có AlwaysActsFirst (ví dụ: Sói)
+        // Những enemy này sẽ act trước cả player
+        var firstActors = EnemyUnits.Where(e => e.IsAlive && e.AlwaysActsFirst).ToList();
+        if (firstActors.Count > 0)
+        {
+            Debug.Log("=== ALWAYS ACTS FIRST PHASE ===");
+            foreach (var actor in firstActors)
+            {
+                // Reset action tracking và trigger turn start
+                actor.ActionsRemainingThisTurn = actor.MaxActionsPerTurn;
+                actor.HasActedThisTurn = true;
+
+                // Handle start-of-turn effects
+                yield return HandleStartOfTurnEffects(actor);
+                if (!actor.IsAlive) continue;
+
+                OnUnitTurnStart?.Invoke(actor);
+                actor.TriggerTurnStart();
+
+                // AI chọn skill + target
+                enemyAI.PlanTurn(actor, PlayerUnits);
+
+                if (actor.SelectedSkill != null && actor.SelectedTargets.Any())
+                {
+                    yield return ResolveAction(new PlannedAction(actor, actor.SelectedSkill, actor.SelectedTargets));
+                    if (CheckForCombatEnd()) yield break;
+                }
+
+                // TickStatuses sau khi act
+                TickAllStatuses();
+                if (CheckForCombatEnd()) yield break;
+            }
+            Debug.Log("=== END ALWAYS ACTS FIRST PHASE ===");
+        }
+
         // Bắt đầu lượt Player
         stateMachine.TransitionTo(CombatPhase.PlayerTurn);
     }
@@ -329,8 +397,8 @@ public class CombatManager : MonoBehaviour
         // Vòng lặp: player chọn unit → chọn skill → target → resolve
         while (!_playerEndedTurn)
         {
-            // Lấy danh sách unit còn có thể act
-            var unitsCanAct = PlayerUnits.Where(u => u.IsAlive && !u.HasActedThisTurn).ToList();
+            // Lấy danh sách unit còn có thể act (còn sống, chưa act, không bị Stun)
+            var unitsCanAct = PlayerUnits.Where(u => u.IsAlive && !u.HasActedThisTurn && !u.HasStatus(StatusEffectType.Stun)).ToList();
             if (unitsCanAct.Count == 0)
             {
                 Debug.Log("[PlayerTurn] Không còn unit nào có thể hành động.");
@@ -376,9 +444,12 @@ public class CombatManager : MonoBehaviour
             // Đánh dấu unit đã act
             _selectedUnit.HasActedThisTurn = true;
 
-            // TickStatuses cho tất cả unit sau mỗi lượt act
-            TickAllStatuses();
-            if (CheckForCombatEnd()) yield break;
+            // Kiểm tra interrupt (Reinhard phản đòn)
+            if (_interruptPending)
+            {
+                yield return ProcessInterrupt();
+                if (CheckForCombatEnd()) yield break;
+            }
 
             // Nếu skill có doesNotEndTurn, unit đó vẫn có thể act tiếp
             if (_selectedSkill.doesNotEndTurn)
@@ -391,6 +462,18 @@ public class CombatManager : MonoBehaviour
         // Reset HasActedThisTurn cho lượt sau
         foreach (var unit in PlayerUnits) unit.HasActedThisTurn = false;
 
+        // Clear Stun cho tất cả player units khi player turn kết thúc
+        foreach (var unit in PlayerUnits)
+        {
+            if (unit.HasStatus(StatusEffectType.Stun))
+            {
+                unit.ClearStatus(StatusEffectType.Stun);
+                var view = GetUnitView(unit);
+                if (view != null) view.SetStunVisual(false);
+                Debug.Log($"[CombatManager] {unit.UnitName} hết Stun sau khi player turn kết thúc.");
+            }
+        }
+
         Debug.Log("=== END PLAYER TURN ===");
         OnPlayerTurnEnd?.Invoke();
         stateMachine.TransitionTo(CombatPhase.EnemyTurn);
@@ -402,37 +485,60 @@ public class CombatManager : MonoBehaviour
         Debug.Log("=== ENEMY TURN ===");
         OnEnemyTurnStart?.Invoke();
 
-        // Reset HasActedThisTurn cho tất cả enemy units
-        foreach (var unit in EnemyUnits) unit.HasActedThisTurn = false;
+        // Reset HasActedThisTurn và ActionsRemainingThisTurn cho tất cả enemy units
+        foreach (var unit in EnemyUnits)
+        {
+            unit.HasActedThisTurn = false;
+            unit.ActionsRemainingThisTurn = 0;
+        }
 
         // Lần lượt từng enemy hành động
         foreach (var enemy in EnemyUnits.Where(e => e.IsAlive))
         {
+            // Reset multi-action counter cho enemy này
+            // Giữ lại extra action đã tích lũy từ player turn (GrantExtraAction)
+            // Cộng dồn với MaxActionsPerTurn để có tổng số action trong turn này
+            int extraFromPlayerTurn = Mathf.Max(0, enemy.ActionsRemainingThisTurn);
+            enemy.ActionsRemainingThisTurn = enemy.MaxActionsPerTurn + extraFromPlayerTurn;
+            Debug.Log($"[EnemyTurn] {enemy.UnitName}: MaxActions={enemy.MaxActionsPerTurn}, Extra={extraFromPlayerTurn}, Total={enemy.ActionsRemainingThisTurn}");
             enemy.HasActedThisTurn = true;
 
-            // Handle start-of-turn effects (burn, etc.)
-            yield return HandleStartOfTurnEffects(enemy);
-            if (!enemy.IsAlive)
+            bool firstAction = true;
+
+            // Vòng lặp multi-action: boss có thể act nhiều lần
+            while (enemy.CanActThisTurn)
             {
+                // Handle start-of-turn effects (burn, etc.) - chỉ lần đầu tiên
+                if (firstAction)
+                {
+                    yield return HandleStartOfTurnEffects(enemy);
+                    if (!enemy.IsAlive)
+                    {
+                        if (CheckForCombatEnd()) yield break;
+                        break;
+                    }
+
+                    OnUnitTurnStart?.Invoke(enemy);
+                    enemy.TriggerTurnStart();
+                    firstAction = false;
+                }
+
+                // AI chọn skill + target
+                enemyAI.PlanTurn(enemy, PlayerUnits);
+
+                if (enemy.SelectedSkill != null && enemy.SelectedTargets.Any())
+                {
+                    yield return ResolveAction(new PlannedAction(enemy, enemy.SelectedSkill, enemy.SelectedTargets));
+                    if (CheckForCombatEnd()) yield break;
+                }
+
+                // Giảm số action còn lại
+                enemy.ActionsRemainingThisTurn--;
+
+                // TickStatuses sau mỗi act
+                TickAllStatuses();
                 if (CheckForCombatEnd()) yield break;
-                continue;
             }
-
-            OnUnitTurnStart?.Invoke(enemy);
-            enemy.TriggerTurnStart();
-
-            // AI chọn skill + target
-            enemyAI.PlanTurn(enemy, PlayerUnits);
-
-            if (enemy.SelectedSkill != null && enemy.SelectedTargets.Any())
-            {
-                yield return ResolveAction(new PlannedAction(enemy, enemy.SelectedSkill, enemy.SelectedTargets));
-                if (CheckForCombatEnd()) yield break;
-            }
-
-            // TickStatuses sau mỗi enemy act
-            TickAllStatuses();
-            if (CheckForCombatEnd()) yield break;
         }
 
         Debug.Log("=== END ENEMY TURN ===");
@@ -449,6 +555,70 @@ public class CombatManager : MonoBehaviour
         {
             unit.TickStatuses();
         }
+    }
+
+    // ── Interrupt System (Counter Attack giữa turn) ───────────
+    /// <summary>
+    /// Enemy gọi hàm này từ passive khi muốn đánh trả ngay lập tức.
+    /// Sẽ dừng player turn hiện tại, cho enemy act 1 lần, rồi resume.
+    /// </summary>
+    public void RequestInterrupt(CombatUnit attacker, CombatUnit target)
+    {
+        if (_isInterrupting) return; // Chống stack interrupt
+        if (CurrentPhase != CombatPhase.PlayerTurn) return; // Chỉ trong player turn
+
+        _interruptPending = true;
+        _interruptAttacker = attacker;
+        _interruptTarget = target;
+        Debug.Log($"[Interrupt] {attacker.UnitName} kích hoạt phản đòn! Sẽ đánh ngay sau hành động hiện tại.");
+    }
+
+    /// <summary>
+    /// Xử lý interrupt: enemy act 1 lần ngay giữa lượt player.
+    /// </summary>
+    private IEnumerator ProcessInterrupt()
+    {
+        if (!_interruptPending || _interruptAttacker == null || !_interruptAttacker.IsAlive)
+        {
+            _interruptPending = false;
+            yield break;
+        }
+
+        _isInterrupting = true;
+        _interruptPending = false;
+
+        CombatUnit enemy = _interruptAttacker;
+        CombatUnit target = _interruptTarget;
+
+        Debug.Log($"[Interrupt] {enemy.UnitName} phản đòn {target?.UnitName}!");
+
+        // AI chọn skill (nếu enemy không có skill hợp lệ, dùng skill đầu tiên)
+        enemyAI.PlanTurn(enemy, PlayerUnits);
+
+        if (enemy.SelectedSkill != null && enemy.SelectedTargets.Any())
+        {
+            yield return ResolveAction(new PlannedAction(enemy, enemy.SelectedSkill, enemy.SelectedTargets));
+        }
+        else
+        {
+            // Fallback: tấn công thẳng vào target
+            var fallbackSkill = enemy.AvailableSkills.FirstOrDefault();
+            if (fallbackSkill == null)
+            {
+                Debug.LogWarning($"[Interrupt] {enemy.UnitName} không có skill nào để phản đòn!");
+            }
+            else
+            {
+                enemy.SelectSkill(fallbackSkill, new List<CombatUnit> { target ?? enemy });
+                yield return ResolveAction(new PlannedAction(enemy, fallbackSkill, new List<CombatUnit> { target ?? enemy }));
+            }
+        }
+
+        TickAllStatuses();
+        CheckForCombatEnd();
+
+        _isInterrupting = false;
+        Debug.Log($"[Interrupt] {enemy.UnitName} kết thúc phản đòn. Player turn tiếp tục.");
     }
 
     // ── Player Selection (gọi từ UI) ──────────────────────────
@@ -476,13 +646,15 @@ public class CombatManager : MonoBehaviour
 
     /// <summary>
     /// Cho phép unit hành động thêm 1 lần nữa trong lượt hiện tại.
+    /// Hoạt động cho cả player (HasActedThisTurn) và enemy (ActionsRemainingThisTurn).
     /// </summary>
     public void GrantExtraAction(CombatUnit unit)
     {
         if (unit != null && unit.IsAlive)
         {
             unit.HasActedThisTurn = false;
-            Debug.Log($"[CombatManager] {unit.UnitName} được act thêm lần nữa!");
+            unit.ActionsRemainingThisTurn++;
+            Debug.Log($"[CombatManager] {unit.UnitName} được act thêm lần nữa! (ActionsRemaining: {unit.ActionsRemainingThisTurn})");
         }
     }
 
