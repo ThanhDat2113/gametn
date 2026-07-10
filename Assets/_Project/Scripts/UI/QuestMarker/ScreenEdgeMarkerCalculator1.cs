@@ -1,7 +1,8 @@
 using UnityEngine;
 
 /// <summary>
-/// Static utility: tính toán vị trí VÀ hướng xoay (rotation) của marker trên màn hình.
+/// Static utility: tính toán hướng, góc xoay VÀ vị trí trên vòng tròn quanh player
+/// cho hệ thống quest marker.
 ///
 /// CHIẾN LƯỢC CHO CAMERA 2.5D/ISOMETRIC (pitch lớn, nhìn xuống):
 ///   Chiếu vector "player → target" lên mặt phẳng ngang XZ, sau đó
@@ -10,6 +11,13 @@ using UnityEngine;
 ///
 ///   Cách này hoạt động đúng cho mọi pitch camera vì không dùng
 ///   WorldToViewportPoint (bị méo khi pitch lớn hoặc target sau lưng).
+///
+/// GHI CHÚ (bản ring): GetScreenDirection trả về hướng CAMERA-RELATIVE (x=phải, y=trước).
+/// Hướng này được dùng làm nguồn chân lý duy nhất cho cả:
+///   - Vị trí marker trên vòng tròn UI overlay (ScreenOverlayRing) — dùng trực tiếp làm hướng 2D.
+///   - Vị trí marker trên vòng tròn world-space (WorldSpaceRing) — convert qua GetWorldFlatDirection
+///     để ra vector world thật (world-relative nhưng vẫn "xoay" theo hướng camera nhìn,
+///     giống hệt hành vi mép màn hình cũ).
 /// </summary>
 public static class ScreenEdgeMarkerCalculator
 {
@@ -24,28 +32,23 @@ public static class ScreenEdgeMarkerCalculator
     }
 
     /// <summary>
-    /// Tính hướng screen-space 2D từ tâm màn hình đến target.
+    /// Tính hướng screen-space 2D (camera-relative) từ camera đến target.
     ///
     /// Dùng camera forward/right đã được flatten xuống mặt phẳng XZ,
     /// phù hợp với camera 2.5D/isometric nhìn xuống với bất kỳ pitch nào.
-    /// Xử lý đúng cả khi target ở sau lưng camera (vd player quay lưng về Vergil).
+    /// Xử lý đúng cả khi target ở sau lưng camera.
     /// </summary>
     public static Vector2 GetScreenDirection(Vector3 targetWorldPos, Camera mainCamera)
     {
-        // Vector từ camera đến target trên mặt phẳng XZ (bỏ Y)
         Vector3 toTarget = targetWorldPos - mainCamera.transform.position;
         Vector3 toTargetFlat = new Vector3(toTarget.x, 0f, toTarget.z);
 
-        // Forward của camera flatten xuống XZ (hướng camera nhìn về phía trước trên map)
         Vector3 camForwardFlat = mainCamera.transform.forward;
         camForwardFlat.y = 0f;
 
-        // Right của camera flatten xuống XZ
         Vector3 camRightFlat = mainCamera.transform.right;
         camRightFlat.y = 0f;
 
-        // Edge case: camera nhìn thẳng đứng (overhead 90°) → forward flat = zero
-        // Fallback về world forward/right
         if (camForwardFlat.sqrMagnitude < 0.001f)
         {
             camForwardFlat = Vector3.forward;
@@ -57,14 +60,9 @@ public static class ScreenEdgeMarkerCalculator
             camRightFlat.Normalize();
         }
 
-        // Edge case: target thẳng đứng phía trên/dưới camera (flat = zero)
-        // → không có thông tin hướng ngang, trả về Vector2.up (chỉ lên)
         if (toTargetFlat.sqrMagnitude < 0.001f)
             return Vector2.up;
 
-        // Chiếu toTargetFlat lên right/forward của camera
-        // → x: dương = target bên phải camera, âm = bên trái
-        // → y: dương = target phía trước camera (lên trên màn hình), âm = phía sau
         float x = Vector3.Dot(toTargetFlat, camRightFlat);
         float y = Vector3.Dot(toTargetFlat, camForwardFlat);
 
@@ -74,7 +72,54 @@ public static class ScreenEdgeMarkerCalculator
     }
 
     /// <summary>
+    /// Giống GetScreenDirection nhưng trả về vector WORLD thật (trên mặt phẳng XZ),
+    /// dùng để đặt marker world-space quanh chân player.
+    ///
+    /// Vẫn "camera-relative" theo nghĩa: hướng x/y camera-relative (từ GetScreenDirection)
+    /// được chiếu ngược lại thành world bằng camRightFlat/camForwardFlat — nên khi camera
+    /// xoay quanh player, marker world-space cũng xoay theo đúng như bản mép màn hình cũ.
+    /// </summary>
+    public static Vector3 GetWorldFlatDirection(Vector3 targetWorldPos, Camera mainCamera)
+    {
+        if (mainCamera == null) return Vector3.forward;
+
+        Vector2 dir = GetScreenDirection(targetWorldPos, mainCamera);
+
+        Vector3 camForwardFlat = mainCamera.transform.forward;
+        camForwardFlat.y = 0f;
+        Vector3 camRightFlat = mainCamera.transform.right;
+        camRightFlat.y = 0f;
+
+        if (camForwardFlat.sqrMagnitude < 0.001f)
+        {
+            camForwardFlat = Vector3.forward;
+            camRightFlat   = Vector3.right;
+        }
+        else
+        {
+            camForwardFlat.Normalize();
+            camRightFlat.Normalize();
+        }
+
+        Vector3 worldDir = camRightFlat * dir.x + camForwardFlat * dir.y;
+        if (worldDir.sqrMagnitude < 0.0001f) return camForwardFlat;
+        return worldDir.normalized;
+    }
+
+    /// <summary>
+    /// Vị trí world-space trên vòng tròn bán kính `radius` quanh `ringCenterWorld`,
+    /// theo hướng camera-relative tới targetWorldPos.
+    /// </summary>
+    public static Vector3 CalculateRingWorldPos(
+        Vector3 ringCenterWorld, Vector3 targetWorldPos, Camera mainCamera, float radius)
+    {
+        Vector3 dir = GetWorldFlatDirection(targetWorldPos, mainCamera);
+        return ringCenterWorld + dir * radius;
+    }
+
+    /// <summary>
     /// Trả về screen position 2D đã clamp về mép màn hình, theo đúng hướng tới target.
+    /// Giữ lại cho tương thích ngược / dùng nơi khác nếu cần fallback mép màn hình.
     /// </summary>
     public static Vector2 CalculateEdgeScreenPos(
         Vector3 targetWorldPos,

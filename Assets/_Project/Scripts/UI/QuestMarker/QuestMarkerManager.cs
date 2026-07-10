@@ -141,7 +141,16 @@ public class QuestMarkerManager : MonoBehaviour
         if (markerContainer == null) ResolveMarkerContainer();
         if (!IsReadyToSpawn()) return;
 
-        var marker = Instantiate(markerPrefab, markerContainer);
+        // WorldSpaceRing: marker tự quản lý transform thật trong world (tự thêm
+        // Canvas World Space cho chính nó), nên KHÔNG parent vào markerContainer (UI canvas).
+        // ScreenOverlayRing: giữ nguyên hành vi cũ — marker là con của markerContainer.
+        bool worldSpaceRing = PlayerMarkerRing.Instance != null &&
+                               PlayerMarkerRing.Instance.Mode == PlayerMarkerRing.RingMode.WorldSpaceRing;
+
+        QuestMarkerUI marker = worldSpaceRing
+            ? Instantiate(markerPrefab)
+            : Instantiate(markerPrefab, markerContainer);
+
         marker.InitializeFromBridge(bridge, markerContainer);
         _activeMarkers[bridge] = marker;
 
@@ -187,9 +196,22 @@ public class QuestMarkerManager : MonoBehaviour
 
     private bool IsReadyToSpawn()
     {
-        if (markerPrefab != null && markerContainer != null) return true;
-        Debug.LogError("[QuestMarkerManager] markerPrefab hoặc markerContainer chưa được set.");
-        return false;
+        if (markerPrefab == null)
+        {
+            Debug.LogError("[QuestMarkerManager] markerPrefab chưa được set.");
+            return false;
+        }
+
+        // markerContainer chỉ bắt buộc ở ScreenOverlayRing (marker world-space tự quản lý transform).
+        bool worldSpaceRing = PlayerMarkerRing.Instance != null &&
+                               PlayerMarkerRing.Instance.Mode == PlayerMarkerRing.RingMode.WorldSpaceRing;
+        if (!worldSpaceRing && markerContainer == null)
+        {
+            Debug.LogError("[QuestMarkerManager] markerContainer chưa được set (bắt buộc ở ScreenOverlayRing).");
+            return false;
+        }
+
+        return true;
     }
 
     // ── Public API ────────────────────────────────────────────────────────────

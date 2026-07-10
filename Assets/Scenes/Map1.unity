@@ -22566,7 +22566,6 @@ GameObject:
   - component: {fileID: 374202606}
   - component: {fileID: 374202605}
   - component: {fileID: 374202604}
-  - component: {fileID: 374202603}
   - component: {fileID: 374202602}
   m_Layer: 7
   m_Name: Vergil (2)
@@ -22608,24 +22607,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ab9b14809ca169f4ba53024fe3809516, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::QuestMarkerBridge
-  questId: 1
-  stepIndex: 3
-  headPosition: {fileID: 1067042404}
-  defaultHeadOffset: 0
---- !u!114 &374202603
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 374202600}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ab9b14809ca169f4ba53024fe3809516, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::QuestMarkerBridge
-  questId: 1
-  stepIndex: 1
+  questId: 4
+  stepIndex: 6
   headPosition: {fileID: 1067042404}
   defaultHeadOffset: 0
 --- !u!114 &374202604
@@ -52484,8 +52467,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ab9b14809ca169f4ba53024fe3809516, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::QuestMarkerBridge
-  questId: 2
-  stepIndex: 0
+  questId: 4
+  stepIndex: 1
   headPosition: {fileID: 0}
   defaultHeadOffset: 2
 --- !u!65 &726349025
@@ -55931,6 +55914,7 @@ GameObject:
   - component: {fileID: 819972482}
   - component: {fileID: 819972481}
   - component: {fileID: 819972487}
+  - component: {fileID: 819972488}
   m_Layer: 7
   m_Name: Rogue
   m_TagString: Untagged
@@ -56017,7 +56001,7 @@ MonoBehaviour:
     playOnce: 1
     customPrompt: {fileID: 1761421798}
   - questId: 1
-    requiredStepIndex: 3
+    requiredStepIndex: 4
     requiredCompleted: 0
     lines:
     - {fileID: 11400000, guid: d6148ec2bc8edab4fb917ba0c26c72b0, type: 2}
@@ -56185,10 +56169,26 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ab9b14809ca169f4ba53024fe3809516, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::QuestMarkerBridge
-  questId: 2
+  questId: 1
   stepIndex: 1
   headPosition: {fileID: 782723441}
   defaultHeadOffset: 0
+--- !u!114 &819972488
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 819972479}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ab9b14809ca169f4ba53024fe3809516, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestMarkerBridge
+  questId: 1
+  stepIndex: 4
+  headPosition: {fileID: 0}
+  defaultHeadOffset: 2
 --- !u!1 &820513532 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 8162019079867284486, guid: 92880beafc0c147459c8d7eb17ca44ad, type: 3}
@@ -56522,6 +56522,7 @@ Terrain:
   m_AllowAutoConnect: 1
   m_EnableHeightmapRayTracing: 1
   m_EnableTreesAndDetailsRayTracing: 0
+  m_EnableHeightmapLODFrustumCulling: 1
   m_TreeMotionVectorModeOverride: 3
 --- !u!4 &829601830
 Transform:
@@ -58134,6 +58135,7 @@ Terrain:
   m_AllowAutoConnect: 1
   m_EnableHeightmapRayTracing: 1
   m_EnableTreesAndDetailsRayTracing: 0
+  m_EnableHeightmapLODFrustumCulling: 1
   m_TreeMotionVectorModeOverride: 3
 --- !u!4 &855101692
 Transform:
@@ -61039,7 +61041,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ab9b14809ca169f4ba53024fe3809516, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::QuestMarkerBridge
-  questId: 2
+  questId: 3
   stepIndex: 0
   headPosition: {fileID: 0}
   defaultHeadOffset: 2
@@ -85576,7 +85578,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::QuestMarkerBridge
   questId: 2
-  stepIndex: 0
+  stepIndex: 2
   headPosition: {fileID: 0}
   defaultHeadOffset: 2
 --- !u!65 &1301506506
@@ -125424,6 +125426,7 @@ GameObject:
   - component: {fileID: 1865564054}
   - component: {fileID: 1865564060}
   - component: {fileID: 1865564061}
+  - component: {fileID: 1865564062}
   m_Layer: 0
   m_Name: Reinhard
   m_TagString: Untagged
@@ -125657,7 +125660,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::QuestMarkerBridge
   questId: 4
-  stepIndex: 0
+  stepIndex: 3
   headPosition: {fileID: 112702643}
   defaultHeadOffset: 2
 --- !u!114 &1865564061
@@ -125673,8 +125676,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::QuestMarkerBridge
   questId: 4
-  stepIndex: 2
+  stepIndex: 5
   headPosition: {fileID: 112702643}
+  defaultHeadOffset: 2
+--- !u!114 &1865564062
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1865564052}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ab9b14809ca169f4ba53024fe3809516, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestMarkerBridge
+  questId: 
+  stepIndex: 0
+  headPosition: {fileID: 0}
   defaultHeadOffset: 2
 --- !u!1 &1872553224
 GameObject:
@@ -131762,6 +131781,7 @@ Terrain:
   m_AllowAutoConnect: 1
   m_EnableHeightmapRayTracing: 1
   m_EnableTreesAndDetailsRayTracing: 0
+  m_EnableHeightmapLODFrustumCulling: 1
   m_TreeMotionVectorModeOverride: 3
 --- !u!4 &1988827559
 Transform:
@@ -132372,7 +132392,7 @@ MonoBehaviour:
   triggerID: 1
   dialogueEntries:
   - questId: 1
-    requiredStepIndex: 2
+    requiredStepIndex: 3
     requiredCompleted: 0
     lines:
     - {fileID: 11400000, guid: 3ece06cd615655040ba3e5472924f103, type: 2}
@@ -132412,8 +132432,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ab9b14809ca169f4ba53024fe3809516, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::QuestMarkerBridge
-  questId: 2
-  stepIndex: 0
+  questId: 1
+  stepIndex: 3
   headPosition: {fileID: 0}
   defaultHeadOffset: 2
 --- !u!1 &1996220682
@@ -133837,7 +133857,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ab9b14809ca169f4ba53024fe3809516, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::QuestMarkerBridge
-  questId: 2
+  questId: 3
   stepIndex: 2
   headPosition: {fileID: 337659153}
   defaultHeadOffset: 0
@@ -134073,7 +134093,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ab9b14809ca169f4ba53024fe3809516, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::QuestMarkerBridge
-  questId: 2
+  questId: 4
   stepIndex: 0
   headPosition: {fileID: 0}
   defaultHeadOffset: 2
@@ -134574,7 +134594,6 @@ GameObject:
   - component: {fileID: 2040449518}
   - component: {fileID: 2040449519}
   - component: {fileID: 2040449520}
-  - component: {fileID: 2040449521}
   m_Layer: 7
   m_Name: Vergil
   m_TagString: Untagged
@@ -134821,24 +134840,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ab9b14809ca169f4ba53024fe3809516, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::QuestMarkerBridge
-  questId: 1
+  questId: 2
   stepIndex: 1
-  headPosition: {fileID: 2110864509}
-  defaultHeadOffset: 0
---- !u!114 &2040449521
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2040449512}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ab9b14809ca169f4ba53024fe3809516, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::QuestMarkerBridge
-  questId: 1
-  stepIndex: 3
   headPosition: {fileID: 2110864509}
   defaultHeadOffset: 0
 --- !u!4 &2043171600 stripped

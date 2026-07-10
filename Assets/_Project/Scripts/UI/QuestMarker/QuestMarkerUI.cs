@@ -2,6 +2,28 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
 
+/// <summary>
+/// Marker quest — hybrid giữa 2 hành vi:
+///   • NPC ĐANG trong tầm nhìn camera → marker bám thẳng lên đầu NPC (giống bản gốc).
+///   • NPC NGOÀI tầm nhìn → marker rơi về vòng tròn "la bàn" quanh chân player,
+///     thay cho việc bám mép màn hình của bản cũ.
+///
+/// Đọc mode hiện tại từ PlayerMarkerRing.Instance mỗi frame để biết dùng vòng tròn
+/// world-space hay screen-overlay khi NPC ngoài tầm nhìn:
+///   • ScreenOverlayRing — UI marker con của markerContainer, vòng tròn UI 2D quanh
+///     vị trí player-trên-màn-hình.
+///   • WorldSpaceRing — marker tự thêm 1 Canvas (World Space), đặt transform thật
+///     trong world trên vòng tròn quanh chân player, luôn billboard về phía camera.
+///
+/// Tắt `showAboveTargetWhenInView` nếu muốn marker LUÔN bám vòng tròn, kể cả khi
+/// NPC đang hiện rõ trên màn hình.
+///
+/// Hướng đặt marker trên vòng tròn luôn tính theo CAMERA-RELATIVE
+/// (ScreenEdgeMarkerCalculator.GetScreenDirection/GetWorldFlatDirection).
+///
+/// LƯU Ý: cần có đúng 1 PlayerMarkerRing trong scene, nếu không marker sẽ
+/// không tự cập nhật vị trí (Update() return sớm).
+/// </summary>
 [RequireComponent(typeof(RectTransform))]
 [RequireComponent(typeof(CanvasGroup))]
 [DisallowMultipleComponent]
@@ -10,24 +32,16 @@ public class QuestMarkerUI : MonoBehaviour
     [Header("UI References")]
     [SerializeField] private Image arrowIcon;
 
-    [Header("Settings")]
-    [Tooltip("Padding tính từ mép màn hình (pixel).")]
-    [SerializeField] private float edgePadding = 60f;
-
-    [Header("UI Avoidance")]
+    [Header("UI Avoidance (chỉ áp dụng khi ở ScreenOverlayRing)")]
     [Tooltip("Tự động tránh các UI panel đang active trên màn hình (minimap, HUD, quest text...).")]
     [SerializeField] private bool avoidUIElements = true;
-
-    [Tooltip("Các tag của Canvas/RectTransform cần BỎ QUA khi scan (vd: canvas chứa marker chính nó).")]
+    [Tooltip("Các tag của Canvas cần BỎ QUA khi scan (vd: canvas chứa marker chính nó).")]
     [SerializeField] private string[] ignoreCanvasTags = { "UICanvas", "MarkerCanvas" };
-
     [Tooltip("Số lần thử đẩy marker ra khỏi vùng bị chặn trước khi bỏ qua.")]
     [SerializeField] private int maxAvoidIterations = 5;
-
     [Tooltip("Padding thêm xung quanh mỗi UI element khi tránh (pixel màn hình).")]
     [SerializeField] private float uiAvoidPadding = 10f;
-
-    [Tooltip("Số frame giữa mỗi lần re-scan UI elements (0 = scan mỗi frame, cao hơn = ít tốn hơn).")]
+    [Tooltip("Số frame giữa mỗi lần re-scan UI elements (0 = scan mỗi frame).")]
     [SerializeField] private int scanInterval = 10;
 
     [Header("Rotation")]
@@ -35,15 +49,29 @@ public class QuestMarkerUI : MonoBehaviour
     [Tooltip("Sprite chỉ RIGHT(→): 0°  |  UP(↑): -90°  |  LEFT(←): 180°  |  DOWN(↓): 90°")]
     [SerializeField] private float spriteAngleOffset = 0f;
 
+    [Header("Above-Target (khi NPC đang trong tầm nhìn camera)")]
+    [Tooltip("Bật: khi NPC nằm trong view frustum của camera, marker hiện THẲNG PHÍA TRÊN ĐẦU NPC " +
+             "(giống bản gốc), thay vì bám vòng tròn quanh player. Tắt: marker luôn bám vòng tròn, " +
+             "kể cả khi NPC đang hiện rõ trên màn hình.")]
+    [SerializeField] private bool showAboveTargetWhenInView = true;
+    [Tooltip("Độ cao cộng thêm phía trên MarkerPosition của bridge (world units) khi hiện trên đầu NPC.")]
+    [SerializeField] private float aboveTargetHeightOffset = 0.3f;
+
+    [Header("World Space Ring")]
+    [Tooltip("Scale RectTransform khi Canvas tự tạo ở mode WorldSpaceRing " +
+             "(kích thước UI px → world units). Chỉnh cho icon không quá to/nhỏ ngoài world.")]
+    [SerializeField] private float worldCanvasScale = 0.01f;
+    [Tooltip("Sorting order cho Canvas world-space tự tạo, đảm bảo marker vẽ đè lên terrain/props.")]
+    [SerializeField] private int worldCanvasSortingOrder = 10;
+
     private RectTransform _rectTransform;
     private CanvasGroup   _canvasGroup;
+    private RectTransform _canvasRect;   // dùng ở ScreenOverlayRing
+    private Camera        _mainCamera;
+    private Camera        _uiCamera;
+    private Canvas        _worldCanvas;  // tự thêm khi ở WorldSpaceRing
 
     private QuestMarkerBridge _targetBridge;
-    private Camera            _mainCamera;
-    private RectTransform     _canvasRect;
-    private Camera            _uiCamera;
-
-    // Cache danh sách rect UI cần tránh (screen space pixel)
     private readonly List<Rect> _avoidRects = new List<Rect>();
     private int _frameCounter = 0;
 
@@ -62,10 +90,35 @@ public class QuestMarkerUI : MonoBehaviour
         _targetBridge = bridge;
         _canvasRect   = canvasParent;
 
-        Canvas canvas = canvasParent.GetComponentInParent<Canvas>();
-        _uiCamera = (canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay)
-            ? canvas.worldCamera
-            : null;
+        if (IsWorldSpaceRingMode())
+        {
+            SetupWorldCanvas();
+        }
+        else if (canvasParent != null)
+        {
+            Canvas canvas = canvasParent.GetComponentInParent<Canvas>();
+            _uiCamera = (canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay)
+                ? canvas.worldCamera
+                : null;
+        }
+    }
+
+    private bool IsWorldSpaceRingMode() =>
+        PlayerMarkerRing.Instance != null &&
+        PlayerMarkerRing.Instance.Mode == PlayerMarkerRing.RingMode.WorldSpaceRing;
+
+    /// <summary>Tự thêm Canvas (World Space) cho chính marker này khi ở mode world-space ring,
+    /// để nó có thể render như 1 object độc lập trong world thay vì phải là con của UI canvas.</summary>
+    private void SetupWorldCanvas()
+    {
+        _worldCanvas = GetComponent<Canvas>();
+        if (_worldCanvas == null) _worldCanvas = gameObject.AddComponent<Canvas>();
+
+        _worldCanvas.renderMode      = RenderMode.WorldSpace;
+        _worldCanvas.overrideSorting = true;
+        _worldCanvas.sortingOrder    = worldCanvasSortingOrder;
+
+        _rectTransform.localScale = Vector3.one * worldCanvasScale;
     }
 
     private void Update()
@@ -73,14 +126,84 @@ public class QuestMarkerUI : MonoBehaviour
         if (_mainCamera == null || !_mainCamera.gameObject.activeInHierarchy)
             _mainCamera = Camera.main;
 
-        if (_targetBridge == null || _mainCamera == null || _canvasRect == null) return;
+        if (_targetBridge == null || _mainCamera == null) return;
+
+        var ring = PlayerMarkerRing.Instance;
+        if (ring == null) return; // cần PlayerMarkerRing trong scene để hệ thống hoạt động
+
+        if (_worldCanvas != null) _worldCanvas.worldCamera = _mainCamera;
 
         // Ẩn khi dialogue đang chạy
         bool dialogueActive = DialogueBubbleUI.Instance != null && DialogueBubbleUI.Instance.IsShowing;
         _canvasGroup.alpha = dialogueActive ? 0f : 1f;
         if (dialogueActive) return;
 
-        // Re-scan UI elements theo interval để tránh scan mỗi frame
+        Vector3 targetPos = _targetBridge.MarkerPosition;
+
+        if (ring.Mode == PlayerMarkerRing.RingMode.WorldSpaceRing)
+            UpdateWorldSpacePosition(ring, targetPos);
+        else
+            UpdateScreenOverlayPosition(ring, targetPos);
+    }
+
+    // ── WorldSpaceRing ────────────────────────────────────────────────────────
+
+    private void UpdateWorldSpacePosition(PlayerMarkerRing ring, Vector3 targetPos)
+    {
+        bool inView = showAboveTargetWhenInView &&
+                      ScreenEdgeMarkerCalculator.IsInViewFrustum(targetPos, _mainCamera);
+
+        if (inView)
+        {
+            // NPC đang hiện trên màn hình → marker bám thẳng lên đầu NPC, không dùng vòng tròn.
+            transform.position = targetPos + Vector3.up * aboveTargetHeightOffset;
+
+            Vector3 toCamInView = _mainCamera.transform.position - transform.position;
+            if (toCamInView.sqrMagnitude < 0.0001f) toCamInView = -_mainCamera.transform.forward;
+            transform.rotation = Quaternion.LookRotation(toCamInView.normalized, Vector3.up);
+            return;
+        }
+
+        // NPC ngoài tầm nhìn → rơi về vòng tròn quanh chân player.
+        transform.position = ring.GetWorldRingPosition(targetPos, _mainCamera);
+
+        // Billboard: luôn xoay mặt marker về phía camera
+        Vector3 toCam = _mainCamera.transform.position - transform.position;
+        if (toCam.sqrMagnitude < 0.0001f) toCam = -_mainCamera.transform.forward;
+        transform.rotation = Quaternion.LookRotation(toCam.normalized, Vector3.up);
+
+        // Roll quanh trục nhìn để mũi tên chỉ đúng hướng target (giống spriteAngleOffset cũ)
+        if (enableRotation)
+        {
+            float angle = ScreenEdgeMarkerCalculator.CalculateArrowRotation(targetPos, _mainCamera);
+            transform.Rotate(Vector3.forward, -(angle + spriteAngleOffset), Space.Self);
+        }
+    }
+
+    // ── ScreenOverlayRing ─────────────────────────────────────────────────────
+
+    private void UpdateScreenOverlayPosition(PlayerMarkerRing ring, Vector3 targetPos)
+    {
+        if (_canvasRect == null) return;
+
+        bool inView = showAboveTargetWhenInView &&
+                      ScreenEdgeMarkerCalculator.IsInViewFrustum(targetPos, _mainCamera);
+
+        if (inView)
+        {
+            // NPC đang hiện trên màn hình → marker bám thẳng lên đầu NPC, không dùng vòng tròn.
+            Vector3 headWorldPos = targetPos + Vector3.up * aboveTargetHeightOffset;
+            Vector3 sp = _mainCamera.WorldToScreenPoint(headWorldPos);
+
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                _canvasRect, new Vector2(sp.x, sp.y), _uiCamera, out Vector2 headCanvasPos);
+            _rectTransform.anchoredPosition = headCanvasPos;
+
+            if (enableRotation) _rectTransform.localRotation = Quaternion.identity;
+            return;
+        }
+
+        // NPC ngoài tầm nhìn → rơi về vòng tròn quanh player-trên-màn-hình.
         _frameCounter++;
         if (avoidUIElements && _frameCounter >= scanInterval)
         {
@@ -88,73 +211,42 @@ public class QuestMarkerUI : MonoBehaviour
             RefreshAvoidRects();
         }
 
-        Vector3 targetPos = _targetBridge.MarkerPosition;
-        bool inView = ScreenEdgeMarkerCalculator.IsInViewFrustum(targetPos, _mainCamera);
+        Vector2 screenPos = ring.GetScreenRingPosition(targetPos, _mainCamera);
 
-        if (inView)
+        if (avoidUIElements && _avoidRects.Count > 0)
+            screenPos = PushOutOfUIRects(screenPos, uiAvoidPadding);
+
+        RectTransformUtility.ScreenPointToLocalPointInRectangle(
+            _canvasRect, screenPos, _uiCamera, out Vector2 canvasPos);
+        _rectTransform.anchoredPosition = canvasPos;
+
+        if (enableRotation)
         {
-            Vector3 sp = _mainCamera.WorldToScreenPoint(targetPos);
-            RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                _canvasRect, new Vector2(sp.x, sp.y), _uiCamera, out Vector2 canvasPos);
-
-            _rectTransform.anchoredPosition = canvasPos;
-            if (enableRotation) _rectTransform.localRotation = Quaternion.identity;
-        }
-        else
-        {
-            float dynamicPadding = edgePadding + GetHalfIconSize();
-            Vector2 screenPos = ScreenEdgeMarkerCalculator.CalculateEdgeScreenPos(
-                targetPos, _mainCamera, dynamicPadding);
-
-            // Tránh các UI đang active
-            if (avoidUIElements && _avoidRects.Count > 0)
-                screenPos = PushOutOfUIRects(screenPos, dynamicPadding);
-
-            RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                _canvasRect, screenPos, _uiCamera, out Vector2 canvasPos);
-
-            _rectTransform.anchoredPosition = canvasPos;
-
-            if (enableRotation)
-            {
-                float angle = ScreenEdgeMarkerCalculator.CalculateArrowRotation(targetPos, _mainCamera);
-                _rectTransform.localRotation = Quaternion.AngleAxis(angle + spriteAngleOffset, Vector3.forward);
-            }
+            float angle = ScreenEdgeMarkerCalculator.CalculateArrowRotation(targetPos, _mainCamera);
+            _rectTransform.localRotation = Quaternion.AngleAxis(angle + spriteAngleOffset, Vector3.forward);
         }
     }
 
-    // ── UI Avoidance ──────────────────────────────────────────────────────────
+    // ── UI Avoidance (giữ nguyên từ bản cũ, chỉ áp dụng ở ScreenOverlayRing) ────
 
-    /// <summary>
-    /// Scan tất cả Graphic active trên Canvas, convert sang screen-space rect,
-    /// lưu vào _avoidRects để dùng trong PushOutOfUIRects().
-    /// Bỏ qua canvas chứa marker chính nó (tránh self-avoidance).
-    /// </summary>
     private void RefreshAvoidRects()
     {
         _avoidRects.Clear();
-
-        // Canvas gốc chứa marker — bỏ qua toàn bộ children của canvas này
         Canvas selfCanvas = _canvasRect != null ? _canvasRect.GetComponentInParent<Canvas>() : null;
 
         var allGraphics = FindObjectsByType<Graphic>(FindObjectsSortMode.None);
         foreach (var g in allGraphics)
         {
             if (!g.gameObject.activeInHierarchy) continue;
-            if (g.canvasRenderer.cull) continue; // bị cull (ngoài viewport)
+            if (g.canvasRenderer.cull) continue;
 
-            // Bỏ qua nếu thuộc canvas của marker
             Canvas parentCanvas = g.canvas;
             if (parentCanvas != null && parentCanvas == selfCanvas) continue;
-
-            // Bỏ qua nếu canvas có tag trong ignoreCanvasTags
             if (parentCanvas != null && IsIgnoredCanvas(parentCanvas)) continue;
 
-            // Bỏ qua các element quá nhỏ (dưới 20x20 pixel) — text ký tự đơn, v.v.
             Rect screenRect = GetScreenRect(g.rectTransform);
             if (screenRect.width < 20f || screenRect.height < 20f) continue;
 
-            // Expand thêm uiAvoidPadding
             screenRect.x      -= uiAvoidPadding;
             screenRect.y      -= uiAvoidPadding;
             screenRect.width  += uiAvoidPadding * 2f;
@@ -164,11 +256,6 @@ public class QuestMarkerUI : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Đẩy screenPos ra khỏi tất cả avoidRects bằng cách lặp lại tối đa
-    /// maxAvoidIterations lần. Mỗi lần tìm rect đang chứa điểm và đẩy ra
-    /// theo cạnh gần nhất dọc theo viền màn hình.
-    /// </summary>
     private Vector2 PushOutOfUIRects(Vector2 screenPos, float padding)
     {
         float sw = _mainCamera.pixelWidth;
@@ -181,29 +268,22 @@ public class QuestMarkerUI : MonoBehaviour
             {
                 if (!rect.Contains(screenPos)) continue;
 
-                // Tính khoảng cách đến từng cạnh của rect
                 float dLeft   = screenPos.x - rect.xMin;
                 float dRight  = rect.xMax   - screenPos.x;
                 float dBottom = screenPos.y - rect.yMin;
                 float dTop    = rect.yMax   - screenPos.y;
                 float minDist = Mathf.Min(dLeft, dRight, dBottom, dTop);
 
-                // Đẩy ra theo cạnh gần nhất, nhưng clamp về viền màn hình
-                if (minDist == dBottom)
-                    screenPos.y = Mathf.Max(padding, rect.yMin - padding);
-                else if (minDist == dTop)
-                    screenPos.y = Mathf.Min(sh - padding, rect.yMax + padding);
-                else if (minDist == dLeft)
-                    screenPos.x = Mathf.Max(padding, rect.xMin - padding);
-                else
-                    screenPos.x = Mathf.Min(sw - padding, rect.xMax + padding);
+                if (minDist == dBottom)      screenPos.y = Mathf.Max(padding, rect.yMin - padding);
+                else if (minDist == dTop)    screenPos.y = Mathf.Min(sh - padding, rect.yMax + padding);
+                else if (minDist == dLeft)   screenPos.x = Mathf.Max(padding, rect.xMin - padding);
+                else                         screenPos.x = Mathf.Min(sw - padding, rect.xMax + padding);
 
                 moved = true;
-                break; // re-check từ đầu sau mỗi lần đẩy
+                break;
             }
-            if (!moved) break; // không còn overlap → xong
+            if (!moved) break;
         }
-
         return screenPos;
     }
 
@@ -211,35 +291,19 @@ public class QuestMarkerUI : MonoBehaviour
     {
         if (ignoreCanvasTags == null) return false;
         foreach (var tag in ignoreCanvasTags)
-        {
             if (!string.IsNullOrEmpty(tag) && canvas.CompareTag(tag)) return true;
-        }
         return false;
     }
 
-    /// <summary>Convert RectTransform sang Rect trong screen space (pixel).</summary>
     private static Rect GetScreenRect(RectTransform rt)
     {
         Vector3[] corners = new Vector3[4];
         rt.GetWorldCorners(corners);
-
-        // GetWorldCorners trả về world position — với Screen Space Overlay canvas
-        // thì world position = screen position trực tiếp.
-        // Với Camera canvas cần project qua camera, nhưng UI element thường là SS Overlay.
         float xMin = Mathf.Min(corners[0].x, corners[1].x, corners[2].x, corners[3].x);
         float xMax = Mathf.Max(corners[0].x, corners[1].x, corners[2].x, corners[3].x);
         float yMin = Mathf.Min(corners[0].y, corners[1].y, corners[2].y, corners[3].y);
         float yMax = Mathf.Max(corners[0].y, corners[1].y, corners[2].y, corners[3].y);
-
         return new Rect(xMin, yMin, xMax - xMin, yMax - yMin);
-    }
-
-    private float GetHalfIconSize()
-    {
-        if (_rectTransform == null) return 0f;
-        Canvas canvas = _canvasRect != null ? _canvasRect.GetComponentInParent<Canvas>() : null;
-        float canvasScale = canvas != null ? canvas.scaleFactor : 1f;
-        return Mathf.Max(_rectTransform.sizeDelta.x, _rectTransform.sizeDelta.y) * 0.5f * canvasScale;
     }
 
     public void SetActive(bool active) => gameObject.SetActive(active);
