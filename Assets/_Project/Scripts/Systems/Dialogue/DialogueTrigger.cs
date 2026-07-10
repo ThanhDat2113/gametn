@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 [System.Serializable]
 public class DialogueEntry
@@ -46,7 +47,7 @@ public class DialogueTrigger : MonoBehaviour
     public Transform rightPlayerPoint;
 
     [Header("Hide on Complete")]
-    [Tooltip("Nếu true, NPC (hoặc targetToHide) sẽ bị ẩn sau khi dialogue hoàn thành.")]
+    [Tooltip("Nếu true, NPC sẽ bị ẩn sau khi tất cả các dialogue có thể chơi đã hoàn thành (không còn entry nào thỏa mãn điều kiện và chưa chơi).")]
     public bool hideOnDialogueComplete = false;
     [Tooltip("Đối tượng cần ẩn. Để trống sẽ ẩn chính GameObject này.")]
     public GameObject targetToHide;
@@ -57,7 +58,6 @@ public class DialogueTrigger : MonoBehaviour
     private Vector3 _originalMainCamPos;
     private Quaternion _originalMainCamRot;
     private bool _playerInRange;
-    private bool _hasPlayedForCurrentEntry;
     private bool _isPlaying;
     private Camera _mainCamera;
     private DialogueEntry _currentEntry;
@@ -81,6 +81,9 @@ public class DialogueTrigger : MonoBehaviour
 
     // Cờ để tránh gọi quest nhiều lần
     private bool _questNotified = false;
+
+    // Lưu chỉ mục các entry đã chơi (chỉ entry playOnce)
+    private HashSet<int> _playedEntryIndices = new HashSet<int>();
 
     // ── Tìm main camera và dialogue camera ──────────────────
     private const string DIALOGUE_CAMERA_TAG = "DialogueCamera";
@@ -131,7 +134,34 @@ public class DialogueTrigger : MonoBehaviour
         // Nếu targetToHide chưa được gán, mặc định ẩn chính GameObject này
         if (targetToHide == null)
             targetToHide = gameObject;
+
+        // Đăng ký sự kiện quest để kiểm tra ẩn khi quest thay đổi
+        if (hideOnDialogueComplete && QuestManager.Instance != null)
+        {
+            QuestManager.Instance.OnStepChanged.AddListener(OnQuestStepChanged);
+            QuestManager.Instance.OnQuestCompleted.AddListener(OnQuestCompleted);
+        }
     }
+
+    private void OnDestroy()
+    {
+        if (QuestManager.Instance != null)
+        {
+            QuestManager.Instance.OnStepChanged.RemoveListener(OnQuestStepChanged);
+            QuestManager.Instance.OnQuestCompleted.RemoveListener(OnQuestCompleted);
+        }
+        RestoreOriginalScales();
+        UnlockPlayerMovement();
+    }
+
+    private void OnDisable()
+    {
+        RestoreOriginalScales();
+        UnlockPlayerMovement();
+    }
+
+    private void OnQuestStepChanged(QuestStep step) => CheckAndHideIfNeeded();
+    private void OnQuestCompleted(QuestData quest) => CheckAndHideIfNeeded();
 
     private GameObject FindMainCamera()
     {
@@ -232,38 +262,89 @@ public class DialogueTrigger : MonoBehaviour
             StopPlayerImmediately();
     }
 
-    private DialogueEntry GetAppropriateEntry()
+    // ==================== DIALOGUE ENTRY VALIDATION ====================
+
+    private bool IsEntryValid(DialogueEntry entry)
     {
-        if (dialogueEntries == null || dialogueEntries.Length == 0) return null;
+        if (entry == null) return false;
         var qm = QuestManager.Instance;
         var currentQuest = qm?.CurrentQuest;
 
+        if (!string.IsNullOrEmpty(entry.questId))
+        {
+            if (currentQuest == null || currentQuest.questId != entry.questId) return false;
+        }
+
+        if (entry.requiredStepIndex >= 0)
+        {
+            if (qm == null || currentQuest == null) return false;
+            if (entry.requiredStepIndex >= currentQuest.steps.Length) return false;
+            bool stepCompleted = currentQuest.steps[entry.requiredStepIndex].isCompleted;
+            if (entry.requiredCompleted != stepCompleted) return false;
+            if (!entry.requiredCompleted && qm.CurrentStepIndex != entry.requiredStepIndex) return false;
+        }
+
+        return true;
+    }
+
+    private List<DialogueEntry> GetAllValidEntries()
+    {
+        List<DialogueEntry> valid = new List<DialogueEntry>();
         foreach (var entry in dialogueEntries)
         {
-            if (!string.IsNullOrEmpty(entry.questId))
+            if (IsEntryValid(entry)) valid.Add(entry);
+        }
+        return valid;
+    }
+
+    private bool ShouldHideNow()
+    {
+        if (!hideOnDialogueComplete) return false;
+
+        var validEntries = GetAllValidEntries();
+        if (validEntries.Count == 0) return true; // Không còn entry nào hợp lệ -> ẩn
+
+        // Kiểm tra xem tất cả các entry hợp lệ có playOnce và đã chơi chưa
+        foreach (var entry in validEntries)
+        {
+            int index = System.Array.IndexOf(dialogueEntries, entry);
+            if (entry.playOnce && !_playedEntryIndices.Contains(index))
             {
-                if (currentQuest == null) continue;
-                if (currentQuest.questId != entry.questId) continue;
+                return false; // Còn entry chưa chơi
             }
+        }
 
-            if (entry.requiredStepIndex >= 0)
-            {
-                if (qm == null || currentQuest == null) continue;
-                if (entry.requiredStepIndex >= currentQuest.steps.Length) continue;
+        return true; // Tất cả entry playOnce đã chơi hết
+    }
 
-                bool stepCompleted = currentQuest.steps[entry.requiredStepIndex].isCompleted;
-                if (entry.requiredCompleted != stepCompleted) continue;
+    private void CheckAndHideIfNeeded()
+    {
+        if (ShouldHideNow())
+        {
+            StartCoroutine(HideAfterDelayIfNeeded());
+        }
+    }
 
-                if (!entry.requiredCompleted && qm.CurrentStepIndex != entry.requiredStepIndex)
-                    continue;
-            }
+    private IEnumerator HideAfterDelayIfNeeded()
+    {
+        if (!hideOnDialogueComplete || targetToHide == null) yield break;
 
-            if (_currentEntry != entry)
-            {
-                _hasPlayedForCurrentEntry = false;
-                _currentEntry = entry;
-            }
-            return entry;
+        if (hideDelay > 0f)
+            yield return new WaitForSeconds(hideDelay);
+
+        if (targetToHide != null && targetToHide.activeSelf)
+        {
+            targetToHide.SetActive(false);
+            Debug.Log($"[DialogueTrigger] Ẩn {targetToHide.name} sau khi tất cả dialogue đã hoàn thành.");
+        }
+    }
+
+    private DialogueEntry GetAppropriateEntry()
+    {
+        if (dialogueEntries == null || dialogueEntries.Length == 0) return null;
+        foreach (var entry in dialogueEntries)
+        {
+            if (IsEntryValid(entry)) return entry;
         }
         return null;
     }
@@ -307,12 +388,17 @@ public class DialogueTrigger : MonoBehaviour
             return;
         }
 
-        if (entry.playOnce && _hasPlayedForCurrentEntry)
+        int entryIndex = System.Array.IndexOf(dialogueEntries, entry);
+        if (entry.playOnce && _playedEntryIndices.Contains(entryIndex))
             return;
 
         StopPlayerImmediately();
         _isDialogueTriggered = true;
-        _hasPlayedForCurrentEntry = true;
+
+        // Đánh dấu đã chơi nếu là playOnce
+        if (entry.playOnce)
+            _playedEntryIndices.Add(entryIndex);
+
         _currentEntry = entry;
 
         if (_npcInteraction == null && interactionPrompt != null)
@@ -545,14 +631,12 @@ public class DialogueTrigger : MonoBehaviour
         }
         else
         {
-            // Không black screen, thực hiện ngay
             RestoreOriginalScales();
             RestoreCameraState();
             UnlockPlayerMovement();
             NotifyQuestIfNeeded();
             InvokeNPCInteractionComplete();
-            // Xử lý ẩn sau khi đã hoàn tất mọi thứ (có thể delay)
-            StartCoroutine(HideAfterDelayIfNeeded());
+            CheckAndHideIfNeeded(); // Kiểm tra ẩn sau khi hoàn tất dialogue
         }
     }
 
@@ -570,22 +654,7 @@ public class DialogueTrigger : MonoBehaviour
         NotifyQuestIfNeeded();
         InvokeNPCInteractionComplete();
 
-        // Ẩn sau khi đã hoàn tất mọi thứ (có delay)
-        yield return StartCoroutine(HideAfterDelayIfNeeded());
-    }
-
-    private IEnumerator HideAfterDelayIfNeeded()
-    {
-        if (!hideOnDialogueComplete || targetToHide == null) yield break;
-
-        if (hideDelay > 0f)
-            yield return new WaitForSeconds(hideDelay);
-
-        if (targetToHide != null && targetToHide.activeSelf)
-        {
-            targetToHide.SetActive(false);
-            Debug.Log($"[DialogueTrigger] Ẩn {targetToHide.name} sau khi dialogue hoàn thành.");
-        }
+        CheckAndHideIfNeeded(); // Kiểm tra ẩn sau khi hoàn tất mọi thứ
     }
 
     private void NotifyQuestIfNeeded()
@@ -606,11 +675,18 @@ public class DialogueTrigger : MonoBehaviour
         }
         else if (_playerInRange)
         {
+            // Kiểm tra còn entry nào hợp lệ để hiển thị prompt không
             var entry = GetAppropriateEntry();
-            if (entry != null && (!entry.playOnce || !_hasPlayedForCurrentEntry))
+            if (entry != null && (!entry.playOnce || !_playedEntryIndices.Contains(System.Array.IndexOf(dialogueEntries, entry))))
             {
                 if (interactionPrompt != null)
                     interactionPrompt.SetActive(true);
+            }
+            else
+            {
+                // Không còn entry nào -> ẩn prompt
+                if (interactionPrompt != null)
+                    interactionPrompt.SetActive(false);
             }
         }
     }
@@ -680,7 +756,6 @@ public class DialogueTrigger : MonoBehaviour
         }
         else
         {
-            // Fallback: tìm lại main camera nếu đã bị mất tham chiếu
             Camera mainCam = Camera.main;
             if (mainCam != null)
             {
@@ -699,10 +774,19 @@ public class DialogueTrigger : MonoBehaviour
         if (_npcInteraction != null) return;
 
         var entry = GetAppropriateEntry();
-        if (entry != null && (!entry.playOnce || !_hasPlayedForCurrentEntry) && !_isPlaying && !_isDialogueTriggered)
+        if (entry != null)
+        {
+            int index = System.Array.IndexOf(dialogueEntries, entry);
+            if (!entry.playOnce || !_playedEntryIndices.Contains(index))
+            {
+                if (interactionPrompt != null)
+                    interactionPrompt.SetActive(true);
+            }
+        }
+        else
         {
             if (interactionPrompt != null)
-                interactionPrompt.SetActive(true);
+                interactionPrompt.SetActive(false);
         }
     }
 
@@ -713,17 +797,5 @@ public class DialogueTrigger : MonoBehaviour
         if (_npcInteraction != null) return;
         if (interactionPrompt != null)
             interactionPrompt.SetActive(false);
-    }
-
-    private void OnDestroy()
-    {
-        RestoreOriginalScales();
-        UnlockPlayerMovement();
-    }
-
-    private void OnDisable()
-    {
-        RestoreOriginalScales();
-        UnlockPlayerMovement();
     }
 }
