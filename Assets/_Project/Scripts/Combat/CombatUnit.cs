@@ -7,14 +7,16 @@ public class CombatUnit
 {
     private static int nextId = 0;
     public int Id { get; private set; }
-    public int GridRow { get; set; } = 2;
-    public int GridSlot { get; set; } = 0;
+    public int GridRow { get; set; } = 2;  // 0=Back, 1=Mid, 2=Front
+    public int GridSlot { get; set; } = 0;  // 0-8, vị trí trong lưới 3x3
 
+    // ── Identity ─────────────────────────────────────────────
     public CharacterData Data { get; private set; }
     public string UnitName { get; private set; }
     public bool IsPlayer { get; private set; }
     public int Level { get; private set; }
 
+    // ── Stats ─────────────────────────────────────────────────
     public int MaxHP { get; private set; }
     public int CurrentHP { get; private set; }
     public int ATK { get; private set; }
@@ -26,12 +28,47 @@ public class CombatUnit
     public float ArmorPenetration { get; set; } = 0f;
 
     public bool IsAlive => CurrentHP > 0;
+
+    // ── Special Flags ────────────────────────────────────────
     public bool IgnoreTaunt { get; set; } = false;
+
+    /// <summary>
+    /// Nếu true, unit này sẽ hành động trước tất cả (kể cả player) ngay sau Intro phase.
+    /// Dùng cho Wolf-type enemies.
+    /// </summary>
+    public bool AlwaysActsFirst { get; set; } = false;
+
+    // ── Side-Based Turn Tracking ─────────────────────────────
+    /// <summary>
+    /// Đánh dấu unit đã hành động trong lượt hiện tại (PlayerTurn hoặc EnemyTurn).
+    /// Reset mỗi đầu lượt.
+    /// </summary>
     public bool HasActedThisTurn { get; set; } = false;
 
+    // ── Multi-Action System ──────────────────────────────────
+    /// <summary>
+    /// Số hành động tối đa mỗi turn (mặc định 1, boss có thể 2+).
+    /// Được set khi khởi tạo unit (ví dụ: Edward có 2 actions/turn).
+    /// </summary>
+    public int MaxActionsPerTurn { get; set; } = 1;
+
+    /// <summary>
+    /// Số hành động còn lại trong turn hiện tại.
+    /// Reset mỗi đầu turn enemy trong DoEnemyTurn().
+    /// </summary>
+    public int ActionsRemainingThisTurn { get; set; } = 1;
+
+    /// <summary>
+    /// Unit có thể hành động trong turn này không?
+    /// (Còn action, còn sống, và không bị Stun)
+    /// </summary>
+    public bool CanActThisTurn => ActionsRemainingThisTurn > 0 && IsAlive && !HasStatus(StatusEffectType.Stun);
+
+    // ── Buff & Status ───────────────────────────────────────
     private List<ActiveBuff> activeBuffs = new List<ActiveBuff>();
     private List<ActiveStatus> activeStatuses = new List<ActiveStatus>();
 
+    // ── Damage Reduction Charges (giảm sát thương theo đòn) ──
     private int _damageReductionCharges = 0;
     private float _damageReductionPercent = 0f;
     public int DamageReductionChargesRemaining => _damageReductionCharges;
@@ -43,30 +80,35 @@ public class CombatUnit
         Debug.Log($"[{UnitName}] Nhận {charges} lớp giáp, mỗi lớp giảm {percent*100}% sát thương.");
     }
 
+    // ── Challenge Stack ───────────────────────────────────────
     public ChallengeStack ChallengeStack { get; private set; } = new();
 
+    // ── Round selection ───────────────────────────────────────
     public List<SkillData> AvailableSkills { get; private set; } = new();
     public SkillData SelectedSkill { get; private set; }
     public List<CombatUnit> SelectedTargets { get; private set; } = new();
     public PassiveAbility Passive { get; private set; }
     private PlannedAction _plannedAction;
 
-    // ── Events ──
-    public event System.Action<CombatUnit, int, DamageType> OnDamageTaken;
-    public event System.Action<CombatUnit, int> OnDealDamage;
-    public event System.Action<int> OnHealed;
+    // ── Events ────────────────────────────────────────────────
+    public event System.Action<CombatUnit, int> OnDamageTaken; // (attacker, damage)
+    public event System.Action<CombatUnit, int> OnDealDamage; // (target, damage)
+    public event System.Action<int> OnHealed; // (amount)
     public event System.Action OnDied;
-    public event System.Action<CombatUnit> OnKill;
-    public event System.Action<int> OnSpendAP;
-    public event System.Action<CombatUnit, SkillData, List<CombatUnit>> OnActionConfirmed;
-    public event System.Action OnTurnStart;
+    public event System.Action<CombatUnit> OnKill; // (target)
+    public event System.Action<int> OnSpendAP; // (amount)
+    public event System.Action<CombatUnit, SkillData, List<CombatUnit>> OnActionConfirmed; // (caster, skill, targets)
 
     public void RaiseActionConfirmed(SkillData skill, List<CombatUnit> targets)
     {
         OnActionConfirmed?.Invoke(this, skill, targets);
     }
 
-    public void Initialize(CharacterData data, int level, bool isPlayer,
+    public event System.Action OnTurnStart;
+
+    // ── Initialize ────────────────────────────────────────────
+    // ĐÃ SỬA: hỗ trợ 4 chỉ số riêng: HP, ATK, PDEF, MDEF (đã xóa Speed)
+    public void Initialize(CharacterData data, int level, bool isPlayer, 
         int hpBonus = 0, int atkBonus = 0, int pdefBonus = 0, int mdefBonus = 0)
     {
         Id = nextId++;
@@ -81,6 +123,7 @@ public class CombatUnit
         PDEF = data.GetPDEF(level) + pdefBonus;
         MDEF = data.GetMDEF(level) + mdefBonus;
 
+        // Instantiate skills to make them unique to this unit
         AvailableSkills.Clear();
         if (data.skills != null)
         {
@@ -89,41 +132,51 @@ public class CombatUnit
                 if (skillAsset != null)
                 {
                     var skillInstance = Object.Instantiate(skillAsset);
-                    skillInstance.name = skillAsset.name;
+                    skillInstance.name = skillAsset.name; // Remove "(Clone)" from name
                     AvailableSkills.Add(skillInstance);
                 }
             }
         }
     }
 
-    // ── Damage ── chỉ giữ một overload với DamageType ──
-    public void TakeDamage(CombatUnit caster, int amount, DamageType damageType = DamageType.Physical)
+    // ── Damage ────────────────────────────────────────────────
+    public void TakeDamage(int amount)
+    {
+        TakeDamage(null, amount);
+    }
+
+    public void TakeDamage(CombatUnit caster, int amount, bool isTrueDamage = false)
     {
         int actualDamage = amount;
-        bool isTrueDamage = (damageType == DamageType.True);
 
+        // Nếu không phải true damage, tính toán giảm trừ
         if (!isTrueDamage)
         {
-            float defense = (damageType == DamageType.Physical) ? PDEF : MDEF;
-            actualDamage = Mathf.Max(1, amount - Mathf.RoundToInt(defense));
-
+            // Ưu tiên dùng damage reduction charges trước
             if (_damageReductionCharges > 0)
             {
-                actualDamage = Mathf.RoundToInt(actualDamage * (1f - _damageReductionPercent));
+                actualDamage = Mathf.RoundToInt(amount * (1f - _damageReductionPercent));
                 _damageReductionCharges--;
+                Debug.Log($"[{UnitName}] Lớp giáp chặn! Còn {_damageReductionCharges} lớp. Sát thương: {amount} → {actualDamage}");
+            }
+            else
+            {
+                actualDamage = Mathf.RoundToInt(amount * GetDamageReductionMultiplier());
             }
         }
 
         actualDamage = Mathf.Max(1, actualDamage);
         CurrentHP = Mathf.Max(0, CurrentHP - actualDamage);
 
-        OnDamageTaken?.Invoke(caster, actualDamage, damageType);
+        // Kích hoạt sự kiện
+        OnDamageTaken?.Invoke(caster, actualDamage);
         caster?.OnDealDamage?.Invoke(this, actualDamage);
         Passive?.OnTakeDamage(caster, actualDamage);
         caster?.Passive?.OnDealDamage(this, actualDamage);
 
-        Debug.Log($"  {UnitName} nhận {actualDamage} dmg (Type: {damageType}) → HP {CurrentHP}/{MaxHP}");
+        Debug.Log($"  {UnitName} nhận {actualDamage} dmg (True: {isTrueDamage}) → HP {CurrentHP}/{MaxHP}");
 
+        // Xử lý phản sát thương (chỉ với sát thương không phải true damage)
         if (!isTrueDamage)
         {
             var reflectStatus = GetActiveStatus(StatusEffectType.ReflectDamage);
@@ -133,7 +186,7 @@ public class CombatUnit
                 if (reflectDamage > 0)
                 {
                     Debug.Log($"  [{UnitName}] phản {reflectDamage} dmg lại cho [{caster.UnitName}]!");
-                    caster.TakeDamage(null, reflectDamage, DamageType.True);
+                    caster.TakeDamage(null, reflectDamage, isTrueDamage: true); // Phản sát thương luôn là true damage
                 }
             }
         }
@@ -147,18 +200,12 @@ public class CombatUnit
         }
     }
 
-    // ── overload đơn giản để tương thích code cũ (sẽ gọi overload chính) ──
-    public void TakeDamage(int amount)
-    {
-        TakeDamage(null, amount, DamageType.Physical);
-    }
-
     public bool IsAlly(CombatUnit other)
     {
         return this.IsPlayer == other.IsPlayer;
     }
 
-    // ── Heal ──
+    // ── Heal ──────────────────────────────────────────────────
     public void Heal(int amount)
     {
         int actual = Mathf.Min(amount, MaxHP - CurrentHP);
@@ -168,7 +215,7 @@ public class CombatUnit
         Debug.Log($"  {UnitName} hồi {actual} HP → HP {CurrentHP}/{MaxHP}");
     }
 
-    // ── Skill ──
+    // ── Skill selection ───────────────────────────────────────
     public void SelectSkill(SkillData skill, List<CombatUnit> targets)
     {
         SelectedSkill = skill;
@@ -189,10 +236,11 @@ public class CombatUnit
     public PlannedAction GetPlannedAction()
     {
         var action = _plannedAction;
-        _plannedAction = null;
+        _plannedAction = null; // Clear action after getting it
         return action;
     }
 
+    // ── Execute skill ─────────────────────────────────────────
     public void ExecuteSelectedSkill(int apCost)
     {
         if (SelectedSkill == null || SelectedTargets.Count == 0) return;
@@ -200,11 +248,14 @@ public class CombatUnit
         Debug.Log($"[{UnitName}] dùng [{SelectedSkill.skillName}]");
         foreach (var effect in SelectedSkill.effects)
         {
+            Debug.Log($"[{UnitName}] Chuẩn bị áp dụng hiệu ứng: {effect.GetType().Name}");
             effect.Apply(this, SelectedTargets.ToArray());
+            Debug.Log($"[{UnitName}] Đã áp dụng hiệu ứng: {effect.GetType().Name}");
         }
     }
 
-    // ── Buff / Status ──
+    // ── Buff & Status Management ──────────────────────────────
+
     public void ApplyBuff(StatType stat, float multiplier, int duration)
     {
         var existing = activeBuffs.Find(b => b.Stat == stat);
@@ -254,6 +305,7 @@ public class CombatUnit
 
     public bool HasAnyDebuff()
     {
+        // Định nghĩa các loại được coi là debuff
         var debuffTypes = new HashSet<StatusEffectType>
         {
             StatusEffectType.Stun,
@@ -261,6 +313,7 @@ public class CombatUnit
             StatusEffectType.ThieuDot,
             StatusEffectType.DiemYeu
         };
+
         return activeStatuses.Any(s => debuffTypes.Contains(s.Type));
     }
 
@@ -316,8 +369,13 @@ public class CombatUnit
         Passive?.OnTurnStart();
     }
 
+    /// <summary>
+    /// TickStatuses: giảm duration của buffs/statuses.
+    /// Được gọi sau mỗi lượt act (khi 1 unit hoàn thành hành động).
+    /// </summary>
     public void TickStatuses()
     {
+        // Buffs
         for (int i = activeBuffs.Count - 1; i >= 0; i--)
         {
             if (activeBuffs[i].Duration == 0) continue;
@@ -325,6 +383,8 @@ public class CombatUnit
             if (activeBuffs[i].Duration <= 0)
                 activeBuffs.RemoveAt(i);
         }
+
+        // Statuses
         for (int i = activeStatuses.Count - 1; i >= 0; i--)
         {
             if (activeStatuses[i].Duration == 0) continue;
@@ -338,21 +398,30 @@ public class CombatUnit
     {
         Passive = passive;
         if (Passive != null)
+        {
             Passive.Initialize(this);
+        }
     }
 
+    /// <summary>
+    /// Recalculate stats khi level-up.
+    /// Gọi từ PlayerProgression.UpdateCombatUnitLevel().
+    /// </summary>
     public void RecalculateStatsForLevel(int newLevel)
     {
         Level = newLevel;
         int oldMaxHP = MaxHP;
         MaxHP = Data.GetHP(Level);
-        CurrentHP += (MaxHP - oldMaxHP);
+        CurrentHP += (MaxHP - oldMaxHP); // hồi thêm phần máu mới
         ATK = Data.GetATK(Level);
         PDEF = Data.GetPDEF(Level);
         MDEF = Data.GetMDEF(Level);
         Debug.Log($"[{UnitName}] Level Up stats: HP {MaxHP} | ATK {ATK} | PDEF {PDEF} | MDEF {MDEF}");
     }
 
+    /// <summary>
+    /// Lấy hệ số nhân sát thương từ Empowered stacks mà KHÔNG tiêu thụ chúng.
+    /// </summary>
     public float GetEmpowerMultiplier()
     {
         var empowerStatus = GetActiveStatus(StatusEffectType.Empowered);
@@ -365,17 +434,21 @@ public class CombatUnit
         return 1f;
     }
 
+    /// <summary>
+    /// Xóa tất cả các stack Empowered.
+    /// </summary>
     public void ClearEmpowerStacks()
     {
         var empowerStatus = GetActiveStatus(StatusEffectType.Empowered);
         if (empowerStatus != null)
         {
             activeStatuses.Remove(empowerStatus);
-            Debug.Log($"[{UnitName}] đã xóa {empowerStatus.Stacks} stack Empowered.");
+            Debug.Log($"[{UnitName}] đã xóa {empowerStatus.Stacks} stack Empowered sau khi tấn công.");
         }
     }
 }
 
+// Lớp lưu trữ buff
 public class ActiveBuff
 {
     public StatType Stat { get; }
@@ -390,6 +463,7 @@ public class ActiveBuff
     }
 }
 
+// Lớp lưu trữ trạng thái
 public class ActiveStatus
 {
     public StatusEffectType Type { get; }
