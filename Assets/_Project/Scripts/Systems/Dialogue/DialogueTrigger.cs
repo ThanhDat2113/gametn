@@ -37,7 +37,6 @@ public class DialogueTrigger : MonoBehaviour
 
     [Header("Dialogue Camera")]
     public bool switchCamera = false;
-    // KHÔNG cần kéo thủ công nữa – script sẽ tự tìm
     [HideInInspector] public GameObject mainCameraObject;
     [HideInInspector] public GameObject dialogueCameraObject;
     public Transform dialogueCameraPoint;
@@ -45,6 +44,14 @@ public class DialogueTrigger : MonoBehaviour
     public Transform rightCameraPoint;
     public Transform leftPlayerPoint;
     public Transform rightPlayerPoint;
+
+    [Header("Hide on Complete")]
+    [Tooltip("Nếu true, NPC (hoặc targetToHide) sẽ bị ẩn sau khi dialogue hoàn thành.")]
+    public bool hideOnDialogueComplete = false;
+    [Tooltip("Đối tượng cần ẩn. Để trống sẽ ẩn chính GameObject này.")]
+    public GameObject targetToHide;
+    [Tooltip("Delay (giây) trước khi ẩn, tính từ lúc dialogue hoàn thành.")]
+    public float hideDelay = 0f;
 
     private InteractionSide _currentSide = InteractionSide.Left;
     private Vector3 _originalMainCamPos;
@@ -71,6 +78,9 @@ public class DialogueTrigger : MonoBehaviour
     private CharacterController _playerCharacterController;
     private Rigidbody _playerRigidbody;
     private HSRPlayerController _hsrController;
+
+    // Cờ để tránh gọi quest nhiều lần
+    private bool _questNotified = false;
 
     // ── Tìm main camera và dialogue camera ──────────────────
     private const string DIALOGUE_CAMERA_TAG = "DialogueCamera";
@@ -117,6 +127,10 @@ public class DialogueTrigger : MonoBehaviour
 
         _npcInteraction = GetComponent<NPCInteraction>();
         FindPlayerComponents();
+
+        // Nếu targetToHide chưa được gán, mặc định ẩn chính GameObject này
+        if (targetToHide == null)
+            targetToHide = gameObject;
     }
 
     private GameObject FindMainCamera()
@@ -480,6 +494,7 @@ public class DialogueTrigger : MonoBehaviour
     private void StartDialogueInternal(DialogueLineData[] lines)
     {
         _isPlaying = true;
+        _questNotified = false;
 
         if (_npcInteraction == null && interactionPrompt != null)
             interactionPrompt.SetActive(false);
@@ -516,32 +531,86 @@ public class DialogueTrigger : MonoBehaviour
         }
     }
 
-    private IEnumerator EndWithBlackScreen()
-    {
-        yield return FadeController.Instance.FadeToBlack();
-        RestoreOriginalScales();
-        RestoreCameraState();
-        yield return new WaitForSeconds(blackScreenDelay);
-        yield return FadeController.Instance.FadeFromBlack();
-    }
+    // ==================== COMPLETE ====================
 
-    private void RestoreCameraState()
+    private void OnDialogueComplete()
     {
-        if (!switchCamera) return;
-        if (dialogueCameraObject != null) dialogueCameraObject.SetActive(false);
-        if (mainCameraObject != null)
+        _isPlaying = false;
+        _isDialogueTriggered = false;
+        _questNotified = false;
+
+        if (useBlackScreenOnEnd)
         {
-            mainCameraObject.SetActive(true);
-            mainCameraObject.transform.SetPositionAndRotation(_originalMainCamPos, _originalMainCamRot);
+            StartCoroutine(EndWithBlackScreenAndNotify());
         }
         else
         {
-            // Fallback: tìm lại main camera nếu đã bị mất tham chiếu
-            Camera mainCam = Camera.main;
-            if (mainCam != null)
+            // Không black screen, thực hiện ngay
+            RestoreOriginalScales();
+            RestoreCameraState();
+            UnlockPlayerMovement();
+            NotifyQuestIfNeeded();
+            InvokeNPCInteractionComplete();
+            // Xử lý ẩn sau khi đã hoàn tất mọi thứ (có thể delay)
+            StartCoroutine(HideAfterDelayIfNeeded());
+        }
+    }
+
+    private IEnumerator EndWithBlackScreenAndNotify()
+    {
+        yield return FadeController.Instance.FadeToBlack();
+
+        RestoreOriginalScales();
+        RestoreCameraState();
+
+        yield return new WaitForSeconds(blackScreenDelay);
+        yield return FadeController.Instance.FadeFromBlack();
+
+        UnlockPlayerMovement();
+        NotifyQuestIfNeeded();
+        InvokeNPCInteractionComplete();
+
+        // Ẩn sau khi đã hoàn tất mọi thứ (có delay)
+        yield return StartCoroutine(HideAfterDelayIfNeeded());
+    }
+
+    private IEnumerator HideAfterDelayIfNeeded()
+    {
+        if (!hideOnDialogueComplete || targetToHide == null) yield break;
+
+        if (hideDelay > 0f)
+            yield return new WaitForSeconds(hideDelay);
+
+        if (targetToHide != null && targetToHide.activeSelf)
+        {
+            targetToHide.SetActive(false);
+            Debug.Log($"[DialogueTrigger] Ẩn {targetToHide.name} sau khi dialogue hoàn thành.");
+        }
+    }
+
+    private void NotifyQuestIfNeeded()
+    {
+        if (!_questNotified && QuestManager.Instance != null && !string.IsNullOrEmpty(triggerID))
+        {
+            _questNotified = true;
+            QuestManager.Instance.OnDialogueEnded(triggerID);
+            Debug.Log($"[DialogueTrigger] Notified QuestManager for triggerID: {triggerID}");
+        }
+    }
+
+    private void InvokeNPCInteractionComplete()
+    {
+        if (_npcInteraction != null)
+        {
+            _npcInteraction.OnDialogueComplete();
+        }
+        else if (_playerInRange)
+        {
+            var entry = GetAppropriateEntry();
+            if (entry != null && (!entry.playOnce || !_hasPlayedForCurrentEntry))
             {
-                mainCam.gameObject.SetActive(true);
-                mainCam.transform.SetPositionAndRotation(_originalMainCamPos, _originalMainCamRot);
+                if (interactionPrompt != null)
+                    interactionPrompt.SetActive(true);
             }
         }
     }
@@ -600,39 +669,28 @@ public class DialogueTrigger : MonoBehaviour
         _scalesSaved = false;
     }
 
-    // ==================== COMPLETE ====================
-
-    private void OnDialogueComplete()
+    private void RestoreCameraState()
     {
-        _isPlaying = false;
-        _isDialogueTriggered = false;
-
-        UnlockPlayerMovement();
-
-        if (useBlackScreenOnEnd)
-            StartCoroutine(EndWithBlackScreen());
+        if (!switchCamera) return;
+        if (dialogueCameraObject != null) dialogueCameraObject.SetActive(false);
+        if (mainCameraObject != null)
+        {
+            mainCameraObject.SetActive(true);
+            mainCameraObject.transform.SetPositionAndRotation(_originalMainCamPos, _originalMainCamRot);
+        }
         else
         {
-            RestoreOriginalScales();
-            RestoreCameraState();
-        }
-
-        if (QuestManager.Instance != null && !string.IsNullOrEmpty(triggerID))
-            QuestManager.Instance.OnDialogueEnded(triggerID);
-
-        if (_npcInteraction != null)
-            _npcInteraction.OnDialogueComplete();
-
-        if (_npcInteraction == null && _playerInRange)
-        {
-            var entry = GetAppropriateEntry();
-            if (entry != null && (!entry.playOnce || !_hasPlayedForCurrentEntry))
+            // Fallback: tìm lại main camera nếu đã bị mất tham chiếu
+            Camera mainCam = Camera.main;
+            if (mainCam != null)
             {
-                if (interactionPrompt != null)
-                    interactionPrompt.SetActive(true);
+                mainCam.gameObject.SetActive(true);
+                mainCam.transform.SetPositionAndRotation(_originalMainCamPos, _originalMainCamRot);
             }
         }
     }
+
+    // ==================== TRIGGER EVENTS ====================
 
     void OnTriggerEnter(Collider other)
     {
