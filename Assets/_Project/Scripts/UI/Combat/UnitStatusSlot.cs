@@ -20,7 +20,7 @@ public class UnitStatusSlot : MonoBehaviour
             unitNameText.text = unit.UnitName;
         UpdateHealth();
 
-        // Đăng ký sự kiện
+        // Đăng ký sự kiện - sửa delegate để khớp
         linkedUnit.OnDamageTaken += OnUnitDamaged;
         linkedUnit.OnHealed += OnUnitHealed;
         linkedUnit.OnDied += OnUnitDied;
@@ -41,15 +41,15 @@ public class UnitStatusSlot : MonoBehaviour
         UpdateHealth();
     }
 
-    private void OnUnitDamaged(CombatUnit caster, int damage)
+    // Sửa: thêm tham số DamageType (có thể không dùng)
+    private void OnUnitDamaged(CombatUnit caster, int damage, DamageType damageType)
     {
         UpdateHealth();
     }
 
     private void OnUnitDied()
     {
-        UpdateHealth(); // máu = 0
-        // Có thể disable slot hoặc làm mờ
+        UpdateHealth();
     }
 
     public void UpdateHealth()

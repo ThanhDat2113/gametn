@@ -3,6 +3,8 @@ using UnityEngine;
 /// <summary>
 /// Passive của Edward (Mini Boss):
 /// Automail Phản Giáp — 25% khi bị tấn công cận chiến → làm choáng kẻ tấn công 1 lượt.
+/// Edward có thể hành động 2 lần mỗi lượt (MaxActionsPerTurn = 2).
+/// Khi dùng skill mạnh nhất sẽ ưu tiên target yếu máu (AI đã xử lý).
 /// </summary>
 public class EdwardPassive : PassiveAbility
 {
@@ -12,7 +14,9 @@ public class EdwardPassive : PassiveAbility
     public override void Initialize(CombatUnit owner)
     {
         base.Initialize(owner);
-        Debug.Log($"[{Owner.UnitName}'s Passive] Automail Phản Giáp kích hoạt! 25% cơ hội làm choáng kẻ tấn công cận chiến.");
+        // Edward có thể act 2 lần mỗi turn
+        owner.MaxActionsPerTurn = 2;
+        Debug.Log($"[{Owner.UnitName}'s Passive] Automail Phản Giáp kích hoạt! 25% cơ hội làm choáng kẻ tấn công cận chiến. (2 actions/turn)");
     }
 
     public override void OnTakeDamage(CombatUnit attacker, int damage)

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro; // ← THÊM DÒNG NÀY
+using TMPro;
 
 public class UnitView : MonoBehaviour
 {
@@ -13,16 +13,11 @@ public class UnitView : MonoBehaviour
     public HitEventReceiver hitReceiver;
     public Slider healthBar;
 
-    [Header("Health Bar Text")] // ← THÊM HEADER MỚI
-    [Tooltip("Text hiển thị HP dạng '100/200'")]
+    [Header("Health Bar Text")]
     public TextMeshProUGUI healthText;
-    [Tooltip("Định dạng hiển thị: {0}=CurrentHP, {1}=MaxHP")]
     public string healthTextFormat = "{0}/{1}";
-    [Tooltip("Màu text khi HP > 50%")]
     public Color healthyColor = Color.white;
-    [Tooltip("Màu text khi HP <= 50%")]
     public Color warningColor = Color.yellow;
-    [Tooltip("Màu text khi HP <= 25%")]
     public Color dangerColor = Color.red;
 
     public event System.Action OnHitAnimationEvent;
@@ -38,29 +33,32 @@ public class UnitView : MonoBehaviour
     private Vector3 originalPosition;
     private bool originalPositionHasBeenSet = false;
 
-    // Per-hit damage tracking
     private List<ActionOutcome> pendingOutcomes = new();
     private CombatUnit pendingCaster;
     private int pendingHitCount = 1;
     private int currentHitIndex = 0;
 
-    // Wird von Animation Events aufgerufen
+    // ─── Damage Text Position ────────────────────────────────────
+    [Header("Damage Text Offset")]
+    [Tooltip("Độ cao so với vị trí transform của nhân vật (world units)")]
+    public float damageTextHeightOffset = 2.5f;
+
     public void OnAnimationEnd() { OnAnimationEndEvent?.Invoke(); }
 
-    public Vector3 GetOriginalPosition()
-    {
-        return originalPosition;
-    }
-
+    public Vector3 GetOriginalPosition() => originalPosition;
     public void StoreOriginalPosition(Vector3 position)
     {
         originalPosition = position;
         originalPositionHasBeenSet = true;
     }
+    public void StoreOriginalPosition() => StoreOriginalPosition(transform.position);
 
-    public void StoreOriginalPosition()
+    /// <summary>
+    /// Lấy vị trí world để hiển thị damage text.
+    /// </summary>
+    public Vector3 GetDamageTextPosition()
     {
-        StoreOriginalPosition(transform.position);
+        return transform.position + Vector3.up * damageTextHeightOffset;
     }
 
     public void Setup(CombatUnit unit)
@@ -70,30 +68,33 @@ public class UnitView : MonoBehaviour
         if (unit.Data.battleSprite != null)
             spriteRenderer.sprite = unit.Data.battleSprite;
 
-        // Flip logic based on flipOnSpawn
         if (unit.Data.flipOnSpawn)
-        {
             spriteRenderer.flipX = !unit.IsPlayer;
-        }
         else
-        {
             spriteRenderer.flipX = false;
-        }
 
         if (cameraManager == null)
             cameraManager = FindFirstObjectByType<CombatCameraManager>();
         if (clashSequence == null)
             clashSequence = FindFirstObjectByType<ClashAnimationSequence>();
 
-        unit.OnDamageTaken += (caster, dmg) => 
+        // ── ĐÃ SỬA: delegate đúng 3 tham số ──
+        unit.OnDamageTaken += (caster, dmg, damageType) => 
         {
             SetAnimationTrigger("Knockback");
             TriggerHitFlash();
             UpdateHealthBar();
-            if (FloatingTextController.Instance != null)
+
+            Vector2 direction = Vector2.up;
+            if (spriteRenderer != null)
             {
-                FloatingTextController.Instance.ShowFloatingText($"-{dmg}", transform.position + Vector3.up * 1.5f, Color.white);
+                float dirX = spriteRenderer.flipX ? 1f : -1f;
+                direction = new Vector2(dirX, 0.5f).normalized;
             }
+
+            Vector3 textPos = GetDamageTextPosition();
+            DamageTextManager.Instance?.ShowDamage(dmg, textPos, damageType, direction);
+
             if (cameraManager != null)
             {
                 cameraManager.ZoomToUnit(transform, cameraManager.damageZoomSize);
@@ -103,6 +104,7 @@ public class UnitView : MonoBehaviour
                     cameraManager.PlayImpactShake();
             }
         };
+
         unit.OnHealed += (amount) =>
         {
             UpdateHealthBar();
@@ -120,42 +122,31 @@ public class UnitView : MonoBehaviour
             hitReceiver.OnVFXFrame += ProcessVFXAtFrame;
         }
 
-        // ─── SETUP HEALTH BAR ──────────────────────────────────
         if (healthBar != null)
         {
-            // Tìm fill image để set màu
             Image fillImage = null;
             if (healthBar.fillRect != null)
                 fillImage = healthBar.fillRect.GetComponentInChildren<Image>();
             if (fillImage == null)
                 fillImage = healthBar.GetComponentInChildren<Image>();
-            
             if (fillImage != null)
             {
                 fillImage.color = unit.IsPlayer ? Color.green : Color.red;
                 fillImage.enabled = true;
                 fillImage.color = new Color(fillImage.color.r, fillImage.color.g, fillImage.color.b, 1f);
             }
-            
             healthBar.value = (float)unit.CurrentHP / unit.MaxHP;
         }
 
-        // ─── SETUP HEALTH TEXT ─────────────────────────────────
-        // Nếu chưa gán healthText, tự tìm trong children
         if (healthText == null)
         {
             healthText = GetComponentInChildren<TextMeshProUGUI>();
-            if (healthText == null)
-            {
-                // Thử tìm trong healthBar GameObject
-                if (healthBar != null)
-                    healthText = healthBar.GetComponentInChildren<TextMeshProUGUI>();
-            }
+            if (healthText == null && healthBar != null)
+                healthText = healthBar.GetComponentInChildren<TextMeshProUGUI>();
         }
 
-        UpdateHealthBar(); // Cập nhật lần đầu
+        UpdateHealthBar();
 
-        // Gán combat camera cho World Space canvas (fix skeleton health bar bị null camera)
         var worldCanvas = GetComponentInChildren<Canvas>();
         if (worldCanvas != null && worldCanvas.renderMode == RenderMode.WorldSpace && worldCanvas.worldCamera == null)
         {
@@ -164,6 +155,9 @@ public class UnitView : MonoBehaviour
             else
                 worldCanvas.worldCamera = Camera.main;
         }
+
+        // Bắt đầu monitor Stun status
+        StartCoroutine(MonitorStunStatus());
     }
 
     private void OnDestroy()
@@ -175,27 +169,17 @@ public class UnitView : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Cập nhật thanh HP và text HP.
-    /// </summary>
     public void UpdateHealthBar()
     {
         if (LinkedUnit == null) return;
-
-        // Cập nhật slider
         if (healthBar != null)
-        {
             healthBar.value = (float)LinkedUnit.CurrentHP / LinkedUnit.MaxHP;
-        }
 
-        // Cập nhật text HP
         if (healthText != null)
         {
             int currentHP = LinkedUnit.CurrentHP;
             int maxHP = LinkedUnit.MaxHP;
             healthText.text = string.Format(healthTextFormat, currentHP, maxHP);
-
-            // Đổi màu dựa trên tỷ lệ HP
             float ratio = (float)currentHP / maxHP;
             if (ratio <= 0.25f)
                 healthText.color = dangerColor;
@@ -281,12 +265,10 @@ public class UnitView : MonoBehaviour
 
                 if (damageThisHit > 0)
                 {
-                    outcome.Target.TakeDamage(pendingCaster, damageThisHit);
+                    outcome.Target.TakeDamage(pendingCaster, damageThisHit, DamageType.Physical);
                     string logMessage = $"[Flush Hit {currentHitIndex}] {outcome.Target.UnitName} nhận {damageThisHit} damage (fallback).";
                     if (outcome.EmpowerMultiplier > 1f)
-                    {
                         logMessage += $" ({outcome.EmpowerMultiplier:F1}x)";
-                    }
                     Debug.Log(logMessage);
                 }
             }
@@ -320,12 +302,10 @@ public class UnitView : MonoBehaviour
 
             if (damageThisHit > 0)
             {
-                outcome.Target.TakeDamage(pendingCaster, damageThisHit);
+                outcome.Target.TakeDamage(pendingCaster, damageThisHit, DamageType.Physical);
                 string logMessage = $"[Hit {currentHitIndex}] {outcome.Target.UnitName} nhận {damageThisHit} damage.";
                 if (outcome.EmpowerMultiplier > 1f)
-                {
                     logMessage += $" ({outcome.EmpowerMultiplier:F1}x)";
-                }
                 Debug.Log(logMessage + $" HP: {outcome.Target.CurrentHP}");
             }
         }
@@ -337,11 +317,8 @@ public class UnitView : MonoBehaviour
         if (currentSkill == null) return;
 
         VFXEvent evt = null;
-
         if (currentSkill.vfxEvents != null && vfxIndex >= 0 && vfxIndex < currentSkill.vfxEvents.Length)
-        {
             evt = currentSkill.vfxEvents[vfxIndex];
-        }
         else if (vfxIndex == 0 && currentSkill.vfxPrefab != null)
         {
             evt = new VFXEvent 
@@ -363,7 +340,6 @@ public class UnitView : MonoBehaviour
                 spawnPos = transform.position + evt.offset;
                 parent = transform;
                 break;
-
             case VFXSpawnMode.AtTarget:
             case VFXSpawnMode.HitOnEachTarget:
                 var targetView = FindViewForUnit(currentTarget);
@@ -378,7 +354,6 @@ public class UnitView : MonoBehaviour
                     parent = transform;
                 }
                 break;
-            
             default:
                 spawnPos = transform.position + evt.offset;
                 parent = transform;
@@ -387,9 +362,7 @@ public class UnitView : MonoBehaviour
 
         GameObject vfx = Instantiate(evt.vfxPrefab, spawnPos, Quaternion.identity);
         if (evt.attachToCaster && parent != null)
-        {
             vfx.transform.SetParent(parent);
-        }
         
         var visualEffect = vfx.GetComponent<UnityEngine.VFX.VisualEffect>();
         if (visualEffect != null) visualEffect.Play();
@@ -401,12 +374,8 @@ public class UnitView : MonoBehaviour
     {
         if (unit == null) return null;
         foreach (var view in FindObjectsByType<UnitView>(FindObjectsSortMode.None))
-        {
             if (view.LinkedUnit == unit)
-            {
                 return view;
-            }
-        }
         return null;
     }
 
@@ -423,11 +392,11 @@ public class UnitView : MonoBehaviour
     {
         spriteRenderer.color = Color.red;
         yield return new WaitForSeconds(0.08f);
-        spriteRenderer.color = Color.white;
+        RestoreColorAfterFlash();
         yield return new WaitForSeconds(0.05f);
         spriteRenderer.color = Color.red;
         yield return new WaitForSeconds(0.08f);
-        spriteRenderer.color = Color.white;
+        RestoreColorAfterFlash();
     }
 
     public void TriggerHealFlash() => StartCoroutine(HealFlash());
@@ -435,11 +404,68 @@ public class UnitView : MonoBehaviour
     {
         spriteRenderer.color = Color.green;
         yield return new WaitForSeconds(0.08f);
-        spriteRenderer.color = Color.white;
+        RestoreColorAfterFlash();
         yield return new WaitForSeconds(0.05f);
         spriteRenderer.color = Color.green;
         yield return new WaitForSeconds(0.08f);
-        spriteRenderer.color = Color.white;
+        RestoreColorAfterFlash();
+    }
+
+    /// <summary>Khôi phục màu sau flash - nếu đang Stun thì tím, nếu không thì trắng.</summary>
+    private void RestoreColorAfterFlash()
+    {
+        if (LinkedUnit != null && LinkedUnit.HasStatus(StatusEffectType.Stun) && LinkedUnit.IsAlive)
+            spriteRenderer.color = new Color(0.7f, 0.4f, 0.9f, 1f); // Tím
+        else
+            spriteRenderer.color = Color.white;
+    }
+
+    /// <summary>
+    /// Hiệu ứng nháy vàng - dùng cho Skeleton hồi sinh.
+    /// </summary>
+    public void TriggerReviveFlash() => StartCoroutine(ReviveFlash());
+    private IEnumerator ReviveFlash()
+    {
+        for (int i = 0; i < 3; i++)
+        {
+            spriteRenderer.color = Color.yellow;
+            yield return new WaitForSeconds(0.12f);
+            spriteRenderer.color = Color.white;
+            yield return new WaitForSeconds(0.12f);
+        }
+    }
+
+    /// <summary>
+    /// Hiệu ứng tím cho trạng thái Stun - persistent (duy trì đến khi hết choáng).
+    /// </summary>
+    public void SetStunVisual(bool isStunned)
+    {
+        if (spriteRenderer == null) return;
+        if (isStunned)
+            spriteRenderer.color = new Color(0.7f, 0.4f, 0.9f, 1f);
+        else
+            spriteRenderer.color = Color.white;
+    }
+
+    /// <summary>
+    /// Coroutine monitor trạng thái Stun, tự động cập nhật visual.
+    /// </summary>
+    private IEnumerator MonitorStunStatus()
+    {
+        bool wasStunned = false;
+        while (LinkedUnit != null && LinkedUnit.IsAlive)
+        {
+            bool isStunned = LinkedUnit.HasStatus(StatusEffectType.Stun);
+            if (isStunned != wasStunned)
+            {
+                SetStunVisual(isStunned);
+                wasStunned = isStunned;
+            }
+            yield return new WaitForSeconds(0.2f);
+        }
+        // Khi unit chết, reset màu
+        if (spriteRenderer != null)
+            spriteRenderer.color = Color.white;
     }
 
     private IEnumerator DeathFade()

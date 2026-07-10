@@ -156,7 +156,7 @@ public class CombatPlanningUI : MonoBehaviour
         foreach (var hit in hits2D)
         {
             var view = hit.collider?.GetComponent<UnitView>();
-            if (view != null && view.LinkedUnit.IsAlive && view.LinkedUnit.IsPlayer && !view.LinkedUnit.HasActedThisTurn)
+            if (view != null && view.LinkedUnit.IsAlive && view.LinkedUnit.IsPlayer && !view.LinkedUnit.HasActedThisTurn && !view.LinkedUnit.HasStatus(StatusEffectType.Stun))
             { clickedView = view; break; }
         }
         if (clickedView == null)
@@ -164,7 +164,7 @@ public class CombatPlanningUI : MonoBehaviour
             if (Physics.Raycast(ray, out RaycastHit hit3D, 100f))
             {
                 clickedView = hit3D.collider?.GetComponent<UnitView>();
-                if (clickedView != null && (!clickedView.LinkedUnit.IsAlive || !clickedView.LinkedUnit.IsPlayer || clickedView.LinkedUnit.HasActedThisTurn))
+                if (clickedView != null && (!clickedView.LinkedUnit.IsAlive || !clickedView.LinkedUnit.IsPlayer || clickedView.LinkedUnit.HasActedThisTurn || clickedView.LinkedUnit.HasStatus(StatusEffectType.Stun)))
                     clickedView = null;
             }
         }
@@ -524,13 +524,13 @@ public class CombatPlanningUI : MonoBehaviour
         
         if (isSelectingUnit && selectableUnits != null)
         {
-            // Chế độ chọn unit: highlight unit có thể chọn, dim unit đã act
+            // Chế độ chọn unit: highlight unit có thể chọn, dim unit đã act / bị stun
             foreach (var view in allViews)
             {
-                if (view.LinkedUnit.IsPlayer && view.LinkedUnit.IsAlive && !view.LinkedUnit.HasActedThisTurn)
+                if (view.LinkedUnit.IsPlayer && view.LinkedUnit.IsAlive && !view.LinkedUnit.HasActedThisTurn && !view.LinkedUnit.HasStatus(StatusEffectType.Stun))
                     view.SetAlpha(1f); // Có thể chọn
                 else
-                    view.SetAlpha(0.4f); // Đã act / enemy / dead
+                    view.SetAlpha(0.4f); // Đã act / bị stun / enemy / dead
             }
             return;
         }
