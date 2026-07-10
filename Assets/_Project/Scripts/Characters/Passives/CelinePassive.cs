@@ -14,11 +14,13 @@ public class CelinePassive : PassiveAbility
     public override void Initialize(CombatUnit owner)
     {
         base.Initialize(owner);
+        // Đăng ký với delegate mới
         Owner.OnDamageTaken += OnOwnerTakeDamage;
         Owner.OnDealDamage += OnOwnerDealDamage;
     }
 
-    private void OnOwnerTakeDamage(CombatUnit attacker, int damage)
+    // Sửa: thêm tham số DamageType (không dùng)
+    private void OnOwnerTakeDamage(CombatUnit attacker, int damage, DamageType damageType)
     {
         ApplyCharge();
     }

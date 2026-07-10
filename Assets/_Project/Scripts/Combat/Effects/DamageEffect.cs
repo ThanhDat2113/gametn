@@ -9,14 +9,11 @@ public class DamageEffect : SkillEffect
 
     public override void Apply(CombatUnit caster, CombatUnit[] targets)
     {
-        // Cần biết hitCount – nhưng Apply không có thông tin này.
-        // Cách tốt nhất là không dùng Apply cho multi-hit, mà để ActionResolver xử lý.
-        // Ở đây tôi giữ nguyên logic 1 hit.
         foreach (var target in targets)
         {
             var hits = CalculateHits(caster, target, 1);
             foreach (var hit in hits)
-                target.TakeDamage(caster, hit.Damage);
+                target.TakeDamage(caster, hit.Damage, damageType);
         }
     }
 
@@ -29,7 +26,6 @@ public class DamageEffect : SkillEffect
                        * caster.GetStatMultiplier(StatType.ATK)
                        * caster.GetDamageMultiplier());
 
-        // Tính toán phòng thủ hiệu quả sau khi trừ đi xuyên giáp
         float defenseStat = damageType == DamageType.Physical ? target.PDEF : target.MDEF;
         float effectiveDefense = defenseStat * (1f - caster.ArmorPenetration);
         

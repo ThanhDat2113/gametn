@@ -14,6 +14,7 @@ public class KlarisPassive : PassiveAbility
         {
             CombatManager.Instance.OnDamageCalculation += OnDamageCalculation;
         }
+        // ✅ ĐÃ SỬA: khớp với delegate Action<CombatUnit, int, DamageType>
         Owner.OnDamageTaken += HandleTakeDamage;
         Owner.OnTurnStart += OnTurnStart;
     }
@@ -32,54 +33,36 @@ public class KlarisPassive : PassiveAbility
     private void OnTurnStart()
     {
         if (_stunCooldown > 0)
-        {
             _stunCooldown--;
-        }
     }
 
-    private void HandleTakeDamage(CombatUnit attacker, int damage)
+    // ✅ ĐÃ SỬA: thêm tham số DamageType (không sử dụng trong logic này)
+    private void HandleTakeDamage(CombatUnit attacker, int damage, DamageType damageType)
     {
         if (attacker != null && Owner.HasStatus(StatusEffectType.ThuThe) && _stunCooldown == 0)
         {
             Debug.Log($"[KlarisPassive] {Owner.UnitName} đang ở trạng thái Thủ Thế, phản công choáng!");
-
-            // Gây choáng cho kẻ tấn công
             attacker.ApplyStatus(StatusEffectType.Stun, 1);
-
-            // Xóa trạng thái Thủ Thế
             Owner.ClearStatus(StatusEffectType.ThuThe);
-
-            // Đặt thời gian hồi chiêu
             _stunCooldown = 3;
         }
     }
 
-
     private void OnDamageCalculation(ActionOutcome outcome, CombatUnit actor)
     {
-        // Bỏ qua nếu Klaris đã chết, hoặc mục tiêu là chính Klaris, hoặc mục tiêu không phải đồng minh
         if (!Owner.IsAlive || outcome.Target == Owner || !outcome.Target.IsAlly(Owner))
-        {
             return;
-        }
 
-        // Bỏ qua nếu sát thương đến từ chính Klaris (tránh các trường hợp phức tạp)
         if (actor == Owner)
-        {
             return;
-        }
 
         int originalDamage = outcome.Damage;
         int redirectedDamage = Mathf.FloorToInt(originalDamage * 0.3f);
 
         if (redirectedDamage > 0)
         {
-            // Giảm sát thương trên mục tiêu
             outcome.Damage -= redirectedDamage;
-
-            // Gây sát thương cho Klaris (sát thương chuẩn, không qua tính toán giáp)
-            Owner.TakeDamage(null, redirectedDamage, isTrueDamage: true);
-
+            Owner.TakeDamage(null, redirectedDamage, DamageType.True);
             Debug.Log($"[KlarisPassive] Chuyển hướng {redirectedDamage} sát thương từ {outcome.Target.UnitName} sang cho {Owner.UnitName}. Sát thương mới: {outcome.Damage}");
         }
     }
