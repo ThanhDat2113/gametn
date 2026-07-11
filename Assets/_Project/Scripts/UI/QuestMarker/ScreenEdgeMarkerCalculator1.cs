@@ -21,14 +21,46 @@ using UnityEngine;
 /// </summary>
 public static class ScreenEdgeMarkerCalculator
 {
-    /// <summary>Kiểm tra target có nằm trong view frustum không.</summary>
-    public static bool IsInViewFrustum(Vector3 targetWorldPos, Camera mainCamera)
+    // Cache frustum planes để tránh tạo array mới mỗi frame (alloc GC)
+    private static readonly Plane[] _frustumPlanes = new Plane[6];
+
+    /// <summary>
+    /// Kiểm tra target có nằm HOÀN TOÀN trong view frustum không, với một viewport
+    /// shrink buffer để tránh "vùng chết" tại biên màn hình.
+    ///
+    /// VẤN ĐỀ của WorldToViewportPoint cũ:
+    ///   Khi NPC vừa ra khỏi mép màn hình, hàm cũ có thể trả về kết quả không nhất
+    ///   quán (z âm / tọa độ NaN khi target sau near clip plane) → marker bị mất rồi
+    ///   hiện lại đột ngột. Error "Screen position out of view frustum" trong Console
+    ///   là triệu chứng rõ nhất.
+    ///
+    /// GIẢI PHÁP:
+    ///   • Dùng GeometryUtility.CalculateFrustumPlanes + TestPlanesAABB — chính xác
+    ///     hơn và không bị NaN/edge-case near clip.
+    ///   • Thêm `viewportShrink` co nhỏ vùng "in-view" vào trong một chút so với mép
+    ///     màn hình thực. Marker chuyển sang ring mode SỚM HƠN một chút trước khi NPC
+    ///     thật sự ra mép → tránh giật/nhấp nháy khi NPC đứng đúng biên frustum.
+    ///     Giá trị mặc định 0.05 = 5% viewport mỗi cạnh (±50px trên màn hình 1920×1080).
+    /// </summary>
+    public static bool IsInViewFrustum(Vector3 targetWorldPos, Camera mainCamera,
+                                       float viewportShrink = 0.05f)
     {
         if (mainCamera == null) return false;
+
+        // Bước 1: kiểm tra nhanh bằng viewport point (loại ngay các trường hợp
+        // rõ ràng ngoài màn hình, kể cả sau lưng camera z <= 0)
         Vector3 vp = mainCamera.WorldToViewportPoint(targetWorldPos);
-        return vp.z > 0f
-            && vp.x >= 0f && vp.x <= 1f
-            && vp.y >= 0f && vp.y <= 1f;
+        if (vp.z <= 0f) return false; // sau lưng camera
+
+        float lo = viewportShrink;
+        float hi = 1f - viewportShrink;
+        if (vp.x < lo || vp.x > hi || vp.y < lo || vp.y > hi) return false;
+
+        // Bước 2: xác nhận bằng frustum planes (xử lý đúng near/far clip)
+        GeometryUtility.CalculateFrustumPlanes(mainCamera, _frustumPlanes);
+        // Dùng AABB điểm (size = zero) để test một điểm đơn
+        Bounds pointBounds = new Bounds(targetWorldPos, Vector3.zero);
+        return GeometryUtility.TestPlanesAABB(_frustumPlanes, pointBounds);
     }
 
     /// <summary>

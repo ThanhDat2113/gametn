@@ -150,33 +150,42 @@ public class QuestMarkerUI : MonoBehaviour
 
     private void UpdateWorldSpacePosition(PlayerMarkerRing ring, Vector3 targetPos)
     {
-        bool inView = showAboveTargetWhenInView &&
-                      ScreenEdgeMarkerCalculator.IsInViewFrustum(targetPos, _mainCamera);
+        Vector3 headWorldPos = targetPos + Vector3.up * aboveTargetHeightOffset;
 
-        if (inView)
+        bool tryInView = showAboveTargetWhenInView &&
+                          ScreenEdgeMarkerCalculator.IsInViewFrustum(headWorldPos, _mainCamera);
+
+        bool placedInView = false;
+        if (tryInView)
         {
-            // NPC đang hiện trên màn hình → marker bám thẳng lên đầu NPC, không dùng vòng tròn.
-            transform.position = targetPos + Vector3.up * aboveTargetHeightOffset;
-
-            Vector3 toCamInView = _mainCamera.transform.position - transform.position;
-            if (toCamInView.sqrMagnitude < 0.0001f) toCamInView = -_mainCamera.transform.forward;
-            transform.rotation = Quaternion.LookRotation(toCamInView.normalized, Vector3.up);
-            return;
+            if (IsValid(headWorldPos))
+            {
+                transform.position = headWorldPos;
+                // Billboard đúng cho camera isometric: copy thẳng rotation của camera
+                // (không dùng LookRotation vì bị gimbal lock khi camera pitch ~45-60°)
+                transform.rotation = _mainCamera.transform.rotation;
+                placedInView = true;
+            }
         }
 
-        // NPC ngoài tầm nhìn → rơi về vòng tròn quanh chân player.
-        transform.position = ring.GetWorldRingPosition(targetPos, _mainCamera);
-
-        // Billboard: luôn xoay mặt marker về phía camera
-        Vector3 toCam = _mainCamera.transform.position - transform.position;
-        if (toCam.sqrMagnitude < 0.0001f) toCam = -_mainCamera.transform.forward;
-        transform.rotation = Quaternion.LookRotation(toCam.normalized, Vector3.up);
-
-        // Roll quanh trục nhìn để mũi tên chỉ đúng hướng target (giống spriteAngleOffset cũ)
-        if (enableRotation)
+        if (!placedInView)
         {
-            float angle = ScreenEdgeMarkerCalculator.CalculateArrowRotation(targetPos, _mainCamera);
-            transform.Rotate(Vector3.forward, -(angle + spriteAngleOffset), Space.Self);
+            // NPC ngoài tầm nhìn (hoặc in-view bị NaN) → rơi về vòng tròn quanh chân player.
+            Vector3 ringPos = ring.GetWorldRingPosition(targetPos, _mainCamera);
+            if (!IsValid(ringPos)) return;
+
+            transform.position = ringPos;
+
+            // Billboard: copy camera rotation làm base (tránh gimbal lock isometric),
+            // sau đó roll thêm để mũi tên chỉ đúng hướng NPC.
+            transform.rotation = _mainCamera.transform.rotation;
+
+            if (enableRotation)
+            {
+                float angle = ScreenEdgeMarkerCalculator.CalculateArrowRotation(targetPos, _mainCamera);
+                // spriteAngleOffset bù theo hướng vẽ gốc của sprite (RIGHT=0, UP=-90, v.v.)
+                transform.Rotate(Vector3.forward, angle + spriteAngleOffset, Space.Self);
+            }
         }
     }
 
@@ -307,4 +316,10 @@ public class QuestMarkerUI : MonoBehaviour
     }
 
     public void SetActive(bool active) => gameObject.SetActive(active);
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private static bool IsValid(Vector3 v) =>
+        !float.IsNaN(v.x) && !float.IsNaN(v.y) && !float.IsNaN(v.z)
+        && !float.IsInfinity(v.x) && !float.IsInfinity(v.y) && !float.IsInfinity(v.z);
 }
