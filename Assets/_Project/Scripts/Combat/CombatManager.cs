@@ -72,6 +72,7 @@ public class CombatManager : MonoBehaviour
     public event System.Action<Dictionary<CharacterData, int>> OnVictory;
     public event System.Action OnDefeat;
     public event System.Action<int> OnAPChanged;
+    public event System.Action OnIntroEnded;
 
     public delegate void DamageModificationHandler(ActionOutcome outcome, CombatUnit actor);
     public event DamageModificationHandler OnDamageCalculation;
@@ -307,7 +308,8 @@ public class CombatManager : MonoBehaviour
         yield return new WaitForSeconds(0.75f);
         StartCoroutine(cameraManager.ZoomOutToFinalView(2.0f));
 
-        var enemyViews = unitViews.Where(v => v.LinkedUnit != null && !v.LinkedUnit.IsPlayer).ToList();
+        // Lọc enemy views - bỏ qua Afterimage (clone) để camera không focus vào chúng
+        var enemyViews = unitViews.Where(v => v.LinkedUnit != null && !v.LinkedUnit.IsPlayer && v.LinkedUnit.UnitName != "Afterimage").ToList();
         if (enemyViews.Count > 0)
         {
             var leader = enemyViews[enemyViews.Count / 2]; enemyViews.Remove(leader);
@@ -320,6 +322,7 @@ public class CombatManager : MonoBehaviour
         yield return new WaitForSeconds(2.0f);
         yield return FadeUI(1f, 0.5f);
         cameraManager.EndIntroSequence();
+        OnIntroEnded?.Invoke();
 
         // Kiểm tra enemy nào có AlwaysActsFirst (ví dụ: Sói)
         // Những enemy này sẽ act trước cả player
@@ -628,6 +631,17 @@ public class CombatManager : MonoBehaviour
     public void SubmitPlayerAction(CombatUnit unit, SkillData skill, List<CombatUnit> targets)
     {
         if (!_isWaitingForPlayerSelection) return;
+        
+        // Kiểm tra: tất cả target phải có IsTargetable = true
+        foreach (var target in targets)
+        {
+            if (target != null && !target.IsTargetable)
+            {
+                Debug.LogWarning($"[CombatManager] Không thể tấn công {target.UnitName} - mục tiêu không thể target!");
+                return;
+            }
+        }
+        
         _selectedUnit = unit;
         _selectedSkill = skill;
         _selectedTargets = targets;
@@ -729,6 +743,11 @@ public class CombatManager : MonoBehaviour
 
     public UnitView GetUnitView(CombatUnit unit) => unitViews.Find(v => v.LinkedUnit == unit);
     public bool WillAttackResultInClash(CombatUnit a, CombatUnit b) => false;
+    public void AddUnitView(UnitView view)
+    {
+        if (view != null && !unitViews.Contains(view))
+            unitViews.Add(view);
+    }
 
     private void DoVictory()
     {

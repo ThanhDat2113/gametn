@@ -74,6 +74,9 @@ public class ClashAnimationSequence : MonoBehaviour
             actorView.FlushPendingOutcomes();
         }
 
+        // Cleanup: xóa handler để tránh skill cũ dùng SFX của skill mới
+        actorView.ClearAnimationEventHandlers();
+
         if (shouldMove)
             yield return StartCoroutine(ReturnPhase(actorView, actorOrigin, result));
 

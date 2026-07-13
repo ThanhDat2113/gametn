@@ -22,6 +22,15 @@ public class UnitView : MonoBehaviour
 
     public event System.Action OnHitAnimationEvent;
     public event System.Action OnAnimationEndEvent;
+    
+    /// <summary>
+    /// Xóa tất cả handlers để tránh skill cũ dùng sai SFX cho skill mới.
+    /// </summary>
+    public void ClearAnimationEventHandlers()
+    {
+        OnHitAnimationEvent = null;
+        OnAnimationEndEvent = null;
+    }
 
     public CombatUnit LinkedUnit { get; private set; }
 
