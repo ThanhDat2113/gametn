@@ -382,7 +382,7 @@ public class CombatPlanningUI : MonoBehaviour
     {
         if (!isChoosingTarget || view == null || selectedSkill == null) return;
         var clickedUnit = view.LinkedUnit;
-        if (!clickedUnit.IsAlive) return;
+        if (!clickedUnit.IsAlive || !clickedUnit.IsTargetable) return;
         bool isValid = false;
         switch (selectedSkill.targetType)
         {
@@ -397,7 +397,7 @@ public class CombatPlanningUI : MonoBehaviour
             {
                 case TargetType.SingleEnemy: case TargetType.SingleAlly: case TargetType.Self:
                     finalTargets.Add(clickedUnit); break;
-                case TargetType.AllEnemies: finalTargets = combat.EnemyUnits.Where(e => e.IsAlive).ToList(); break;
+                case TargetType.AllEnemies: finalTargets = combat.EnemyUnits.Where(e => e.IsAlive && e.IsTargetable).ToList(); break;
                 case TargetType.AllAllies: finalTargets = combat.PlayerUnits.Where(p => p.IsAlive).ToList(); break;
             }
             if (finalTargets.Count > 0)
@@ -450,7 +450,7 @@ public class CombatPlanningUI : MonoBehaviour
         IEnumerable<CombatUnit> pool;
         switch (skill.targetType)
         {
-            case TargetType.SingleEnemy: case TargetType.AllEnemies: pool = combat.EnemyUnits.Where(e => e.IsAlive); break;
+            case TargetType.SingleEnemy: case TargetType.AllEnemies: pool = combat.EnemyUnits.Where(e => e.IsAlive && e.IsTargetable); break;
             case TargetType.SingleAlly: case TargetType.AllAllies: pool = combat.PlayerUnits.Where(p => p.IsAlive); break;
             case TargetType.Self: pool = new List<CombatUnit> { currentUnit }; break;
             default: pool = Enumerable.Empty<CombatUnit>(); break;

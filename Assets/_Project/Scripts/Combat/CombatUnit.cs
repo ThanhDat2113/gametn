@@ -10,16 +10,16 @@ public class CombatUnit
     public int GridRow { get; set; } = 2;
     public int GridSlot { get; set; } = 0;
 
-    public CharacterData Data { get; private set; }
-    public string UnitName { get; private set; }
-    public bool IsPlayer { get; private set; }
-    public int Level { get; private set; }
+    public CharacterData Data { get; set; }
+    public string UnitName { get; set; }
+    public bool IsPlayer { get; set; }
+    public int Level { get; set; }
 
-    public int MaxHP { get; private set; }
-    public int CurrentHP { get; private set; }
-    public int ATK { get; private set; }
-    public int PDEF { get; private set; }
-    public int MDEF { get; private set; }
+    public int MaxHP { get; set; }
+    public int CurrentHP { get; set; }
+    public int ATK { get; set; }
+    public int PDEF { get; set; }
+    public int MDEF { get; set; }
 
     public float CritChance { get; set; } = 0f;
     public float CritDamage { get; set; } = 1.5f;
@@ -32,6 +32,8 @@ public class CombatUnit
     public int MaxActionsPerTurn { get; set; } = 1;
     public int ActionsRemainingThisTurn { get; set; } = 1;
     public bool CanActThisTurn => ActionsRemainingThisTurn > 0 && IsAlive && !HasStatus(StatusEffectType.Stun);
+    public bool IsTargetable { get; set; } = true;
+    public string PassiveClassName { get; set; } // để lưu tên class passive sau khi spawn
 
     private List<ActiveBuff> activeBuffs = new List<ActiveBuff>();
     private List<ActiveStatus> activeStatuses = new List<ActiveStatus>();
@@ -49,7 +51,7 @@ public class CombatUnit
 
     public ChallengeStack ChallengeStack { get; private set; } = new();
 
-    public List<SkillData> AvailableSkills { get; private set; } = new();
+    public List<SkillData> AvailableSkills { get; set; } = new();
     public SkillData SelectedSkill { get; private set; }
     public List<CombatUnit> SelectedTargets { get; private set; } = new();
     public PassiveAbility Passive { get; private set; }
@@ -94,6 +96,21 @@ public class CombatUnit
                 {
                     var skillInstance = Object.Instantiate(skillAsset);
                     skillInstance.name = skillAsset.name;
+                    
+                    // Deep clone array references để tránh các skill clone share cùng mảng âm thanh/VFX
+                    if (skillAsset.sfxClips != null)
+                        skillInstance.sfxClips = (AudioClip[])skillAsset.sfxClips.Clone();
+                    if (skillAsset.vfxEvents != null)
+                        skillInstance.vfxEvents = (VFXEvent[])skillAsset.vfxEvents.Clone();
+                    if (skillAsset.hitVfxEvents != null)
+                        skillInstance.hitVfxEvents = (VFXEvent[])skillAsset.hitVfxEvents.Clone();
+                    if (skillAsset.rangedVfxEvents != null)
+                        skillInstance.rangedVfxEvents = (VFXEvent[])skillAsset.rangedVfxEvents.Clone();
+                    if (skillAsset.voiceLines != null)
+                        skillInstance.voiceLines = (AudioClip[])skillAsset.voiceLines.Clone();
+                    if (skillAsset.effects != null)
+                        skillInstance.effects = (SkillEffect[])skillAsset.effects.Clone();
+                    
                     AvailableSkills.Add(skillInstance);
                 }
             }
@@ -103,6 +120,14 @@ public class CombatUnit
     // ── Damage ── ✅ ĐÃ SỬA: truyền DamageType
     public void TakeDamage(CombatUnit caster, int amount, DamageType damageType = DamageType.Physical)
     {
+        // Invincible: chặn mọi sát thương, sau đó tự xóa
+        if (HasStatus(StatusEffectType.Invincible))
+        {
+            Debug.Log($"  {UnitName} đang Invincible! Chặn {amount} dmg.");
+            ClearStatus(StatusEffectType.Invincible);
+            return;
+        }
+
         int actualDamage = amount;
         bool isTrueDamage = (damageType == DamageType.True);
 
