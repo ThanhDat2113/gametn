@@ -321,7 +321,11 @@ public class DialogueTrigger : MonoBehaviour
     {
         if (ShouldHideNow())
         {
-            StartCoroutine(HideAfterDelayIfNeeded());
+            // Dùng CoroutineRunner thay vì StartCoroutine trên chính GameObject này —
+            // object có thể đã bị hệ thống khác (vd: QuestVisibilityController) tắt
+            // TRƯỚC trong cùng lần invoke event OnStepChanged, khiến StartCoroutine
+            // thất bại ("Coroutine couldn't be started because the game object is inactive").
+            CoroutineRunner.Instance.Run(HideAfterDelayIfNeeded());
         }
     }
 

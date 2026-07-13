@@ -80,7 +80,10 @@ public class QuestMarkerManager : MonoBehaviour
 
         // FIX: Delay 1 frame để các QuestMarkerBridge trong scene mới kịp Awake()
         // trước khi FindObjectsByType chạy. Nếu gọi ngay thì sẽ tìm được 0 bridges.
-        StartCoroutine(EvaluateNextFrame());
+        // Dùng CoroutineRunner thay vì StartCoroutine trên chính GameObject này —
+        // QuestMarkerManager có thể đang bị tắt (vd: hệ thống ẩn object khi vào combat)
+        // ngay lúc OnSceneLoaded bắn ra, khiến StartCoroutine thất bại.
+        CoroutineRunner.Instance.Run(EvaluateNextFrame());
     }
 
     private IEnumerator EvaluateNextFrame()
@@ -115,7 +118,11 @@ public class QuestMarkerManager : MonoBehaviour
 
         Debug.Log($"[QuestMarkerManager] Looking for bridges: questId='{questId}' stepIndex={stepIndex}");
 
-        var allBridges = FindObjectsByType<QuestMarkerBridge>(FindObjectsSortMode.None);
+        // FindObjectsInactive.Include: NPC có thể đang bị QuestVisibilityController
+        // set inactive (ẩn phục vụ cốt truyện) nhưng bridge của nó vẫn cần được
+        // tìm thấy để marker match đúng step — vị trí (transform.position) vẫn
+        // hợp lệ dù object không hiển thị.
+        var allBridges = FindObjectsByType<QuestMarkerBridge>(FindObjectsInactive.Include, FindObjectsSortMode.None);
         Debug.Log($"[QuestMarkerManager] Found {allBridges.Length} bridges total in scene");
 
         foreach (var bridge in allBridges)
