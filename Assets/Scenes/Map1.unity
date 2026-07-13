@@ -39539,7 +39539,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 465054330}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 816.64716, y: 112.42584, z: 496.00504}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -39548,7 +39548,7 @@ Transform:
   - {fileID: 588974793}
   - {fileID: 637797688}
   - {fileID: 1895282612}
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 554073902}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &465485059
 GameObject:
@@ -43601,6 +43601,8 @@ Transform:
   - {fileID: 1823438185}
   - {fileID: 1606156169}
   - {fileID: 1290094778}
+  - {fileID: 937918985}
+  - {fileID: 465054332}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &554126390
@@ -57120,7 +57122,6 @@ Terrain:
   m_AllowAutoConnect: 1
   m_EnableHeightmapRayTracing: 1
   m_EnableTreesAndDetailsRayTracing: 0
-  m_EnableHeightmapLODFrustumCulling: 1
   m_TreeMotionVectorModeOverride: 3
 --- !u!4 &829601830
 Transform:
@@ -58733,7 +58734,6 @@ Terrain:
   m_AllowAutoConnect: 1
   m_EnableHeightmapRayTracing: 1
   m_EnableTreesAndDetailsRayTracing: 0
-  m_EnableHeightmapLODFrustumCulling: 1
   m_TreeMotionVectorModeOverride: 3
 --- !u!4 &855101692
 Transform:
@@ -63442,7 +63442,7 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 0}
+    m_TransformParent: {fileID: 554073902}
     m_Modifications:
     - target: {fileID: 374183921211196681, guid: fdc875b0588dec54c91922618888946e, type: 3}
       propertyPath: m_Sprite
@@ -63546,15 +63546,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6506432628251830510, guid: fdc875b0588dec54c91922618888946e, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 6506432628251830510, guid: fdc875b0588dec54c91922618888946e, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 6506432628251830510, guid: fdc875b0588dec54c91922618888946e, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 6506432628251830510, guid: fdc875b0588dec54c91922618888946e, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -132774,7 +132774,6 @@ Terrain:
   m_AllowAutoConnect: 1
   m_EnableHeightmapRayTracing: 1
   m_EnableTreesAndDetailsRayTracing: 0
-  m_EnableHeightmapLODFrustumCulling: 1
   m_TreeMotionVectorModeOverride: 3
 --- !u!4 &1988827559
 Transform:
@@ -141388,5 +141387,3 @@ SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
   - {fileID: 554073902}
-  - {fileID: 937918984}
-  - {fileID: 465054332}

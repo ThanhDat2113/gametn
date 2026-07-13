@@ -1,0 +1,45 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f9330979f02ddf43a415e7748b42aae, type: 3}
+  m_Name: ENEMY_Madara
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterData
+  characterType: 1
+  defaultCombatStyle: 0
+  prefab: {fileID: 1169202276313242578, guid: a01f5f2bca8f96e4484dc6c0368e93ef, type: 3}
+  characterName: Madara
+  portrait: {fileID: 21300000, guid: e176f83865cc6884cabe3920efe2603a, type: 3}
+  battleSprite: {fileID: 21300000, guid: e176f83865cc6884cabe3920efe2603a, type: 3}
+  lore: "M\u1ED9t nh\xE0 gi\u1EA3 kim thi\xEAn t\xE0i v\u1EDBi tay ch\xE2n automail,
+    c\xF3 kh\u1EA3 n\u0103ng bi\u1EBFn \u0111\u1ED5i v\u1EADt ch\u1EA5t v\xE0 chi\u1EBFn
+    \u0111\u1EA5u b\u1EC1n b\u1EC9."
+  baseHP: 2500
+  baseATK: 50
+  basePDEF: 20
+  baseMDEF: 10
+  baseLevel: 1
+  expReward: 800
+  baseExpThreshold: 100
+  expIncrementPerLevel: 50
+  hpPerLevel: 5
+  atkPerLevel: 2
+  pdefPerLevel: 1
+  mdefPerLevel: 1
+  skills:
+  - {fileID: 11400000, guid: 5ee3555fefd97d347999f8ef11b006e5, type: 2}
+  - {fileID: 11400000, guid: 55e010d1fb5f7c145b6e580d68b6de96, type: 2}
+  - {fileID: 11400000, guid: 8d0f9775a3172274ab2ab3325d7efddb, type: 2}
+  passiveScript: {fileID: 11500000, guid: fed9759cac91add4980ceea005cab7a3, type: 3}
+  hitVoiceClips: []
+  attackVoiceClips: []
+  deathVoiceClips: []
+  footstepSound: {fileID: 0}
+  flipOnSpawn: 1
