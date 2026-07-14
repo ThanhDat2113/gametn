@@ -44070,7 +44070,7 @@ GameObject:
   - component: {fileID: 554073902}
   m_Layer: 0
   m_Name: MapRoot
-  m_TagString: Untagged
+  m_TagString: MapRoot
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -44131,18 +44131,19 @@ Transform:
   - {fileID: 208583798}
   - {fileID: 986966051}
   - {fileID: 241084389}
+  - {fileID: 1699402727}
   - {fileID: 558812883}
   - {fileID: 1608484767}
   - {fileID: 814109592}
   - {fileID: 333065823}
   - {fileID: 96696692}
-  - {fileID: 1699402727}
   - {fileID: 1917683691}
   - {fileID: 507920901}
   - {fileID: 126140759}
   - {fileID: 735860297}
   - {fileID: 1358279536}
   - {fileID: 411594705}
+  - {fileID: 1596950992}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &554126390
@@ -111410,6 +111411,37 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 1031294880, guid: abc00000000017167628766033424233, type: 3}
   m_PrefabInstance: {fileID: 1595101881}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1596950991
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1596950992}
+  m_Layer: 0
+  m_Name: wayJade (2)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1596950992
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1596950991}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 87.1, y: 123.15, z: 38.9}
+  m_LocalScale: {x: 8.17272, y: 8.17272, z: 8.17272}
+  m_ConstrainProportionsScale: 1
+  m_Children: []
+  m_Father: {fileID: 554073902}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1602161798
 GameObject:
   m_ObjectHideFlags: 0
@@ -117759,8 +117791,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Door_Master
   targetSceneName: Bar
-  destinationCamera: {fileID: 0}
-  mapCameraName: Camera_Map
+  playerSpawnPointInside: {fileID: 1596950992}
+  playerSpawnPointOutside: {fileID: 0}
+  mapRootObject: {fileID: 554073901}
 --- !u!1001 &1699436665
 PrefabInstance:
   m_ObjectHideFlags: 0
