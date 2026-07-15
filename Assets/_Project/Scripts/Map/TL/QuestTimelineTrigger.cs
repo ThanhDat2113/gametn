@@ -201,12 +201,18 @@ public class QuestTimelineTrigger : MonoBehaviour
         if (waitForTimeline)
         {
             yield return null; // chờ 1 frame để Timeline kịp khởi động
+            EnforceHiddenState(); // ép lại ngay khoảng hở 1 frame này, tránh bị đè trước khi vòng lặp dưới chạy
 
             float timelineTimeout = (float)timeline.duration + 5f;
             float timelineElapsed = 0f;
 
             while (timeline.state == PlayState.Playing && timelineElapsed < timelineTimeout)
             {
+                // Hệ thống khác (vd: QuestVisibilityController) có thể cùng nghe sự kiện
+                // quest và tự SetActive(true) lại object đã ẩn ở đây. Ép lại trạng thái ẩn
+                // mỗi frame trong suốt lúc Timeline đang chạy để đảm bảo không bị đè.
+                EnforceHiddenState();
+
                 timelineElapsed += Time.deltaTime;
                 yield return null;
             }
@@ -287,37 +293,55 @@ public class QuestTimelineTrigger : MonoBehaviour
         _disabledListeners.Clear();
     }
 
-    private readonly System.Collections.Generic.List<GameObject> _hiddenByUs =
+    private readonly System.Collections.Generic.List<GameObject> _managedHideTargets =
         new System.Collections.Generic.List<GameObject>();
 
     /// <summary>
-    /// Tắt các object trong objectsToHideDuringTimeline. Chỉ ghi nhớ (để bật lại sau)
-    /// những object đang active thực sự — object nào vốn đã tắt sẵn thì bỏ qua,
-    /// tránh vô tình bật nó lên sau khi Timeline xong.
+    /// Tắt các object trong objectsToHideDuringTimeline. LUÔN track toàn bộ object được cấu hình
+    /// (không chỉ cái đang active đúng lúc hàm này chạy) — vì nếu 1 object đang tạm thời bị hệ
+    /// thống khác tắt/bật ngay lúc này, ta vẫn cần biết để EnforceHiddenState() ép lại đúng chỗ
+    /// sau đó, và RestoreHiddenObjects() sẽ bật lại tất cả sau khi Timeline xong.
     /// </summary>
     private void HideObjectsBeforeTimeline()
     {
-        _hiddenByUs.Clear();
+        _managedHideTargets.Clear();
         if (objectsToHideDuringTimeline == null) return;
 
         foreach (var go in objectsToHideDuringTimeline)
         {
-            if (go != null && go.activeSelf)
-            {
-                go.SetActive(false);
-                _hiddenByUs.Add(go);
-            }
+            if (go == null) continue;
+
+            _managedHideTargets.Add(go);
+            if (go.activeSelf) go.SetActive(false);
         }
     }
 
-    /// <summary>Bật lại đúng những object đã bị HideObjectsBeforeTimeline tắt.</summary>
+    /// <summary>
+    /// Bật lại TẤT CẢ object đã cấu hình sau khi Timeline chạy xong — đúng mục đích ban đầu
+    /// (ẩn trước Timeline, hiện lại sau khi xong), không dựa vào "trạng thái gốc trước khi ẩn"
+    /// vì trạng thái đó có thể bị sai do race condition với hệ thống khác (QuestVisibilityController...)
+    /// đúng lúc HideObjectsBeforeTimeline() chạy.
+    /// </summary>
     private void RestoreHiddenObjects()
     {
-        foreach (var go in _hiddenByUs)
+        foreach (var go in _managedHideTargets)
         {
             if (go != null) go.SetActive(true);
         }
-        _hiddenByUs.Clear();
+        _managedHideTargets.Clear();
+    }
+
+    /// <summary>
+    /// Ép lại trạng thái TẮT cho TẤT CẢ object đã cấu hình (_managedHideTargets), mỗi frame
+    /// trong lúc Timeline đang chạy — chống hệ thống khác (QuestVisibilityController, v.v...)
+    /// tự SetActive(true) lại do cùng nghe chung sự kiện quest.
+    /// </summary>
+    private void EnforceHiddenState()
+    {
+        foreach (var go in _managedHideTargets)
+        {
+            if (go != null && go.activeSelf) go.SetActive(false);
+        }
     }
 
     private readonly System.Collections.Generic.List<Renderer> _hiddenPlayerRenderers =
