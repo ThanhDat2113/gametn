@@ -144,6 +144,9 @@ public class MinimapController : MonoBehaviour
     private bool _isHiddenByUI = false;     // ẩn do MapMenuManager/UI panel đang mở
     private bool _externalCombatFlag = false; // set bởi NotifyCombatStateChanged từ bên ngoài
 
+    // ── Multi-terrain support ─────────────────────────────────────────────────
+    private Terrain[] _allTerrains;          // cache danh sách terrain để tìm nhanh
+
     /// <summary>Fire sau khi minimap đã refresh xong cho map mới (terrain/player/data đã cập nhật).</summary>
     public event System.Action<string> OnMapChanged;
 
@@ -199,12 +202,52 @@ public class MinimapController : MonoBehaviour
             if (p != null) player = p.transform;
         }
 
+        // Cache tất cả terrain trong scene hiện tại
+        CacheAllTerrains();
+
         ResolveUIRoot();
         SetupDisplayMode();
         ApplyMaskShape();
 
         SceneManager.sceneLoaded += OnSceneLoaded;
         SceneManager.sceneUnloaded += OnSceneUnloaded;
+    }
+
+    /// <summary>
+    /// Cache tất cả Terrain trong scene hiện tại (bao gồm cả inactive).
+    /// </summary>
+    private void CacheAllTerrains()
+    {
+        _allTerrains = FindObjectsByType<Terrain>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        Debug.Log($"[MinimapController] Cached {_allTerrains.Length} terrains.");
+    }
+
+    /// <summary>
+    /// Tìm Terrain đầu tiên chứa điểm worldPos (dựa trên bounds).
+    /// </summary>
+    private Terrain GetTerrainAtPosition(Vector3 worldPos)
+    {
+        // Ưu tiên terrain đã gán (nếu vẫn đang chứa player)
+        if (terrain != null)
+        {
+            Bounds terrainBounds = terrain.terrainData.bounds;
+            terrainBounds.center += terrain.transform.position;
+            if (terrainBounds.Contains(worldPos))
+                return terrain;
+        }
+
+        // Duyệt cache để tìm terrain chứa điểm này
+        foreach (Terrain t in _allTerrains)
+        {
+            if (t == null) continue;
+            Bounds bounds = t.terrainData.bounds;
+            bounds.center += t.transform.position;
+            if (bounds.Contains(worldPos))
+                return t;
+        }
+
+        // Không tìm thấy → fallback về terrain đầu tiên (hoặc null)
+        return _allTerrains.Length > 0 ? _allTerrains[0] : null;
     }
 
     /// <summary>
@@ -280,6 +323,8 @@ public class MinimapController : MonoBehaviour
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         Debug.Log($"[MinimapController] Scene loaded: '{scene.name}' (mode={mode}) → refresh minimap.");
+        // Cache lại terrain cho scene mới
+        CacheAllTerrains();
         RefreshForMap(scene);
         RefreshCombatVisibility();
     }
@@ -293,6 +338,9 @@ public class MinimapController : MonoBehaviour
         if (terrain != null && terrain.gameObject.scene == scene) terrain = null;
         if (player != null && player.gameObject.scene == scene) player = null;
 
+        // Cache lại terrain (loại bỏ terrain đã unload)
+        CacheAllTerrains();
+
         // Quan trọng: nếu combat scene (Additive) vừa unload, phải re-check visibility
         // ngay — không chờ scene khác load, vì có thể không có scene mới nào load tiếp theo
         // (chỉ đơn giản là rời combat scene, quay lại scene chính đã loaded từ trước).
@@ -305,19 +353,6 @@ public class MinimapController : MonoBehaviour
     /// </summary>
     private void RefreshForMap(Scene scene)
     {
-        Terrain foundTerrain = FindTerrainInScene(scene);
-        if (foundTerrain != null)
-        {
-            terrain = foundTerrain;
-            Debug.Log($"[MinimapController] Tìm thấy Terrain '{terrain.name}' trong scene '{scene.name}'.");
-        }
-        else if (terrain == null)
-        {
-            // Scene này không có terrain riêng (vd UI scene, scene phụ) — không log lỗi,
-            // có thể terrain vẫn còn từ scene khác đang active song song (Additive).
-            Debug.Log($"[MinimapController] Scene '{scene.name}' không có Terrain — giữ terrain hiện tại (nếu có).");
-        }
-
         // Player: nếu player cũ đã null (do scene cũ unload) hoặc chưa từng có, tìm lại.
         if (player == null)
         {
@@ -332,6 +367,8 @@ public class MinimapController : MonoBehaviour
                 Debug.LogWarning("[MinimapController] Không tìm thấy Player sau khi đổi map!");
             }
         }
+
+        // Không gán terrain cố định nữa — sẽ tự tìm mỗi frame.
 
         ApplyMapDataIfAvailable(scene.name);
 
@@ -521,6 +558,8 @@ public class MinimapController : MonoBehaviour
 
     private void UpdateCameraFollow()
     {
+        if (player == null) return;
+
         Vector3 pos = player.position;
         pos.y = GetTerrainHeightOrFallback(pos) + cameraHeight;
         _minimapCamera.transform.position = pos;
@@ -540,10 +579,16 @@ public class MinimapController : MonoBehaviour
         _minimapCamera.orthographicSize = EffectiveWorldSize * 0.5f;
     }
 
+    /// <summary>
+    /// Lấy độ cao của Terrain dưới chân player (tự động tìm terrain phù hợp).
+    /// Fallback về worldPos.y nếu không tìm thấy terrain.
+    /// </summary>
     private float GetTerrainHeightOrFallback(Vector3 worldPos)
     {
-        if (terrain != null) return terrain.SampleHeight(worldPos) + terrain.transform.position.y;
-        return worldPos.y;
+        Terrain currentTerrain = GetTerrainAtPosition(worldPos);
+        if (currentTerrain != null)
+            return currentTerrain.SampleHeight(worldPos) + currentTerrain.transform.position.y;
+        return worldPos.y; // fallback
     }
 
     // ── Static Texture mode: pan ảnh tĩnh theo player bằng UV offset ─────────
