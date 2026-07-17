@@ -15,7 +15,7 @@ MonoBehaviour:
   active: 1
   intensity:
     m_OverrideState: 1
-    m_Value: 0.136
+    m_Value: 0.111
 --- !u!114 &-7628381940728108323
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -111,8 +111,8 @@ MonoBehaviour:
     m_OverrideState: 1
     m_Value: 3
   intensity:
-    m_OverrideState: 1
-    m_Value: 0.2
+    m_OverrideState: 0
+    m_Value: 0
   response:
     m_OverrideState: 0
     m_Value: 1
@@ -225,7 +225,7 @@ MonoBehaviour:
     m_Value: 0
   contrast:
     m_OverrideState: 1
-    m_Value: 24
+    m_Value: 20
   colorFilter:
     m_OverrideState: 0
     m_Value: {r: 1, g: 1, b: 1, a: 1}
@@ -234,7 +234,7 @@ MonoBehaviour:
     m_Value: 180
   saturation:
     m_OverrideState: 1
-    m_Value: 67
+    m_Value: 70
 --- !u!114 &-4457098822591104647
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -268,19 +268,19 @@ MonoBehaviour:
     m_Value: 6.7
   aperture:
     m_OverrideState: 1
-    m_Value: 3.6
+    m_Value: 4.7
   focalLength:
     m_OverrideState: 1
-    m_Value: 67
+    m_Value: 70
   bladeCount:
     m_OverrideState: 0
-    m_Value: 5
+    m_Value: 9
   bladeCurvature:
     m_OverrideState: 0
     m_Value: 1
   bladeRotation:
     m_OverrideState: 0
-    m_Value: 0
+    m_Value: 180
 --- !u!114 &-4361136492330804433
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -433,16 +433,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0b2db86121404754db890f4c8dfe81b2, type: 3}
   m_Name: Bloom
   m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.Bloom
-  active: 1
+  active: 0
   skipIterations:
     m_OverrideState: 0
     m_Value: 1
   threshold:
     m_OverrideState: 1
-    m_Value: 1
+    m_Value: 0.67
   intensity:
     m_OverrideState: 1
-    m_Value: 2
+    m_Value: 1.98
   scatter:
     m_OverrideState: 1
     m_Value: 0.67
@@ -842,7 +842,7 @@ MonoBehaviour:
   active: 1
   intensity:
     m_OverrideState: 1
-    m_Value: 0.67
+    m_Value: 0.36
   tintColor:
     m_OverrideState: 0
     m_Value: {r: 1, g: 1, b: 1, a: 1}
@@ -974,10 +974,10 @@ MonoBehaviour:
     m_Value: {x: 0.5, y: 0.5}
   intensity:
     m_OverrideState: 1
-    m_Value: 0.36
+    m_Value: 0.375
   smoothness:
-    m_OverrideState: 0
-    m_Value: 0.344
+    m_OverrideState: 1
+    m_Value: 0.37
   rounded:
     m_OverrideState: 0
     m_Value: 0
