@@ -13,6 +13,8 @@ public class StandingNPCTalk : MonoBehaviour
     public TextMeshProUGUI dialogueText; // Kéo cái Text (TMP) vào đây
     public string[] lines;            // Mảng chứa các câu thoại
 
+    private int currentLineIndex = 0; // Chỉ số câu thoại hiện tại
+
     private void Start()
     {
         // Đảm bảo bong bóng tắt ngay khi vào game
@@ -32,9 +34,8 @@ public class StandingNPCTalk : MonoBehaviour
             dialogueBubble.SetActive(true);
             if (lines.Length > 0)
             {
-                // Chọn một câu ngẫu nhiên trong danh sách
-                string randomLine = lines[Random.Range(0, lines.Length)];
-                dialogueText.text = randomLine; 
+                dialogueText.text = lines[currentLineIndex];
+                currentLineIndex = (currentLineIndex + 1) % lines.Length;
             }
 
             // 3. Giữ khung chat trong thời gian quy định
