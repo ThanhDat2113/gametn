@@ -1178,6 +1178,7 @@ Terrain:
   m_AllowAutoConnect: 1
   m_EnableHeightmapRayTracing: 1
   m_EnableTreesAndDetailsRayTracing: 0
+  m_EnableHeightmapLODFrustumCulling: 1
   m_TreeMotionVectorModeOverride: 3
 --- !u!4 &12032645
 Transform:
@@ -6384,8 +6385,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ab9b14809ca169f4ba53024fe3809516, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::QuestMarkerBridge
-  questId: 1
-  stepIndex: 0
+  questId: 11
+  stepIndex: 4
   headPosition: {fileID: 715999095}
   defaultHeadOffset: 0
 --- !u!114 &55791408
@@ -23748,6 +23749,7 @@ Terrain:
   m_AllowAutoConnect: 1
   m_EnableHeightmapRayTracing: 1
   m_EnableTreesAndDetailsRayTracing: 0
+  m_EnableHeightmapLODFrustumCulling: 1
   m_TreeMotionVectorModeOverride: 3
 --- !u!4 &187296455
 Transform:
@@ -36628,8 +36630,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ab9b14809ca169f4ba53024fe3809516, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::QuestMarkerBridge
-  questId: 1
-  stepIndex: 0
+  questId: 11
+  stepIndex: 1
   headPosition: {fileID: 1338950059}
   defaultHeadOffset: 0
 --- !u!114 &299665800
@@ -40753,8 +40755,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ab9b14809ca169f4ba53024fe3809516, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::QuestMarkerBridge
-  questId: 1
-  stepIndex: 0
+  questId: 10
+  stepIndex: 5
   headPosition: {fileID: 1794520967}
   defaultHeadOffset: 0
 --- !u!114 &330299285
@@ -45976,6 +45978,7 @@ Terrain:
   m_AllowAutoConnect: 1
   m_EnableHeightmapRayTracing: 1
   m_EnableTreesAndDetailsRayTracing: 0
+  m_EnableHeightmapLODFrustumCulling: 1
   m_TreeMotionVectorModeOverride: 3
 --- !u!4 &372785201
 Transform:
@@ -65311,6 +65314,7 @@ Terrain:
   m_AllowAutoConnect: 1
   m_EnableHeightmapRayTracing: 1
   m_EnableTreesAndDetailsRayTracing: 0
+  m_EnableHeightmapLODFrustumCulling: 1
   m_TreeMotionVectorModeOverride: 3
 --- !u!4 &542198819
 Transform:
@@ -81433,6 +81437,7 @@ Transform:
   - {fileID: 1534248318}
   - {fileID: 748101354}
   - {fileID: 1818951609}
+  - {fileID: 1005113134}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &638009215
@@ -111047,6 +111052,7 @@ Terrain:
   m_AllowAutoConnect: 1
   m_EnableHeightmapRayTracing: 1
   m_EnableTreesAndDetailsRayTracing: 0
+  m_EnableHeightmapLODFrustumCulling: 1
   m_TreeMotionVectorModeOverride: 3
 --- !u!4 &904494286
 Transform:
@@ -115232,6 +115238,7 @@ GameObject:
   - component: {fileID: 940489828}
   - component: {fileID: 940489827}
   - component: {fileID: 940489826}
+  - component: {fileID: 940489834}
   m_Layer: 7
   m_Name: Madara
   m_TagString: Untagged
@@ -115251,7 +115258,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ab9b14809ca169f4ba53024fe3809516, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::QuestMarkerBridge
-  questId: 1
+  questId: 12
   stepIndex: 0
   headPosition: {fileID: 731383612}
   defaultHeadOffset: 0
@@ -115463,6 +115470,22 @@ Transform:
   - {fileID: 731383612}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &940489834
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 940489825}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ab9b14809ca169f4ba53024fe3809516, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestMarkerBridge
+  questId: 12
+  stepIndex: 2
+  headPosition: {fileID: 731383612}
+  defaultHeadOffset: 2
 --- !u!1001 &940619526
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -119844,8 +119867,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ab9b14809ca169f4ba53024fe3809516, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::QuestMarkerBridge
-  questId: 5
-  stepIndex: 1
+  questId: 11
+  stepIndex: 2
   headPosition: {fileID: 0}
   defaultHeadOffset: 2
 --- !u!114 &993090504
@@ -120812,6 +120835,57 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 1030678204987211682, guid: 398b156fac7c6f44db09e9ad046c24dd, type: 3}
   m_PrefabInstance: {fileID: 1004766308}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1005113133
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1005113134}
+  - component: {fileID: 1005113135}
+  m_Layer: 0
+  m_Name: GameObject
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1005113134
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1005113133}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 635879303}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1005113135
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1005113133}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8e877cb1baf01e647a2eadfd2d13ba96, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AreaQuestStatusUI
+  areaDisplayName: "Ph\u01B0\u01A1ng \u0110\xF4ng"
+  questsInArea:
+  - {fileID: 11400000, guid: 318be08e48d30ea4684f60af84231bb8, type: 2}
+  - {fileID: 11400000, guid: a2425d858f281af498c9c8edc3329ef7, type: 2}
+  - {fileID: 11400000, guid: 9cc02b76a28a4b14dba5ae872081a4ef, type: 2}
+  statusText: {fileID: 0}
+  displayFormat: "{area}: {percent}% nhi\u1EC7m v\u1EE5 ho\xE0n th\xE0nh"
 --- !u!1001 &1005461990
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -158652,8 +158726,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ab9b14809ca169f4ba53024fe3809516, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::QuestMarkerBridge
-  questId: 1
-  stepIndex: 0
+  questId: 10
+  stepIndex: 7
   headPosition: {fileID: 1797189182}
   defaultHeadOffset: 0
 --- !u!114 &1363225495
@@ -161201,8 +161275,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ab9b14809ca169f4ba53024fe3809516, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::QuestMarkerBridge
-  questId: 5
-  stepIndex: 1
+  questId: 12
+  stepIndex: 3
   headPosition: {fileID: 0}
   defaultHeadOffset: 2
 --- !u!114 &1382027522
@@ -170887,8 +170961,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ab9b14809ca169f4ba53024fe3809516, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::QuestMarkerBridge
-  questId: 1
-  stepIndex: 0
+  questId: 12
+  stepIndex: 4
   headPosition: {fileID: 2131370958}
   defaultHeadOffset: 0
 --- !u!114 &1474908508
@@ -175469,6 +175543,7 @@ Terrain:
   m_AllowAutoConnect: 1
   m_EnableHeightmapRayTracing: 1
   m_EnableTreesAndDetailsRayTracing: 0
+  m_EnableHeightmapLODFrustumCulling: 1
   m_TreeMotionVectorModeOverride: 3
 --- !u!4 &1505538296
 Transform:
@@ -214718,8 +214793,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ab9b14809ca169f4ba53024fe3809516, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::QuestMarkerBridge
-  questId: 1
-  stepIndex: 0
+  questId: 10
+  stepIndex: 2
   headPosition: {fileID: 334395674}
   defaultHeadOffset: 0
 --- !u!114 &1861404535
@@ -218664,8 +218739,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ab9b14809ca169f4ba53024fe3809516, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::QuestMarkerBridge
-  questId: 1
-  stepIndex: 0
+  questId: 11
+  stepIndex: 5
   headPosition: {fileID: 1693902976}
   defaultHeadOffset: 0
 --- !u!114 &1897147167
@@ -221322,8 +221397,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ab9b14809ca169f4ba53024fe3809516, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::QuestMarkerBridge
-  questId: 1
-  stepIndex: 0
+  questId: 10
+  stepIndex: 3
   headPosition: {fileID: 878839452}
   defaultHeadOffset: 0
 --- !u!114 &1920995169
@@ -234168,7 +234243,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ab9b14809ca169f4ba53024fe3809516, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::QuestMarkerBridge
-  questId: 5
+  questId: 10
   stepIndex: 1
   headPosition: {fileID: 0}
   defaultHeadOffset: 2

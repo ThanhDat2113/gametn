@@ -57082,6 +57082,7 @@ Terrain:
   m_AllowAutoConnect: 1
   m_EnableHeightmapRayTracing: 1
   m_EnableTreesAndDetailsRayTracing: 0
+  m_EnableHeightmapLODFrustumCulling: 1
   m_TreeMotionVectorModeOverride: 3
 --- !u!4 &829601830
 Transform:
@@ -58694,6 +58695,7 @@ Terrain:
   m_AllowAutoConnect: 1
   m_EnableHeightmapRayTracing: 1
   m_EnableTreesAndDetailsRayTracing: 0
+  m_EnableHeightmapLODFrustumCulling: 1
   m_TreeMotionVectorModeOverride: 3
 --- !u!4 &855101692
 Transform:
@@ -85667,6 +85669,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1290094778}
+  - component: {fileID: 1290094779}
   m_Layer: 0
   m_Name: GameObject
   m_TagString: Untagged
@@ -85689,6 +85692,26 @@ Transform:
   m_Children: []
   m_Father: {fileID: 554073902}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1290094779
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1290094777}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8e877cb1baf01e647a2eadfd2d13ba96, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AreaQuestStatusUI
+  areaDisplayName: "Ph\u01B0\u01A1ng B\u1EAFc"
+  questsInArea:
+  - {fileID: 11400000, guid: 9d8624d6883012c46a5e881ef8e84c27, type: 2}
+  - {fileID: 11400000, guid: 4f4c1297508683d48b8bf733b2a9b74f, type: 2}
+  - {fileID: 11400000, guid: 7f7029075218c2c489509202cd27011d, type: 2}
+  - {fileID: 11400000, guid: 2b994e7c569d7294d8a0c10cecf3cd2e, type: 2}
+  statusText: {fileID: 0}
+  displayFormat: "{area}: {percent}% nhi\u1EC7m v\u1EE5 ho\xE0n th\xE0nh"
 --- !u!1 &1290543450
 GameObject:
   m_ObjectHideFlags: 0
@@ -121130,6 +121153,19 @@ MonoBehaviour:
   moveSpeed: 3
   waitTime: 2
   animator: {fileID: 1791270008}
+--- !u!114 &1791270010
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1298605299}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ea22569f72919cb4e999748baa4c625d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TutorialEnemyTrigger
+  forceEvenIfAlreadySeen: 0
 --- !u!1001 &1795075881
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -133011,6 +133047,7 @@ Terrain:
   m_AllowAutoConnect: 1
   m_EnableHeightmapRayTracing: 1
   m_EnableTreesAndDetailsRayTracing: 0
+  m_EnableHeightmapLODFrustumCulling: 1
   m_TreeMotionVectorModeOverride: 3
 --- !u!4 &1988827559
 Transform:
@@ -141310,6 +141347,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 6000339435574190283, guid: d9d69c4cf7819c041afd5773d5c18b98, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1791270008}
+    - targetCorrespondingSourceObject: {fileID: 6000339435574190283, guid: d9d69c4cf7819c041afd5773d5c18b98, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1791270010}
   m_SourcePrefab: {fileID: 100100000, guid: d9d69c4cf7819c041afd5773d5c18b98, type: 3}
 --- !u!1001 &4575416738627880808
 PrefabInstance:

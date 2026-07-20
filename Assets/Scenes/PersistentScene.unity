@@ -10040,10 +10040,10 @@ RectTransform:
   - {fileID: 1985832569}
   m_Father: {fileID: 1143502550}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 170, y: -50}
-  m_SizeDelta: {x: 100, y: 100}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1659053836
 MonoBehaviour:
@@ -10890,7 +10890,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2201245899094518719, guid: ef89fb1dd3b6a83409e2392ed2c9f690, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 410
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2201245899094518719, guid: ef89fb1dd3b6a83409e2392ed2c9f690, type: 3}
       propertyPath: m_AnchoredPosition.y
@@ -11170,7 +11170,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5226227829242583390, guid: ef89fb1dd3b6a83409e2392ed2c9f690, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 770
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5226227829242583390, guid: ef89fb1dd3b6a83409e2392ed2c9f690, type: 3}
       propertyPath: m_AnchoredPosition.y
@@ -11218,7 +11218,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5552387006796537156, guid: ef89fb1dd3b6a83409e2392ed2c9f690, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 650
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5552387006796537156, guid: ef89fb1dd3b6a83409e2392ed2c9f690, type: 3}
       propertyPath: m_AnchoredPosition.y
@@ -11310,7 +11310,7 @@ PrefabInstance:
       objectReference: {fileID: 762806695, guid: f600b5863600207419cf57a4734044ac, type: 3}
     - target: {fileID: 6684932769487843008, guid: ef89fb1dd3b6a83409e2392ed2c9f690, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6905403277771075175, guid: ef89fb1dd3b6a83409e2392ed2c9f690, type: 3}
       propertyPath: m_Sprite
@@ -11334,7 +11334,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6928859100210291551, guid: ef89fb1dd3b6a83409e2392ed2c9f690, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 530
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6928859100210291551, guid: ef89fb1dd3b6a83409e2392ed2c9f690, type: 3}
       propertyPath: m_AnchoredPosition.y
@@ -11474,7 +11474,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8433532741233144344, guid: ef89fb1dd3b6a83409e2392ed2c9f690, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 290
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8433532741233144344, guid: ef89fb1dd3b6a83409e2392ed2c9f690, type: 3}
       propertyPath: m_AnchoredPosition.y
@@ -11576,13 +11576,40 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 3905822626628840488, guid: ef89fb1dd3b6a83409e2392ed2c9f690, type: 3}
       insertIndex: 0
       addedObject: {fileID: 1830912547}
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 6684932769487843008, guid: ef89fb1dd3b6a83409e2392ed2c9f690, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1921296219}
   m_SourcePrefab: {fileID: 100100000, guid: ef89fb1dd3b6a83409e2392ed2c9f690, type: 3}
 --- !u!1 &1921296217 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 6684932769487843008, guid: ef89fb1dd3b6a83409e2392ed2c9f690, type: 3}
   m_PrefabInstance: {fileID: 1921296216}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1921296218 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1453935350154364990, guid: ef89fb1dd3b6a83409e2392ed2c9f690, type: 3}
+  m_PrefabInstance: {fileID: 1921296216}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
+--- !u!114 &1921296219
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1921296217}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3ea346b7aa46ba6408b46499f0e003b6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AreaQuestStatusDisplay
+  statusText: {fileID: 1921296218}
 --- !u!1 &1949919246
 GameObject:
   m_ObjectHideFlags: 0
