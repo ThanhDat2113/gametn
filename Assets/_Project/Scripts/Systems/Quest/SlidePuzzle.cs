@@ -4,8 +4,11 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// Puzzle "Xếp Hình Trượt" — Grid 3×3 (8 ô số + 1 ô trống).
-/// Trượt các ô liền kề vào ô trống để sắp xếp theo thứ tự 1-8.
+/// Puzzle "Xếp Hình Trượt" — Grid 3×3 (8 ô + 1 ô trống).
+/// Hỗ trợ 3 chế độ hiển thị:
+///   1. Gán từng ảnh riêng lẻ (customTileSprites)
+///   2. Tự động cắt từ 1 ảnh duy nhất (puzzleImage)
+///   3. Hiển thị số (mặc định)
 /// </summary>
 public class SlidePuzzle : PuzzleBase
 {
@@ -16,9 +19,22 @@ public class SlidePuzzle : PuzzleBase
     public Text moveCountText;
     public Button closeButton;
 
+    [Header("Image Puzzle")]
+    [Tooltip("Mảng ảnh cho từng ô (thứ tự 0-8, ô cuối là ô trống). " +
+             "Nếu có đủ 9 ảnh, sẽ ưu tiên dùng mảng này.")]
+    public Sprite[] customTileSprites; // 👈 THÊM MỚI: kéo từng ảnh vào đây
+
+    [Tooltip("Kéo 1 ảnh duy nhất vào đây để tự động cắt. " +
+             "Chỉ dùng khi customTileSprites trống hoặc không đủ.")]
+    public Sprite puzzleImage;
+
+    [Tooltip("Màu nền cho ô trống")]
+    public Color emptyColor = new Color(0.1f, 0.1f, 0.1f);
+    [Tooltip("Màu viền cho các ô (tùy chọn)")]
+    public Color borderColor = Color.white;
+
     [Header("Config")]
     public Color defaultColor = new Color(0.25f, 0.25f, 0.25f);
-    public Color emptyColor = new Color(0.1f, 0.1f, 0.1f);
     public Color correctColor = Color.green;
 
     // Config từ PuzzleData
@@ -28,9 +44,12 @@ public class SlidePuzzle : PuzzleBase
     // Internal state
     private int[,] _board;
     private Button[] _buttons;
+    private Image[] _buttonImages;
+    private Sprite[] _tileSprites;   // mảng sprite đã chuẩn bị (từ custom hoặc slice)
     private int _emptyRow, _emptyCol;
     private int _moveCount = 0;
     private bool _puzzleCompleted = false;
+    private bool _useImageMode = false;
 
     public override void StartPuzzle(PuzzleData data, PuzzleTrigger source)
     {
@@ -46,12 +65,75 @@ public class SlidePuzzle : PuzzleBase
         _puzzleCompleted = false;
         _board = new int[_gridSize, _gridSize];
         _buttons = new Button[_gridSize * _gridSize];
+        _buttonImages = new Image[_gridSize * _gridSize];
+
+        // ── Chuẩn bị sprites cho các ô ──
+        PrepareSprites();
 
         SetupBoard();
         SetupButtons();
         ShuffleBoard();
 
         UpdateUI();
+    }
+
+    /// <summary>
+    /// Chuẩn bị mảng _tileSprites từ nguồn ưu tiên:
+    /// 1. customTileSprites (nếu có đủ)
+    /// 2. puzzleImage (cắt tự động)
+    /// 3. null (dùng chế độ số)
+    /// </summary>
+    private void PrepareSprites()
+    {
+        int totalTiles = _gridSize * _gridSize;
+
+        // Nếu có customTileSprites và đủ số lượng
+        if (customTileSprites != null && customTileSprites.Length >= totalTiles)
+        {
+            _tileSprites = new Sprite[totalTiles];
+            for (int i = 0; i < totalTiles; i++)
+            {
+                _tileSprites[i] = customTileSprites[i];
+            }
+            _useImageMode = true;
+            Debug.Log($"[SlidePuzzle] Dùng {totalTiles} ảnh từ customTileSprites.");
+            return;
+        }
+
+        // Nếu có puzzleImage -> cắt tự động
+        if (puzzleImage != null)
+        {
+            Texture2D tex = puzzleImage.texture;
+            if (tex != null)
+            {
+                int tileWidth = tex.width / _gridSize;
+                int tileHeight = tex.height / _gridSize;
+
+                _tileSprites = new Sprite[totalTiles];
+                for (int row = 0; row < _gridSize; row++)
+                {
+                    for (int col = 0; col < _gridSize; col++)
+                    {
+                        int index = row * _gridSize + col;
+                        Rect rect = new Rect(
+                            col * tileWidth,
+                            tex.height - (row + 1) * tileHeight,
+                            tileWidth,
+                            tileHeight
+                        );
+                        _tileSprites[index] = Sprite.Create(tex, rect, new Vector2(0.5f, 0.5f), 100f);
+                    }
+                }
+                _useImageMode = true;
+                Debug.Log($"[SlidePuzzle] Đã cắt ảnh thành {totalTiles} mảnh.");
+                return;
+            }
+        }
+
+        // Fallback: không có ảnh
+        _tileSprites = null;
+        _useImageMode = false;
+        Debug.Log($"[SlidePuzzle] Dùng chế độ số (không có ảnh).");
     }
 
     private void SetupBoard()
@@ -76,6 +158,12 @@ public class SlidePuzzle : PuzzleBase
             tileButtons[i].onClick.RemoveAllListeners();
             tileButtons[i].onClick.AddListener(() => OnTileClicked(index));
             _buttons[i] = tileButtons[i];
+
+            Image img = tileButtons[i].GetComponent<Image>();
+            if (img == null) img = tileButtons[i].gameObject.AddComponent<Image>();
+            _buttonImages[i] = img;
+
+            // Có thể thêm border hoặc outline nếu muốn
         }
 
         if (closeButton != null)
@@ -84,7 +172,6 @@ public class SlidePuzzle : PuzzleBase
 
     private void ShuffleBoard()
     {
-        // Xáo trộn bằng cách thực hiện 100 bước di chuyển ngẫu nhiên
         int[] dr = { -1, 0, 1, 0 };
         int[] dc = { 0, 1, 0, -1 };
         System.Random rng = new System.Random();
@@ -100,7 +187,6 @@ public class SlidePuzzle : PuzzleBase
             }
         }
 
-        // Nếu shuffle ra đúng thứ tự thì shuffle thêm
         if (IsSolved())
         {
             ShuffleBoard();
@@ -127,7 +213,6 @@ public class SlidePuzzle : PuzzleBase
         int r = index / _gridSize;
         int c = index % _gridSize;
 
-        // Kiểm tra xem ô này có kề với ô trống không
         if ((Mathf.Abs(r - _emptyRow) == 1 && c == _emptyCol) ||
             (Mathf.Abs(c - _emptyCol) == 1 && r == _emptyRow))
         {
@@ -171,19 +256,45 @@ public class SlidePuzzle : PuzzleBase
             for (int c = 0; c < _gridSize; c++)
             {
                 int index = r * _gridSize + c;
-                if (index >= _buttons.Length) continue;
+                if (index >= _buttonImages.Length) continue;
 
-                Text txt = _buttons[index].GetComponentInChildren<Text>();
-                if (_board[r, c] == 0)
+                Image img = _buttonImages[index];
+                int tileNumber = _board[r, c];
+
+                if (tileNumber == 0) // ô trống
                 {
-                    _buttons[index].image.color = emptyColor;
-                    if (txt != null) txt.text = "";
+                    img.sprite = null;
+                    img.color = emptyColor;
                     _buttons[index].interactable = false;
                 }
                 else
                 {
-                    _buttons[index].image.color = defaultColor;
-                    if (txt != null) txt.text = _board[r, c].ToString();
+                    if (_useImageMode && _tileSprites != null && tileNumber - 1 < _tileSprites.Length)
+                    {
+                        // Hiển thị ảnh (từ custom hoặc slice)
+                        Sprite sprite = _tileSprites[tileNumber - 1];
+                        if (sprite != null)
+                        {
+                            img.sprite = sprite;
+                            img.color = Color.white;
+                        }
+                        else
+                        {
+                            // Nếu sprite bị null, fallback về số
+                            img.sprite = null;
+                            img.color = defaultColor;
+                            Text txt = _buttons[index].GetComponentInChildren<Text>();
+                            if (txt != null) txt.text = tileNumber.ToString();
+                        }
+                    }
+                    else
+                    {
+                        // Chế độ số
+                        img.sprite = null;
+                        img.color = defaultColor;
+                        Text txt = _buttons[index].GetComponentInChildren<Text>();
+                        if (txt != null) txt.text = tileNumber.ToString();
+                    }
                     _buttons[index].interactable = true;
                 }
             }
@@ -193,7 +304,7 @@ public class SlidePuzzle : PuzzleBase
     private void UpdateUI()
     {
         if (instructionText != null)
-            instructionText.text = _puzzleCompleted ? "🎉 Hoàn thành!" : "Sắp xếp các số 1-8";
+            instructionText.text = _puzzleCompleted ? "🎉 Hoàn thành!" : "Sắp xếp các mảnh ghép";
         if (moveCountText != null)
             moveCountText.text = $"Số bước: {_moveCount}";
     }
