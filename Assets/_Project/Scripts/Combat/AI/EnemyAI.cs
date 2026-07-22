@@ -9,7 +9,7 @@ public class EnemyAI
     private static readonly float[] RowWeights = { 0.15f, 0.25f, 0.60f };
 
     // Chọn skill và target cho 1 kẻ địch
-    public void PlanTurn(CombatUnit enemy, List<CombatUnit> playerUnits)
+    public virtual void PlanTurn(CombatUnit enemy, List<CombatUnit> playerUnits)
     {
         SkillData skill = ChooseSkill(enemy);
         if (skill == null) return;
@@ -35,8 +35,8 @@ public class EnemyAI
         // bằng cách tăng trọng số
         if (hasAtkBuff && skillList.Count >= 3)
         {
-            // 50% chọn skill cuối, 50% chia đều cho các skill còn lại
-            if (Random.value < 0.5f)
+            // 15% chọn skill cuối, 85% chia đều cho các skill còn lại
+            if (Random.value < 0.15f)
                 return skillList[skillList.Count - 1];
         }
 
