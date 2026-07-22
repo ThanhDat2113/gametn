@@ -29,6 +29,8 @@ public class CombatManager : MonoBehaviour
     private CombatStateMachine stateMachine = new();
     private ActionResolver actionResolver = new();
     private EnemyAI enemyAI = new();
+    private MadaraAI madaraAI = new();
+    private GilgameshAI gilgameshAI = new();
 
     private readonly Queue<ICombatCommand> _commandQueue = new Queue<ICombatCommand>();
     private bool _isProcessingCommands = false;
@@ -344,7 +346,7 @@ public class CombatManager : MonoBehaviour
                 actor.TriggerTurnStart();
 
                 // AI chọn skill + target
-                enemyAI.PlanTurn(actor, PlayerUnits);
+                GetAIForEnemy(actor).PlanTurn(actor, PlayerUnits);
 
                 if (actor.SelectedSkill != null && actor.SelectedTargets.Any())
                 {
@@ -527,7 +529,7 @@ public class CombatManager : MonoBehaviour
                 }
 
                 // AI chọn skill + target
-                enemyAI.PlanTurn(enemy, PlayerUnits);
+                GetAIForEnemy(enemy).PlanTurn(enemy, PlayerUnits);
 
                 if (enemy.SelectedSkill != null && enemy.SelectedTargets.Any())
                 {
@@ -596,7 +598,7 @@ public class CombatManager : MonoBehaviour
         Debug.Log($"[Interrupt] {enemy.UnitName} phản đòn {target?.UnitName}!");
 
         // AI chọn skill (nếu enemy không có skill hợp lệ, dùng skill đầu tiên)
-        enemyAI.PlanTurn(enemy, PlayerUnits);
+        GetAIForEnemy(enemy).PlanTurn(enemy, PlayerUnits);
 
         if (enemy.SelectedSkill != null && enemy.SelectedTargets.Any())
         {
@@ -734,11 +736,25 @@ public class CombatManager : MonoBehaviour
         if (CheckForCombatEnd()) yield break;
     }
 
-    private bool CheckForCombatEnd()
+    public bool CheckForCombatEnd()
     {
         if (!EnemyUnits.Any(e => e.IsAlive)) { stateMachine.TransitionTo(CombatPhase.Victory); return true; }
         if (!PlayerUnits.Any(p => p.IsAlive)) { stateMachine.TransitionTo(CombatPhase.Defeat); return true; }
         return false;
+    }
+
+    /// <summary>
+    /// Chọn AI phù hợp dựa vào tên enemy
+    /// </summary>
+    private EnemyAI GetAIForEnemy(CombatUnit enemy)
+    {
+        if (enemy == null) return enemyAI;
+        switch (enemy.UnitName)
+        {
+            case "Madara": return madaraAI;
+            case "Gilgamesh": return gilgameshAI;
+            default: return enemyAI;
+        }
     }
 
     public UnitView GetUnitView(CombatUnit unit) => unitViews.Find(v => v.LinkedUnit == unit);
