@@ -2639,10 +2639,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::QuestManager
   questTemplate: {fileID: 11400000, guid: 9d8624d6883012c46a5e881ef8e84c27, type: 2}
   questChain:
-  - {fileID: 11400000, guid: 318be08e48d30ea4684f60af84231bb8, type: 2}
-  - {fileID: 11400000, guid: a2425d858f281af498c9c8edc3329ef7, type: 2}
-  - {fileID: 11400000, guid: 9cc02b76a28a4b14dba5ae872081a4ef, type: 2}
-  - {fileID: 11400000, guid: 9aa4a12340db5bc468bc6c427d4c7e9a, type: 2}
   - {fileID: 11400000, guid: 9d8624d6883012c46a5e881ef8e84c27, type: 2}
   - {fileID: 11400000, guid: 4f4c1297508683d48b8bf733b2a9b74f, type: 2}
   - {fileID: 11400000, guid: 7f7029075218c2c489509202cd27011d, type: 2}
@@ -2652,6 +2648,10 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 0f63b9ab5fc21e74e9d91066344ea195, type: 2}
   - {fileID: 11400000, guid: 2fd6ebe51c874aa469ecf8a26236fab4, type: 2}
   - {fileID: 11400000, guid: 04ff1bd5687506849a16f4225f84fa60, type: 2}
+  - {fileID: 11400000, guid: 318be08e48d30ea4684f60af84231bb8, type: 2}
+  - {fileID: 11400000, guid: a2425d858f281af498c9c8edc3329ef7, type: 2}
+  - {fileID: 11400000, guid: 9cc02b76a28a4b14dba5ae872081a4ef, type: 2}
+  - {fileID: 11400000, guid: 9aa4a12340db5bc468bc6c427d4c7e9a, type: 2}
   questUI: {fileID: 1060176369}
   rewardUI: {fileID: 1380480495}
   OnStepCompleted:
@@ -8589,6 +8589,8 @@ MonoBehaviour:
   markerPrefab: {fileID: 3019558730982221199, guid: 7b99867bd3ede8f47ae21859cc82d330, type: 3}
   minimapMarkerPrefab: {fileID: 2361571076760816718, guid: ba8d7b95fd2b750459ed517c12c524e8, type: 3}
   markerContainer: {fileID: 542860691}
+  combatSceneNames:
+  - CombatScene
 --- !u!114 &1019474316
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9026,6 +9028,7 @@ Transform:
   - {fileID: 1059725248}
   - {fileID: 1019474314}
   - {fileID: 333353}
+  - {fileID: 2074706728}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!224 &1143502550 stripped
@@ -12140,6 +12143,22 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 9057390868638421423, guid: ef89fb1dd3b6a83409e2392ed2c9f690, type: 3}
+      propertyPath: m_fontSize
+      value: 43.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 9057390868638421423, guid: ef89fb1dd3b6a83409e2392ed2c9f690, type: 3}
+      propertyPath: m_margin.x
+      value: -2.3461914
+      objectReference: {fileID: 0}
+    - target: {fileID: 9057390868638421423, guid: ef89fb1dd3b6a83409e2392ed2c9f690, type: 3}
+      propertyPath: m_margin.z
+      value: -123.73822
+      objectReference: {fileID: 0}
+    - target: {fileID: 9057390868638421423, guid: ef89fb1dd3b6a83409e2392ed2c9f690, type: 3}
+      propertyPath: m_enableAutoSizing
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects:
     - {fileID: 4316083183860496308, guid: ef89fb1dd3b6a83409e2392ed2c9f690, type: 3}
@@ -12194,6 +12213,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AreaQuestStatusDisplay
   statusText: {fileID: 1921296218}
+--- !u!114 &1921296220 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 9057390868638421423, guid: ef89fb1dd3b6a83409e2392ed2c9f690, type: 3}
+  m_PrefabInstance: {fileID: 1921296216}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
 --- !u!1 &1949919246
 GameObject:
   m_ObjectHideFlags: 0
@@ -12521,6 +12551,53 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 34d0c683c1b77014db98ed22cf43568c, type: 3}
+--- !u!1 &2074706727
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2074706728}
+  - component: {fileID: 2074706729}
+  m_Layer: 0
+  m_Name: playtime
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2074706728
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2074706727}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1086502326}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2074706729
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2074706727}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e3c810aed0812e4b9acc756c59ed879, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlaytimeTracker
+  displayText: {fileID: 1921296220}
+  extraTexts: []
+  pauseWithTimeScale: 0
 --- !u!1 &2104468997
 GameObject:
   m_ObjectHideFlags: 0
