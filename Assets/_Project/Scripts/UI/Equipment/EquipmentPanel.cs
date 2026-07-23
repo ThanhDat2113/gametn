@@ -34,6 +34,10 @@ public class EquipmentPanel : MonoBehaviour
     private EquipmentSlot previewSlot;
     private bool isPreviewing = false;
 
+    // ── Thêm flag drag preview ──
+    private bool _isDraggingPreview = false;
+    public bool IsDraggingPreview => _isDraggingPreview;
+
     void OnEnable()
     {
         RefreshCharacterList();
@@ -135,8 +139,13 @@ public class EquipmentPanel : MonoBehaviour
     public CharacterData GetSelectedCharacter() => selectedCharacter;
     public bool TryGoBack() => false;
 
+    // ── Preview ──
+
     public void ShowPreview(EquipmentData equip)
     {
+        // Nếu đang kéo preview, không cho thay đổi preview (giữ nguyên item đang kéo)
+        if (_isDraggingPreview) return;
+
         if (selectedCharacter == null || equip == null) return;
 
         previewEquipment = equip;
@@ -154,13 +163,47 @@ public class EquipmentPanel : MonoBehaviour
 
     public void ClearPreview()
     {
+        _isDraggingPreview = false; // reset flag khi clear
         if (!isPreviewing) return;
         isPreviewing = false;
         previewEquipment = null;
-        RefreshStatsDisplay();
+        if (selectedCharacter != null)
+            RefreshStatsDisplay();
     }
 
-    private void RefreshStatsDisplay()
+    // ── Drag Preview ──
+
+    public void StartDragPreview(EquipmentData equip)
+    {
+        _isDraggingPreview = true;
+        // Gọi ShowPreview trực tiếp (bỏ qua check flag vì ta đang set true)
+        // Nhưng ShowPreview có check _isDraggingPreview nên sẽ bị chặn.
+        // Ta gọi trực tiếp logic preview để override
+        if (selectedCharacter == null || equip == null) return;
+
+        previewEquipment = equip;
+        previewSlot = equip.slot;
+        isPreviewing = true;
+
+        GetCurrentTotalStats(selectedCharacter, out int curHp, out int curAtk, out int curPdef, out int curMdef);
+        GetStatsWithEquipment(selectedCharacter, equip, previewSlot, out int newHp, out int newAtk, out int newPdef, out int newMdef);
+
+        UpdateStatText(statHpText, curHp, newHp, "HP");
+        UpdateStatText(statAtkText, curAtk, newAtk, "ATK");
+        UpdateStatText(statPdefText, curPdef, newPdef, "P.DEF");
+        UpdateStatText(statMdefText, curMdef, newMdef, "M.DEF");
+    }
+
+    public void EndDragPreview(bool keepPreview = false)
+    {
+        _isDraggingPreview = false;
+        if (!keepPreview)
+            ClearPreview();
+    }
+
+    // ── Stat Helpers ──
+
+    public void RefreshStatsDisplay()
     {
         if (selectedCharacter == null) return;
         GetCurrentTotalStats(selectedCharacter, out int hp, out int atk, out int pdef, out int mdef);

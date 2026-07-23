@@ -17,6 +17,11 @@ public class QuestMarkerManager : MonoBehaviour
              "để tránh tìm sai Canvas sau scene transition.")]
     [SerializeField] private RectTransform markerContainer;
 
+    [Header("Combat Scene")]
+    [Tooltip("Tên các scene combat (additive). Khi scene này đang loaded, " +
+             "QuestMarkerManager sẽ không spawn marker mới và sẽ re-evaluate khi nó unload.")]
+    [SerializeField] private List<string> combatSceneNames = new() { "CombatScene" };
+
     private readonly Dictionary<QuestMarkerBridge, QuestMarkerUI>   _activeMarkers        = new();
     private readonly Dictionary<QuestMarkerBridge, MinimapMarkerUI> _activeMinimapMarkers = new();
 
@@ -55,7 +60,8 @@ public class QuestMarkerManager : MonoBehaviour
     {
         QuestManager.Instance.OnStepChanged.AddListener(OnStepChanged);
         QuestManager.Instance.OnStepCompleted.AddListener(OnStepCompleted);
-        SceneManager.sceneLoaded += OnSceneLoaded;
+        SceneManager.sceneLoaded   += OnSceneLoaded;
+        SceneManager.sceneUnloaded += OnSceneUnloaded;
         EvaluateCurrentStep();
     }
 
@@ -67,7 +73,8 @@ public class QuestMarkerManager : MonoBehaviour
             QuestManager.Instance.OnStepChanged.RemoveListener(OnStepChanged);
             QuestManager.Instance.OnStepCompleted.RemoveListener(OnStepCompleted);
         }
-        SceneManager.sceneLoaded -= OnSceneLoaded;
+        SceneManager.sceneLoaded   -= OnSceneLoaded;
+        SceneManager.sceneUnloaded -= OnSceneUnloaded;
     }
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
@@ -78,12 +85,42 @@ public class QuestMarkerManager : MonoBehaviour
         if (markerContainer == null)
             ResolveMarkerContainer();
 
+        // Nếu là combat scene load vào → clear marker (MapRoot đang inactive,
+        // bridge không thể spawn đúng) nhưng KHÔNG spawn lại — chờ unload.
+        if (IsCombatScene(scene.name))
+        {
+            Debug.Log($"[QuestMarkerManager] Combat scene '{scene.name}' loaded — clear markers, không spawn.");
+            ClearAllMarkers();
+            return;
+        }
+
         // FIX: Delay 1 frame để các QuestMarkerBridge trong scene mới kịp Awake()
-        // trước khi FindObjectsByType chạy. Nếu gọi ngay thì sẽ tìm được 0 bridges.
-        // Dùng CoroutineRunner thay vì StartCoroutine trên chính GameObject này —
-        // QuestMarkerManager có thể đang bị tắt (vd: hệ thống ẩn object khi vào combat)
-        // ngay lúc OnSceneLoaded bắn ra, khiến StartCoroutine thất bại.
         CoroutineRunner.Instance.Run(EvaluateNextFrame());
+    }
+
+    /// <summary>
+    /// Khi combat scene unload → MapRoot/PersistentContainer đã được reactivate
+    /// bởi combat exit flow → re-evaluate để spawn lại marker.
+    /// Đây là fix chính cho bug "marker mất sau khi thoát combat".
+    /// </summary>
+    private void OnSceneUnloaded(Scene scene)
+    {
+        if (!IsCombatScene(scene.name)) return;
+
+        Debug.Log($"[QuestMarkerManager] Combat scene '{scene.name}' unloaded — re-evaluate markers.");
+
+        // Delay 1 frame để MapRoot/PersistentContainer kịp reactivate
+        // (combat exit flow reactivate trong coroutine, có thể chưa xong ngay lúc này)
+        CoroutineRunner.Instance.Run(EvaluateNextFrame());
+    }
+
+    private bool IsCombatScene(string sceneName)
+    {
+        if (combatSceneNames == null) return false;
+        foreach (var name in combatSceneNames)
+            if (string.Equals(name, sceneName, System.StringComparison.OrdinalIgnoreCase))
+                return true;
+        return false;
     }
 
     private IEnumerator EvaluateNextFrame()

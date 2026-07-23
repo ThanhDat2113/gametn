@@ -9,21 +9,21 @@ public class InventoryUI : MonoBehaviour
     public Button tabHelmetBtn;
     public Button tabArmorBtn;
     public Button tabAccessoryBtn;
-    public Button tabMaterialBtn;
+    public Button tabMaterialBtn; // giữ lại nhưng sẽ ẩn
 
     [Header("Panels (Container của từng tab)")]
     public GameObject weaponPanel;
     public GameObject helmetPanel;
     public GameObject armorPanel;
     public GameObject accessoryPanel;
-    public GameObject materialPanel;
+    public GameObject materialPanel; // giữ lại nhưng sẽ ẩn
 
     [Header("Slot Containers (Grid Layout Group bên trong mỗi panel)")]
     public Transform weaponSlotContainer;
     public Transform helmetSlotContainer;
     public Transform armorSlotContainer;
     public Transform accessorySlotContainer;
-    public Transform materialSlotContainer;
+    public Transform materialSlotContainer; // giữ lại nhưng không dùng
 
     [Header("Slot Settings")]
     public GameObject slotPrefab;
@@ -33,16 +33,25 @@ public class InventoryUI : MonoBehaviour
     private List<InventorySlotUI> helmetSlotUIList = new List<InventorySlotUI>();
     private List<InventorySlotUI> armorSlotUIList = new List<InventorySlotUI>();
     private List<InventorySlotUI> accessorySlotUIList = new List<InventorySlotUI>();
-    private List<InventorySlotUI> materialSlotUIList = new List<InventorySlotUI>();
+    // Không cần list cho material
+
+    void Awake()
+    {
+        // Ẩn tab Material và panel Material
+        if (tabMaterialBtn != null)
+            tabMaterialBtn.gameObject.SetActive(false);
+        if (materialPanel != null)
+            materialPanel.SetActive(false);
+    }
 
     void Start()
     {
-        // Tạo các slot tĩnh cho từng panel
+        // Tạo slot cho các panel còn lại (bỏ material)
         CreateSlots(weaponSlotContainer, weaponSlotUIList);
         CreateSlots(helmetSlotContainer, helmetSlotUIList);
         CreateSlots(armorSlotContainer, armorSlotUIList);
         CreateSlots(accessorySlotContainer, accessorySlotUIList);
-        CreateSlots(materialSlotContainer, materialSlotUIList);
+        // KHÔNG tạo slot cho material
 
         // Đăng ký sự kiện thay đổi inventory
         if (InventoryManager.Instance != null)
@@ -50,12 +59,12 @@ public class InventoryUI : MonoBehaviour
 
         RefreshUI();
 
-        // Gán sự kiện cho các nút tab
+        // Gán sự kiện cho các nút tab (bỏ material)
         tabWeaponBtn.onClick.AddListener(() => ShowTab(EquipmentSlot.Weapon));
         tabHelmetBtn.onClick.AddListener(() => ShowTab(EquipmentSlot.Helmet));
         tabArmorBtn.onClick.AddListener(() => ShowTab(EquipmentSlot.Armor));
         tabAccessoryBtn.onClick.AddListener(() => ShowTab(EquipmentSlot.Accessory));
-        tabMaterialBtn.onClick.AddListener(() => ShowTab(null)); // null = material
+        // Không gán cho tabMaterialBtn
 
         // Mặc định hiện tab vũ khí
         ShowTab(EquipmentSlot.Weapon);
@@ -80,17 +89,17 @@ public class InventoryUI : MonoBehaviour
         ResetSlots(helmetSlotUIList);
         ResetSlots(armorSlotUIList);
         ResetSlots(accessorySlotUIList);
-        ResetSlots(materialSlotUIList);
+        // Không reset material
 
         var inventory = InventoryManager.Instance.inventory;
 
-        int weaponIdx = 0, helmetIdx = 0, armorIdx = 0, accessoryIdx = 0, materialIdx = 0;
+        int weaponIdx = 0, helmetIdx = 0, armorIdx = 0, accessoryIdx = 0;
 
         foreach (var invSlot in inventory.slots)
         {
             if (invSlot.item == null) continue;
 
-            // Nếu là trang bị
+            // Chỉ xử lý trang bị (bỏ qua Material)
             if (invSlot.item is EquipmentData equip)
             {
                 switch (equip.slot)
@@ -113,12 +122,7 @@ public class InventoryUI : MonoBehaviour
                         break;
                 }
             }
-            // Nếu là nguyên liệu
-            else if (invSlot.item.itemType == ItemType.Material)
-            {
-                if (materialIdx < materialSlotUIList.Count)
-                    materialSlotUIList[materialIdx++].Setup(invSlot.item, invSlot.amount);
-            }
+            // Bỏ qua itemType == Material
         }
     }
 
@@ -127,26 +131,22 @@ public class InventoryUI : MonoBehaviour
         foreach (var slot in slotList) slot.SetEmpty();
     }
 
-    void ShowTab(EquipmentSlot? slot)
+    void ShowTab(EquipmentSlot slot)
     {
         // Ẩn tất cả panel
         weaponPanel.SetActive(false);
         helmetPanel.SetActive(false);
         armorPanel.SetActive(false);
         accessoryPanel.SetActive(false);
-        materialPanel.SetActive(false);
+        // materialPanel đã ẩn từ đầu, không cần set
 
-        if (slot == null)
-            materialPanel.SetActive(true);
-        else
+        // Hiện panel tương ứng
+        switch (slot)
         {
-            switch (slot.Value)
-            {
-                case EquipmentSlot.Weapon: weaponPanel.SetActive(true); break;
-                case EquipmentSlot.Helmet: helmetPanel.SetActive(true); break;
-                case EquipmentSlot.Armor: armorPanel.SetActive(true); break;
-                case EquipmentSlot.Accessory: accessoryPanel.SetActive(true); break;
-            }
+            case EquipmentSlot.Weapon: weaponPanel.SetActive(true); break;
+            case EquipmentSlot.Helmet: helmetPanel.SetActive(true); break;
+            case EquipmentSlot.Armor: armorPanel.SetActive(true); break;
+            case EquipmentSlot.Accessory: accessoryPanel.SetActive(true); break;
         }
     }
 }
