@@ -1,10 +1,9 @@
-// EquipmentDragItem.cs
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using TMPro;
 
-public class EquipmentDragItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerClickHandler
+public class EquipmentDragItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerEnterHandler, IPointerExitHandler
 {
     public EquipmentData Equipment { get; private set; }
 
@@ -15,8 +14,8 @@ public class EquipmentDragItem : MonoBehaviour, IBeginDragHandler, IDragHandler,
     private GameObject ghost;
     private EquipmentPanel panel;
 
-    // Sự kiện khi click vào item (có thể dùng hoặc không)
-    public event System.Action<EquipmentData> OnItemClicked;
+    private bool _isDragging = false;
+    private bool _isHovering = false;
 
     public void Initialize(EquipmentData equip, EquipmentPanel parentPanel)
     {
@@ -60,7 +59,6 @@ public class EquipmentDragItem : MonoBehaviour, IBeginDragHandler, IDragHandler,
         {
             icon.sprite = null;
             icon.enabled = true;
-            // Đặt alpha = 0 để icon trong suốt hoàn toàn
             icon.color = new Color(1, 1, 1, 0f);
         }
         if (nameText != null)
@@ -73,12 +71,18 @@ public class EquipmentDragItem : MonoBehaviour, IBeginDragHandler, IDragHandler,
         ghost = null;
     }
 
+    // ── Drag ──
+
     public void OnBeginDrag(PointerEventData eventData)
     {
         if (Equipment == null) return;
 
+        _isDragging = true;
         canvasGroup.alpha = 0.6f;
         canvasGroup.blocksRaycasts = false;
+
+        // Bắt đầu drag preview - giữ preview của item này
+        panel?.StartDragPreview(Equipment);
 
         Canvas rootCanvas = GetComponentInParent<Canvas>();
         if (rootCanvas != null) rootCanvas = rootCanvas.rootCanvas;
@@ -109,21 +113,39 @@ public class EquipmentDragItem : MonoBehaviour, IBeginDragHandler, IDragHandler,
 
     public void OnEndDrag(PointerEventData eventData)
     {
+        _isDragging = false;
         DestroyGhost();
         if (canvasGroup != null)
         {
             canvasGroup.alpha = 1f;
             canvasGroup.blocksRaycasts = true;
         }
+
+        // Kết thúc drag preview - clear preview (không giữ lại)
+        panel?.EndDragPreview(false);
     }
 
-    // Xử lý click để hiển thị preview chỉ số
-    public void OnPointerClick(PointerEventData eventData)
+    // ── Hover ──
+
+    public void OnPointerEnter(PointerEventData eventData)
     {
-        if (Equipment != null && panel != null)
-        {
-            panel.ShowPreview(Equipment);
-            OnItemClicked?.Invoke(Equipment);
-        }
+        if (Equipment == null || panel == null) return;
+
+        // Nếu panel đang trong trạng thái drag preview, không thay đổi preview
+        if (panel.IsDraggingPreview) return;
+
+        _isHovering = true;
+        panel.ShowPreview(Equipment);
+    }
+
+    public void OnPointerExit(PointerEventData eventData)
+    {
+        _isHovering = false;
+
+        // Nếu đang drag, không clear preview (vì preview đang được quản lý bởi drag)
+        if (_isDragging) return;
+        if (panel == null) return;
+
+        panel.ClearPreview();
     }
 }

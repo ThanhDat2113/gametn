@@ -1,4 +1,3 @@
-// EquipmentSlotUI.cs
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
@@ -18,12 +17,11 @@ public class EquipmentSlotUI : MonoBehaviour, IDropHandler, IPointerClickHandler
 
     private void Awake()
     {
-        // Đảm bảo có Image với raycastTarget=true để OnDrop fire được
         var bg = GetComponent<Image>();
         if (bg == null)
         {
             bg = gameObject.AddComponent<Image>();
-            bg.color = new Color(0, 0, 0, 0); // trong suốt
+            bg.color = new Color(0, 0, 0, 0);
         }
         bg.raycastTarget = true;
     }
@@ -72,24 +70,29 @@ public class EquipmentSlotUI : MonoBehaviour, IDropHandler, IPointerClickHandler
         EquipmentManager.Instance.Equip(currentCharacter, slotType, dragItem.Equipment);
         Refresh();
         panel?.RefreshEquipmentList();
-        // KHÔNG gọi dragItem.DestroyGhost() ở đây — OnEndDrag sẽ xử lý
+
+        // Cập nhật stat thực tế và xóa preview
+        if (panel != null)
+        {
+            panel.ClearPreview();
+            panel.RefreshStatsDisplay();
+        }
     }
 
     public void OnPointerClick(PointerEventData eventData)
     {
-        // Nhấn chuột phải: gỡ trang bị
-        if (eventData.button == PointerEventData.InputButton.Right)
+        if (eventData.button == PointerEventData.InputButton.Right ||
+            (eventData.button == PointerEventData.InputButton.Left && eventData.clickCount == 2))
         {
             EquipmentManager.Instance.Unequip(currentCharacter, slotType);
             Refresh();
             panel?.RefreshEquipmentList();
-        }
-        // Nhấn đúp chuột trái: cũng gỡ trang bị
-        else if (eventData.clickCount == 2 && eventData.button == PointerEventData.InputButton.Left)
-        {
-            EquipmentManager.Instance.Unequip(currentCharacter, slotType);
-            Refresh();
-            panel?.RefreshEquipmentList();
+
+            if (panel != null)
+            {
+                panel.ClearPreview();
+                panel.RefreshStatsDisplay();
+            }
         }
     }
 }
