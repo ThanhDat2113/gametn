@@ -807,7 +807,6 @@ public class CombatManager : MonoBehaviour
             if (afterimage != null)
             {
                 afterimage.CurrentHP = 0;
-                afterimage.IsAlive = false;
                 // Xóa view nếu có
                 var view = GetUnitView(afterimage);
                 if (view != null)
