@@ -252,7 +252,8 @@ public class QuestManager : MonoBehaviour
                          || step.type == QuestStepType.MemoryGrove
                          || step.type == QuestStepType.SlidePuzzle
                          || step.type == QuestStepType.SpirePuzzle
-                         || step.type == QuestStepType.FlowPuzzle;
+                         || step.type == QuestStepType.FlowPuzzle
+                         || step.type == QuestStepType.Unblock;
         if (isPuzzleType && step.targetId == triggerID && !step.isCompleted)
         {
             Debug.Log($"[QuestManager] Puzzle completed: {step.description}");

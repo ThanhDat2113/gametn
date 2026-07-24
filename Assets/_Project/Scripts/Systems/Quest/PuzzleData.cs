@@ -33,6 +33,9 @@ public class PuzzleData : ScriptableObject
 
     [Header("Flow Puzzle Config")]
     public FlowPuzzleConfig flowConfig;
+
+    [Header("Unblock Puzzle Config")]
+    public UnblockConfig unblockConfig;
 }
 
 // ─────────────────────────────
@@ -111,4 +114,23 @@ public class FlowPuzzleConfig
     // Keep legacy fields
     public int gridSize = 5;
     public Color[] pairColors;
+}
+
+[System.Serializable]
+public class UnblockConfig
+{
+    [Header("Grid Size")]
+    public int gridWidth = 4;
+    public int gridHeight = 5;
+
+    [Header("Board Layout (rows of chars)")]
+    [TextArea(5, 10)]
+    public string[] boardLayout;
+
+    [Header("Visual")]
+    public Color emptyColor = new Color(0.1f, 0.1f, 0.1f);
+    public Color wallColor = new Color(0.5f, 0.5f, 0.5f);
+    public Color blockColor = new Color(0.6f, 0.4f, 0.2f);
+    public Color redBlockColor = Color.red;
+    public Color goalColor = Color.green;
 }

@@ -13,7 +13,8 @@ public enum QuestStepType
     MemoryGrove,
     SlidePuzzle,
     SpirePuzzle,
-    FlowPuzzle
+    FlowPuzzle,
+    Unblock
 }
 
 [System.Serializable]
