@@ -80,7 +80,7 @@ public class ClashAnimationSequence : MonoBehaviour
         if (shouldMove)
             yield return StartCoroutine(ReturnPhase(actorView, actorOrigin, result));
 
-        yield return StartCoroutine(CleanupPhase());
+        yield return StartCoroutine(CleanupPhase(result));
     }
 
     private bool ShouldCharacterMove(CombatUnit actor, SkillData skill)
@@ -271,7 +271,7 @@ public class ClashAnimationSequence : MonoBehaviour
         actorView.SetAnimationTrigger(AnimationConstants.Idle);
     }
 
-    private IEnumerator CleanupPhase()
+    private IEnumerator CleanupPhase(ActionResult result)
     {
         foreach (var view in allUnitViews)
             if (view != null) view.PlayAnimation(AnimationConstants.Idle);
