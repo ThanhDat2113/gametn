@@ -738,7 +738,12 @@ public class CombatManager : MonoBehaviour
 
     public bool CheckForCombatEnd()
     {
-        if (!EnemyUnits.Any(e => e.IsAlive)) { stateMachine.TransitionTo(CombatPhase.Victory); return true; }
+        // Bỏ qua Afterimage (clone của Hassan) khi kiểm tra victory để tránh bị kẹt
+        if (!EnemyUnits.Any(e => e.IsAlive && e.UnitName != "Afterimage"))
+        {
+            stateMachine.TransitionTo(CombatPhase.Victory);
+            return true;
+        }
         if (!PlayerUnits.Any(p => p.IsAlive)) { stateMachine.TransitionTo(CombatPhase.Defeat); return true; }
         return false;
     }
@@ -771,9 +776,14 @@ public class CombatManager : MonoBehaviour
         if (_currentEnemyGroup != null && _currentEnemyGroup.victoryFanfare != null && AudioManager.Instance != null)
             AudioManager.Instance.PlaySFX2D(_currentEnemyGroup.victoryFanfare, 0.8f);
 
+        // Xóa tất cả Afterimage sau khi victory để tránh lỗi camera/scene sau combat
+        KillAllAfterimages();
+
         int totalExp = 0;
         foreach (var enemy in EnemyUnits)
         {
+            // Bỏ qua Afterimage khi tính exp
+            if (enemy.UnitName == "Afterimage") continue;
             int baseReward = enemy.Data != null ? enemy.Data.expReward : 100;
             int bonus = (enemy.Level - 1) * 10;
             totalExp += baseReward + bonus;
@@ -787,6 +797,30 @@ public class CombatManager : MonoBehaviour
         var expGained = new Dictionary<CharacterData, int>();
         foreach (var player in alivePlayers) expGained[player.Data] = expPerPlayer;
         OnVictory?.Invoke(expGained);
+    }
+
+    private void KillAllAfterimages()
+    {
+        if (CombatManager.Instance == null) return;
+        foreach (var afterimage in EnemyUnits.Where(e => e.UnitName == "Afterimage").ToList())
+        {
+            if (afterimage != null)
+            {
+                afterimage.CurrentHP = 0;
+                afterimage.IsAlive = false;
+                // Xóa view nếu có
+                var view = GetUnitView(afterimage);
+                if (view != null)
+                {
+                    if (view.gameObject != null)
+                        Object.Destroy(view.gameObject);
+                    unitViews.Remove(view);
+                }
+            }
+        }
+        // Xóa khỏi danh sách
+        EnemyUnits.RemoveAll(e => e.UnitName == "Afterimage");
+        Debug.Log("[CombatManager] Đã xóa tất cả Afterimage sau Victory.");
     }
 
     private void DoDefeat()
