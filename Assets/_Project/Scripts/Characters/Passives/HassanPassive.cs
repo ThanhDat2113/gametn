@@ -38,9 +38,10 @@ public class HassanPassive : PassiveAbility
     private bool isExposed = false;         // Hassan đang lộ diện (không có afterimage)
     private bool hasRevived = false;
     private int turnsSinceExposed = 0;
-    
+
     // Lưu reference để spawn view cho afterimage
     private CombatUnit originalHassan;
+    private Dictionary<CombatUnit, UnitView> afterimageViews = new Dictionary<CombatUnit, UnitView>();
 
     public override void Initialize(CombatUnit owner)
     {
@@ -75,19 +76,19 @@ public class HassanPassive : PassiveAbility
     public override void Cleanup()
     {
         base.Cleanup();
-        
+
         if (Owner != null)
         {
             Owner.OnDied -= OnOwnerDied;
             Owner.OnKill -= OnOwnerKilledUnit;
         }
-        
+
         if (CombatManager.Instance != null)
         {
             CombatManager.Instance.OnEnemyTurnEnd -= OnEnemyTurnEnd;
             CombatManager.Instance.OnCombatStarted -= OnCombatStarted;
         }
-        
+
         // Cleanup afterimages khỏi CombatManager
         if (CombatManager.Instance != null)
         {
@@ -95,11 +96,32 @@ public class HassanPassive : PassiveAbility
             {
                 if (ai != null)
                 {
+                    // Hủy GameObject view nếu còn tồn tại
+                    if (afterimageViews.TryGetValue(ai, out var view) && view != null && view.gameObject != null)
+                    {
+                        Object.Destroy(view.gameObject);
+                    }
                     CombatManager.Instance.EnemyUnits.Remove(ai);
+                }
+            }
+
+            // Xóa hết view khỏi unitViews
+            var unitViewsField = typeof(CombatManager).GetField("unitViews",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            if (unitViewsField != null)
+            {
+                var unitViews = unitViewsField.GetValue(CombatManager.Instance) as List<UnitView>;
+                if (unitViews != null)
+                {
+                    foreach (var kvp in afterimageViews)
+                    {
+                        unitViews.Remove(kvp.Value);
+                    }
                 }
             }
         }
         afterimages.Clear();
+        afterimageViews.Clear();
     }
 
     // ── Spawn Afterimage ───────────────────────────────────────
@@ -211,14 +233,14 @@ public class HassanPassive : PassiveAbility
     {
         var cm = CombatManager.Instance;
         if (cm == null) return;
-        
-        Transform gridTransform = cm.enemyGridSlots != null && gridSlot < cm.enemyGridSlots.Length 
-            ? cm.enemyGridSlots[gridSlot] 
+
+        Transform gridTransform = cm.enemyGridSlots != null && gridSlot < cm.enemyGridSlots.Length
+            ? cm.enemyGridSlots[gridSlot]
             : null;
         if (gridTransform == null) return;
-        
+
         Vector3 spawnPos = gridTransform.position;
-        
+
         // Dùng prefab của Hassan để spawn
         GameObject prefab = Owner.Data != null ? Owner.Data.prefab : null;
         if (prefab == null)
@@ -226,10 +248,10 @@ public class HassanPassive : PassiveAbility
             Debug.LogError("[HassanPassive] Hassan chưa có prefab!");
             return;
         }
-        
+
         var go = Object.Instantiate(prefab, spawnPos, Quaternion.identity);
         UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(go, cm.gameObject.scene);
-        
+
         var view = go.GetComponent<UnitView>();
         if (view == null)
         {
@@ -237,10 +259,10 @@ public class HassanPassive : PassiveAbility
             Object.Destroy(go);
             return;
         }
-        
+
         // Setup view cho afterimage
         view.Setup(aiUnit);
-        
+
         // Afterimage visual: alpha thấp, hơi trong suốt
         if (view.spriteRenderer != null)
         {
@@ -248,10 +270,10 @@ public class HassanPassive : PassiveAbility
             c.a = 0.5f;  // 50% opacity
             view.spriteRenderer.color = c;
         }
-        
+
         // Lưu vào danh sách unitViews của CombatManager
         // Dùng reflection để truy cập unitViews private field
-        var unitViewsField = typeof(CombatManager).GetField("unitViews", 
+        var unitViewsField = typeof(CombatManager).GetField("unitViews",
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
         if (unitViewsField != null)
         {
@@ -261,19 +283,44 @@ public class HassanPassive : PassiveAbility
                 unitViews.Add(view);
             }
         }
+
+        // Lưu reference để cleanup sau này
+        afterimageViews[aiUnit] = view;
     }
 
     // ── Afterimage chết ─────────────────────────────────────────
     private void OnAfterimageKilled(CombatUnit afterimage)
     {
         if (!afterimages.Contains(afterimage)) return;
-        
+
         afterimages.Remove(afterimage);
         Debug.Log($"[HassanPassive] Afterimage bị tiêu diệt! Còn {afterimages.Count} afterimage.");
-        
-        // Xóa khỏi EnemyUnits
+
+        // Xóa UnitView của afterimage khỏi scene và khỏi CombatManager.unitViews
         if (CombatManager.Instance != null)
         {
+            // Lấy view trực tiếp từ dictionary thay vì tìm qua CombatManager
+            if (afterimageViews.TryGetValue(afterimage, out var view))
+            {
+                afterimageViews.Remove(afterimage);
+                if (view != null)
+                {
+                    if (view.gameObject != null)
+                        Object.Destroy(view.gameObject);
+                }
+            }
+
+            // Xóa khỏi unitViews qua reflection vì unitViews là private
+            var unitViewsField = typeof(CombatManager).GetField("unitViews",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            if (unitViewsField != null)
+            {
+                var unitViews = unitViewsField.GetValue(CombatManager.Instance) as List<UnitView>;
+                if (unitViews != null)
+                    unitViews.RemoveAll(v => v == null || (v.LinkedUnit == afterimage));
+            }
+
+            // Xóa khỏi EnemyUnits
             CombatManager.Instance.EnemyUnits.Remove(afterimage);
         }
         
