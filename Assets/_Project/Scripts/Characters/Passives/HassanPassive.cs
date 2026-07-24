@@ -296,53 +296,33 @@ public class HassanPassive : PassiveAbility
         afterimages.Remove(afterimage);
         Debug.Log($"[HassanPassive] Afterimage bị tiêu diệt! Còn {afterimages.Count} afterimage.");
 
-        // Xóa UnitView của afterimage khỏi scene và khỏi CombatManager.unitViews
+        // Chỉ xóa khỏi EnemyUnits, giữ view trong unitViews để camera continue follow bình thường
         if (CombatManager.Instance != null)
         {
-            // Lấy view trực tiếp từ dictionary thay vì tìm qua CombatManager
-            if (afterimageViews.TryGetValue(afterimage, out var view))
-            {
-                afterimageViews.Remove(afterimage);
-                if (view != null)
-                {
-                    if (view.gameObject != null)
-                        Object.Destroy(view.gameObject);
-                }
-            }
-
-            // Xóa khỏi unitViews qua reflection vì unitViews là private
-            var unitViewsField = typeof(CombatManager).GetField("unitViews",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            if (unitViewsField != null)
-            {
-                var unitViews = unitViewsField.GetValue(CombatManager.Instance) as List<UnitView>;
-                if (unitViews != null)
-                    unitViews.RemoveAll(v => v == null || (v.LinkedUnit == afterimage));
-            }
-
-            // Xóa khỏi EnemyUnits
+            // Giữ view trong unitViews (không xóa) để camera vẫn có thể nhìn thấy animation chết
+            // Chỉ xóa unit đi khỏi danh sách enemy đang sống
             CombatManager.Instance.EnemyUnits.Remove(afterimage);
         }
-        
+
         // Mỗi afterimage bị phá → Hassan nhận +5% sát thương từ mọi nguồn VĨNH VIỄN
         Owner.ApplyStatus(StatusEffectType.DiemYeu, 0, 0.05f, 1);
         Debug.Log($"[HassanPassive] Hassan nhận thêm 5% sát thương từ mọi nguồn (vĩnh viễn)!");
-        
+
         // Bù lại: Hassan hành động thêm 1 lần trong round hiện tại (Reset mỗi lượt enemy)
         if (CombatManager.Instance != null)
             CombatManager.Instance.GrantExtraAction(Owner);
         Debug.Log($"[HassanPassive] Hassan được thêm 1 action trong round này! (ActionsRemaining: {Owner.ActionsRemainingThisTurn})");
-        
+
         if (afterimages.Count == 0)
         {
             // Hết afterimage → Hassan lộ diện
             isExposed = true;
             turnsSinceExposed = 0;
             SetHassanTargetable(true);
-            
+
             // Buff ATK +50% vì giận dữ, kéo dài 1 lượt
             Owner.ApplyBuff(StatType.ATK, EXPOSED_ATK_BUFF, EXPOSED_BUFF_DURATION);
-            
+
             Debug.Log($"[HassanPassive] Hassan lộ diện! ATK +50% trong {EXPOSED_BUFF_DURATION} lượt.");
         }
     }
