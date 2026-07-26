@@ -504,8 +504,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: "Ch\xFA th\xEDch slide"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: c4bcafed2a5737a4c90050b5f0af5a7d, type: 2}
+  m_sharedMaterial: {fileID: -7932619690897320833, guid: c4bcafed2a5737a4c90050b5f0af5a7d, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -529,10 +529,10 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 28
+  m_fontSize: 72
   m_fontSizeBase: 28
   m_fontWeight: 400
-  m_enableAutoSizing: 0
+  m_enableAutoSizing: 1
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 0
@@ -1051,14 +1051,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0.15}
+  m_Color: {r: 1, g: 1, b: 1, a: 0.6862745}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: 152894703, guid: 81ab4e05d3b0471438616c359ecb80c6, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -1785,31 +1785,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CombatTutorialManager
   tutorialMode: 1
-  steps:
-  - message: "b\u1EA5m v\xE0o nh\xE2n v\u1EADt"
-    advanceMode: 1
-    requiredAction: 5
-    highlightTarget: {fileID: 0}
-    highlightTargetName: Eugeo
-  - message: "b\u1EA5m v\xE0o skill"
-    advanceMode: 1
-    requiredAction: 5
-    highlightTarget: {fileID: 0}
-    highlightTargetName: SkillButton_Slash
-  - message: "b\u1EA5m v\xE0o Enemy"
-    advanceMode: 1
-    requiredAction: 5
-    highlightTarget: {fileID: 0}
-    highlightTargetName: Slime
+  steps: []
   slides:
-  - image: {fileID: 0}
-    caption: 
-  - image: {fileID: 0}
-    caption: 
-  - image: {fileID: 0}
-    caption: 
-  - image: {fileID: 0}
-    caption: 
+  - image: {fileID: 21300000, guid: 4c70bd225d683fb43a7c56d7d33ff2f7, type: 3}
+    caption: "Nh\xE2n v\u1EADt"
+  - image: {fileID: 21300000, guid: 2e79e21a30caa884d9b08a9c74a5bdab, type: 3}
+    caption: "B\u1EA3ng tr\u1EA1ng th\xE1i"
+  - image: {fileID: 21300000, guid: 02a0ec34eea7e7042be5322e509ca184, type: 3}
+    caption: AP
+  - image: {fileID: 21300000, guid: f3138356b7b249b44b76e563850867b9, type: 3}
+    caption: "Thanh k\u1EF9 n\u0103ng"
+  - image: {fileID: 21300000, guid: ddc92a24c15f91748829465966e12067, type: 3}
+    caption: "T\u1EA5n c\xF4ng k\u1EBB \u0111\u1ECBch"
   slideshowPanel: {fileID: 1290441182}
   slideImage: {fileID: 180886042}
   slideCaptionText: {fileID: 255394707}
@@ -3096,7 +3083,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &1290441183
 RectTransform:
   m_ObjectHideFlags: 0
@@ -3725,8 +3712,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: "Ti\u1EBFp >"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: c4bcafed2a5737a4c90050b5f0af5a7d, type: 2}
+  m_sharedMaterial: {fileID: -7932619690897320833, guid: c4bcafed2a5737a4c90050b5f0af5a7d, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -3750,10 +3737,10 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 24
+  m_fontSize: 72
   m_fontSizeBase: 24
   m_fontWeight: 400
-  m_enableAutoSizing: 0
+  m_enableAutoSizing: 1
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 0
@@ -4462,8 +4449,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: 1 / 1
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: c4bcafed2a5737a4c90050b5f0af5a7d, type: 2}
+  m_sharedMaterial: {fileID: -7932619690897320833, guid: c4bcafed2a5737a4c90050b5f0af5a7d, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -4487,10 +4474,10 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 22
+  m_fontSize: 72
   m_fontSizeBase: 22
   m_fontWeight: 400
-  m_enableAutoSizing: 0
+  m_enableAutoSizing: 1
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 0
@@ -4828,14 +4815,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0.15}
+  m_Color: {r: 1, g: 1, b: 1, a: 0.6862745}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: 152894703, guid: 81ab4e05d3b0471438616c359ecb80c6, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -4956,8 +4943,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: "< Tr\u01B0\u1EDBc"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: c4bcafed2a5737a4c90050b5f0af5a7d, type: 2}
+  m_sharedMaterial: {fileID: -7932619690897320833, guid: c4bcafed2a5737a4c90050b5f0af5a7d, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -4981,10 +4968,10 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 24
+  m_fontSize: 72
   m_fontSizeBase: 24
   m_fontWeight: 400
-  m_enableAutoSizing: 0
+  m_enableAutoSizing: 1
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 0
