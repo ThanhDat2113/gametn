@@ -7666,6 +7666,7 @@ Terrain:
   m_AllowAutoConnect: 1
   m_EnableHeightmapRayTracing: 1
   m_EnableTreesAndDetailsRayTracing: 0
+  m_EnableHeightmapLODFrustumCulling: 1
   m_TreeMotionVectorModeOverride: 3
 --- !u!4 &142001443
 Transform:
@@ -15837,6 +15838,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: a32b1b7a695920a499d69cc6f3001a78, type: 3}
       insertIndex: -1
       addedObject: {fileID: 291536833}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: a32b1b7a695920a499d69cc6f3001a78, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 291536834}
   m_SourcePrefab: {fileID: 100100000, guid: a32b1b7a695920a499d69cc6f3001a78, type: 3}
 --- !u!1 &291536830 stripped
 GameObject:
@@ -15884,6 +15888,28 @@ MonoBehaviour:
   questId: 8
   stepIndex: 9
   targetObject: {fileID: 291536830}
+--- !u!114 &291536834
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 291536830}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8e315741d89cc654db028e87a1b8a417, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestTeleportTrigger
+  questId: 8
+  stepIndex: 9
+  destinationTransform: {fileID: 0}
+  teleportTimeline: {fileID: 0}
+  waitForTimeline: 0
+  useSceneTransition: 0
+  targetSceneName: 
+  spawnPosKeyPrefix: Spawn
+  playerTransform: {fileID: 0}
+  dialogueWaitTimeout: 30
 --- !u!1 &291730729
 GameObject:
   m_ObjectHideFlags: 0
@@ -41320,6 +41346,7 @@ Terrain:
   m_AllowAutoConnect: 1
   m_EnableHeightmapRayTracing: 1
   m_EnableTreesAndDetailsRayTracing: 0
+  m_EnableHeightmapLODFrustumCulling: 1
   m_TreeMotionVectorModeOverride: 3
 --- !u!4 &901015233
 Transform:
@@ -42123,6 +42150,7 @@ Terrain:
   m_AllowAutoConnect: 1
   m_EnableHeightmapRayTracing: 1
   m_EnableTreesAndDetailsRayTracing: 0
+  m_EnableHeightmapLODFrustumCulling: 1
   m_TreeMotionVectorModeOverride: 3
 --- !u!4 &923288441
 Transform:
@@ -60741,6 +60769,7 @@ Terrain:
   m_AllowAutoConnect: 1
   m_EnableHeightmapRayTracing: 1
   m_EnableTreesAndDetailsRayTracing: 0
+  m_EnableHeightmapLODFrustumCulling: 1
   m_TreeMotionVectorModeOverride: 3
 --- !u!4 &1260052426
 Transform:
@@ -73023,6 +73052,7 @@ Terrain:
   m_AllowAutoConnect: 1
   m_EnableHeightmapRayTracing: 1
   m_EnableTreesAndDetailsRayTracing: 0
+  m_EnableHeightmapLODFrustumCulling: 1
   m_TreeMotionVectorModeOverride: 3
 --- !u!4 &1579537822
 Transform:
@@ -73735,6 +73765,7 @@ GameObject:
   - component: {fileID: 1590870187}
   - component: {fileID: 1590870186}
   - component: {fileID: 1590870185}
+  - component: {fileID: 1590870193}
   m_Layer: 7
   m_Name: Hassan 1
   m_TagString: Untagged
@@ -73755,7 +73786,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::QuestMarkerBridge
   questId: 8
-  stepIndex: 8
+  stepIndex: 6
   headPosition: {fileID: 1658229143}
   defaultHeadOffset: 0
 --- !u!114 &1590870186
@@ -73954,6 +73985,28 @@ Transform:
   - {fileID: 1658229143}
   m_Father: {fileID: 1554058909}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1590870193
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1590870184}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5ad82cdbe057f4b4c98bf85627c6d0f0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestTimelineTrigger
+  questId: 8
+  stepIndex: 6
+  timeline: {fileID: 1017896521052219936}
+  waitForTimeline: 1
+  objectsToHideDuringTimeline:
+  - {fileID: 2125574116}
+  - {fileID: 1590870184}
+  hidePlayerRenderersDuringTimeline: 1
+  timelineCamera: {fileID: 0}
+  dialogueWaitTimeout: 30
 --- !u!1001 &1595694126
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -94655,6 +94708,7 @@ Terrain:
   m_AllowAutoConnect: 1
   m_EnableHeightmapRayTracing: 1
   m_EnableTreesAndDetailsRayTracing: 0
+  m_EnableHeightmapLODFrustumCulling: 1
   m_TreeMotionVectorModeOverride: 3
 --- !u!4 &2032459639
 Transform:
@@ -101332,6 +101386,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: TimeLine 1 Map 3
       objectReference: {fileID: 0}
+    - target: {fileID: 3427215122334329122, guid: 629f6fa50d3c8f9469f1a59e1e46f6cb, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 6008490287840024308, guid: 629f6fa50d3c8f9469f1a59e1e46f6cb, type: 3}
       propertyPath: m_LocalPosition.x
       value: 667.6
@@ -101377,6 +101435,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 629f6fa50d3c8f9469f1a59e1e46f6cb, type: 3}
+--- !u!320 &1017896521052219936 stripped
+PlayableDirector:
+  m_CorrespondingSourceObject: {fileID: 5442050880153608346, guid: 629f6fa50d3c8f9469f1a59e1e46f6cb, type: 3}
+  m_PrefabInstance: {fileID: 1017896521052219935}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1635461128165338233
 PrefabInstance:
   m_ObjectHideFlags: 0
