@@ -23,7 +23,6 @@ MonoBehaviour:
   baseATK: 100
   basePDEF: 10
   baseMDEF: 10
-  baseSpeed: 10
   baseLevel: 1
   expReward: 100
   baseExpThreshold: 100
@@ -32,9 +31,13 @@ MonoBehaviour:
   atkPerLevel: 10
   pdefPerLevel: 10
   mdefPerLevel: 10
-  speedPerLevel: 5
   skills:
   - {fileID: 11400000, guid: e34367bd1d41d5b44a7131d3eecec1be, type: 2}
   - {fileID: 11400000, guid: d6d59a147b91acb4da21e24f067352e7, type: 2}
   - {fileID: 11400000, guid: 07f0246969b0ea24b90d2bdf8264cd29, type: 2}
   passiveScript: {fileID: 11500000, guid: d954a6ca5e452e94eb2d70a10f41bc13, type: 3}
+  hitVoiceClips: []
+  attackVoiceClips: []
+  deathVoiceClips: []
+  footstepSound: {fileID: 0}
+  flipOnSpawn: 1
