@@ -3,22 +3,23 @@ using UnityEngine;
 
 public class BGMManager : MonoBehaviour
 {
-    // Tạo Instance tĩnh để các Script khác có thể gọi BGMManager.Instance
     public static BGMManager Instance { get; private set; }
 
     private AudioSource sourceA;
     private AudioSource sourceB;
     private AudioSource activeSource;
+    private Coroutine crossfadeRoutine;
 
-    [SerializeField] private float crossfadeDuration = 2.5f; 
+    [SerializeField] private float crossfadeDuration = 1.5f;
+    [SerializeField] private float defaultMaxVolume = 0.8f;
+    [SerializeField] private bool loopMusic = true;
 
     private void Awake()
     {
-        // Tự cấu hình Quản lý Singleton trực tiếp tại đây
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject); // Giữ nhạc xuyên suốt khi đổi Scene
+            DontDestroyOnLoad(gameObject);
         }
         else
         {
@@ -31,43 +32,76 @@ public class BGMManager : MonoBehaviour
         {
             sourceA = sources[0];
             sourceB = sources[1];
-            activeSource = sourceA; 
         }
         else
         {
-            Debug.LogError("BGMManager cần ít nhất 2 component Audio Source trên cùng một Object!");
+            sourceA = gameObject.AddComponent<AudioSource>();
+            sourceB = gameObject.AddComponent<AudioSource>();
         }
+
+        ConfigureSource(sourceA);
+        ConfigureSource(sourceB);
+        activeSource = sourceA;
     }
 
-    public void SwitchBGM(AudioClip newTrack, float maxVolume = 0.8f)
+    public void SwitchBGM(AudioClip newTrack, float maxVolume = 0.8f, float fadeDuration = -1f)
     {
-        if (activeSource == null || (activeSource.clip == newTrack && activeSource.isPlaying)) return;
+        if (newTrack == null) return;
+
+        if (activeSource != null && activeSource.clip == newTrack && activeSource.isPlaying)
+        {
+            return;
+        }
+
+        float duration = fadeDuration > 0f ? fadeDuration : crossfadeDuration;
+        float targetVolume = Mathf.Clamp01(maxVolume > 0f ? maxVolume : defaultMaxVolume);
 
         AudioSource fadeOutSource = activeSource;
-        AudioSource fadeInSource = (activeSource == sourceA) ? sourceB : sourceA;
+        AudioSource fadeInSource = (fadeOutSource == sourceA) ? sourceB : sourceA;
 
-        activeSource = fadeInSource; 
+        if (crossfadeRoutine != null)
+        {
+            StopCoroutine(crossfadeRoutine);
+        }
+
+        activeSource = fadeInSource;
         fadeInSource.clip = newTrack;
-        
-        StopAllCoroutines();
-        StartCoroutine(CrossfadeRoutine(fadeOutSource, fadeInSource, maxVolume));
+        fadeInSource.volume = 0f;
+        fadeInSource.Play();
+
+        crossfadeRoutine = StartCoroutine(CrossfadeRoutine(fadeOutSource, fadeInSource, targetVolume, duration));
     }
 
-    private IEnumerator CrossfadeRoutine(AudioSource fadeOut, AudioSource fadeIn, float targetVolume)
+    private void ConfigureSource(AudioSource source)
     {
-        if (fadeIn.clip != null) fadeIn.Play();
+        if (source == null) return;
 
-        float timeElapsed = 0f;
+        source.playOnAwake = false;
+        source.loop = loopMusic;
+        source.volume = 0f;
+        source.spatialBlend = 0f;
+        source.priority = 128;
+    }
+
+    private IEnumerator CrossfadeRoutine(AudioSource fadeOut, AudioSource fadeIn, float targetVolume, float duration)
+    {
+        if (fadeIn == null) yield break;
+
+        float elapsed = 0f;
         float startOutVolume = fadeOut != null ? fadeOut.volume : 0f;
+        float startInVolume = fadeIn.volume;
 
-        while (timeElapsed < crossfadeDuration)
+        while (elapsed < duration)
         {
-            timeElapsed += Time.deltaTime;
-            float t = timeElapsed / crossfadeDuration;
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / duration);
 
-            if (fadeOut != null) fadeOut.volume = Mathf.Lerp(startOutVolume, 0f, t);
-            fadeIn.volume = Mathf.Lerp(0f, targetVolume, t);
+            if (fadeOut != null)
+            {
+                fadeOut.volume = Mathf.Lerp(startOutVolume, 0f, t);
+            }
 
+            fadeIn.volume = Mathf.Lerp(startInVolume, targetVolume, t);
             yield return null;
         }
 
@@ -77,6 +111,11 @@ public class BGMManager : MonoBehaviour
             fadeOut.Stop();
         }
 
-        fadeIn.volume = targetVolume;
+        if (fadeIn != null)
+        {
+            fadeIn.volume = targetVolume;
+        }
+
+        crossfadeRoutine = null;
     }
 }

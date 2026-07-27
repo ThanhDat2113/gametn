@@ -67253,7 +67253,7 @@ GameObject:
   - component: {fileID: 1002618661}
   - component: {fileID: 1002618660}
   - component: {fileID: 1002618664}
-  m_Layer: 3
+  m_Layer: 8
   m_Name: BMG2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -78688,7 +78688,6 @@ MonoBehaviour:
   questId: 4
   stepIndex: 2
   destinationTransform: {fileID: 1290094778}
-  useTimeline: 1
   teleportTimeline: {fileID: 465054331}
   waitForTimeline: 1
   useSceneTransition: 0
@@ -116775,7 +116774,7 @@ GameObject:
   - component: {fileID: 1655100514}
   - component: {fileID: 1655100513}
   - component: {fileID: 1655100517}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: BMG1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -140798,7 +140797,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2089988908}
-  - component: {fileID: 2089988907}
   - component: {fileID: 2089988906}
   - component: {fileID: 2089988905}
   m_Layer: 0
@@ -141002,19 +141000,6 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
---- !u!114 &2089988907
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2089988904}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ed38e0f4ad1f30647adf122c9ae4dd59, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BGMManager
-  crossfadeDuration: 2.5
 --- !u!4 &2089988908
 Transform:
   m_ObjectHideFlags: 0
@@ -141528,7 +141513,7 @@ GameObject:
   - component: {fileID: 2097893583}
   - component: {fileID: 2097893582}
   - component: {fileID: 2097893586}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: BMG3
   m_TagString: Untagged
   m_Icon: {fileID: 0}

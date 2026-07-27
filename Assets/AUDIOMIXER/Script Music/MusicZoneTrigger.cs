@@ -3,8 +3,9 @@ using UnityEngine;
 public class MusicZoneTrigger : MonoBehaviour
 {
     [Header("Cấu hình nhạc vùng")]
-    [SerializeField] private AudioClip zoneMusicClip; 
+    [SerializeField] private AudioClip zoneMusicClip;
     [SerializeField] private float zoneMaxVolume = 0.7f;
+    [SerializeField] private float zoneFadeDuration = 1.5f;
 
     private void OnTriggerEnter(Collider other)
     {
@@ -12,7 +13,7 @@ public class MusicZoneTrigger : MonoBehaviour
         {
             if (BGMManager.Instance != null && zoneMusicClip != null)
             {
-                BGMManager.Instance.SwitchBGM(zoneMusicClip, zoneMaxVolume);
+                BGMManager.Instance.SwitchBGM(zoneMusicClip, zoneMaxVolume, zoneFadeDuration);
             }
         }
     }
