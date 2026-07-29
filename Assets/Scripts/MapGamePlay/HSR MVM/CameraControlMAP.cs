@@ -6,36 +6,39 @@ public class HSRCameraController : MonoBehaviour
     public Transform target;        // Kéo Player vào đây
 
     [Header("Orbit Settings")]
-    public float distance = 25f;    // Đang để 25 theo hình của bạn
-    public float yawSpeed = 80f;    
-    public KeyCode rotateLeft = KeyCode.None;
-    public KeyCode rotateRight = KeyCode.None;
+    public float distance = 25f;    // Khoảng cách từ camera đến player
+    public float rotationStep = 90f; // Góc xoay mỗi lần nhấn (mặc định 90 độ)
 
     [Header("Vertical Offset")]
-    public float heightOffset = 3f; // Đang để 3 theo hình của bạn
+    public float heightOffset = 3f; // Độ cao camera so với player
 
     [Header("Smoothing")]
-    public float smoothTime = 0.15f;
+    public float smoothTime = 0.15f; // Thời gian làm mịn di chuyển
     private float _currentYaw = 0f;
     private Vector3 _velocity = Vector3.zero;
 
     [Header("Collision Settings (Né vật cản)")]
-    public LayerMask obstacleLayers;   // Chọn Layer của Tường/Nhà
+    public LayerMask obstacleLayers;   // Layer của tường/nhà
     public float cameraRadius = 0.3f;  // Bán kính khối cầu quét tường
     public float minDistance = 2.0f;   // Khoảng cách tối thiểu khi ép sát tường
+    public float playerPivotHeight = 1.0f; // Độ cao trọng tâm cơ thể player
 
-    [Tooltip("Độ cao trọng tâm cơ thể Player (thường là 1 mét) để làm gốc quét tia")]
-    public float playerPivotHeight = 1.0f;
+    // Phím tắt (có thể đổi trong Inspector)
+    public KeyCode keyRotateLeft = KeyCode.Z;
+    public KeyCode keyRotateRight = KeyCode.X;
 
     void LateUpdate()
     {
         if (target == null) return;
 
-        // Xoay khi giữ nút (nếu có gán)
-        if (rotateLeft != KeyCode.None && Input.GetKey(rotateLeft))
-            _currentYaw -= yawSpeed * Time.deltaTime;
-        if (rotateRight != KeyCode.None && Input.GetKey(rotateRight))
-            _currentYaw += yawSpeed * Time.deltaTime;
+        // ═══════════════════════════════════════════════
+        // Xoay 90 độ mỗi lần nhấn phím Z hoặc X
+        // ═══════════════════════════════════════════════
+        if (Input.GetKeyDown(keyRotateLeft))
+            _currentYaw -= rotationStep;
+
+        if (Input.GetKeyDown(keyRotateRight))
+            _currentYaw += rotationStep;
 
         // 1. Điểm gốc thực tế trên cơ thể nhân vật (ngay ngực/bụng)
         Vector3 playerPivot = target.position + Vector3.up * playerPivotHeight;
@@ -47,7 +50,6 @@ public class HSRCameraController : MonoBehaviour
         // 3. Bắn tia XÉO từ người chơi ra vị trí lý tưởng của Cam (quét theo đường nhìn)
         Vector3 rayDir = idealPos - playerPivot;
         float maxRayLength = rayDir.magnitude;
-
         float appliedDistance = maxRayLength;
 
         // Quét khối cầu để chống sượng góc tường
@@ -63,16 +65,29 @@ public class HSRCameraController : MonoBehaviour
 
         // 5. Di chuyển mượt mà tới vị trí đó
         transform.position = Vector3.SmoothDamp(transform.position, desiredPos, ref _velocity, smoothTime);
-        
+
         // 6. ĐIỀU CHỈNH ĐIỂM NHÌN THÔNG MINH (QUAN TRỌNG)
         // Khi ở xa (t -> 1): Nhìn lên cao (heightOffset) để đẩy Player xuống góc dưới màn hình cho đẹp.
         // Khi ở gần tường (t -> 0): Hạ điểm nhìn về tâm người (playerPivotHeight) để ép cam cúi xuống, giữ Player ở giữa màn hình.
-        float t = appliedDistance / maxRayLength; 
+        float t = appliedDistance / maxRayLength;
         float dynamicLookHeight = Mathf.Lerp(playerPivotHeight, heightOffset, t);
         Vector3 currentLookAtTarget = target.position + Vector3.up * dynamicLookHeight;
 
         transform.LookAt(currentLookAtTarget);
     }
 
+    /// <summary>
+    /// Reset góc xoay về 0 (hướng Bắc).
+    /// </summary>
     public void ResetYaw() => _currentYaw = 0f;
+
+    /// <summary>
+    /// Đặt góc xoay hiện tại (theo độ).
+    /// </summary>
+    public void SetYaw(float yaw) => _currentYaw = yaw;
+
+    /// <summary>
+    /// Lấy góc xoay hiện tại (độ).
+    /// </summary>
+    public float GetYaw() => _currentYaw;
 }

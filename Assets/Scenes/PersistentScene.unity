@@ -263,9 +263,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::HSRCameraController
   target: {fileID: 1264433187}
   distance: 25
-  yawSpeed: 80
-  rotateLeft: 0
-  rotateRight: 0
+  rotationStep: 90
   heightOffset: 3
   smoothTime: 0.1
   obstacleLayers:
@@ -274,6 +272,8 @@ MonoBehaviour:
   cameraRadius: 0.25
   minDistance: 0.5
   playerPivotHeight: 0.67
+  keyRotateLeft: 122
+  keyRotateRight: 120
 --- !u!114 &43899153
 MonoBehaviour:
   m_ObjectHideFlags: 0
