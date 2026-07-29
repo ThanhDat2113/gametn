@@ -22271,7 +22271,7 @@ PrefabInstance:
     - target: {fileID: 1672786819387311600, guid: d9d69c4cf7819c041afd5773d5c18b98, type: 3}
       propertyPath: enemyGroup
       value: 
-      objectReference: {fileID: 11400000, guid: 9516e9a0fbdb6754d9974a7e78238f23, type: 2}
+      objectReference: {fileID: 11400000, guid: 1d8bb02f0424b294f9bd62cbd40d2b6f, type: 2}
     - target: {fileID: 6000339435574190283, guid: d9d69c4cf7819c041afd5773d5c18b98, type: 3}
       propertyPath: m_Name
       value: Slime (3)
@@ -48836,8 +48836,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1.4532877, y: 3.3080537, z: 6.4529085}
-  m_Center: {x: 0.5340712, y: 0.17353524, z: -0.53829384}
+  m_Size: {x: 0.57474786, y: 1.3334901, z: 0.93730015}
+  m_Center: {x: 0.09480108, y: 0.012076908, z: -0.0031841067}
 --- !u!1 &658898415
 GameObject:
   m_ObjectHideFlags: 0
@@ -67367,6 +67367,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MusicZoneTrigger
   zoneMusicClip: {fileID: 8300000, guid: c90013aaec7248142b434ba2a55e304d, type: 3}
   zoneMaxVolume: 0.67
+  zoneFadeDuration: 1.5
 --- !u!1 &1003412472
 GameObject:
   m_ObjectHideFlags: 0
@@ -116888,6 +116889,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MusicZoneTrigger
   zoneMusicClip: {fileID: 8300000, guid: 82cea2d402f99ee41a6563803ed7e1d7, type: 3}
   zoneMaxVolume: 0.67
+  zoneFadeDuration: 1.5
 --- !u!1 &1656440152
 GameObject:
   m_ObjectHideFlags: 0
@@ -141627,6 +141629,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MusicZoneTrigger
   zoneMusicClip: {fileID: 8300000, guid: b4bdc96eb9d6b524eb71723d413be33c, type: 3}
   zoneMaxVolume: 0.67
+  zoneFadeDuration: 1.5
 --- !u!1001 &2099182138
 PrefabInstance:
   m_ObjectHideFlags: 0
