@@ -19,7 +19,9 @@ using UnityEngine.SceneManagement;
 ///   2. Điền questId + stepIndex khớp với bridge tương ứng.
 ///   3. Kéo Transform đích vào destinationTransform
 ///      (tạo 1 empty GameObject đặt đúng vị trí tele, đặt tên "TeleportTarget_...").
-///   4. (Tuỳ chọn) Kéo PlayableDirector vào teleportTimeline — bỏ trống nếu không cần.
+///   4. (Tuỳ chọn) Tick useTimeline nếu muốn phát hiệu ứng trước khi tele, rồi kéo
+///      PlayableDirector vào teleportTimeline. Bỏ tick useTimeline để bỏ qua Timeline
+///      hoàn toàn — teleport ngay sau khi dialogue kết thúc.
 ///   5. Nếu tele sang scene khác: bật useSceneTransition, điền targetSceneName.
 ///      destinationTransform lúc này là spawn point trong scene HIỆN TẠI (dùng để
 ///      lấy toạ độ truyền sang scene mới qua PlayerSpawnPoint hoặc PlayerPrefs).
@@ -40,8 +42,12 @@ public class QuestTeleportTrigger : MonoBehaviour
     [SerializeField] private Transform destinationTransform;
 
     [Header("Timeline")]
+    [Tooltip("Bật để phát Timeline trước khi teleport. Tắt để bỏ qua hoàn toàn bước Timeline " +
+             "(teleport ngay sau khi dialogue kết thúc), kể cả khi teleportTimeline có gán sẵn.")]
+    [SerializeField] private bool useTimeline = true;
+
     [Tooltip("PlayableDirector chứa Timeline sẽ phát trước khi teleport (fade-out, hiệu ứng...). " +
-             "Để trống nếu muốn teleport ngay không có hiệu ứng.")]
+             "Chỉ được dùng khi useTimeline = true. Để trống nếu muốn teleport ngay không có hiệu ứng.")]
     [SerializeField] private PlayableDirector teleportTimeline;
 
     [Tooltip("Nếu bật: chờ Timeline phát xong mới teleport. " +
@@ -173,8 +179,8 @@ public class QuestTeleportTrigger : MonoBehaviour
         if (elapsed >= dialogueWaitTimeout)
             Debug.LogWarning($"[QuestTeleportTrigger] '{name}': Dialogue wait timeout ({dialogueWaitTimeout}s) — teleporting anyway.");
 
-        // 2. Phát Timeline (nếu có)
-        if (teleportTimeline != null)
+        // 2. Phát Timeline (nếu bật useTimeline và có gán teleportTimeline)
+        if (useTimeline && teleportTimeline != null)
         {
             // Kích hoạt toàn bộ chain cha-con — không chỉ riêng object chứa Timeline.
             // Nếu Timeline nằm trong 1 container cha đang bị tắt, chỉ SetActive

@@ -49,11 +49,14 @@ public class QuestMarkerUI : MonoBehaviour
     [Tooltip("Sprite chỉ RIGHT(→): 0°  |  UP(↑): -90°  |  LEFT(←): 180°  |  DOWN(↓): 90°")]
     [SerializeField] private float spriteAngleOffset = 0f;
 
-    [Header("Above-Target (khi NPC đang trong tầm nhìn camera)")]
-    [Tooltip("Bật: khi NPC nằm trong view frustum của camera, marker hiện THẲNG PHÍA TRÊN ĐẦU NPC " +
-             "(giống bản gốc), thay vì bám vòng tròn quanh player. Tắt: marker luôn bám vòng tròn, " +
-             "kể cả khi NPC đang hiện rõ trên màn hình.")]
+    [Header("Above-Target (khi NPC ở gần player)")]
+    [Tooltip("Bật: khi NPC nằm trong bán kính `aboveTargetRange` quanh player, marker hiện " +
+             "THẲNG PHÍA TRÊN ĐẦU NPC, thay vì bám vòng tròn quanh player. Tắt: marker luôn " +
+             "bám vòng tròn, kể cả khi NPC đứng sát player.")]
     [SerializeField] private bool showAboveTargetWhenInView = true;
+    [Tooltip("Bán kính (world units, tính theo mặt phẳng XZ) quanh player — NPC lọt vào vùng " +
+             "này thì marker chuyển sang hiện trên đầu NPC.")]
+    [SerializeField] private float aboveTargetRange = 5f;
     [Tooltip("Độ cao cộng thêm phía trên MarkerPosition của bridge (world units) khi hiện trên đầu NPC.")]
     [SerializeField] private float aboveTargetHeightOffset = 0.3f;
 
@@ -148,12 +151,30 @@ public class QuestMarkerUI : MonoBehaviour
 
     // ── WorldSpaceRing ────────────────────────────────────────────────────────
 
+    // ── Above-Target proximity check ─────────────────────────────────────────
+
+    /// <summary>
+    /// Kiểm tra NPC (targetPos) có nằm trong bán kính `aboveTargetRange` quanh player không.
+    /// Dùng khoảng cách phẳng (XZ) để nhất quán với logic camera 2.5D/isometric — bỏ qua
+    /// chênh lệch chiều cao (Y) giữa NPC đứng trên dốc/bậc thang so với player.
+    /// </summary>
+    private bool IsWithinAboveTargetRange(PlayerMarkerRing ring, Vector3 targetPos)
+    {
+        Transform player = ring != null ? ring.Player : null;
+        if (player == null) return false;
+
+        Vector3 playerFlat = new Vector3(player.position.x, 0f, player.position.z);
+        Vector3 targetFlat = new Vector3(targetPos.x, 0f, targetPos.z);
+
+        float sqrDist = (targetFlat - playerFlat).sqrMagnitude;
+        return sqrDist <= aboveTargetRange * aboveTargetRange;
+    }
+
     private void UpdateWorldSpacePosition(PlayerMarkerRing ring, Vector3 targetPos)
     {
         Vector3 headWorldPos = targetPos + Vector3.up * aboveTargetHeightOffset;
 
-        bool tryInView = showAboveTargetWhenInView &&
-                          ScreenEdgeMarkerCalculator.IsInViewFrustum(headWorldPos, _mainCamera);
+        bool tryInView = showAboveTargetWhenInView && IsWithinAboveTargetRange(ring, targetPos);
 
         bool placedInView = false;
         if (tryInView)
@@ -195,8 +216,7 @@ public class QuestMarkerUI : MonoBehaviour
     {
         if (_canvasRect == null) return;
 
-        bool inView = showAboveTargetWhenInView &&
-                      ScreenEdgeMarkerCalculator.IsInViewFrustum(targetPos, _mainCamera);
+        bool inView = showAboveTargetWhenInView && IsWithinAboveTargetRange(ring, targetPos);
 
         if (inView)
         {
