@@ -1,0 +1,150 @@
+# Tóm Tắt Lịch Sử Chat — WoodQuiz Puzzle Auto Setup
+
+## 📋 Yêu cầu ban đầu
+- **Task**: Đọc và hiểu toàn bộ hệ thống dự án, sau đó tạo script auto setup cho puzzle WoodQuiz tương tự như các mini game hiện tại
+- **Dự án**: Unity game `gametn` (d:\unity\gametn)
+- **Unity version**: 6000.3.10f1
+
+## 🔍 Khám phá hệ thống
+
+### Kiến trúc Puzzle System hiện tại
+Hệ thống gồm 7 loại puzzle, mỗi loại có 3 thành phần:
+1. **PuzzleBase** (abstract) → mỗi puzzle kế thừa và implement `StartPuzzle()`, `ClosePuzzle()`
+2. **PuzzleData** (ScriptableObject) → chứa config riêng cho từng loại
+3. **PuzzleTrigger** (MonoBehaviour) → gắn trong scene, mở puzzle UI khi player nhấn E
+
+### Puzzle types hiện có (trong QuestStepType enum):
+- SymbolSequence
+- RiddleGate
+- MemoryGrove
+- SlidePuzzle
+- SpirePuzzle
+- FlowPuzzle
+- Unblock
+
+### Editor tools hiện có:
+- `PuzzlePrefabCreator` — tạo UI Canvas prefabs
+- `PuzzleSetupWizard` — wizard 5 bước tạo PuzzleData + QuestData + Trigger
+- `QuestMarkerAutoSetup` / `MinimapAutoSetup` — one-click auto setup
+
+### Files đã đọc:
+- `Assets/_Project/Scripts/Systems/Quest/PuzzleBase.cs`
+- `Assets/_Project/Scripts/Systems/Quest/PuzzleData.cs`
+- `Assets/_Project/Scripts/Systems/Quest/PuzzleTrigger.cs`
+- `Assets/_Project/Scripts/Systems/Quest/SymbolSequencePuzzle.cs`
+- `Assets/_Project/Scripts/Systems/Quest/RiddleGatePuzzle.cs`
+- `Assets/_Project/Scripts/Systems/Quest/SlidePuzzle.cs`
+- `Assets/_Project/Scripts/Systems/Quest/MemoryGrovePuzzle.cs`
+- `Assets/_Project/Scripts/Systems/Quest/UnblockPuzzle.cs`
+- `Assets/_Project/Scripts/Systems/Quest/SpirePuzzle.cs`
+- `Assets/_Project/Scripts/Systems/Quest/FlowPuzzle.cs`
+- `Assets/_Project/Scripts/Systems/Quest/QuestStep.cs`
+- `Assets/_Project/Scripts/Systems/Quest/QuestManager.cs`
+- `Assets/_Project/Scripts/Systems/Quest/QuestData.cs`
+- `Assets/_Project/Scripts/Systems/Quest/QuestReward.cs`
+- `Assets/Editor/PuzzlePrefabCreator.cs`
+- `Assets/Editor/PuzzleSetupWizard.cs`
+- `Assets/Editor/QuestMarkerAutoSetup.cs`
+- `Assets/Editor/MinimapAutoSetup.cs`
+
+## 🎯 Clarification từ user
+
+### Lần 1: User nói "thôn bình là tao tưởng là cái loại kéo các khối gỗ sao cho có đường để khối gỗ cần đẩy ra khỏi hộp mà?"
+→ WoodQuiz là puzzle **Klotski** (kéo khối gỗ ra hộp), KHÔNG phải quiz trắc nghiệm
+
+### Lần 2: User nói "thôi bỏ đi tạo mới rồi cho nó auto setup đi"
+→ Tạo mới hoàn toàn, không tìm script cũ
+
+## 🪵 Kế hoạch implement
+
+### Files tạo mới:
+1. `Assets/_Project/Scripts/Systems/Quest/WoodQuizPuzzle.cs` — Logic Klotski
+2. `Assets/Editor/WoodQuizAutoSetup.cs` — One-click editor tool
+
+### Files sửa:
+3. `QuestStep.cs` — Thêm `WoodQuiz` vào enum
+4. `PuzzleData.cs` — Thêm `WoodQuizConfig` class + field
+5. `QuestManager.cs` — Thêm `WoodQuiz` vào `isPuzzleType` check
+6. `PuzzlePrefabCreator.cs` — Thêm nút WoodQuiz
+7. `PuzzleSetupWizard.cs` — Thêm case WoodQuiz
+
+## ✅ Đã implement
+
+### 1. QuestStep.cs
+- Thêm `WoodQuiz` vào `QuestStepType` enum
+
+### 2. PuzzleData.cs
+- Thêm `WoodQuizConfig` class với: gridWidth, gridHeight, boardLayout, maxMoves, colors
+- Thêm field `woodQuizConfig` vào PuzzleData
+
+### 3. QuestManager.cs
+- Thêm `|| step.type == QuestStepType.WoodQuiz` vào `isPuzzleType` check
+
+### 4. WoodQuizPuzzle.cs (logic chính)
+- `WoodQuizPuzzle : PuzzleBase` — parse board, build grid, drag blocks, win check
+- `WoodQuizBlockDrag` — drag handler (IBeginDragHandler, IDragHandler, IEndDragHandler)
+- Layout ký tự: `#`=wall, `.`=empty, `G`=goal, `M`=master 2x2, `A`-`Z`=blocks
+- **Sửa lần 2**: Thêm `blockContainer` riêng (không nằm trong gridLayout) + CanvasGroup + raycastTarget
+
+### 5. WoodQuizAutoSetup.cs
+- EditorWindow (menu: Tools → Puzzle Quest → WoodQuiz Auto Setup)
+- Tạo prefab + PuzzleData + QuestData + Trigger + thêm quest vào QuestManager
+- **Sửa lần 2**: Thêm tạo `blockContainer` trong prefab
+
+### 6. PuzzlePrefabCreator.cs
+- Thêm nút "7. WoodQuizCanvas" + method `BuildWoodQuizPrefab()`
+
+### 7. PuzzleSetupWizard.cs
+- Thêm WoodQuiz case (config UI, prefab lookup, PuzzleData creation)
+
+## ⚠️ Vấn đề gặp phải
+
+### Vấn đề 1: task_progress lẫn vào code
+- Khi dùng `replace_in_file`, task_progress list bị dính vào file code
+- **Files bị lỗi**: PuzzlePrefabCreator.cs, PuzzleSetupWizard.cs, WoodQuizPuzzle.cs
+- **Cách sửa**: Viết lại toàn bộ file bằng `write_to_file`
+
+### Vấn đề 2: UI lộn xộn, không tương tác được
+- User feedback: "nó không hề hoạt động UI thì lộn tùng phèo hết cả lên rất là xấu thậm chí còn không tương tác được chả cái nào nhìn ra được cả"
+- **Nguyên nhân**: 
+  - Block objects bị GridLayoutGroup tự sắp xếp → vị trí lộn xộn
+  - Thiếu CanvasGroup → không raycast được
+  - Block nằm trong gridLayout → bị layout group điều khiển
+- **Cách sửa**:
+  - Thêm `blockContainer` riêng (RectTransform, cùng vị trí/size với grid)
+  - Block objects nằm trong `blockContainer`, KHÔNG nằm trong gridLayout
+  - Thêm CanvasGroup với `blocksRaycasts = true`
+  - Image `raycastTarget = true`
+
+## 📊 Trạng thái hiện tại
+
+### Đã hoàn thành:
+- [x] Khám phá hệ thống puzzle
+- [x] Thêm WoodQuiz vào enum
+- [x] Thêm WoodQuizConfig vào PuzzleData
+- [x] Cập nhật QuestManager
+- [x] Tạo WoodQuizPuzzle.cs (đã sửa UI)
+- [x] Tạo WoodQuizAutoSetup.cs
+- [x] Sửa PuzzlePrefabCreator.cs
+- [x] Sửa PuzzleSetupWizard.cs
+
+### Cần làm tiếp:
+- [ ] Cập nhật WoodQuizAutoSetup.cs tạo blockContainer (đang bị lỗi replace_in_file)
+- [ ] Cập nhật PuzzlePrefabCreator.cs tạo blockContainer
+- [ ] Kiểm tra compile trong Unity
+- [ ] Test UI thực tế
+
+## 🎮 Cách sử dụng (khi hoàn thành)
+1. Mở Unity → menu **Tools → Puzzle Quest → WoodQuiz Auto Setup**
+2. Nhấn **"🚀 Auto Setup (Tạo tất cả)"**
+3. Đến gần trigger trong scene, nhấn **E** để mở puzzle
+4. Kéo khối gỗ đỏ (master 2x2) ra lối thoát (G)
+
+## 📁 Files quan trọng
+- `Assets/_Project/Scripts/Systems/Quest/WoodQuizPuzzle.cs` — Logic puzzle
+- `Assets/Editor/WoodQuizAutoSetup.cs` — Auto setup tool
+- `Assets/_Project/Scripts/Systems/Quest/PuzzleData.cs` — Config
+- `Assets/_Project/Scripts/Systems/Quest/QuestStep.cs` — Enum
+- `Assets/_Project/Scripts/Systems/Quest/QuestManager.cs` — Quest progression
+- `Assets/Editor/PuzzlePrefabCreator.cs` — Prefab generator
+- `Assets/Editor/PuzzleSetupWizard.cs` — Setup wizard

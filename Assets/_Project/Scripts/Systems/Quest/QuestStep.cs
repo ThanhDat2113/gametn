@@ -14,7 +14,8 @@ public enum QuestStepType
     SlidePuzzle,
     SpirePuzzle,
     FlowPuzzle,
-    Unblock
+    Unblock,
+    WoodQuiz
 }
 
 [System.Serializable]
