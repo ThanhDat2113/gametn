@@ -26,7 +26,7 @@ namespace QLDATN.ProjectTracker
         private const string DeviceIdPreference = "QLDATN_PROJECT_TRACKER_DEVICE_ID";
         private const double HeartbeatSeconds = 30.0;
         private const double GitRefreshSeconds = 60.0;
-        private const string ClientVersion = "qldatn-unity-3.0.0";
+        private const string ClientVersion = "qldatn-unity-3.0.2";
 
         private static readonly string SessionId = Guid.NewGuid().ToString("N");
         private static readonly Queue<StatusPayload> PendingPayloads = new Queue<StatusPayload>();
@@ -77,10 +77,10 @@ namespace QLDATN.ProjectTracker
             var now = EditorApplication.timeSinceStartup;
             if (_pendingAssetChanges > 0 && now >= _assetFlushAt)
             {
-                var changedAssets = _pendingAssetChanges;
                 _pendingAssetChanges = 0;
                 RefreshState(false);
-                QueueSend(CurrentStatus(), "ASSETS_CHANGED", changedAssets);
+                // Server chỉ ghi một lượt sự kiện cho mỗi request; không tin số lượng do client khai.
+                QueueSend(CurrentStatus(), "ASSETS_CHANGED", 1);
             }
             var active = EditorSceneManager.GetActiveScene();
             var dirtyNow = active.IsValid() && active.isDirty;
@@ -368,7 +368,16 @@ namespace QLDATN.ProjectTracker
                     while (!operation.isDone) await Task.Delay(50);
                     if (request.result != UnityWebRequest.Result.Success)
                     {
-                        Debug.LogWarning("[QLDATN Tracker] Không thể đồng bộ: " + request.error);
+                        var responseBody = request.downloadHandler?.text;
+                        var serverMessage = string.IsNullOrWhiteSpace(responseBody)
+                            ? request.error
+                            : responseBody;
+                        Debug.LogWarning(
+                            "[QLDATN Tracker] Không thể đồng bộ (HTTP "
+                            + request.responseCode
+                            + "): "
+                            + serverMessage
+                        );
                     }
                 }
             }
