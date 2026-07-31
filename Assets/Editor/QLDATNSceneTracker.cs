@@ -26,10 +26,17 @@ namespace QLDATN.ProjectTracker
         private const string DeviceIdPreference = "QLDATN_PROJECT_TRACKER_DEVICE_ID";
         private const double HeartbeatSeconds = 30.0;
         private const double GitRefreshSeconds = 60.0;
-        private const string ClientVersion = "qldatn-unity-3.0.2";
+        private const string ClientVersion = "qldatn-unity-3.2.0";
+        private const string PendingUpdatePreference = "QLDATN_PROJECT_TRACKER_PENDING_UPDATE";
+        private const int MaximumOfflinePayloads = 50;
 
         private static readonly string SessionId = Guid.NewGuid().ToString("N");
         private static readonly Queue<StatusPayload> PendingPayloads = new Queue<StatusPayload>();
+        private static readonly string OfflineQueuePath = Path.Combine(
+            "Library",
+            "QLDATNTracker",
+            "offline-queue.json"
+        );
         private static string _scene = "";
         private static string _branch = "";
         private static string _revision = "";
@@ -43,9 +50,11 @@ namespace QLDATN.ProjectTracker
         private static double _lastHeartbeat;
         private static double _lastGitRefresh = -GitRefreshSeconds;
         private static long _lastSequence;
+        private static bool _updateCompilationFailed;
 
         static SceneTracker()
         {
+            RestorePendingPayloads();
             EditorApplication.update += OnEditorUpdate;
             EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
             EditorSceneManager.sceneOpened += OnSceneChanged;
@@ -53,6 +62,7 @@ namespace QLDATN.ProjectTracker
             EditorSceneManager.sceneSaved += OnSceneSaved;
             CompilationPipeline.compilationStarted += OnCompilationStarted;
             CompilationPipeline.compilationFinished += OnCompilationFinished;
+            CompilationPipeline.assemblyCompilationFinished += OnAssemblyCompilationFinished;
             EditorApplication.quitting += OnEditorQuitting;
 
             EditorApplication.delayCall += () =>
@@ -143,8 +153,25 @@ namespace QLDATN.ProjectTracker
 
         private static void OnCompilationFinished(object _context)
         {
+            FinalizePendingUpdate();
             RefreshState(true);
             QueueSend(CurrentStatus(), "COMPILATION_FINISHED");
+        }
+
+        private static void OnAssemblyCompilationFinished(
+            string _assemblyPath,
+            CompilerMessage[] messages
+        )
+        {
+            if (string.IsNullOrEmpty(EditorPrefs.GetString(PendingUpdatePreference))) return;
+            foreach (var message in messages)
+            {
+                if (message.type == CompilerMessageType.Error)
+                {
+                    _updateCompilationFailed = true;
+                    break;
+                }
+            }
         }
 
         private static void RefreshState(bool refreshGit)
@@ -317,10 +344,71 @@ namespace QLDATN.ProjectTracker
             );
             lock (PendingPayloads)
             {
-                while (PendingPayloads.Count >= 100) PendingPayloads.Dequeue();
+                while (PendingPayloads.Count >= MaximumOfflinePayloads) PendingPayloads.Dequeue();
                 PendingPayloads.Enqueue(payload);
             }
+            PersistPendingPayloads();
             _ = FlushQueueAsync();
+        }
+
+        private static void RestorePendingPayloads()
+        {
+            try
+            {
+                if (!File.Exists(OfflineQueuePath)) return;
+                var stored = JsonUtility.FromJson<OfflineQueue>(
+                    File.ReadAllText(OfflineQueuePath, Encoding.UTF8)
+                );
+                if (stored?.items == null) return;
+                foreach (var payload in stored.items)
+                {
+                    if (payload == null) continue;
+                    while (PendingPayloads.Count >= MaximumOfflinePayloads)
+                    {
+                        PendingPayloads.Dequeue();
+                    }
+                    PendingPayloads.Enqueue(payload);
+                }
+            }
+            catch
+            {
+                // File hỏng không được làm gián đoạn Unity Editor.
+            }
+        }
+
+        private static void PersistPendingPayloads()
+        {
+            try
+            {
+                List<StatusPayload> snapshot;
+                lock (PendingPayloads)
+                {
+                    snapshot = new List<StatusPayload>(PendingPayloads);
+                }
+                var directory = Path.GetDirectoryName(OfflineQueuePath);
+                if (!string.IsNullOrEmpty(directory)) Directory.CreateDirectory(directory);
+                File.WriteAllText(
+                    OfflineQueuePath,
+                    JsonUtility.ToJson(new OfflineQueue { items = snapshot }),
+                    new UTF8Encoding(false)
+                );
+            }
+            catch
+            {
+                // Hàng đợi trên RAM vẫn tiếp tục hoạt động nếu không ghi được Library.
+            }
+        }
+
+        private static void RemoveSentPayload(StatusPayload expected)
+        {
+            lock (PendingPayloads)
+            {
+                if (PendingPayloads.Count > 0 && ReferenceEquals(PendingPayloads.Peek(), expected))
+                {
+                    PendingPayloads.Dequeue();
+                }
+            }
+            PersistPendingPayloads();
         }
 
         private static async Task FlushQueueAsync()
@@ -329,13 +417,14 @@ namespace QLDATN.ProjectTracker
             _isSending = true;
             try
             {
-                while (true)
+                var sentThisPass = 0;
+                while (sentThisPass < 5)
                 {
                     StatusPayload payload;
                     lock (PendingPayloads)
                     {
                         if (PendingPayloads.Count == 0) break;
-                        payload = PendingPayloads.Dequeue();
+                        payload = PendingPayloads.Peek();
                     }
                     var json = JsonUtility.ToJson(payload);
                     var body = Encoding.UTF8.GetBytes(json);
@@ -378,6 +467,23 @@ namespace QLDATN.ProjectTracker
                             + "): "
                             + serverMessage
                         );
+                        var transientFailure = request.responseCode == 0
+                            || request.responseCode == 408
+                            || request.responseCode == 429
+                            || request.responseCode >= 500;
+                        if (transientFailure)
+                        {
+                            PersistPendingPayloads();
+                            break;
+                        }
+                        RemoveSentPayload(payload);
+                        sentThisPass += 1;
+                    }
+                    else
+                    {
+                        RemoveSentPayload(payload);
+                        sentThisPass += 1;
+                        await TryApplyUpdate(request.downloadHandler?.text);
                     }
                 }
             }
@@ -389,6 +495,120 @@ namespace QLDATN.ProjectTracker
             {
                 _isSending = false;
             }
+        }
+
+        private static async Task TryApplyUpdate(string responseBody)
+        {
+            if (string.IsNullOrWhiteSpace(responseBody)) return;
+            HeartbeatResponse response;
+            try
+            {
+                response = JsonUtility.FromJson<HeartbeatResponse>(responseBody);
+            }
+            catch
+            {
+                return;
+            }
+            var update = response?.clientUpdate;
+            if (
+                update == null
+                || update.platform != "UNITY"
+                || update.version == ClientVersion
+                || string.IsNullOrEmpty(update.url)
+                || string.IsNullOrEmpty(update.sha256)
+                || string.IsNullOrEmpty(update.signature)
+            )
+            {
+                return;
+            }
+            var manifest = "artifact."
+                + update.platform + "."
+                + update.version + "."
+                + update.sha256 + "."
+                + update.url;
+            var expectedSignature = SignRequest(
+                EditorPrefs.GetString(DeviceSecretPreference),
+                manifest
+            );
+            if (!ConstantTimeEquals(expectedSignature, update.signature)) return;
+
+            string source;
+            using (var request = UnityWebRequest.Get(update.url))
+            {
+                var operation = request.SendWebRequest();
+                while (!operation.isDone) await Task.Delay(50);
+                if (request.result != UnityWebRequest.Result.Success) return;
+                source = request.downloadHandler?.text;
+            }
+            if (
+                string.IsNullOrWhiteSpace(source)
+                || !ConstantTimeEquals(Sha256Hex(source), update.sha256.ToLowerInvariant())
+            )
+            {
+                return;
+            }
+
+            var editorDirectory = Path.Combine(Application.dataPath, "Editor");
+            var targetPath = Path.Combine(editorDirectory, "QLDATNSceneTracker.cs");
+            var downloadPath = targetPath + ".download";
+            var backupPath = targetPath + ".backup";
+            File.WriteAllText(downloadPath, source, new UTF8Encoding(false));
+            File.Copy(targetPath, backupPath, true);
+            EditorPrefs.SetString(PendingUpdatePreference, update.version);
+            _updateCompilationFailed = false;
+            File.Copy(downloadPath, targetPath, true);
+            File.Delete(downloadPath);
+            AssetDatabase.ImportAsset(
+                "Assets/Editor/QLDATNSceneTracker.cs",
+                ImportAssetOptions.ForceUpdate
+            );
+            Debug.Log("[QLDATN Tracker] Đang tự cập nhật lên " + update.version + "...");
+        }
+
+        private static void FinalizePendingUpdate()
+        {
+            var pendingVersion = EditorPrefs.GetString(PendingUpdatePreference);
+            if (string.IsNullOrEmpty(pendingVersion)) return;
+            var targetPath = Path.Combine(Application.dataPath, "Editor/QLDATNSceneTracker.cs");
+            var backupPath = targetPath + ".backup";
+            EditorPrefs.DeleteKey(PendingUpdatePreference);
+            if (_updateCompilationFailed && File.Exists(backupPath))
+            {
+                File.Copy(backupPath, targetPath, true);
+                AssetDatabase.ImportAsset(
+                    "Assets/Editor/QLDATNSceneTracker.cs",
+                    ImportAssetOptions.ForceUpdate
+                );
+                Debug.LogError(
+                    "[QLDATN Tracker] Bản cập nhật "
+                    + pendingVersion
+                    + " không biên dịch được; đã tự khôi phục bản trước."
+                );
+            }
+            else
+            {
+                Debug.Log("[QLDATN Tracker] Đã cập nhật thành công lên " + pendingVersion + ".");
+            }
+            if (File.Exists(backupPath)) File.Delete(backupPath);
+            _updateCompilationFailed = false;
+        }
+
+        private static string Sha256Hex(string value)
+        {
+            using var sha = SHA256.Create();
+            var hash = sha.ComputeHash(Encoding.UTF8.GetBytes(value));
+            return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
+        }
+
+        private static bool ConstantTimeEquals(string first, string second)
+        {
+            if (first == null || second == null || first.Length != second.Length) return false;
+            var difference = 0;
+            for (var index = 0; index < first.Length; index++)
+            {
+                difference |= first[index] ^ second[index];
+            }
+            return difference == 0;
         }
 
         public static void ReportAssetChanges(int count)
@@ -479,6 +699,12 @@ namespace QLDATN.ProjectTracker
         }
 
         [Serializable]
+        private class OfflineQueue
+        {
+            public List<StatusPayload> items = new List<StatusPayload>();
+        }
+
+        [Serializable]
         private class StatusPayload
         {
             public string status;
@@ -515,6 +741,22 @@ namespace QLDATN.ProjectTracker
             public long durationMs;
             public bool success;
             public string label;
+        }
+
+        [Serializable]
+        private class HeartbeatResponse
+        {
+            public ClientUpdatePayload clientUpdate;
+        }
+
+        [Serializable]
+        private class ClientUpdatePayload
+        {
+            public string platform;
+            public string version;
+            public string sha256;
+            public string url;
+            public string signature;
         }
     }
 
