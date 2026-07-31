@@ -39,17 +39,17 @@ public class FormationManager : MonoBehaviour
     private const int MAX_UNITS = 5;
     private bool isFormationUIOpen = false;
 
-    // Danh sách nhân vật đã mở khóa (có thể xem trong roster)
-    private HashSet<CharacterData> unlockedCharacters = new HashSet<CharacterData>();
+    // ✅ ĐÃ SỬA: public property
+    public HashSet<CharacterData> UnlockedCharacters { get; private set; } = new HashSet<CharacterData>();
     private Dictionary<CharacterData, CharacterDragItem> rosterItemMap
         = new Dictionary<CharacterData, CharacterDragItem>();
 
     void Start()
     {
         BuildGrid();
-        // Khởi tạo unlockedCharacters với startingCharacters
+        // ✅ ĐÃ SỬA: dùng UnlockedCharacters
         foreach (var c in startingCharacters)
-            if (c != null) unlockedCharacters.Add(c);
+            if (c != null) UnlockedCharacters.Add(c);
         BuildRoster();
         EnsureAtLeastOneCharacter();
         formationPanel.SetActive(false);
@@ -90,10 +90,10 @@ public class FormationManager : MonoBehaviour
             if (kvp.Value != null) Destroy(kvp.Value.gameObject);
         rosterItemMap.Clear();
 
-        // Chỉ hiển thị nhân vật đã mở khóa
+        // ✅ ĐÃ SỬA: dùng UnlockedCharacters
         foreach (var cd in allCharacters)
         {
-            if (cd == null || !unlockedCharacters.Contains(cd)) continue;
+            if (cd == null || !UnlockedCharacters.Contains(cd)) continue;
             var go = Instantiate(characterIconPrefab, rosterContainer);
             var drag = go.GetComponent<CharacterDragItem>();
             drag.Initialize(cd, this);
@@ -292,9 +292,10 @@ public class FormationManager : MonoBehaviour
     public void UnlockCharacter(CharacterData character)
     {
         if (character == null) return;
-        if (unlockedCharacters.Contains(character)) return;
+        // ✅ ĐÃ SỬA: dùng UnlockedCharacters
+        if (UnlockedCharacters.Contains(character)) return;
 
-        unlockedCharacters.Add(character);
+        UnlockedCharacters.Add(character);
 
         // Thêm vào allCharacters nếu chưa có
         if (!allCharacters.Contains(character))
