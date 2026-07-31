@@ -26,11 +26,17 @@ namespace QLDATN.ProjectTracker
         private const string DeviceIdPreference = "QLDATN_PROJECT_TRACKER_DEVICE_ID";
         private const double HeartbeatSeconds = 30.0;
         private const double GitRefreshSeconds = 60.0;
-        private const string ClientVersion = "qldatn-unity-3.2.0";
+        private const double RecentSourceActivitySeconds = 90.0;
+        private const string ClientVersion = "qldatn-unity-3.3.0";
         private const string PendingUpdatePreference = "QLDATN_PROJECT_TRACKER_PENDING_UPDATE";
         private const int MaximumOfflinePayloads = 50;
 
-        private static readonly string SessionId = Guid.NewGuid().ToString("N");
+        private static readonly string SessionIdPath = Path.Combine(
+            "Library",
+            "QLDATNTracker",
+            "session-id.txt"
+        );
+        private static readonly string SessionId = LoadOrCreateSessionId();
         private static readonly Queue<StatusPayload> PendingPayloads = new Queue<StatusPayload>();
         private static readonly string OfflineQueuePath = Path.Combine(
             "Library",
@@ -49,6 +55,7 @@ namespace QLDATN.ProjectTracker
         private static double _assetFlushAt;
         private static double _lastHeartbeat;
         private static double _lastGitRefresh = -GitRefreshSeconds;
+        private static double _lastSourceActivity = -RecentSourceActivitySeconds;
         private static long _lastSequence;
         private static bool _updateCompilationFailed;
 
@@ -140,8 +147,10 @@ namespace QLDATN.ProjectTracker
             {
                 QueueSend("PLAYING", "PLAY_MODE_ENTERED");
             }
-            else if (state == PlayModeStateChange.ExitingPlayMode)
+            else if (state == PlayModeStateChange.EnteredEditMode)
             {
+                // Đợi Unity trở lại Edit Mode hoàn toàn để heartbeat thoát Play
+                // không tiếp tục mang trạng thái PLAYING thêm một chu kỳ.
                 QueueSend(CurrentStatus(), "PLAY_MODE_EXITED");
             }
         }
@@ -244,9 +253,9 @@ namespace QLDATN.ProjectTracker
         {
             if (_isBuilding) return "BUILDING";
             if (EditorApplication.isCompiling) return "COMPILING";
-            if (!IsEditorFocused()) return "BACKGROUND";
             if (EditorApplication.isPlayingOrWillChangePlaymode) return "PLAYING";
-            if (_isDirty) return "EDITING";
+            if (_isDirty || HasRecentSourceActivity()) return "EDITING";
+            if (!IsEditorFocused()) return "BACKGROUND";
             if (_uncommittedFiles > 0) return "UNCOMMITTED";
             return string.IsNullOrEmpty(_scene) ? "SAFE" : "VIEWING";
         }
@@ -255,9 +264,10 @@ namespace QLDATN.ProjectTracker
         {
             if (_isBuilding) return "Đang build";
             if (EditorApplication.isCompiling) return "Đang biên dịch";
-            if (!IsEditorFocused()) return "Unity Editor chạy nền";
             if (EditorApplication.isPlayingOrWillChangePlaymode) return "Đang chạy Play Mode";
             if (_isDirty) return "Đang chỉnh sửa scene";
+            if (HasRecentSourceActivity()) return "Source/asset vừa được thay đổi";
+            if (!IsEditorFocused()) return "Unity Editor chạy nền";
             return string.IsNullOrEmpty(_scene) ? "Unity Editor" : "Đang xem scene";
         }
 
@@ -265,10 +275,17 @@ namespace QLDATN.ProjectTracker
         {
             if (_isBuilding) return "BUILD";
             if (EditorApplication.isCompiling) return "COMPILE";
-            if (!IsEditorFocused()) return "BACKGROUND";
             if (EditorApplication.isPlayingOrWillChangePlaymode) return "PLAY";
             if (EditorApplication.isPaused) return "PAUSED";
+            if (_isDirty || HasRecentSourceActivity()) return "EDIT";
+            if (!IsEditorFocused()) return "BACKGROUND";
             return "EDIT";
+        }
+
+        private static bool HasRecentSourceActivity()
+        {
+            return EditorApplication.timeSinceStartup - _lastSourceActivity
+                <= RecentSourceActivitySeconds;
         }
 
         private static bool IsEditorFocused()
@@ -467,6 +484,9 @@ namespace QLDATN.ProjectTracker
                             + "): "
                             + serverMessage
                         );
+                        // Server vẫn có thể trả gói cập nhật đã ký kèm HTTP 422.
+                        // Xử lý trước khi loại payload để client cũ có cơ hội tự sửa.
+                        await TryApplyUpdate(responseBody);
                         var transientFailure = request.responseCode == 0
                             || request.responseCode == 408
                             || request.responseCode == 429
@@ -553,16 +573,30 @@ namespace QLDATN.ProjectTracker
             var downloadPath = targetPath + ".download";
             var backupPath = targetPath + ".backup";
             File.WriteAllText(downloadPath, source, new UTF8Encoding(false));
-            File.Copy(targetPath, backupPath, true);
-            EditorPrefs.SetString(PendingUpdatePreference, update.version);
-            _updateCompilationFailed = false;
-            File.Copy(downloadPath, targetPath, true);
-            File.Delete(downloadPath);
-            AssetDatabase.ImportAsset(
-                "Assets/Editor/QLDATNSceneTracker.cs",
-                ImportAssetOptions.ForceUpdate
-            );
-            Debug.Log("[QLDATN Tracker] Đang tự cập nhật lên " + update.version + "...");
+            try
+            {
+                File.Copy(targetPath, backupPath, true);
+                EditorPrefs.SetString(PendingUpdatePreference, update.version);
+                _updateCompilationFailed = false;
+                File.Copy(downloadPath, targetPath, true);
+                File.Delete(downloadPath);
+                AssetDatabase.ImportAsset(
+                    "Assets/Editor/QLDATNSceneTracker.cs",
+                    ImportAssetOptions.ForceUpdate
+                );
+                Debug.Log("[QLDATN Tracker] Đang tự cập nhật lên " + update.version + "...");
+            }
+            catch
+            {
+                EditorPrefs.DeleteKey(PendingUpdatePreference);
+                if (File.Exists(backupPath))
+                {
+                    File.Copy(backupPath, targetPath, true);
+                    File.Delete(backupPath);
+                }
+                if (File.Exists(downloadPath)) File.Delete(downloadPath);
+                throw;
+            }
         }
 
         private static void FinalizePendingUpdate()
@@ -614,6 +648,7 @@ namespace QLDATN.ProjectTracker
         public static void ReportAssetChanges(int count)
         {
             if (count <= 0) return;
+            _lastSourceActivity = EditorApplication.timeSinceStartup;
             _pendingAssetChanges += count;
             _assetFlushAt = EditorApplication.timeSinceStartup + 2.0;
         }
@@ -667,6 +702,40 @@ namespace QLDATN.ProjectTracker
             catch
             {
                 // Server tự chuyển offline nếu Unity đóng trước khi gửi xong.
+            }
+            DeleteSessionId();
+        }
+
+        private static string LoadOrCreateSessionId()
+        {
+            try
+            {
+                if (File.Exists(SessionIdPath))
+                {
+                    var stored = File.ReadAllText(SessionIdPath).Trim();
+                    if (stored.Length == 32) return stored;
+                }
+                var directory = Path.GetDirectoryName(SessionIdPath);
+                if (!string.IsNullOrEmpty(directory)) Directory.CreateDirectory(directory);
+                var created = Guid.NewGuid().ToString("N");
+                File.WriteAllText(SessionIdPath, created, new UTF8Encoding(false));
+                return created;
+            }
+            catch
+            {
+                return Guid.NewGuid().ToString("N");
+            }
+        }
+
+        private static void DeleteSessionId()
+        {
+            try
+            {
+                if (File.Exists(SessionIdPath)) File.Delete(SessionIdPath);
+            }
+            catch
+            {
+                // Session cũ vẫn an toàn vì server không cộng gap quá timeout.
             }
         }
 
