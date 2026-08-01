@@ -5536,75 +5536,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 9025435444988080515, guid: c4cc3cc9ac499864f882426702a19b05, type: 3}
   m_PrefabInstance: {fileID: 99922729}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &106476578
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 106476579}
-  - component: {fileID: 106476581}
-  - component: {fileID: 106476580}
-  m_Layer: 8
-  m_Name: M_Desert 1
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &106476579
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 106476578}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0.134505, z: 0, w: 0.9909129}
-  m_LocalPosition: {x: 152.58742, y: 0, z: 709.50256}
-  m_LocalScale: {x: 557.2541, y: 192, z: 196.512}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 753736112}
-  m_LocalEulerAnglesHint: {x: 0, y: 15.46, z: 0}
---- !u!114 &106476580
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 106476578}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c9ec9782d403b424a91fd07063a3b7e8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MusicZoneTrigger
-  zoneMusicClip: {fileID: 8300000, guid: 69d98a4bdb7ee464fa23fbfa58b5316f, type: 3}
-  zoneMaxVolume: 0.5
-  zoneFadeDuration: 2
---- !u!65 &106476581
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 106476578}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 1.1543298, y: 1.0000002, z: 0.69467336}
-  m_Center: {x: -0.096904226, y: -0.00000007947286, z: -0.94140387}
 --- !u!1 &106639882
 GameObject:
   m_ObjectHideFlags: 0
@@ -46670,7 +46601,6 @@ Transform:
   - {fileID: 1136097942}
   - {fileID: 1339205570}
   - {fileID: 1678202322}
-  - {fileID: 106476579}
   - {fileID: 1690872291}
   m_Father: {fileID: 2118859792}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -98500,8 +98430,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1.1543298, y: 1.0000002, z: 0.826983}
-  m_Center: {x: -0.09690422, y: -0.00000007947286, z: -0.8752509}
+  m_Size: {x: 1.1543298, y: 1.0000002, z: 1.4528961}
+  m_Center: {x: -0.096904226, y: -0.00000007947286, z: -0.56229156}
 --- !u!1 &1680709502
 GameObject:
   m_ObjectHideFlags: 0
