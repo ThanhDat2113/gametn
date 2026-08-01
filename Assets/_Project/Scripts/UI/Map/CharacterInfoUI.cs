@@ -56,12 +56,12 @@ public class CharacterInfoUI : MonoBehaviour
         {
             // ✅ Giữ tỉ lệ hình ảnh gốc
             characterImageDisplay.preserveAspect = true;
-            characterImageDisplay.type = Image.Type.Simple; // Đảm bảo không bị cắt
+            characterImageDisplay.type = Image.Type.Simple;
 
             if (character.characterImage != null)
                 characterImageDisplay.sprite = character.characterImage;
             else if (character.portrait != null)
-                characterImageDisplay.sprite = character.portrait; // fallback
+                characterImageDisplay.sprite = character.portrait;
         }
 
         if (nameText != null)
@@ -97,8 +97,15 @@ public class CharacterInfoUI : MonoBehaviour
             expText.text = $"{currentExp} / {neededExp}";
 
         // ── 3. SPRITE / ANIMATION ──
-        if (spriteDisplay != null && character.battleSprite != null)
-            spriteDisplay.sprite = character.battleSprite;
+        if (spriteDisplay != null)
+        {
+            // ✅ Giữ tỉ lệ cho battle sprite
+            spriteDisplay.preserveAspect = true;
+            spriteDisplay.type = Image.Type.Simple;
+
+            if (character.battleSprite != null)
+                spriteDisplay.sprite = character.battleSprite;
+        }
 
         if (previewAnimator != null && character.previewAnimation != null)
         {
