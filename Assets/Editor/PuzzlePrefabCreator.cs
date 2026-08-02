@@ -4,7 +4,7 @@ using UnityEditor;
 using System.IO;
 
 /// <summary>
-/// Editor utility: Tự động tạo 6 puzzle UI prefabs cho 6 loại puzzle.
+/// Editor utility: Tự động tạo 7 puzzle UI prefabs cho 7 loại puzzle.
 /// Vào Tools → Puzzle Quest → Create Prefabs để chạy.
 /// </summary>
 public class PuzzlePrefabCreator : EditorWindow
@@ -24,7 +24,7 @@ public class PuzzlePrefabCreator : EditorWindow
         GUILayout.Label("Puzzle Prefab Generator", EditorStyles.boldLabel);
         GUILayout.Space(5);
 
-        EditorGUILayout.HelpBox("Tạo 6 UI Canvas prefabs cho 6 loại puzzle.", MessageType.Info);
+        EditorGUILayout.HelpBox("Tạo 7 UI Canvas prefabs cho 7 loại puzzle.", MessageType.Info);
         GUILayout.Space(5);
 
         GUILayout.Label("Batch 1:", EditorStyles.boldLabel);
@@ -35,11 +35,12 @@ public class PuzzlePrefabCreator : EditorWindow
         GUILayout.Space(5);
         GUILayout.Label("Batch 2:", EditorStyles.boldLabel);
         if (GUILayout.Button("4. SlidePuzzleCanvas", GUILayout.Height(25))) BuildSlidePuzzlePrefab();
-    if (GUILayout.Button("5. SpirePuzzleCanvas", GUILayout.Height(25))) BuildSpirePuzzlePrefab();
+        if (GUILayout.Button("5. SpirePuzzleCanvas", GUILayout.Height(25))) BuildSpirePuzzlePrefab();
         if (GUILayout.Button("6. FlowPuzzleCanvas", GUILayout.Height(25))) BuildFlowPuzzlePrefab();
+        if (GUILayout.Button("7. WoodQuizCanvas", GUILayout.Height(25))) BuildWoodQuizPrefab();
 
         GUILayout.Space(10);
-        if (GUILayout.Button("Create ALL 6 Prefabs", GUILayout.Height(40)))
+        if (GUILayout.Button("Create ALL 7 Prefabs", GUILayout.Height(40)))
         {
             CreateSymbolSequencePrefab();
             CreateRiddleGatePrefab();
@@ -47,7 +48,8 @@ public class PuzzlePrefabCreator : EditorWindow
             BuildSlidePuzzlePrefab();
             BuildSpirePuzzlePrefab();
             BuildFlowPuzzlePrefab();
-            Debug.Log("[PuzzlePrefabCreator] ✅ All 6 prefabs created!");
+            BuildWoodQuizPrefab();
+            Debug.Log("[PuzzlePrefabCreator] ✅ All 7 prefabs created!");
         }
     }
 
@@ -341,11 +343,51 @@ public class PuzzlePrefabCreator : EditorWindow
         wireSeg.GetComponent<RectTransform>().sizeDelta = new Vector2(1, 1);
         p.wireSegmentPrefab = wireSeg.GetComponent<Image>();
         wireSeg.SetActive(false);
-         
 
         p.progressText = CreateUIText(canvas.transform, "ProgressText", "Đã nối: 0/4", 20, Color.green, new Vector2(0, -250));
         p.closeButton = CreateCloseButton(canvas.transform);
         SavePrefab(canvas, "FlowPuzzleCanvas");
+    }
+
+    private void BuildWoodQuizPrefab()
+    {
+        var canvas = CreateBaseCanvas("WoodQuizCanvas");
+        var p = canvas.AddComponent<WoodQuizPuzzle>();
+        CreateTitleText(canvas.transform, "🪵 KHỐI GỖ THOÁT HỘP", new Vector2(0, 310));
+        p.instructionText = CreateUIText(canvas.transform, "InstructionText", "Kéo khối gỗ đỏ ra lối thoát (G)", 22, Color.white, new Vector2(0, 240));
+
+        // Grid panel (chỉ chứa cell nền, không chứa block)
+        var grid = new GameObject("GridPanel"); grid.transform.SetParent(canvas.transform, false);
+        var gl = grid.AddComponent<GridLayoutGroup>(); gl.cellSize = new Vector2(70, 70); gl.spacing = Vector2.zero;
+        gl.constraint = GridLayoutGroup.Constraint.FixedColumnCount; gl.constraintCount = 4; gl.childAlignment = TextAnchor.MiddleCenter;
+        grid.GetComponent<RectTransform>().sizeDelta = new Vector2(280, 350); grid.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 20);
+        p.gridLayout = gl;
+
+        // Block container (riêng, cùng vị trí/kích thước với grid, chứa các block có thể kéo)
+        var blockCont = new GameObject("BlockContainer");
+        blockCont.transform.SetParent(canvas.transform, false);
+        var blockRect = blockCont.AddComponent<RectTransform>();
+        blockRect.sizeDelta = new Vector2(280, 350);
+        blockRect.anchoredPosition = new Vector2(0, 20);
+        p.blockContainer = blockRect;
+
+        // Block prefab template (disabled) — Image + CanvasGroup + WoodQuizBlockDrag
+        var blockTemplate = new GameObject("BlockPrefab_Template", typeof(Image), typeof(CanvasGroup));
+        blockTemplate.transform.SetParent(blockCont.transform, false);
+        blockTemplate.AddComponent<WoodQuizBlockDrag>();
+        var cg = blockTemplate.GetComponent<CanvasGroup>();
+        cg.blocksRaycasts = true;
+        cg.interactable = true;
+        blockTemplate.GetComponent<Image>().raycastTarget = true;
+        blockTemplate.GetComponent<RectTransform>().sizeDelta = new Vector2(66, 66);
+        blockTemplate.SetActive(false);
+        p.blockPrefab = blockTemplate;
+
+        p.moveCountText = CreateUIText(canvas.transform, "MoveCount", "Bước: 0/50", 18, Color.yellow, new Vector2(0, -200));
+        p.resetButton = CreateButton(canvas.transform, "ResetButton", "🔄 Lại", 18, 100, 36).GetComponent<Button>();
+        p.resetButton.GetComponent<RectTransform>().anchoredPosition = new Vector2(-80, -200);
+        p.closeButton = CreateCloseButton(canvas.transform);
+        SavePrefab(canvas, "WoodQuizCanvas");
     }
 
     private void SavePrefab(GameObject go, string name)

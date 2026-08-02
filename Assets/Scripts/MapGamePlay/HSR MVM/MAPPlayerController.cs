@@ -11,7 +11,7 @@ public class HSRPlayerController : MonoBehaviour
 
     [Header("Visual References")]
     public Animator animator;
-    public Transform spriteContainer;
+    public Transform spriteContainer; // GameObject chứa sprite (có SpriteBillboard)
 
     [Header("Audio")]
     public AudioClip[] footstepSounds;
@@ -27,6 +27,9 @@ public class HSRPlayerController : MonoBehaviour
     private bool _wasMoving = false;
     private AudioSource _footstepSource;
 
+    // 🔥 Tham chiếu đến SpriteBillboard
+    private SpriteBillboard _billboard;
+
     void Awake()
     {
         _controller = GetComponent<CharacterController>();
@@ -39,6 +42,15 @@ public class HSRPlayerController : MonoBehaviour
         _footstepSource.playOnAwake = false;
         _footstepSource.spatialBlend = 1f;
         _footstepSource.volume = footstepVolume;
+
+        // 🔥 Tìm hoặc thêm SpriteBillboard vào spriteContainer
+        if (spriteContainer != null)
+        {
+            _billboard = spriteContainer.GetComponent<SpriteBillboard>();
+            if (_billboard == null)
+                _billboard = spriteContainer.gameObject.AddComponent<SpriteBillboard>();
+            _billboard.targetCamera = cameraTransform;
+        }
     }
 
     void Update()
@@ -61,15 +73,9 @@ public class HSRPlayerController : MonoBehaviour
             float speed = Input.GetKey(KeyCode.LeftShift) ? sprintSpeed : moveSpeed;
             _controller.Move(_moveDir * speed * Time.deltaTime);
 
-            if (spriteContainer != null)
-            {
-                float moveX = _moveDir.x;
-                if (moveX != 0)
-                {
-                    float flipX = Mathf.Sign(moveX) * Mathf.Abs(_initialScale.x);
-                    spriteContainer.localScale = new Vector3(flipX, _initialScale.y, _initialScale.z);
-                }
-            }
+            // 🔥 Flip sprite dựa trên hướng di chuyển (dùng SpriteBillboard)
+            if (_billboard != null)
+                _billboard.FlipBasedOnMovement(_moveDir);
 
             footstepTimer -= Time.deltaTime;
             if (!_wasMoving)
@@ -106,36 +112,22 @@ public class HSRPlayerController : MonoBehaviour
         if (!_controller.isGrounded)
             _controller.Move(Vector3.down * gravityForce * Time.deltaTime);
 
-        if (spriteContainer != null)
-        {
-            spriteContainer.LookAt(cameraTransform.position);
-            spriteContainer.rotation = Quaternion.Euler(0, spriteContainer.eulerAngles.y, 0);
-        }
+        // 🔥 KHÔNG cần Billboard ở đây nữa vì SpriteBillboard đã xử lý trong LateUpdate
+        // Nếu muốn bật/tắt Billboard, dùng _billboard.enableBillboard
     }
 
-    /// <summary>
-    /// Khi script bị disable (VD: do DialogueTrigger tắt để dừng player),
-    /// reset animation về Idle ngay lập tức để tránh bị kẹt ở trạng thái Run.
-    /// </summary>
     private void OnDisable()
     {
         ResetToIdle();
     }
 
-    /// <summary>
-    /// Reset tất cả animation state về Idle và dừng footstep.
-    /// Gọi được từ bên ngoài (VD: DialogueTrigger) nếu cần.
-    /// </summary>
     public void ResetToIdle()
     {
-        // Dừng footstep sound
         if (_footstepSource != null && _footstepSource.isPlaying)
             _footstepSource.Stop();
 
         _wasMoving = false;
         footstepTimer = 0f;
-
-        // Reset animation về idle
         UpdateAnimation(false, 0, 0);
     }
 
@@ -150,7 +142,6 @@ public class HSRPlayerController : MonoBehaviour
         }
         else
         {
-            // Khi về idle, reset MoveX/MoveY về 0 tránh bị blend tree giữ animation chạy
             animator.SetFloat("MoveX", 0f);
             animator.SetFloat("MoveY", 0f);
         }
@@ -173,27 +164,25 @@ public class HSRPlayerController : MonoBehaviour
 
     // ==================== DIALOGUE FLIP API ====================
 
-    /// <summary>
-    /// Trả về true nếu spriteContainer đang nhìn sang phải (scale.x dương).
-    /// </summary>
     public bool IsFacingRight()
     {
-        if (spriteContainer == null) return true;
-        return spriteContainer.localScale.x > 0;
+        if (_billboard != null)
+            return _billboard.IsFacingRight();
+        return spriteContainer != null && spriteContainer.localScale.x > 0;
     }
 
-    /// <summary>
-    /// Đặt hướng nhìn của spriteContainer.
-    /// facingRight=true → scale.x dương; facingRight=false → scale.x âm.
-    /// </summary>
     public void SetFacingDirection(bool facingRight)
     {
-        if (spriteContainer == null) return;
-        float absX = Mathf.Abs(_initialScale.x);
-        spriteContainer.localScale = new Vector3(
-            facingRight ? absX : -absX,
-            _initialScale.y,
-            _initialScale.z
-        );
+        if (_billboard != null)
+            _billboard.SetFacingDirection(facingRight);
+        else if (spriteContainer != null)
+        {
+            float absX = Mathf.Abs(_initialScale.x);
+            spriteContainer.localScale = new Vector3(
+                facingRight ? absX : -absX,
+                _initialScale.y,
+                _initialScale.z
+            );
+        }
     }
 }

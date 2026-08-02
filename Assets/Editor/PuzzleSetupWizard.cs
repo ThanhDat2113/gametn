@@ -4,24 +4,16 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using System.IO;
 
-/// <summary>
-/// Editor Wizard: Auto-setup PuzzleData + QuestData + PuzzleTrigger trong scene.
-/// KHÔNG gen UI prefab — dùng prefabs từ PuzzlePrefabCreator.
-/// Tools → Puzzle Quest → Setup Wizard
-/// </summary>
 public class PuzzleSetupWizard : EditorWindow
 {
     private enum WizardStep { BasicInfo, PuzzleData, QuestData, SceneSetup, Done }
-
     private WizardStep currentStep = WizardStep.BasicInfo;
 
-    // ── Step 1: Basic Info ──
     private string puzzleID = "";
     private string puzzleName = "";
     private QuestStepType puzzleType = QuestStepType.SymbolSequence;
     private int allowedAttempts = 3;
 
-    // ── Step 2: Puzzle Data Config ──
     private int symbolStartLength = 3;
     private int symbolMaxLength = 7;
     private int riddleCount = 3;
@@ -34,8 +26,6 @@ public class PuzzleSetupWizard : EditorWindow
     private int memoryCols = 4;
     private int memoryRows = 3;
     private bool showLore = true;
-
-    // Batch 2
     private int slideGridSize = 3;
     private int slideMaxMoves = 100;
     private int pipeGridSize = 4;
@@ -44,24 +34,20 @@ public class PuzzleSetupWizard : EditorWindow
     private int spireDiskCount = 4;
     private int spireMaxMoves = 50;
 
-    // ── Step 3: Quest ──
     private bool createQuest = true;
     private string questId = "";
     private string questName = "";
     private string stepDescription = "";
 
-    // ── Step 4: Scene ──
     private bool createTriggerInScene = true;
     private string triggerObjectName = "";
     private Vector3 triggerPosition = Vector3.zero;
     private bool addToQuestManager = true;
 
-    // ── Paths ──
     private string puzzleDataPath = "Assets/_Project/Data/Puzzle";
     private string questDataPath = "Assets/_Project/Data/Quest";
     private string prefabPath = "Assets/_Project/Prefabs/UI/Puzzle";
 
-    // ── Results ──
     private string resultLog = "";
     private bool hasError = false;
 
@@ -78,25 +64,8 @@ public class PuzzleSetupWizard : EditorWindow
     {
         if (string.IsNullOrEmpty(puzzleID))
             puzzleID = "puzzle_" + System.DateTime.Now.Ticks % 10000;
-        if (string.IsNullOrEmpty(puzzleName))
-            puzzleName = "Puzzle " + (System.DateTime.Now.Ticks % 1000);
-        if (string.IsNullOrEmpty(triggerObjectName))
-            triggerObjectName = "Trigger_" + puzzleID;
-        if (string.IsNullOrEmpty(questId))
-            questId = "quest_" + puzzleID;
-        if (string.IsNullOrEmpty(questName))
-            questName = "Thử thách " + puzzleName;
-        if (string.IsNullOrEmpty(stepDescription))
-            stepDescription = "Vượt qua " + puzzleName;
-
-        if (string.IsNullOrEmpty(riddles[0]))
-        {
-            riddles[0] = "\"Ta không phải lửa nhưng có thể thiêu đốt...\"";
-            correctAnswers[0] = "Ý Chí";
-            wrongA[0] = "Sức Mạnh";
-            wrongB[0] = "Nỗi Đau";
-            wrongC[0] = "Tình Yêu";
-        }
+        triggerObjectName = "Trigger_" + puzzleID;
+        questId = "quest_" + puzzleID;
     }
 
     private void OnGUI()
@@ -120,162 +89,95 @@ public class PuzzleSetupWizard : EditorWindow
         EditorGUILayout.BeginHorizontal();
         for (int i = 0; i < 5; i++)
         {
-            var step = (WizardStep)i;
-            bool isActive = step == currentStep;
-            bool isPast = (int)step < (int)currentStep;
-            GUI.color = isActive ? Color.green : isPast ? Color.gray : Color.white;
-            if (GUILayout.Button($"{i + 1}", GUILayout.Width(30), GUILayout.Height(30)))
-                if ((int)step <= (int)currentStep + 1) currentStep = step;
+            bool isActive = (WizardStep)i == currentStep;
+            GUI.color = isActive ? Color.green : Color.white;
+            if (GUILayout.Button("" + (i + 1), GUILayout.Width(30), GUILayout.Height(30)))
+                if (i <= (int)currentStep + 1) currentStep = (WizardStep)i;
             GUI.color = Color.white;
-            if (i < 4) EditorGUILayout.LabelField("→", GUILayout.Width(20));
+            if (i < 4) EditorGUILayout.LabelField("->", GUILayout.Width(20));
         }
-        EditorGUILayout.EndHorizontal();
-        string[] sn = { "Info", "Puzzle Data", "Quest", "Scene", "Done" };
-        EditorGUILayout.BeginHorizontal();
-        foreach (var s in sn) EditorGUILayout.LabelField(s, EditorStyles.centeredGreyMiniLabel, GUILayout.Width(80));
         EditorGUILayout.EndHorizontal();
     }
 
     private void DrawStep1_BasicInfo()
     {
-        EditorGUILayout.LabelField("Thông Tin Cơ Bản", EditorStyles.boldLabel);
-        EditorGUILayout.Space(5);
+        EditorGUILayout.LabelField("Thong Tin Co Ban", EditorStyles.boldLabel);
         puzzleID = EditorGUILayout.TextField("Puzzle ID", puzzleID);
         puzzleName = EditorGUILayout.TextField("Puzzle Name", puzzleName);
         puzzleType = (QuestStepType)EditorGUILayout.EnumPopup("Puzzle Type", puzzleType);
         allowedAttempts = EditorGUILayout.IntField("Allowed Attempts", allowedAttempts);
-        EditorGUILayout.Space(10);
-        EditorGUILayout.HelpBox("Puzzle ID sẽ khớp với QuestStep.targetId\nvd: ancient_altar", MessageType.Info);
     }
 
     private void DrawStep2_PuzzleData()
     {
-        EditorGUILayout.LabelField($"Cấu Hình {puzzleType}", EditorStyles.boldLabel);
-        EditorGUILayout.Space(5);
-        switch (puzzleType)
+        EditorGUILayout.LabelField("Cau Hinh " + puzzleType, EditorStyles.boldLabel);
+        if (puzzleType == QuestStepType.WoodQuiz)
         {
-            case QuestStepType.SymbolSequence:
-                symbolStartLength = EditorGUILayout.IntField("Start Length", symbolStartLength);
-                symbolMaxLength = EditorGUILayout.IntField("Max Length", symbolMaxLength);
-                break;
-            case QuestStepType.RiddleGate:
-                requiredCorrect = EditorGUILayout.IntField("Required Correct", requiredCorrect);
-                riddleCount = EditorGUILayout.IntField("Số câu đố", riddleCount);
-                if (riddleCount < 1) riddleCount = 1;
-                System.Array.Resize(ref riddles, riddleCount);
-                System.Array.Resize(ref correctAnswers, riddleCount);
-                System.Array.Resize(ref wrongA, riddleCount);
-                System.Array.Resize(ref wrongB, riddleCount);
-                System.Array.Resize(ref wrongC, riddleCount);
-                EditorGUILayout.Space(5);
-                for (int i = 0; i < riddleCount; i++)
-                {
-                    EditorGUILayout.LabelField($"Câu {i + 1}", EditorStyles.boldLabel);
-                    riddles[i] = EditorGUILayout.TextField("Riddle", riddles[i]);
-                    correctAnswers[i] = EditorGUILayout.TextField("Correct", correctAnswers[i]);
-                    wrongA[i] = EditorGUILayout.TextField("Wrong A", wrongA[i]);
-                    wrongB[i] = EditorGUILayout.TextField("Wrong B", wrongB[i]);
-                    wrongC[i] = EditorGUILayout.TextField("Wrong C", wrongC[i]);
-                    EditorGUILayout.Space(3);
-                }
-                break;
-            case QuestStepType.MemoryGrove:
-                memoryCols = EditorGUILayout.IntField("Columns", memoryCols);
-                memoryRows = EditorGUILayout.IntField("Rows", memoryRows);
-                showLore = EditorGUILayout.Toggle("Show Lore", showLore);
-                EditorGUILayout.HelpBox($"Cards: {memoryCols * memoryRows} ({memoryCols * memoryRows / 2} pairs)", MessageType.Info);
-                break;
-            case QuestStepType.SlidePuzzle:
-                slideGridSize = EditorGUILayout.IntField("Grid Size", slideGridSize);
-                slideMaxMoves = EditorGUILayout.IntField("Max Moves", slideMaxMoves);
-                EditorGUILayout.HelpBox($"Slide puzzle {slideGridSize}x{slideGridSize}", MessageType.Info);
-                break;
-            case QuestStepType.SpirePuzzle:
-                spireDiskCount = EditorGUILayout.IntField("Số đĩa", spireDiskCount);
-                spireMaxMoves = EditorGUILayout.IntField("Max Moves", spireMaxMoves);
-                EditorGUILayout.HelpBox($"Tháp Huyền Thoại {spireDiskCount} đĩa", MessageType.Info);
-                break;
-            case QuestStepType.FlowPuzzle:
-                flowGridSize = EditorGUILayout.IntField("Grid Size", flowGridSize);
-                EditorGUILayout.HelpBox($"Flow puzzle {flowGridSize}x{flowGridSize}, 5 color pairs", MessageType.Info);
-                break;
+            EditorGUILayout.HelpBox("WoodQuiz (Klotski) layout (co loi giai):\n" +
+                "  ####\n" +
+                "  #.M#\n" +
+                "  #.M#\n" +
+                "  #AB#\n" +
+                "  #.G#\n" +
+                "M=do doc 1x2 | A/B=1x1 | G=goal\n" +
+                "Cach giai: A xuong -> B trai -> M xuong", MessageType.Info);
         }
     }
 
     private void DrawStep3_QuestData()
     {
         EditorGUILayout.LabelField("Quest Configuration", EditorStyles.boldLabel);
-        EditorGUILayout.Space(5);
         createQuest = EditorGUILayout.Toggle("Create Quest Data", createQuest);
         if (createQuest)
         {
-            EditorGUI.indentLevel++;
             questId = EditorGUILayout.TextField("Quest ID", questId);
             questName = EditorGUILayout.TextField("Quest Name", questName);
             stepDescription = EditorGUILayout.TextField("Step Desc", stepDescription);
             addToQuestManager = EditorGUILayout.Toggle("Add to QuestManager", addToQuestManager);
-            EditorGUI.indentLevel--;
         }
-        EditorGUILayout.HelpBox($"Step: type={puzzleType}, targetId=\"{puzzleID}\"", MessageType.Info);
     }
 
     private void DrawStep4_SceneSetup()
     {
         EditorGUILayout.LabelField("Scene Setup", EditorStyles.boldLabel);
-        EditorGUILayout.Space(5);
         createTriggerInScene = EditorGUILayout.Toggle("Create Trigger", createTriggerInScene);
         if (createTriggerInScene)
         {
-            EditorGUI.indentLevel++;
             triggerObjectName = EditorGUILayout.TextField("Object Name", triggerObjectName);
             triggerPosition = EditorGUILayout.Vector3Field("Position", triggerPosition);
-            EditorGUI.indentLevel--;
         }
-        EditorGUILayout.Space(10);
-        EditorGUILayout.LabelField("Output Paths", EditorStyles.boldLabel);
-        puzzleDataPath = EditorGUILayout.TextField("Puzzle Data", puzzleDataPath);
-        questDataPath = EditorGUILayout.TextField("Quest Data", questDataPath);
-        prefabPath = EditorGUILayout.TextField("Prefab Path", prefabPath);
-        EditorGUILayout.Space(10);
-        EditorGUILayout.HelpBox("Sẽ tạo: PuzzleData asset + QuestData asset + Trigger GameObject\nDùng prefabs có sẵn từ PuzzlePrefabCreator.", MessageType.Info);
     }
 
     private void DrawStep5_Done()
     {
-        if (hasError) EditorGUILayout.HelpBox("❌ Có lỗi! Xem log.", MessageType.Error);
-        else EditorGUILayout.HelpBox("✅ Hoàn thành!", MessageType.Info);
-        EditorGUILayout.Space(10);
-        EditorGUILayout.LabelField("Result Log", EditorStyles.boldLabel);
+        if (hasError) EditorGUILayout.HelpBox("Co loi! Xem log.", MessageType.Error);
+        else EditorGUILayout.HelpBox("Hoan thanh!", MessageType.Info);
         EditorGUILayout.TextArea(resultLog, GUILayout.Height(200));
-        if (GUILayout.Button("🔄 Start Over", GUILayout.Height(30)))
-        {
-            currentStep = WizardStep.BasicInfo; resultLog = ""; hasError = false;
-        }
+        if (GUILayout.Button("Start Over")) { currentStep = WizardStep.BasicInfo; resultLog = ""; hasError = false; }
     }
 
     private void DrawNavigation()
     {
         EditorGUILayout.BeginHorizontal();
         if (currentStep > WizardStep.BasicInfo)
-            if (GUILayout.Button("← Previous", GUILayout.Height(30))) currentStep--;
+            if (GUILayout.Button("<- Previous", GUILayout.Height(30))) currentStep--;
         GUILayout.FlexibleSpace();
         if (currentStep < WizardStep.Done)
         {
             if (currentStep == WizardStep.SceneSetup)
             {
                 GUI.color = Color.green;
-                if (GUILayout.Button("🚀 Generate!", GUILayout.Height(30), GUILayout.Width(150))) GenerateAll();
+                if (GUILayout.Button("Generate!", GUILayout.Height(30), GUILayout.Width(150))) GenerateAll();
                 GUI.color = Color.white;
             }
             else
             {
-                if (GUILayout.Button("Next →", GUILayout.Height(30), GUILayout.Width(120))) currentStep++;
+                if (GUILayout.Button("Next ->", GUILayout.Height(30), GUILayout.Width(120))) currentStep++;
             }
         }
         EditorGUILayout.EndHorizontal();
     }
 
-    // ──────────────────────────────── GENERATE ────────────────────────────────
     private void GenerateAll()
     {
         hasError = false; resultLog = "";
@@ -283,30 +185,13 @@ public class PuzzleSetupWizard : EditorWindow
         {
             try
             {
-                // 1. PuzzleData
                 var puzzleData = CreatePuzzleDataAsset();
-                if (puzzleData == null) throw new System.Exception("Failed PuzzleData");
-
-                // 2. QuestData
                 QuestData questData = null;
-                if (createQuest)
-                {
-                    questData = CreateQuestDataAsset();
-                    if (questData == null) throw new System.Exception("Failed QuestData");
-                }
+                if (createQuest) questData = CreateQuestDataAsset();
 
-                // 3. Lookup prefab có sẵn (không gen)
                 var prefab = GetExistingPrefab();
-                if (prefab == null)
-                {
-                    resultLog += "⚠️ Không tìm thấy prefab! Hãy dùng Tools → Puzzle Quest → Create Prefabs trước.\n";
-                }
-
-                // 4. Trigger in scene
                 if (createTriggerInScene && prefab != null)
                     CreateTriggerInScene(puzzleData, prefab);
-
-                // 5. Add to QuestManager
                 if (createQuest && questData != null && addToQuestManager)
                     AddQuestToManager(questData);
 
@@ -317,7 +202,7 @@ public class PuzzleSetupWizard : EditorWindow
             }
             catch (System.Exception e)
             {
-                hasError = true; resultLog += $"\n❌ {e.Message}";
+                hasError = true; resultLog += "\n" + e.Message;
                 currentStep = WizardStep.Done;
             }
         };
@@ -327,36 +212,24 @@ public class PuzzleSetupWizard : EditorWindow
     {
         EnsureFolder(puzzleDataPath);
         var data = ScriptableObject.CreateInstance<PuzzleData>();
-        data.puzzleID = puzzleID; data.puzzleName = puzzleName; data.puzzleType = puzzleType; data.allowedAttempts = allowedAttempts;
-        switch (puzzleType)
+        data.puzzleID = puzzleID;
+        data.puzzleName = puzzleName;
+        data.puzzleType = puzzleType;
+        data.allowedAttempts = allowedAttempts;
+
+        if (puzzleType == QuestStepType.WoodQuiz)
         {
-            case QuestStepType.SymbolSequence:
-                data.symbolConfig = new SymbolSequenceConfig { gridSize = 3, startLength = symbolStartLength, maxLength = symbolMaxLength };
-                break;
-            case QuestStepType.RiddleGate:
-                data.riddleConfig = new RiddleGateConfig
-                {
-                    riddles = (string[])riddles.Clone(), correctAnswers = (string[])correctAnswers.Clone(),
-                    wrongAnswerA = (string[])wrongA.Clone(), wrongAnswerB = (string[])wrongB.Clone(),
-                    wrongAnswerC = (string[])wrongC.Clone(), requiredCorrect = requiredCorrect
-                };
-                break;
-            case QuestStepType.MemoryGrove:
-                data.memoryConfig = new MemoryGroveConfig { characterPool = null, gridCols = memoryCols, gridRows = memoryRows, showLoreOnMatch = showLore };
-                break;
-            case QuestStepType.SlidePuzzle:
-                data.slideConfig = new SlidePuzzleConfig { gridSize = slideGridSize, maxMoves = slideMaxMoves };
-                break;
-            case QuestStepType.SpirePuzzle:
-                data.spireConfig = new SpirePuzzleConfig { diskCount = spireDiskCount, maxMoves = spireMaxMoves };
-                break;
-            case QuestStepType.FlowPuzzle:
-                data.flowConfig = new FlowPuzzleConfig { gridSize = flowGridSize };
-                break;
+            data.woodQuizConfig = new WoodQuizConfig
+            {
+                gridWidth = 4, gridHeight = 5,
+                boardLayout = new string[] { "####", "#.M#", "#.M#", "#AB#", "#.G#" },
+                maxMoves = 50
+            };
         }
-        string path = $"{puzzleDataPath}/{puzzleID}.asset";
+
+        string path = puzzleDataPath + "/" + puzzleID + ".asset";
         AssetDatabase.CreateAsset(data, path);
-        resultLog += $"✅ PuzzleData: {path}\n";
+        resultLog += "PuzzleData: " + path + "\n";
         return AssetDatabase.LoadAssetAtPath<PuzzleData>(path);
     }
 
@@ -364,31 +237,33 @@ public class PuzzleSetupWizard : EditorWindow
     {
         EnsureFolder(questDataPath);
         var data = ScriptableObject.CreateInstance<QuestData>();
-        data.questId = questId; data.questName = questName;
-        data.steps = new QuestStep[] { new QuestStep { stepId = "step_" + puzzleID, type = puzzleType, targetId = puzzleID, description = string.IsNullOrEmpty(stepDescription) ? $"Vượt qua {puzzleName}" : stepDescription, isCompleted = false } };
+        data.questId = questId;
+        data.questName = questName;
+        data.steps = new QuestStep[]
+        {
+            new QuestStep
+            {
+                stepId = "step_" + puzzleID,
+                type = puzzleType,
+                targetId = puzzleID,
+                description = stepDescription,
+                isCompleted = false
+            }
+        };
         data.rewards = new QuestReward[0];
-        string path = $"{questDataPath}/{questId}.asset";
+        string path = questDataPath + "/" + questId + ".asset";
         AssetDatabase.CreateAsset(data, path);
-        resultLog += $"✅ QuestData: {path}\n";
+        resultLog += "QuestData: " + path + "\n";
         return AssetDatabase.LoadAssetAtPath<QuestData>(path);
     }
 
     private GameObject GetExistingPrefab()
     {
-        string name = puzzleType switch
-        {
-            QuestStepType.SymbolSequence => "SymbolSequenceCanvas",
-            QuestStepType.RiddleGate => "RiddleGateCanvas",
-            QuestStepType.MemoryGrove => "MemoryGroveCanvas",
-            QuestStepType.SlidePuzzle => "SlidePuzzleCanvas",
-            QuestStepType.SpirePuzzle => "SpirePuzzleCanvas",
-            QuestStepType.FlowPuzzle => "FlowPuzzleCanvas",
-            _ => ""
-        };
-        string path = $"{prefabPath}/{name}.prefab";
+        string name = "WoodQuizCanvas";
+        string path = prefabPath + "/" + name + ".prefab";
         var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
-        if (prefab != null) resultLog += $"✅ Dùng prefab: {path}\n";
-        else resultLog += $"⚠️ Không tìm thấy: {path} (hãy tạo bằng Create Prefabs)\n";
+        if (prefab != null) resultLog += "Dung prefab: " + path + "\n";
+        else resultLog += "Khong tim thay: " + path + "\n";
         return prefab;
     }
 
@@ -397,36 +272,24 @@ public class PuzzleSetupWizard : EditorWindow
         var go = new GameObject(triggerObjectName);
         go.transform.position = triggerPosition;
         var trigger = go.AddComponent<PuzzleTrigger>();
-        trigger.puzzleData = data; trigger.puzzleUIPrefab = prefab; trigger.interactKey = KeyCode.E;
-        var col = go.AddComponent<BoxCollider>(); col.isTrigger = true; col.size = new Vector3(2, 2, 2);
-
-        var prompt = new GameObject("InteractionPrompt");
-        prompt.transform.SetParent(go.transform, false); prompt.transform.localPosition = new Vector3(0, 2.5f, 0);
-        var c = prompt.AddComponent<Canvas>(); c.renderMode = RenderMode.WorldSpace; c.sortingOrder = 100;
-        prompt.AddComponent<CanvasScaler>().dynamicPixelsPerUnit = 10;
-        var tgo = new GameObject("PromptText");
-        tgo.transform.SetParent(prompt.transform, false);
-        var txt = tgo.AddComponent<Text>(); txt.text = "[E]"; txt.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        txt.fontSize = 40; txt.alignment = TextAnchor.MiddleCenter; txt.color = Color.white; txt.fontStyle = FontStyle.Bold;
-        tgo.GetComponent<RectTransform>().sizeDelta = new Vector2(2, 1); tgo.GetComponent<RectTransform>().localPosition = Vector3.zero;
-        tgo.AddComponent<Outline>().effectColor = new Color(0, 0, 0, 0.8f); tgo.GetComponent<Outline>().effectDistance = new Vector2(2, 2);
-        trigger.interactionPrompt = prompt;
-        Selection.activeGameObject = go;
-        resultLog += $"✅ Trigger: {triggerObjectName} tại {triggerPosition}\n";
+        trigger.puzzleData = data;
+        trigger.puzzleUIPrefab = prefab;
+        trigger.interactKey = KeyCode.E;
+        go.AddComponent<BoxCollider>().isTrigger = true;
+        go.GetComponent<BoxCollider>().size = new Vector3(2, 2, 2);
+        resultLog += "Trigger: " + triggerObjectName + "\n";
     }
 
     private void AddQuestToManager(QuestData questData)
     {
         var mgr = FindFirstObjectByType<QuestManager>();
-        if (mgr == null) { resultLog += "⚠️ Không tìm thấy QuestManager.\n"; return; }
-        if (mgr.questChain != null)
-            foreach (var q in mgr.questChain)
-                if (q != null && q.questId == questData.questId) { resultLog += $"ℹ️ Quest đã có trong chain.\n"; return; }
-        System.Array.Resize(ref mgr.questChain, (mgr.questChain?.Length ?? 0) + 1);
-        mgr.questChain[mgr.questChain.Length - 1] = questData;
-        if (mgr.questChain.Length == 1) mgr.questTemplate = questData;
+        if (mgr == null) { resultLog += "Khong tim thay QuestManager.\n"; return; }
+        int len = (mgr.questChain != null) ? mgr.questChain.Length : 0;
+        System.Array.Resize(ref mgr.questChain, len + 1);
+        mgr.questChain[len] = questData;
+        if (len == 0) mgr.questTemplate = questData;
         EditorUtility.SetDirty(mgr);
-        resultLog += $"✅ Added {questData.questName} to QuestManager\n";
+        resultLog += "Added " + questData.questName + " to QuestManager\n";
     }
 
     private void EnsureFolder(string path)

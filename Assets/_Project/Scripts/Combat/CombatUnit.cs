@@ -47,6 +47,8 @@ public class CombatUnit
         _damageReductionCharges += charges;
         _damageReductionPercent = percent;
         Debug.Log($"[{UnitName}] Nhận {charges} lớp giáp, mỗi lớp giảm {percent*100}% sát thương.");
+        // Hiển thị text "DEF UP!" màu bạc khi nhận giáp/shield
+        OnBuffApplied?.Invoke("DEF UP!", StatType.PDEF, true);
     }
 
     public ChallengeStack ChallengeStack { get; private set; } = new();
@@ -66,6 +68,21 @@ public class CombatUnit
     public event System.Action<int> OnSpendAP;
     public event System.Action<CombatUnit, SkillData, List<CombatUnit>> OnActionConfirmed;
     public event System.Action OnTurnStart;
+
+    // ── Events cho Floating Text (Status/Buff) ──
+    /// <summary>
+    /// Kích hoạt khi một status được áp dụng (STUN!, BURN!, v.v.)
+    /// </summary>
+    public event System.Action<string, StatusEffectType> OnStatusApplied;
+    /// <summary>
+    /// Kích hoạt khi một buff được áp dụng (DEF UP!, DMG UP!, v.v.)
+    /// </summary>
+    public event System.Action<string, StatType, bool> OnBuffApplied;
+
+    /// <summary>
+    /// Cờ tạm thời chặn hiển thị damage text trắng mặc định (dùng cho burn damage đầu lượt).
+    /// </summary>
+    public bool SuppressDamageText { get; set; } = false;
 
     public void RaiseActionConfirmed(SkillData skill, List<CombatUnit> targets)
     {
@@ -245,6 +262,13 @@ public class CombatUnit
             activeBuffs.Add(new ActiveBuff(stat, multiplier, duration));
         }
         Debug.Log($"  {UnitName} nhận buff {stat} x{multiplier} ({(duration == 0 ? "vĩnh viễn" : duration + " lượt")})");
+
+        // Hiển thị text buff (DMG UP!/DEF UP!)
+        bool isBuff = multiplier >= 1f;
+        if (stat == StatType.ATK)
+            OnBuffApplied?.Invoke(isBuff ? "DMG UP!" : "DMG DOWN!", stat, isBuff);
+        else if (stat == StatType.PDEF || stat == StatType.MDEF)
+            OnBuffApplied?.Invoke(isBuff ? "DEF UP!" : "DEF DOWN!", stat, isBuff);
     }
 
     public void ApplyStatus(StatusEffectType status, int duration, float value = 0, int stacks = 1)
@@ -261,6 +285,30 @@ public class CombatUnit
         {
             activeStatuses.Add(new ActiveStatus(status, duration, value, stacks));
             Debug.Log($"  [{UnitName}] nhận trạng thái {status} ({(duration == 0 ? "vĩnh viễn" : duration + " lượt")}, {stacks} stacks, value: {value})");
+        }
+
+        // Hiển thị text status (STUN!, BURN!, DMG UP!, DEF UP!, v.v.)
+        switch (status)
+        {
+            case StatusEffectType.Stun:
+                OnStatusApplied?.Invoke("STUN!", status);
+                break;
+            case StatusEffectType.ThieuDot:
+                OnStatusApplied?.Invoke("BURN!", status);
+                break;
+            case StatusEffectType.SieuViet:
+            case StatusEffectType.YChi:
+            case StatusEffectType.BuiSao:
+            case StatusEffectType.Empowered:
+                OnStatusApplied?.Invoke("DMG UP!", status);
+                break;
+            case StatusEffectType.GiamSatThuong:
+            case StatusEffectType.ThuThe:
+                OnStatusApplied?.Invoke("DEF UP!", status);
+                break;
+            case StatusEffectType.DiemYeu:
+                OnStatusApplied?.Invoke("WEAK!", status);
+                break;
         }
     }
 

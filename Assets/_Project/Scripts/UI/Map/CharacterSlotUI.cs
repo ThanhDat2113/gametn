@@ -8,10 +8,10 @@ public class CharacterSlotUI : MonoBehaviour
     [Header("References (kéo tay hoặc tự tìm theo tên)")]
     public Image portrait;
     public TextMeshProUGUI nameText;
-    public TextMeshProUGUI levelText;
+    public TextMeshProUGUI levelText;      // ✅ Chỉ hiển thị số
     public TextMeshProUGUI orderText;
     public Slider expSlider;
-    public TextMeshProUGUI expText;   // THÊM: hiển thị "xxx/xxx"
+    public TextMeshProUGUI expText;        // Hiển thị "xxx/xxx"
 
     private CharacterData currentCharacter;
     private int currentLevel;
@@ -49,8 +49,8 @@ public class CharacterSlotUI : MonoBehaviour
         // Tên
         if (nameText != null) nameText.text = data.characterName;
 
-        // Level
-        if (levelText != null) levelText.text = $"Lv. {level}";
+        // ✅ Level – chỉ hiển thị số (không có chữ "Lv.")
+        if (levelText != null) levelText.text = level.ToString();
 
         // Số thứ tự
         if (orderText != null) orderText.text = order.ToString();

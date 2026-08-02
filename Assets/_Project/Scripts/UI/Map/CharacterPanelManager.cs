@@ -1,69 +1,151 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class CharacterPanelManager : MonoBehaviour
 {
-    [Header("Panel chính chứa 12 nút")]
-    public GameObject mainCharacterPanel;
+    [Header("Button Container")]
+    public Transform buttonContainer;         // nơi chứa các nút nhân vật
+    public GameObject buttonPrefab;           // prefab của nút (đã gắn CharacterButtonUI)
 
-    [Header("Danh sách 12 nút nhân vật")]
-    public Button[] characterButtons;
+    [Header("Info Panel")]
+    public Transform infoPanelContainer;      // nơi chứa panel thông tin
+    public GameObject infoPanelPrefab;        // prefab panel thông tin (đã gắn CharacterInfoUI)
 
-    [Header("Danh sách 12 panel thông tin")]
-    public GameObject[] infoPanels;
+    private List<GameObject> currentButtons = new List<GameObject>();
+    private Dictionary<CharacterData, GameObject> currentInfoPanels = new Dictionary<CharacterData, GameObject>();
+    private CharacterData selectedCharacter = null;
 
     private enum State { Main, Info }
     private State currentState = State.Main;
-    private int currentInfoIndex = -1;
 
-    void Start()
+    private void OnEnable()
     {
-        if (characterButtons.Length != 12 || infoPanels.Length != 12)
+        RefreshList();
+    }
+
+    /// <summary>
+    /// Xóa danh sách cũ và tạo lại các nút cho nhân vật đã mở khóa.
+    /// </summary>
+    public void RefreshList()
+    {
+        // Xóa các nút cũ
+        foreach (var btn in currentButtons)
+            Destroy(btn);
+        currentButtons.Clear();
+
+        // Xóa tất cả info panel cũ
+        foreach (var panel in currentInfoPanels.Values)
+            Destroy(panel);
+        currentInfoPanels.Clear();
+
+        // Lấy danh sách nhân vật đã mở khóa từ FormationManager
+        var formationMgr = FindObjectOfType<FormationManager>();
+        if (formationMgr == null)
         {
-            Debug.LogError("Cần có đúng 12 nút và 12 panel!");
+            Debug.LogWarning("CharacterPanelManager: Không tìm thấy FormationManager!");
             return;
         }
 
-        mainCharacterPanel.SetActive(true);
-        foreach (var panel in infoPanels)
-            if (panel != null) panel.SetActive(false);
-
-        for (int i = 0; i < characterButtons.Length; i++)
+        var unlocked = formationMgr.UnlockedCharacters;
+        if (unlocked == null || unlocked.Count == 0)
         {
-            int index = i;
-            characterButtons[i].onClick.AddListener(() => OpenInfoPanel(index));
+            Debug.Log("CharacterPanelManager: Chưa có nhân vật nào được mở khóa.");
+            return;
         }
+
+        int order = 1;
+        foreach (var character in unlocked)
+        {
+            GameObject btnGO = Instantiate(buttonPrefab, buttonContainer);
+            currentButtons.Add(btnGO);
+
+            // Lấy component CharacterButtonUI
+            var btnUI = btnGO.GetComponent<CharacterButtonUI>();
+            if (btnUI != null)
+            {
+                btnUI.Setup(character, order);
+                btnUI.OnClicked += OnCharacterSelected;
+            }
+            else
+            {
+                Debug.LogWarning("CharacterPanelManager: buttonPrefab thiếu component CharacterButtonUI!");
+            }
+
+            order++;
+        }
+
+        // Hiển thị danh sách chính
+        ShowMainPanel();
     }
 
-    public void OpenInfoPanel(int index)
+    private void OnCharacterSelected(CharacterData character)
     {
-        if (currentState == State.Info && currentInfoIndex >= 0 && infoPanels[currentInfoIndex] != null)
-            infoPanels[currentInfoIndex].SetActive(false);
+        selectedCharacter = character;
+        ShowInfoPanel(character);
+    }
 
-        mainCharacterPanel.SetActive(false);
-        infoPanels[index].SetActive(true);
+    private void ShowInfoPanel(CharacterData character)
+    {
+        if (infoPanelPrefab == null || infoPanelContainer == null)
+        {
+            Debug.LogError("CharacterPanelManager: Thiếu infoPanelPrefab hoặc infoPanelContainer!");
+            return;
+        }
+
+        // Nếu đã có panel cho nhân vật này → hiển thị nó
+        if (currentInfoPanels.TryGetValue(character, out GameObject existingPanel))
+        {
+            // Ẩn tất cả panel khác
+            foreach (var panel in currentInfoPanels.Values)
+                panel.SetActive(false);
+            existingPanel.SetActive(true);
+            currentState = State.Info;
+            buttonContainer.gameObject.SetActive(false);
+            return;
+        }
+
+        // Tạo panel mới
+        GameObject panelGO = Instantiate(infoPanelPrefab, infoPanelContainer);
+        currentInfoPanels[character] = panelGO;
+
+        // Cập nhật thông tin
+        var infoUI = panelGO.GetComponent<CharacterInfoUI>();
+        if (infoUI != null)
+            infoUI.Setup(character);
+        else
+            Debug.LogWarning("CharacterPanelManager: infoPanelPrefab thiếu component CharacterInfoUI!");
+
+        // Ẩn tất cả panel khác
+        foreach (var panel in currentInfoPanels.Values)
+            panel.SetActive(false);
+        panelGO.SetActive(true);
+
         currentState = State.Info;
-        currentInfoIndex = index;
+        buttonContainer.gameObject.SetActive(false);
     }
 
-    private void CloseInfoPanel()
+    private void ShowMainPanel()
     {
-        if (currentInfoIndex >= 0 && infoPanels[currentInfoIndex] != null)
-            infoPanels[currentInfoIndex].SetActive(false);
-
-        mainCharacterPanel.SetActive(true);
+        // Ẩn tất cả info panel
+        foreach (var panel in currentInfoPanels.Values)
+            panel.SetActive(false);
+        buttonContainer.gameObject.SetActive(true);
         currentState = State.Main;
-        currentInfoIndex = -1;
     }
 
-    // Hàm này được gọi từ MapMenuManager khi nhấn ESC/chuột phải
+    /// <summary>
+    /// Gọi từ MapMenuManager khi nhấn ESC/chuột phải.
+    /// Trả về true nếu đã xử lý (đang ở info → quay lại main).
+    /// </summary>
     public bool TryGoBack()
     {
         if (currentState == State.Info)
         {
-            CloseInfoPanel();
-            return true; // Đã xử lý, không để MapMenuManager xử lý tiếp
+            ShowMainPanel();
+            return true;
         }
-        return false; // Chưa xử lý, MapMenuManager sẽ tự xử lý (quay về main)
+        return false;
     }
 }

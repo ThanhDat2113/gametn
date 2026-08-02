@@ -16,10 +16,24 @@ public class DamageTextManager : MonoBehaviour
     [Tooltip("Màu cho sát thương chuẩn (true damage). Để trống sẽ dùng màu mặc định.")]
     public Color trueColor = Color.white;
 
+    [Header("Status & Buff Colors (Overrides)")]
+    [Tooltip("Màu cho hiệu ứng Burn (thiêu đốt).")]
+    public Color burnColor = new Color(1f, 0.3f, 0.1f); // cam đỏ
+    [Tooltip("Màu cho hiệu ứng Stun (choáng).")]
+    public Color stunColor = new Color(0.6f, 0.2f, 1f); // tím
+    [Tooltip("Màu cho buff tăng sát thương (DMG UP).")]
+    public Color damageUpColor = new Color(1f, 0.4f, 0.4f); // đỏ nhạt
+    [Tooltip("Màu cho buff tăng phòng thủ (DEF UP).")]
+    public Color defenseUpColor = new Color(0.8f, 0.8f, 0.85f); // bạc
+
     // Các màu mặc định (fallback)
     private static readonly Color DefaultPhysical = new Color(1f, 0.5f, 0f);
     private static readonly Color DefaultMagical = new Color(0.6f, 0f, 1f);
     private static readonly Color DefaultTrue = Color.white;
+    private static readonly Color DefaultBurn = new Color(1f, 0.3f, 0.1f);
+    private static readonly Color DefaultStun = new Color(0.6f, 0.2f, 1f);
+    private static readonly Color DefaultDamageUp = new Color(1f, 0.4f, 0.4f);
+    private static readonly Color DefaultDefenseUp = new Color(0.8f, 0.8f, 0.85f);
 
     private List<DamageText> _pool;
 
@@ -115,5 +129,77 @@ public class DamageTextManager : MonoBehaviour
     {
         Color color = isCrit ? Color.yellow : Color.white;
         ShowDamage(damage, worldPosition, color, Vector2.up, isFinalHit);
+    }
+
+    /// <summary>
+    /// Lấy màu cho hiệu ứng status/buff (ưu tiên override nếu có).
+    /// </summary>
+    private Color GetColorForStatus(StatusEffectType status)
+    {
+        switch (status)
+        {
+            case StatusEffectType.ThieuDot:
+                return burnColor.a > 0 ? burnColor : DefaultBurn;
+            case StatusEffectType.Stun:
+                return stunColor.a > 0 ? stunColor : DefaultStun;
+            case StatusEffectType.SieuViet:
+            case StatusEffectType.YChi:
+            case StatusEffectType.BuiSao:
+            case StatusEffectType.Empowered:
+                return damageUpColor.a > 0 ? damageUpColor : DefaultDamageUp;
+            case StatusEffectType.GiamSatThuong:
+            case StatusEffectType.ThuThe:
+                return defenseUpColor.a > 0 ? defenseUpColor : DefaultDefenseUp;
+            default:
+                return Color.white;
+        }
+    }
+
+    /// <summary>
+    /// Hiển thị text status (STUN!, BURN!, v.v.) tại vị trí world.
+    /// </summary>
+    public void ShowStatusText(string text, Vector3 worldPosition, StatusEffectType status, Vector2 direction)
+    {
+        Color color = GetColorForStatus(status);
+        ShowStatusText(text, worldPosition, color, direction);
+    }
+
+/// <summary>
+    /// Hiển thị text status với màu tùy chỉnh.
+    /// </summary>
+    public void ShowStatusText(string text, Vector3 worldPosition, Color textColor, Vector2 direction)
+    {
+        DamageText textObj = GetPooledObject();
+        textObj.gameObject.SetActive(true);
+        textObj.Show(text, worldPosition, textColor, direction, false, true, false);
+    }
+
+    /// <summary>
+    /// Hiển thị text buff (DEF UP!, DMG UP!, v.v.) tại vị trí world.
+    /// Buff text bay lên nhẹ nhàng, có offset riêng.
+    /// </summary>
+    public void ShowBuffText(string text, Vector3 worldPosition, StatType stat, bool isBuff, Vector2 direction)
+    {
+        Color color;
+        if (isBuff)
+        {
+            // Buff tăng phòng thủ → màu bạc; tăng sát thương → màu đỏ nhạt
+            if (stat == StatType.PDEF || stat == StatType.MDEF)
+                color = defenseUpColor.a > 0 ? defenseUpColor : DefaultDefenseUp;
+            else
+                color = damageUpColor.a > 0 ? damageUpColor : DefaultDamageUp;
+        }
+        else
+        {
+            // Debuff → đỏ
+            color = new Color(1f, 0.3f, 0.3f);
+        }
+
+        // Buff text: bay lên nhẹ nhàng với isBuff = true
+        // Buff text offset thấp hơn damage text (phía dưới) để tách biệt
+        Vector3 buffPos = worldPosition + Vector3.down * 0.5f;
+        DamageText textObj = GetPooledObject();
+        textObj.gameObject.SetActive(true);
+        textObj.Show(text, buffPos, color, direction, false, true, true);
     }
 }

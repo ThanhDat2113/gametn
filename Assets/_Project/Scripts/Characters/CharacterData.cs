@@ -20,10 +20,28 @@ public class CharacterData : ScriptableObject
 
     [Header("Identity")]
     public string characterName;
+    
+    [Tooltip("Ảnh đại diện (dùng trong UI roster, formation, v.v.)")]
     public Sprite portrait;
+    
+    [Tooltip("Ảnh chiến đấu (dùng trong battle scene)")]
     public Sprite battleSprite;
+    
+    [Tooltip("Ảnh nhân vật (dùng trong Character Info Panel) – có thể là full-body, illustration, v.v.")]
+    public Sprite characterImage;
+    
     [TextArea]
     public string lore;
+
+    [Header("Identity Details")]
+    [Tooltip("Danh hiệu của nhân vật (vd: 'Nhà thám hiểm', 'Hiệp sĩ ánh sáng')")]
+    public string title;
+
+    [Tooltip("Vai trò chiến đấu (vd: 'Chiến binh', 'Pháp sư', 'Cung thủ') – tự điền theo ý muốn")]
+    public string role;
+
+    [Tooltip("Animation clip dùng để preview trong UI (nếu có)")]
+    public AnimationClip previewAnimation;
 
     [Header("Base Stats (Level 1)")]
     public int baseHP = 100;
@@ -62,9 +80,22 @@ public class CharacterData : ScriptableObject
              "Set false để giữ nguyên hướng sprite gốc.")]
     public bool flipOnSpawn = true;
 
-    // Tính stat theo level
+    // ─── METHODS ─────────────────────────────────────────────────
+
     public int GetHP(int level) => baseHP + hpPerLevel * (level - 1);
     public int GetATK(int level) => baseATK + atkPerLevel * (level - 1);
     public int GetPDEF(int level) => basePDEF + pdefPerLevel * (level - 1);
     public int GetMDEF(int level) => baseMDEF + mdefPerLevel * (level - 1);
+
+    /// <summary>Lấy danh hiệu, fallback nếu rỗng.</summary>
+    public string GetTitleOrDefault(string fallback = "—")
+    {
+        return string.IsNullOrEmpty(title) ? fallback : title;
+    }
+
+    /// <summary>Lấy vai trò, fallback nếu rỗng.</summary>
+    public string GetRoleOrDefault(string fallback = "—")
+    {
+        return string.IsNullOrEmpty(role) ? fallback : role;
+    }
 }

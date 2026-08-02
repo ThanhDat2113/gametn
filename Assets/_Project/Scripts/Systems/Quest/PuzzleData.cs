@@ -36,6 +36,9 @@ public class PuzzleData : ScriptableObject
 
     [Header("Unblock Puzzle Config")]
     public UnblockConfig unblockConfig;
+
+    [Header("Wood Quiz (Klotski) Config")]
+    public WoodQuizConfig woodQuizConfig;
 }
 
 // ─────────────────────────────
@@ -133,4 +136,37 @@ public class UnblockConfig
     public Color blockColor = new Color(0.6f, 0.4f, 0.2f);
     public Color redBlockColor = Color.red;
     public Color goalColor = Color.green;
+}
+
+// ─────────────────────────────
+// Wood Quiz (Klotski)
+// ─────────────────────────────
+
+[System.Serializable]
+public class WoodQuizConfig
+{
+    [Header("Grid Size")]
+    public int gridWidth = 4;
+    public int gridHeight = 5;
+
+    [Header("Board Layout (rows of chars)")]
+    [Tooltip("Ký tự layout:\n" +
+             "  '#' = tường\n" +
+             "  '.' = ô trống\n" +
+             "  'G' = lối thoát (goal)\n" +
+             "  'M' = khối master ĐỎ (block dọc 1x2, cần đẩy ra)\n" +
+             "  'A'-'Z' = các khối gỗ khác (cùng ký tự = cùng block, có thể 1x1, 1x2, 2x1)")]
+    [TextArea(5, 10)]
+    public string[] boardLayout;
+
+    [Header("Rules")]
+    public int maxMoves = 50;
+
+    [Header("Visual")]
+    public Color emptyColor = new Color(0.12f, 0.08f, 0.05f, 1f);
+    public Color wallColor = new Color(0.25f, 0.18f, 0.12f, 1f);
+    public Color woodLightColor = new Color(0.72f, 0.52f, 0.30f, 1f);
+    public Color woodDarkColor = new Color(0.55f, 0.38f, 0.20f, 1f);
+    public Color masterColor = new Color(0.85f, 0.25f, 0.20f, 1f);
+    public Color goalColor = new Color(0.20f, 0.75f, 0.35f, 1f);
 }
