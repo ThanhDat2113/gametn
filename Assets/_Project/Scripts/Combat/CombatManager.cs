@@ -702,6 +702,9 @@ public class CombatManager : MonoBehaviour
         if (burn != null)
         {
             int dmg = Mathf.RoundToInt(burn.Value);
+            // Bật cờ SuppressDamageText để UnitView hiển thị "BURN!" thay vì số damage trắng
+            // (tránh trùng lặp: vừa hiển thị BURN! vừa hiển thị số trắng).
+            unit.SuppressDamageText = true;
             unit.TakeDamage(null, dmg);
             var view = unitViews.FirstOrDefault(v => v.LinkedUnit == unit);
             if (view != null) view.TriggerHitFlash();
