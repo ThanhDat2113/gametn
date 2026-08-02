@@ -4,6 +4,8 @@ using UnityEngine.UI;
 [RequireComponent(typeof(RectTransform))]
 [RequireComponent(typeof(CanvasGroup))]
 [DisallowMultipleComponent]
+// Chạy sau camera (LateUpdate order mặc định 0) để tránh lệch 1 frame khi camera xoay/di chuyển.
+[DefaultExecutionOrder(1000)]
 public class MinimapMarkerUI : MonoBehaviour
 {
     public enum OutOfRangeBehavior { Clamp, Hide }
@@ -35,7 +37,7 @@ public class MinimapMarkerUI : MonoBehaviour
         _targetBridge = bridge;
     }
 
-    private void Update()
+    private void LateUpdate()
     {
         if (_targetBridge == null || MinimapController.Instance == null) return;
 
