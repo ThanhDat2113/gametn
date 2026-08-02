@@ -13,6 +13,16 @@ public class DialogueEntry
     public GameObject customPrompt;
 }
 
+/// <summary>
+/// Chế độ ghi đè hướng tương tác (trái/phải) cho DialogueTrigger.
+/// </summary>
+public enum SideOverrideMode
+{
+    Auto,       // Tự động xác định dựa trên vị trí player so với NPC
+    ForceLeft,  // Luôn coi như player đứng bên trái NPC
+    ForceRight  // Luôn coi như player đứng bên phải NPC
+}
+
 public class DialogueTrigger : MonoBehaviour
 {
     [Header("Trigger Identity")]
@@ -23,6 +33,10 @@ public class DialogueTrigger : MonoBehaviour
 
     [Header("Fallback Dialogue")]
     public DialogueLineData[] defaultLines;
+
+    [Header("Side Override")]
+    [Tooltip("Chọn hướng tương tác cố định. Auto = tự động theo vị trí player, ForceLeft/ForceRight = luôn dùng hướng đó.")]
+    public SideOverrideMode sideOverride = SideOverrideMode.Auto;
 
     [Header("Visual")]
     public GameObject interactionPrompt;
@@ -348,8 +362,15 @@ public class DialogueTrigger : MonoBehaviour
         return entry != null ? entry.customPrompt : null;
     }
 
+    // ─── XÁC ĐỊNH HƯỚNG TƯƠNG TÁC (CÓ GHI ĐÈ) ──────────────────
+
     private InteractionSide DetermineInteractionSide()
     {
+        // Nếu đã chọn ForceLeft hoặc ForceRight thì dùng luôn
+        if (sideOverride == SideOverrideMode.ForceLeft) return InteractionSide.Left;
+        if (sideOverride == SideOverrideMode.ForceRight) return InteractionSide.Right;
+
+        // Mặc định Auto: tính dựa trên vị trí player so với NPC
         GameObject player = PlayerManager.Instance?.GetPlayer();
         if (player == null) return InteractionSide.Left;
         float diff = player.transform.position.x - transform.position.x;
@@ -559,6 +580,7 @@ public class DialogueTrigger : MonoBehaviour
             return;
         }
 
+        // ✅ Xác định hướng tương tác (có hỗ trợ override)
         _currentSide = DetermineInteractionSide();
 
         var entry = GetAppropriateEntry();
@@ -701,28 +723,20 @@ public class DialogueTrigger : MonoBehaviour
         _isDialogueTriggered = false;
         _questNotified = false;
 
-        // 🔥 Luôn chạy EndWithBlackScreen (có fade) để che camera restore
         StartCoroutine(EndDialogueWithFade());
     }
 
     private IEnumerator EndDialogueWithFade()
     {
-        // Fade to black trước khi thay đổi camera
         yield return FadeController.Instance.FadeToBlack();
 
-        // Khôi phục camera
         RestoreCameraState();
-
-        // Khôi phục flips và scales
         RestoreOriginalScales();
 
-        // Đợi thêm một chút nếu cần
         yield return new WaitForSeconds(blackScreenDelay);
 
-        // Fade from black
         yield return FadeController.Instance.FadeFromBlack();
 
-        // Mở khóa player và các logic khác
         UnlockPlayerMovement();
         NotifyQuestIfNeeded();
         InvokeNPCInteractionComplete();
@@ -789,7 +803,7 @@ public class DialogueTrigger : MonoBehaviour
                 _originalNPCScale.z
             );
         }
-        else
+        else // Right
         {
             if (playerController != null)
                 playerController.SetFacingDirection(false);

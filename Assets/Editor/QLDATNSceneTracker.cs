@@ -27,9 +27,10 @@ namespace QLDATN.ProjectTracker
         private const double HeartbeatSeconds = 30.0;
         private const double GitRefreshSeconds = 60.0;
         private const double RecentSourceActivitySeconds = 90.0;
-        private const string ClientVersion = "qldatn-unity-3.3.0";
+        private const string ClientVersion = "qldatn-unity-3.3.1";
         private const string PendingUpdatePreference = "QLDATN_PROJECT_TRACKER_PENDING_UPDATE";
         private const int MaximumOfflinePayloads = 50;
+        private static readonly double[] RetryDelaysSeconds = { 2.0, 5.0, 15.0 };
 
         private static readonly string SessionIdPath = Path.Combine(
             "Library",
@@ -38,6 +39,9 @@ namespace QLDATN.ProjectTracker
         );
         private static readonly string SessionId = LoadOrCreateSessionId();
         private static readonly Queue<StatusPayload> PendingPayloads = new Queue<StatusPayload>();
+        private static StatusPayload _latestHeartbeat;
+        private static int _retryAttempt;
+        private static double _nextRetryAt;
         private static readonly string OfflineQueuePath = Path.Combine(
             "Library",
             "QLDATNTracker",
@@ -361,8 +365,17 @@ namespace QLDATN.ProjectTracker
             );
             lock (PendingPayloads)
             {
-                while (PendingPayloads.Count >= MaximumOfflinePayloads) PendingPayloads.Dequeue();
-                PendingPayloads.Enqueue(payload);
+                if (string.IsNullOrEmpty(eventType))
+                {
+                    // Keep only the newest periodic state so stale heartbeats
+                    // cannot delay the next live heartbeat after reconnect.
+                    _latestHeartbeat = payload;
+                }
+                else
+                {
+                    while (PendingPayloads.Count >= MaximumOfflinePayloads) PendingPayloads.Dequeue();
+                    PendingPayloads.Enqueue(payload);
+                }
             }
             PersistPendingPayloads();
             _ = FlushQueueAsync();
@@ -416,11 +429,15 @@ namespace QLDATN.ProjectTracker
             }
         }
 
-        private static void RemoveSentPayload(StatusPayload expected)
+        private static void RemoveSentPayload(StatusPayload expected, bool heartbeat)
         {
             lock (PendingPayloads)
             {
-                if (PendingPayloads.Count > 0 && ReferenceEquals(PendingPayloads.Peek(), expected))
+                if (heartbeat)
+                {
+                    if (ReferenceEquals(_latestHeartbeat, expected)) _latestHeartbeat = null;
+                }
+                else if (PendingPayloads.Count > 0 && ReferenceEquals(PendingPayloads.Peek(), expected))
                 {
                     PendingPayloads.Dequeue();
                 }
@@ -431,6 +448,8 @@ namespace QLDATN.ProjectTracker
         private static async Task FlushQueueAsync()
         {
             if (_isSending) return;
+            var now = EditorApplication.timeSinceStartup;
+            if (now < _nextRetryAt) return;
             _isSending = true;
             try
             {
@@ -438,11 +457,15 @@ namespace QLDATN.ProjectTracker
                 while (sentThisPass < 5)
                 {
                     StatusPayload payload;
+                    bool heartbeat;
                     lock (PendingPayloads)
                     {
-                        if (PendingPayloads.Count == 0) break;
-                        payload = PendingPayloads.Peek();
+                        heartbeat = _latestHeartbeat != null;
+                        payload = heartbeat
+                            ? _latestHeartbeat
+                            : PendingPayloads.Count > 0 ? PendingPayloads.Peek() : null;
                     }
+                    if (payload == null) break;
                     var json = JsonUtility.ToJson(payload);
                     var body = Encoding.UTF8.GetBytes(json);
                     var timestamp = UnixTimeMilliseconds().ToString();
@@ -456,6 +479,9 @@ namespace QLDATN.ProjectTracker
                         EditorPrefs.GetString(TrackerUrlPreference),
                         "POST"
                     );
+                    // Prevent one stalled network request from blocking every
+                    // later heartbeat while Unity remains open.
+                    request.timeout = 15;
                     request.uploadHandler = new UploadHandlerRaw(body);
                     request.downloadHandler = new DownloadHandlerBuffer();
                     request.SetRequestHeader("Content-Type", "application/json");
@@ -493,15 +519,22 @@ namespace QLDATN.ProjectTracker
                             || request.responseCode >= 500;
                         if (transientFailure)
                         {
+                            var delayIndex = Math.Min(_retryAttempt, RetryDelaysSeconds.Length - 1);
+                            _nextRetryAt = EditorApplication.timeSinceStartup + RetryDelaysSeconds[delayIndex];
+                            _retryAttempt += 1;
                             PersistPendingPayloads();
                             break;
                         }
-                        RemoveSentPayload(payload);
+                        RemoveSentPayload(payload, heartbeat);
+                        _retryAttempt = 0;
+                        _nextRetryAt = 0;
                         sentThisPass += 1;
                     }
                     else
                     {
-                        RemoveSentPayload(payload);
+                        RemoveSentPayload(payload, heartbeat);
+                        _retryAttempt = 0;
+                        _nextRetryAt = 0;
                         sentThisPass += 1;
                         await TryApplyUpdate(request.downloadHandler?.text);
                     }

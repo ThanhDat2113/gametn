@@ -20468,6 +20468,7 @@ MonoBehaviour:
     playOnce: 1
     customPrompt: {fileID: 0}
   defaultLines: []
+  sideOverride: 1
   interactionPrompt: {fileID: 0}
   useBlackScreen: 1
   useBlackScreenOnEnd: 1
@@ -21814,7 +21815,7 @@ MonoBehaviour:
   puzzleData: {fileID: 11400000, guid: d4050d7b16802244ea75b233af922573, type: 2}
   puzzleUIPrefab: {fileID: 4406237021966243345, guid: 135a258bd0974ce4fb3541bad08c626c, type: 3}
   interactKey: 101
-  interactionPrompt: {fileID: 973142511}
+  interactionPrompt: {fileID: 0}
 --- !u!1001 &358102847
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -26860,6 +26861,7 @@ MonoBehaviour:
     playOnce: 1
     customPrompt: {fileID: 843531286}
   defaultLines: []
+  sideOverride: 0
   interactionPrompt: {fileID: 843531286}
   useBlackScreen: 1
   useBlackScreenOnEnd: 1
@@ -30679,6 +30681,7 @@ MonoBehaviour:
     playOnce: 1
     customPrompt: {fileID: 0}
   defaultLines: []
+  sideOverride: 1
   interactionPrompt: {fileID: 0}
   useBlackScreen: 1
   useBlackScreenOnEnd: 1
@@ -33551,6 +33554,7 @@ MonoBehaviour:
     playOnce: 1
     customPrompt: {fileID: 1308095474}
   defaultLines: []
+  sideOverride: 2
   interactionPrompt: {fileID: 1308095474}
   useBlackScreen: 1
   useBlackScreenOnEnd: 1
@@ -48637,6 +48641,7 @@ MonoBehaviour:
     playOnce: 1
     customPrompt: {fileID: 0}
   defaultLines: []
+  sideOverride: 1
   interactionPrompt: {fileID: 0}
   useBlackScreen: 1
   useBlackScreenOnEnd: 1
@@ -64254,6 +64259,7 @@ MonoBehaviour:
     playOnce: 1
     customPrompt: {fileID: 0}
   defaultLines: []
+  sideOverride: 1
   interactionPrompt: {fileID: 0}
   useBlackScreen: 1
   useBlackScreenOnEnd: 1
@@ -64290,8 +64296,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 26.69638, y: 30.822739, z: 38.910767}
-  m_Center: {x: 8.232834, y: -3.297081, z: -1.5211792}
+  m_Size: {x: 27.654324, y: 30.822739, z: 47.489716}
+  m_Center: {x: 7.753848, y: -3.297081, z: 18.094585}
 --- !u!4 &1114602788
 Transform:
   m_ObjectHideFlags: 0
@@ -79447,7 +79453,7 @@ VFXRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1405200519}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 1
   m_ReceiveShadows: 0
   m_DynamicOccludee: 1
@@ -81431,6 +81437,7 @@ MonoBehaviour:
     playOnce: 1
     customPrompt: {fileID: 2135837555}
   defaultLines: []
+  sideOverride: 2
   interactionPrompt: {fileID: 2135837555}
   useBlackScreen: 1
   useBlackScreenOnEnd: 1
@@ -81467,8 +81474,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 9.282092, y: 0.6259088, z: 0.52234566}
-  m_Center: {x: -4.0686707, y: 0.0015911817, z: -0.012836886}
+  m_Size: {x: 6.1605268, y: 1.055795, z: 2.938512}
+  m_Center: {x: 1.2546438, y: -0.015836526, z: -0.28992105}
 --- !u!114 &1462320141
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -85478,6 +85485,8 @@ Transform:
   - {fileID: 1993263639}
   - {fileID: 89205952}
   - {fileID: 789653227}
+  - {fileID: 1017896521052219937}
+  - {fileID: 1975499522}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1556861746
@@ -86681,6 +86690,7 @@ MonoBehaviour:
     playOnce: 1
     customPrompt: {fileID: 874787196}
   defaultLines: []
+  sideOverride: 0
   interactionPrompt: {fileID: 874787196}
   useBlackScreen: 1
   useBlackScreenOnEnd: 1
@@ -87257,7 +87267,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &1590870185
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -87318,6 +87328,7 @@ MonoBehaviour:
     playOnce: 1
     customPrompt: {fileID: 0}
   defaultLines: []
+  sideOverride: 1
   interactionPrompt: {fileID: 0}
   useBlackScreen: 1
   useBlackScreenOnEnd: 1
@@ -87354,8 +87365,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 3.6552541, y: 5.398462, z: 7.963098}
-  m_Center: {x: -1.2552527, y: 0.7287399, z: -0.6937195}
+  m_Size: {x: 1.0199323, y: 2.9739618, z: 1.1408824}
+  m_Center: {x: 0.06240772, y: 0.046212293, z: -0.088087834}
 --- !u!114 &1590870189
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -87484,13 +87495,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::QuestTimelineTrigger
   questId: 8
   stepIndex: 6
-  timeline: {fileID: 1017896521052219936}
+  timeline: {fileID: 1975499521}
   waitForTimeline: 1
   objectsToHideDuringTimeline:
   - {fileID: 2125574116}
-  - {fileID: 1590870184}
+  - {fileID: 291536830}
   hidePlayerRenderersDuringTimeline: 1
-  timelineCamera: {fileID: 0}
+  timelineCamera: {fileID: 116206629}
   dialogueWaitTimeout: 30
 --- !u!1001 &1595694126
 PrefabInstance:
@@ -88549,7 +88560,7 @@ VFXRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1627544266}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 0
   m_ReceiveShadows: 0
   m_DynamicOccludee: 1
@@ -97485,7 +97496,7 @@ VFXRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1786010754}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 0
   m_ReceiveShadows: 0
   m_DynamicOccludee: 1
@@ -107562,7 +107573,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!320 &1975499521
 PlayableDirector:
   m_ObjectHideFlags: 0
@@ -107573,7 +107584,7 @@ PlayableDirector:
   m_Enabled: 1
   serializedVersion: 3
   m_PlayableAsset: {fileID: 11400000, guid: 9c6e9c729eddfd543a46c692478d0cd1, type: 2}
-  m_InitialState: 1
+  m_InitialState: 0
   m_WrapMode: 2
   m_DirectorUpdateMode: 1
   m_InitialTime: 0
@@ -107604,9 +107615,9 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1975499520}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 691.20264, y: 17.09826, z: 79.16193}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalRotation: {x: -0, y: -0.50680745, z: 0, w: 0.86205935}
+  m_LocalPosition: {x: 36.582687, y: 2.343091, z: 88.04137}
+  m_LocalScale: {x: 0.13703662, y: 0.1370368, z: 0.13703671}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 116206630}
@@ -107615,7 +107626,7 @@ Transform:
   - {fileID: 1405200522}
   - {fileID: 1627544267}
   - {fileID: 1786010757}
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 1554058909}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1975559775
 GameObject:
@@ -109966,6 +109977,7 @@ GameObject:
   - component: {fileID: 2025563093}
   - component: {fileID: 2025563092}
   - component: {fileID: 2025563091}
+  - component: {fileID: 2025563096}
   m_Layer: 0
   m_Name: Quest 3-1-2
   m_TagString: Untagged
@@ -110030,6 +110042,7 @@ MonoBehaviour:
     playOnce: 1
     customPrompt: {fileID: 0}
   defaultLines: []
+  sideOverride: 1
   interactionPrompt: {fileID: 0}
   useBlackScreen: 1
   useBlackScreenOnEnd: 1
@@ -110087,6 +110100,28 @@ Transform:
   - {fileID: 1284448257}
   m_Father: {fileID: 1554058909}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2025563096
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2025563090}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5ad82cdbe057f4b4c98bf85627c6d0f0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestTimelineTrigger
+  questId: 8
+  stepIndex: 5
+  timeline: {fileID: 1017896521052219936}
+  waitForTimeline: 1
+  objectsToHideDuringTimeline:
+  - {fileID: 1590870184}
+  - {fileID: 2125574116}
+  hidePlayerRenderersDuringTimeline: 1
+  timelineCamera: {fileID: 1017896521052219938}
+  dialogueWaitTimeout: 30
 --- !u!1001 &2025698900
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -117345,7 +117380,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &2125574117
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -117412,6 +117447,7 @@ MonoBehaviour:
     playOnce: 1
     customPrompt: {fileID: 0}
   defaultLines: []
+  sideOverride: 0
   interactionPrompt: {fileID: 0}
   useBlackScreen: 1
   useBlackScreenOnEnd: 1
@@ -117448,8 +117484,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 8.328482, y: 7.0049386, z: 13.010869}
-  m_Center: {x: -3.5918674, y: -0.043332238, z: -0.41713825}
+  m_Size: {x: 2.0947735, y: 7.0049386, z: 10.931792}
+  m_Center: {x: -0.4750129, y: -0.043332238, z: -0.18964465}
 --- !u!114 &2125574121
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -118765,7 +118801,7 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 0}
+    m_TransformParent: {fileID: 1554058909}
     m_Modifications:
     - target: {fileID: 212334183202192024, guid: 629f6fa50d3c8f9469f1a59e1e46f6cb, type: 3}
       propertyPath: m_Sprite
@@ -118888,6 +118924,10 @@ PrefabInstance:
       value: 0.54
       objectReference: {fileID: 0}
     - target: {fileID: 5442050880153608346, guid: 629f6fa50d3c8f9469f1a59e1e46f6cb, type: 3}
+      propertyPath: m_InitialState
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5442050880153608346, guid: 629f6fa50d3c8f9469f1a59e1e46f6cb, type: 3}
       propertyPath: m_SceneBindings.Array.size
       value: 13
       objectReference: {fileID: 0}
@@ -118956,28 +118996,40 @@ PrefabInstance:
       value: 0.56
       objectReference: {fileID: 0}
     - target: {fileID: 6008490287840024308, guid: 629f6fa50d3c8f9469f1a59e1e46f6cb, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.13703662
+      objectReference: {fileID: 0}
+    - target: {fileID: 6008490287840024308, guid: 629f6fa50d3c8f9469f1a59e1e46f6cb, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.1370368
+      objectReference: {fileID: 0}
+    - target: {fileID: 6008490287840024308, guid: 629f6fa50d3c8f9469f1a59e1e46f6cb, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.13703671
+      objectReference: {fileID: 0}
+    - target: {fileID: 6008490287840024308, guid: 629f6fa50d3c8f9469f1a59e1e46f6cb, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 667.6
+      value: 33.68808
       objectReference: {fileID: 0}
     - target: {fileID: 6008490287840024308, guid: 629f6fa50d3c8f9469f1a59e1e46f6cb, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 17.09826
+      value: 2.343091
       objectReference: {fileID: 0}
     - target: {fileID: 6008490287840024308, guid: 629f6fa50d3c8f9469f1a59e1e46f6cb, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 90.2
+      value: 85.95071
       objectReference: {fileID: 0}
     - target: {fileID: 6008490287840024308, guid: 629f6fa50d3c8f9469f1a59e1e46f6cb, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 1
+      value: 0.86205935
       objectReference: {fileID: 0}
     - target: {fileID: 6008490287840024308, guid: 629f6fa50d3c8f9469f1a59e1e46f6cb, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 6008490287840024308, guid: 629f6fa50d3c8f9469f1a59e1e46f6cb, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0
+      value: -0.50680745
       objectReference: {fileID: 0}
     - target: {fileID: 6008490287840024308, guid: 629f6fa50d3c8f9469f1a59e1e46f6cb, type: 3}
       propertyPath: m_LocalRotation.z
@@ -119038,6 +119090,11 @@ PlayableDirector:
 --- !u!4 &1017896521052219937 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6008490287840024308, guid: 629f6fa50d3c8f9469f1a59e1e46f6cb, type: 3}
+  m_PrefabInstance: {fileID: 1017896521052219935}
+  m_PrefabAsset: {fileID: 0}
+--- !u!20 &1017896521052219938 stripped
+Camera:
+  m_CorrespondingSourceObject: {fileID: 9084975928955431397, guid: 629f6fa50d3c8f9469f1a59e1e46f6cb, type: 3}
   m_PrefabInstance: {fileID: 1017896521052219935}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1635461128165338233
@@ -119123,5 +119180,3 @@ SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
   - {fileID: 1554058909}
-  - {fileID: 1017896521052219935}
-  - {fileID: 1975499522}

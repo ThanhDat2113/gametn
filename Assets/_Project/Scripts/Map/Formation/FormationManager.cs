@@ -34,12 +34,16 @@ public class FormationManager : MonoBehaviour
     [Header("Counter")]
     public TextMeshProUGUI counterText;
 
+    [Header("Debug")]
+    [Tooltip("Bật để kích hoạt phím tắt F (mở Formation) và T (vào Combat)")]
+    public bool enableKeyboardShortcuts = false; // ✅ Mặc định tắt
+
     private SlotUI[] slots = new SlotUI[9];
     private FormationData currentFormation = new FormationData { slots = new FormationSlot[9] };
     private const int MAX_UNITS = 5;
     private bool isFormationUIOpen = false;
 
-    // ✅ ĐÃ SỬA: public property
+    // Danh sách nhân vật đã mở khóa (có thể xem trong roster)
     public HashSet<CharacterData> UnlockedCharacters { get; private set; } = new HashSet<CharacterData>();
     private Dictionary<CharacterData, CharacterDragItem> rosterItemMap
         = new Dictionary<CharacterData, CharacterDragItem>();
@@ -47,7 +51,6 @@ public class FormationManager : MonoBehaviour
     void Start()
     {
         BuildGrid();
-        // ✅ ĐÃ SỬA: dùng UnlockedCharacters
         foreach (var c in startingCharacters)
             if (c != null) UnlockedCharacters.Add(c);
         BuildRoster();
@@ -58,6 +61,9 @@ public class FormationManager : MonoBehaviour
 
     void Update()
     {
+        // ✅ Đã tắt phím tắt F và T theo yêu cầu
+        if (!enableKeyboardShortcuts) return;
+
         if (Input.GetKeyDown(KeyCode.F))
         {
             isFormationUIOpen = !isFormationUIOpen;
@@ -85,12 +91,10 @@ public class FormationManager : MonoBehaviour
 
     void BuildRoster()
     {
-        // Xóa roster cũ
         foreach (var kvp in rosterItemMap)
             if (kvp.Value != null) Destroy(kvp.Value.gameObject);
         rosterItemMap.Clear();
 
-        // ✅ ĐÃ SỬA: dùng UnlockedCharacters
         foreach (var cd in allCharacters)
         {
             if (cd == null || !UnlockedCharacters.Contains(cd)) continue;
@@ -101,7 +105,6 @@ public class FormationManager : MonoBehaviour
         }
     }
 
-    /// <summary>Refresh roster UI (gọi sau khi unlock)</summary>
     private void RefreshRoster()
     {
         BuildRoster();
@@ -282,29 +285,24 @@ public class FormationManager : MonoBehaviour
 
     public FormationData GetCurrentFormationData() => currentFormation;
 
-    // Backward compatibility: EquipmentPanel và các script khác dùng availableCharacters
     public CharacterData[] availableCharacters
     {
         get { return allCharacters; }
     }
 
-    /// <summary>Mở khóa nhân vật (gọi từ quest reward, vào allCharacters + unlocked)</summary>
     public void UnlockCharacter(CharacterData character)
     {
         if (character == null) return;
-        // ✅ ĐÃ SỬA: dùng UnlockedCharacters
         if (UnlockedCharacters.Contains(character)) return;
 
         UnlockedCharacters.Add(character);
 
-        // Thêm vào allCharacters nếu chưa có
         if (!allCharacters.Contains(character))
         {
             var list = new List<CharacterData>(allCharacters) { character };
             allCharacters = list.ToArray();
         }
 
-        // Tạo UI item
         var go = Instantiate(characterIconPrefab, rosterContainer);
         var drag = go.GetComponent<CharacterDragItem>();
         drag.Initialize(character, this);
