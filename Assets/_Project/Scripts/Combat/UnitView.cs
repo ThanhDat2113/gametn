@@ -101,8 +101,18 @@ public class UnitView : MonoBehaviour
                 direction = new Vector2(dirX, 0.5f).normalized;
             }
 
-            Vector3 textPos = GetDamageTextPosition();
-            DamageTextManager.Instance?.ShowDamage(dmg, textPos, damageType, direction);
+            // Nếu SuppressDamageText được bật (burn damage đầu lượt),
+            // hiển thị "BURN! {dmg}" để vừa thấy hiệu ứng vừa thấy số sát thương.
+            if (unit.SuppressDamageText)
+            {
+                DamageTextManager.Instance?.ShowStatusText($"BURN! {dmg}", GetDamageTextPosition(), StatusEffectType.ThieuDot, direction);
+                unit.SuppressDamageText = false;
+            }
+            else
+            {
+                Vector3 textPos = GetDamageTextPosition();
+                DamageTextManager.Instance?.ShowDamage(dmg, textPos, damageType, direction);
+            }
 
             if (cameraManager != null)
             {
@@ -112,6 +122,44 @@ public class UnitView : MonoBehaviour
                 else
                     cameraManager.PlayImpactShake();
             }
+        };
+
+// ── Status text (STUN!, BURN!, v.v.) ──
+        // Bay ngược hướng với damage text để tách biệt
+        unit.OnStatusApplied += (text, status) =>
+        {
+            if (DamageTextManager.Instance == null) return;
+            Vector2 direction = Vector2.up;
+            if (spriteRenderer != null)
+            {
+                float dirX = spriteRenderer.flipX ? 1f : -1f;
+                // Status text bay ngược hướng X so với damage text
+                direction = new Vector2(-dirX, 0.5f).normalized;
+            }
+            // Status text offset cao hơn damage text một chút
+            DamageTextManager.Instance.ShowStatusText(text, GetDamageTextPosition() + Vector3.up * 0.3f, status, direction);
+        };
+
+// ── Buff text (DMG UP!/DEF UP!) ──
+        // Bay lên nhẹ nhàng, vị trí thấp hơn damage text
+        // Delay 0.1s để xuất hiện cùng lúc với VFX spawn
+        unit.OnBuffApplied += (text, stat, isBuff) =>
+        {
+            if (DamageTextManager.Instance == null) return;
+            Vector2 direction = Vector2.up;
+            if (spriteRenderer != null)
+            {
+                float dirX = spriteRenderer.flipX ? 1f : -1f;
+                // Buff text bay lên chính giữa, không bay ngang
+                direction = new Vector2(dirX * 0.2f, 1f).normalized;
+            }
+            var capturedText = text;
+            var capturedStat = stat;
+            var capturedIsBuff = isBuff;
+            var capturedDir = direction;
+            var capturedPos = GetDamageTextPosition() + Vector3.down * 0.5f;
+            // Delay 0.1s để hiển thị cùng lúc VFX
+            StartCoroutine(DelayedShowBuffText(capturedText, capturedPos, capturedStat, capturedIsBuff, capturedDir, 0.1f));
         };
 
         unit.OnHealed += (amount) =>
@@ -516,5 +564,17 @@ public class UnitView : MonoBehaviour
             spriteRenderer.color = c;
         }
     }
-    public void DisableRootMotion() { if (animator != null) animator.applyRootMotion = false; }
+public void DisableRootMotion() { if (animator != null) animator.applyRootMotion = false; }
+
+    /// <summary>
+    /// Hiển thị buff text sau một khoảng delay (để đồng bộ với VFX).
+    /// </summary>
+    private IEnumerator DelayedShowBuffText(string text, Vector3 position, StatType stat, bool isBuff, Vector2 direction, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        if (DamageTextManager.Instance != null)
+        {
+            DamageTextManager.Instance.ShowBuffText(text, position, stat, isBuff, direction);
+        }
+    }
 }
