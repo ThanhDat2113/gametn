@@ -62775,7 +62775,7 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 0}
+    m_TransformParent: {fileID: 2118859792}
     m_Modifications:
     - target: {fileID: 626382593386140487, guid: eadfe6bcf3b028f44a8781ab79d0b209, type: 3}
       propertyPath: m_ResetSeedOnPlay
@@ -62796,6 +62796,10 @@ PrefabInstance:
     - target: {fileID: 4489474361245582160, guid: eadfe6bcf3b028f44a8781ab79d0b209, type: 3}
       propertyPath: m_ResetSeedOnPlay
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5173012247293988751, guid: eadfe6bcf3b028f44a8781ab79d0b209, type: 3}
+      propertyPath: m_InitialState
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5710548780097317186, guid: eadfe6bcf3b028f44a8781ab79d0b209, type: 3}
       propertyPath: m_ResetSeedOnPlay
@@ -62819,15 +62823,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5791318379389758253, guid: eadfe6bcf3b028f44a8781ab79d0b209, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 5791318379389758253, guid: eadfe6bcf3b028f44a8781ab79d0b209, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 5791318379389758253, guid: eadfe6bcf3b028f44a8781ab79d0b209, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 5791318379389758253, guid: eadfe6bcf3b028f44a8781ab79d0b209, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -62858,6 +62862,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: eadfe6bcf3b028f44a8781ab79d0b209, type: 3}
+--- !u!4 &1026167193 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 5791318379389758253, guid: eadfe6bcf3b028f44a8781ab79d0b209, type: 3}
+  m_PrefabInstance: {fileID: 1026167192}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1029532257
 GameObject:
   m_ObjectHideFlags: 0
@@ -118362,6 +118371,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: Goblin Dual
       objectReference: {fileID: 0}
+    - target: {fileID: 8112646481183596063, guid: 982407e9f9c89df4e9fffd0389266a62, type: 3}
+      propertyPath: healthBar
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 8112646481183596063, guid: 982407e9f9c89df4e9fffd0389266a62, type: 3}
+      propertyPath: healthText
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 8324657204817824742, guid: 982407e9f9c89df4e9fffd0389266a62, type: 3}
       propertyPath: m_AnchorMax.x
       value: 0
@@ -125935,6 +125952,7 @@ Transform:
   - {fileID: 899869662}
   - {fileID: 689871279}
   - {fileID: 1086718462}
+  - {fileID: 1026167193}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &2120913635
@@ -127745,4 +127763,3 @@ SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
   - {fileID: 2118859792}
-  - {fileID: 1026167192}
