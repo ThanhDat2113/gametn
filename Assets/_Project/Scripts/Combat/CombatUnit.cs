@@ -277,17 +277,16 @@ public class CombatUnit
         // Đối tượng miễn nhiễm status/buff không thể nhận buff
         if (IsImmuneToStatusEffects) return;
 
-        var existing = activeBuffs.Find(b => b.Stat == stat);
-        if (existing != null)
-        {
-            if (duration != 0) existing.Duration = duration;
-            existing.Multiplier = multiplier;
-        }
-        else
-        {
-            activeBuffs.Add(new ActiveBuff(stat, multiplier, duration));
-        }
-        Debug.Log($"  {UnitName} nhận buff {stat} x{multiplier} ({(duration == 0 ? "vĩnh viễn" : duration + " lượt")})");
+        // CHO PHÉP CHỒNG BUFF: Mỗi lần buff cùng một stat sẽ TẠO MỚI một entry
+        // thay vì ghi đè. Vì GetStatMultiplier() nhân TẤT CẢ các buff cùng stat,
+        // nên nhiều nguồn buff (vd: Aleus buff ATK + Nicholas self-buff ATK) sẽ
+        // chồng lên nhau đúng như lý thuyết (1.1 × 1.05 = 1.155).
+        //
+        // Trước đây đoạn mã ghi đè existing.Multiplier khi buff cùng stat,
+        // khiến buff từ Aleus bị thay thế bởi buff của Nicholas (hoặc ngược lại)
+        // → sát thương thất thường (400/300) thay vì ổn định 580+.
+        activeBuffs.Add(new ActiveBuff(stat, multiplier, duration));
+        Debug.Log($"  {UnitName} nhận buff {stat} x{multiplier} ({(duration == 0 ? "vĩnh viễn" : duration + " lượt")}). Tổng buff {stat} đang có: {activeBuffs.Count(b => b.Stat == stat)}");
 
         // Hiển thị text buff (DMG UP!/DEF UP!)
         bool isBuff = multiplier >= 1f;
