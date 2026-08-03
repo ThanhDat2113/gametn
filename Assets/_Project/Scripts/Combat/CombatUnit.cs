@@ -33,7 +33,13 @@ public class CombatUnit
     public int ActionsRemainingThisTurn { get; set; } = 1;
     public bool CanActThisTurn => ActionsRemainingThisTurn > 0 && IsAlive && !HasStatus(StatusEffectType.Stun);
     public bool IsTargetable { get; set; } = true;
-    public string PassiveClassName { get; set; } // để lưu tên class passive sau khi spawn
+    public string PassiveClassName { get; set; }
+
+    /// <summary>
+    /// Cờ miễn nhiễm status/buff. Khi true, đối tượng KHÔNG thể bị dính bất kỳ
+    /// hiệu ứng trạng thái hoặc buff nào (chỉ nhận sát thương). Dùng cho Afterimage của Hassan.
+    /// </summary>
+    public bool IsImmuneToStatusEffects { get; set; } = false;
 
     private List<ActiveBuff> activeBuffs = new List<ActiveBuff>();
     private List<ActiveStatus> activeStatuses = new List<ActiveStatus>();
@@ -46,7 +52,7 @@ public class CombatUnit
     {
         _damageReductionCharges += charges;
         _damageReductionPercent = percent;
-        Debug.Log($"[{UnitName}] Nhận {charges} lớp giáp, mỗi lớp giảm {percent*100}% sát thương.");
+        Debug.Log($"[{UnitName}] Nhận {charges} lớp giáp, mỗi lớp giảm {percent * 100}% sát thương.");
         // Hiển thị text "DEF UP!" màu bạc khi nhận giáp/shield
         OnBuffApplied?.Invoke("DEF UP!", StatType.PDEF, true);
     }
@@ -113,7 +119,7 @@ public class CombatUnit
                 {
                     var skillInstance = Object.Instantiate(skillAsset);
                     skillInstance.name = skillAsset.name;
-                    
+
                     // Deep clone array references để tránh các skill clone share cùng mảng âm thanh/VFX
                     if (skillAsset.sfxClips != null)
                         skillInstance.sfxClips = (AudioClip[])skillAsset.sfxClips.Clone();
@@ -127,7 +133,7 @@ public class CombatUnit
                         skillInstance.voiceLines = (AudioClip[])skillAsset.voiceLines.Clone();
                     if (skillAsset.effects != null)
                         skillInstance.effects = (SkillEffect[])skillAsset.effects.Clone();
-                    
+
                     AvailableSkills.Add(skillInstance);
                 }
             }
@@ -137,11 +143,23 @@ public class CombatUnit
     // ── Damage ── ✅ ĐÃ SỬA: truyền DamageType
     public void TakeDamage(CombatUnit caster, int amount, DamageType damageType = DamageType.Physical)
     {
-        // Invincible: chặn mọi sát thương, sau đó tự xóa
+        // Invincible: miễn thương đúng 1 đòn duy nhất.
+        // Đòn đánh VẪN "trúng" - hiển thị đầy đủ damage text + hiệu ứng trúng đòn
+        // (knockback, hit flash, camera shake), nhưng sát thương thực tế nhận vào là 0.
+        // Sau đòn này trạng thái tự xóa → chỉ tồn tại cho 1 hit.
         if (HasStatus(StatusEffectType.Invincible))
         {
-            Debug.Log($"  {UnitName} đang Invincible! Chặn {amount} dmg.");
+            Debug.Log($"  {UnitName} đang Invincible! Chặn {amount} dmg (miễn thương 1 đòn).");
             ClearStatus(StatusEffectType.Invincible);
+
+            // Kích hoạt sự kiện nhận sát thương với giá trị 0 để UnitView:
+            // - Hiển thị damage text "0"
+            // - Chạy đầy đủ hiệu ứng trúng đòn
+            // - Không làm giảm HP
+            OnDamageTaken?.Invoke(caster, 0, damageType);
+            caster?.OnDealDamage?.Invoke(this, 0);
+            Passive?.OnTakeDamage(caster, 0);
+            caster?.Passive?.OnDealDamage(this, 0);
             return;
         }
 
@@ -189,6 +207,11 @@ public class CombatUnit
 
         if (CurrentHP <= 0)
         {
+            // Đối tượng chết: xóa toàn bộ status & buff đang có.
+            // Ví dụ: A và B đều bị Burn, A chết → mọi hiệu ứng trên A bị xóa,
+            // B vẫn còn máu nên Burn của B vẫn tiếp tục.
+            ClearAllStatusesAndBuffs();
+
             caster?.OnKill?.Invoke(this);
             caster?.Passive?.OnKill(this);
             OnDied?.Invoke();
@@ -251,6 +274,9 @@ public class CombatUnit
 
     public void ApplyBuff(StatType stat, float multiplier, int duration)
     {
+        // Đối tượng miễn nhiễm status/buff không thể nhận buff
+        if (IsImmuneToStatusEffects) return;
+
         var existing = activeBuffs.Find(b => b.Stat == stat);
         if (existing != null)
         {
@@ -273,6 +299,9 @@ public class CombatUnit
 
     public void ApplyStatus(StatusEffectType status, int duration, float value = 0, int stacks = 1)
     {
+        // Đối tượng miễn nhiễm (ví dụ Afterimage của Hassan) không thể dính status
+        if (IsImmuneToStatusEffects) return;
+
         var existing = activeStatuses.Find(s => s.Type == status);
         if (existing != null)
         {
@@ -320,6 +349,17 @@ public class CombatUnit
     public void ClearStatus(StatusEffectType type)
     {
         activeStatuses.RemoveAll(s => s.Type == type);
+    }
+
+    /// <summary>
+    /// Xóa toàn bộ status và buff của đối tượng. Gọi khi đối tượng chết.
+    /// </summary>
+    public void ClearAllStatusesAndBuffs()
+    {
+        activeStatuses.Clear();
+        activeBuffs.Clear();
+        _damageReductionCharges = 0;
+        _damageReductionPercent = 0f;
     }
 
     public bool HasStatus(StatusEffectType type)
@@ -477,3 +517,5 @@ public class ActiveStatus
         Stacks = stacks;
     }
 }
+
+

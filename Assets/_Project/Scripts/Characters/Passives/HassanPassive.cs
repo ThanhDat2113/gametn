@@ -157,6 +157,20 @@ public class HassanPassive : PassiveAbility
         
         // Hassan không thể target khi còn afterimage
         SetHassanTargetable(false);
+
+// Nếu combat đã vào lượt (không phải Intro/None), yêu cầu camera
+        // chạy lại check để dựng khung bao gồm Afterimage vừa spawn.
+        // RefitCameraToAllUnits đợi 1 frame để view đã được đăng ký xong,
+        // rồi mới AutoFitUnitsInView để camera lấy đúng vị trí mọi nhân vật.
+        // (Trường hợp spawn lúc bắt đầu: Intro sẽ tự fit khi vào PlayerTurn)
+        if (CombatManager.Instance != null &&
+            CombatManager.Instance.CurrentPhase != CombatPhase.None &&
+            CombatManager.Instance.CurrentPhase != CombatPhase.Intro &&
+            CombatManager.Instance.CurrentPhase != CombatPhase.Victory &&
+            CombatManager.Instance.CurrentPhase != CombatPhase.Defeat)
+        {
+            CombatManager.Instance.RefitCameraToAllUnits();
+        }
     }
 
     /// <summary>
@@ -211,10 +225,13 @@ public class HassanPassive : PassiveAbility
             ActionsRemainingThisTurn = 0,
             HasActedThisTurn = true, // Đánh dấu đã act để không được AI điều khiển
             
-            AlwaysActsFirst = false,
+AlwaysActsFirst = false,
             IgnoreTaunt = true,
             IsTargetable = true,
-            PassiveClassName = null
+            PassiveClassName = null,
+            // Afterimage là phân thân ảo ảnh: không thể dính status/buff
+            // (chỉ nhận sát thương). Nhưng vẫn có thể bị tiêu diệt vì có 1 HP.
+            IsImmuneToStatusEffects = true
         };
         
         // Afterimage không có skills
@@ -260,8 +277,12 @@ public class HassanPassive : PassiveAbility
             return;
         }
 
-        // Setup view cho afterimage
+// Setup view cho afterimage
         view.Setup(aiUnit);
+
+        // Lưu vị trí gốc để camera AutoFitUnitsInView có thể dựng khung đủ
+        // và các hệ thống khác (framing, targeting) biết vị trí của unit này.
+        view.StoreOriginalPosition(spawnPos);
 
         // Afterimage visual: alpha thấp, hơi trong suốt
         if (view.spriteRenderer != null)
@@ -271,18 +292,10 @@ public class HassanPassive : PassiveAbility
             view.spriteRenderer.color = c;
         }
 
-        // Lưu vào danh sách unitViews của CombatManager
-        // Dùng reflection để truy cập unitViews private field
-        var unitViewsField = typeof(CombatManager).GetField("unitViews",
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        if (unitViewsField != null)
-        {
-            var unitViews = unitViewsField.GetValue(cm) as List<UnitView>;
-            if (unitViews != null)
-            {
-                unitViews.Add(view);
-            }
-        }
+        // Đăng ký view vào CombatManager bằng public method (giống Madara clone).
+        // Đảm bảo Afterimage được tính là 1 đơn vị: camera bắt được, có thể chọn,
+        // và bị tiêu diệt đúng khi nhận đủ sát thương.
+        cm.AddUnitView(view);
 
         // Lưu reference để cleanup sau này
         afterimageViews[aiUnit] = view;

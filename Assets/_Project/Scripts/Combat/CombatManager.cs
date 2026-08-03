@@ -391,11 +391,19 @@ public class CombatManager : MonoBehaviour
         CurrentPlayerAP = STARTING_PLAYER_AP;
         OnAPChanged?.Invoke(CurrentPlayerAP);
 
-        // Reset HasActedThisTurn cho tất cả player units
+// Reset HasActedThisTurn cho tất cả player units
         foreach (var unit in PlayerUnits)
         {
             unit.HasActedThisTurn = false;
         }
+
+        // Xử lý burn (ThieuDot) đầu lượt player: đối tượng bị burn sẽ
+        // chịu sát thương ngay trong lượt của chính nó.
+        foreach (var unit in PlayerUnits.Where(u => u.IsAlive && u.HasStatus(StatusEffectType.ThieuDot)).ToList())
+        {
+            yield return HandleStartOfTurnEffects(unit);
+        }
+        if (CheckForCombatEnd()) yield break;
 
         _playerEndedTurn = false;
 
@@ -698,14 +706,18 @@ public class CombatManager : MonoBehaviour
 
     private IEnumerator HandleStartOfTurnEffects(CombatUnit unit)
     {
+        if (unit == null || !unit.IsAlive) yield break;
+
         var burn = unit.GetActiveStatus(StatusEffectType.ThieuDot);
         if (burn != null)
         {
-            int dmg = Mathf.RoundToInt(burn.Value);
+            // Sát thương burn = giá trị burn mỗi stack * số stack hiện tại.
+            int dmg = Mathf.RoundToInt(burn.Value * burn.Stacks);
+            dmg = Mathf.Max(1, dmg);
             // Bật cờ SuppressDamageText để UnitView hiển thị "BURN!" thay vì số damage trắng
             // (tránh trùng lặp: vừa hiển thị BURN! vừa hiển thị số trắng).
             unit.SuppressDamageText = true;
-            unit.TakeDamage(null, dmg);
+            unit.TakeDamage(null, dmg, DamageType.True);
             var view = unitViews.FirstOrDefault(v => v.LinkedUnit == unit);
             if (view != null) view.TriggerHitFlash();
             yield return new WaitForSeconds(0.5f);
@@ -765,7 +777,29 @@ public class CombatManager : MonoBehaviour
         }
     }
 
-    public UnitView GetUnitView(CombatUnit unit) => unitViews.Find(v => v.LinkedUnit == unit);
+public UnitView GetUnitView(CombatUnit unit) => unitViews.Find(v => v.LinkedUnit == unit);
+
+    /// <summary>
+    /// Chạy lại camera check để dựng khung quanh tất cả đơn vị hiện tại.
+    /// Được gọi khi có unit mới xuất hiện giữa combat (vd: Afterimage của Hassan
+    /// hồi sinh). Chờ 1 frame để đảm bảo view đã được đăng ký xong, sau đó
+    /// AutoFitUnitsInView sẽ lấy đúng vị trí của mọi nhân vật.
+    /// </summary>
+    public void RefitCameraToAllUnits()
+    {
+        StartCoroutine(RefitCameraDelayed());
+    }
+
+    private System.Collections.IEnumerator RefitCameraDelayed()
+    {
+        // Chờ 1 frame để view mới được Setup/AddUnitView hoàn tất.
+        yield return null;
+
+        if (cameraManager == null)
+            cameraManager = FindFirstObjectByType<CombatCameraManager>();
+        if (cameraManager != null)
+            cameraManager.AutoFitUnitsInView();
+    }
     public bool WillAttackResultInClash(CombatUnit a, CombatUnit b) => false;
     public void AddUnitView(UnitView view)
     {

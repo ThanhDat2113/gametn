@@ -74,17 +74,26 @@ public class MadaraPassive : PassiveAbility
             // Tăng MaxActions lên 3
             Owner.MaxActionsPerTurn = IZANAGI_MAX_ACTIONS;
 
-            // Invincible 1 turn
-            Owner.ApplyStatus(StatusEffectType.Invincible, 1);
+// Invincible: miễn thương đúng 1 đòn duy nhất.
+            // duration = 0 (không đếm lượt) để đảm bảo tồn tại cho tới khi bị 1 đòn
+            // đánh tiêu thụ (không bị TickStatuses xóa sớm theo lượt).
+            Owner.ApplyStatus(StatusEffectType.Invincible, 0);
 
             Debug.Log($"[{Owner.UnitName}'s Passive] IZANAGI! Hồi sinh với {Owner.CurrentHP} HP! Stats giảm 20% nhưng MaxActions = {IZANAGI_MAX_ACTIONS}!");
 
-            // Cập nhật visual
+// Cập nhật visual - khôi phục đầy đủ view giống cách Hassan hồi sinh.
+            // DeathFade (kích hoạt bởi OnDied event) đã tắt GameObject và fade alpha về 0.
+            // Nếu không khôi phục ở đây, Madara sau hồi sinh sẽ vô hình và không thể
+            // được chọn/tấn công (view không active trong scene).
             var view = CombatManager.Instance?.GetUnitView(Owner);
             if (view != null)
             {
+                // Dừng DeathFade (và mọi coroutine đang chạy) trước khi khôi phục view
+                view.StopAllCoroutines();
+                view.gameObject.SetActive(true);
+                view.SetAlpha(1f);
                 view.UpdateHealthBar();
-                view.TriggerHealFlash();
+                view.TriggerReviveFlash();
             }
         }
         else
