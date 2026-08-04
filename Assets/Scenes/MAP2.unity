@@ -4559,7 +4559,7 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 1578149351}
+    m_TransformParent: {fileID: 903760257}
     m_Modifications:
     - target: {fileID: 4923298011488929683, guid: ee95e80d2a3ee0a49a8e97234b9a2487, type: 3}
       propertyPath: m_Name
@@ -4583,27 +4583,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7052337874379436261, guid: ee95e80d2a3ee0a49a8e97234b9a2487, type: 3}
       propertyPath: m_LocalScale.x
-      value: 8
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7052337874379436261, guid: ee95e80d2a3ee0a49a8e97234b9a2487, type: 3}
       propertyPath: m_LocalScale.y
-      value: 8
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7052337874379436261, guid: ee95e80d2a3ee0a49a8e97234b9a2487, type: 3}
       propertyPath: m_LocalScale.z
-      value: 8
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7052337874379436261, guid: ee95e80d2a3ee0a49a8e97234b9a2487, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 117.91411
+      value: 0.021793365
       objectReference: {fileID: 0}
     - target: {fileID: 7052337874379436261, guid: ee95e80d2a3ee0a49a8e97234b9a2487, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -2.5773916
+      value: -0.38342643
       objectReference: {fileID: 0}
     - target: {fileID: 7052337874379436261, guid: ee95e80d2a3ee0a49a8e97234b9a2487, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 90.447105
+      value: -0.37365055
       objectReference: {fileID: 0}
     - target: {fileID: 7052337874379436261, guid: ee95e80d2a3ee0a49a8e97234b9a2487, type: 3}
       propertyPath: m_LocalRotation.w
@@ -10169,7 +10169,8 @@ Transform:
   m_LocalPosition: {x: 81.27789, y: -26.949104, z: 172.62703}
   m_LocalScale: {x: 10, y: 10, z: 10}
   m_ConstrainProportionsScale: 1
-  m_Children: []
+  m_Children:
+  - {fileID: 1390284388}
   m_Father: {fileID: 1578149351}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &195853843
@@ -16812,7 +16813,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
-    m_AddedGameObjects: []
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: 7052337874379436261, guid: ee95e80d2a3ee0a49a8e97234b9a2487, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 83674064}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 4923298011488929683, guid: ee95e80d2a3ee0a49a8e97234b9a2487, type: 3}
       insertIndex: -1
@@ -56077,6 +56081,7 @@ GameObject:
   - component: {fileID: 887091525}
   - component: {fileID: 887091524}
   - component: {fileID: 887091523}
+  - component: {fileID: 887091526}
   m_Layer: 0
   m_Name: Maidrin
   m_TagString: Untagged
@@ -56181,6 +56186,18 @@ Transform:
   - {fileID: 391953322}
   m_Father: {fileID: 1578149351}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &887091526
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 887091522}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 239d8b5e0332586458f7471e5863d807, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Billboard
 --- !u!1 &887977427
 GameObject:
   m_ObjectHideFlags: 0
@@ -69837,7 +69854,6 @@ GameObject:
   - component: {fileID: 1130687759}
   - component: {fileID: 1130687762}
   - component: {fileID: 1130687761}
-  - component: {fileID: 1130687760}
   m_Layer: 0
   m_Name: Marin  (1)
   m_TagString: Untagged
@@ -69860,18 +69876,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1151373872}
   m_LocalEulerAnglesHint: {x: -90, y: 3.89, z: 0}
---- !u!114 &1130687760
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1130687758}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 239d8b5e0332586458f7471e5863d807, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Billboard
 --- !u!95 &1130687761
 Animator:
   serializedVersion: 7
@@ -76105,6 +76109,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 7102918707243845903, guid: 29bc85ccfce58bd42b95b9052eeff377, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1229408539}
+    - targetCorrespondingSourceObject: {fileID: 7102918707243845903, guid: 29bc85ccfce58bd42b95b9052eeff377, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1229408540}
   m_SourcePrefab: {fileID: 100100000, guid: 29bc85ccfce58bd42b95b9052eeff377, type: 3}
 --- !u!1 &1229408538 stripped
 GameObject:
@@ -76132,6 +76139,18 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.21636991, y: 0.5378338, z: 0.19999999}
   m_Center: {x: -0.02016821, y: -0.0028811095, z: -0.00000059604645}
+--- !u!114 &1229408540
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1229408538}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 239d8b5e0332586458f7471e5863d807, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Billboard
 --- !u!1001 &1239856156
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -85546,11 +85565,11 @@ Transform:
   m_GameObject: {fileID: 1390284387}
   serializedVersion: 2
   m_LocalRotation: {x: -0.70710576, y: -0, z: -0, w: 0.7071079}
-  m_LocalPosition: {x: 81.27789, y: -30.298286, z: 169.4899}
-  m_LocalScale: {x: 10, y: 10, z: 10}
+  m_LocalPosition: {x: 0, y: -0.33491823, z: -0.31371307}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 1
   m_Children: []
-  m_Father: {fileID: 1578149351}
+  m_Father: {fileID: 195853842}
   m_LocalEulerAnglesHint: {x: -90, y: 0, z: 0}
 --- !u!95 &1390284389
 Animator:
@@ -95573,7 +95592,6 @@ Transform:
   - {fileID: 1993722040}
   - {fileID: 1611531928}
   - {fileID: 195853842}
-  - {fileID: 1390284388}
   - {fileID: 763923621}
   - {fileID: 473368419}
   - {fileID: 1529657052}
@@ -95584,7 +95602,6 @@ Transform:
   - {fileID: 151648160}
   - {fileID: 1151373872}
   - {fileID: 903760257}
-  - {fileID: 83674064}
   - {fileID: 887091525}
   - {fileID: 37988842}
   - {fileID: 2060270038}
@@ -97540,6 +97557,7 @@ GameObject:
   - component: {fileID: 1611531928}
   - component: {fileID: 1611531931}
   - component: {fileID: 1611531930}
+  - component: {fileID: 1611531932}
   m_Layer: 0
   m_Name: Skeleton
   m_TagString: Untagged
@@ -97643,6 +97661,18 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+--- !u!114 &1611531932
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1611531927}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 239d8b5e0332586458f7471e5863d807, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Billboard
 --- !u!1001 &1617714975
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -119909,6 +119939,7 @@ GameObject:
   - component: {fileID: 2007847709}
   - component: {fileID: 2007847710}
   - component: {fileID: 2007847711}
+  - component: {fileID: 2007847712}
   m_Layer: 7
   m_Name: Kazuma
   m_TagString: Untagged
@@ -120055,6 +120086,18 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.16999999, y: 0.53999996, z: 0.19999999}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &2007847712
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2007847706}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 239d8b5e0332586458f7471e5863d807, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Billboard
 --- !u!1001 &2008087036
 PrefabInstance:
   m_ObjectHideFlags: 0

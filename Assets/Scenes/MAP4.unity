@@ -67304,6 +67304,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 7582585639801045666, guid: 3978fb2301828af48bc2699297ee968b, type: 3}
       insertIndex: -1
       addedObject: {fileID: 430186416}
+    - targetCorrespondingSourceObject: {fileID: 7582585639801045666, guid: 3978fb2301828af48bc2699297ee968b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 430186418}
   m_SourcePrefab: {fileID: 100100000, guid: 3978fb2301828af48bc2699297ee968b, type: 3}
 --- !u!1 &430186415 stripped
 GameObject:
@@ -67336,6 +67339,18 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 7467995252510413478, guid: 3978fb2301828af48bc2699297ee968b, type: 3}
   m_PrefabInstance: {fileID: 430186414}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &430186418
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 430186415}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 239d8b5e0332586458f7471e5863d807, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Billboard
 --- !u!1001 &432592373
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -89998,6 +90013,7 @@ GameObject:
   - component: {fileID: 561233909}
   - component: {fileID: 561233910}
   - component: {fileID: 561233911}
+  - component: {fileID: 561233912}
   m_Layer: 7
   m_Name: kabuto_yakushi
   m_TagString: Untagged
@@ -90141,6 +90157,18 @@ MonoBehaviour:
   dialogueText: {fileID: 313387915}
   lines:
   - "th\u1EDDi ti\u1EBFt h\xF4m nay c\xF3 v\u1EBB \u0111\u1EB9p"
+--- !u!114 &561233912
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 561233906}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 239d8b5e0332586458f7471e5863d807, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Billboard
 --- !u!1 &561636430 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 100000, guid: abc00000000015060796866134989649, type: 3}
@@ -120289,8 +120317,28 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 4325532058982257013, guid: 989578c6050960243af4aea102dea712, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 753533439}
   m_SourcePrefab: {fileID: 100100000, guid: 989578c6050960243af4aea102dea712, type: 3}
+--- !u!1 &753533438 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4325532058982257013, guid: 989578c6050960243af4aea102dea712, type: 3}
+  m_PrefabInstance: {fileID: 753533437}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &753533439
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 753533438}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 239d8b5e0332586458f7471e5863d807, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Billboard
 --- !u!1001 &754860915
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -156354,6 +156402,7 @@ GameObject:
   - component: {fileID: 1015343865}
   - component: {fileID: 1015343864}
   - component: {fileID: 1015343863}
+  - component: {fileID: 1015343866}
   m_Layer: 0
   m_Name: Kanroji Mitsuri
   m_TagString: Untagged
@@ -156451,12 +156500,24 @@ Transform:
   m_GameObject: {fileID: 1015343862}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 496.22308, y: 8.405614, z: -235.09216}
+  m_LocalPosition: {x: 499.74652, y: 8.553739, z: -234.10876}
   m_LocalScale: {x: 10, y: 10, z: 10}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 491907389}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1015343866
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1015343862}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 239d8b5e0332586458f7471e5863d807, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Billboard
 --- !u!1001 &1015835206
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -218597,6 +218658,7 @@ GameObject:
   - component: {fileID: 1443800351}
   - component: {fileID: 1443800354}
   - component: {fileID: 1443800355}
+  - component: {fileID: 1443800356}
   m_Layer: 7
   m_Name: youngtobiedasick
   m_TagString: Untagged
@@ -218744,6 +218806,18 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.27, y: 0.64, z: 0.2}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &1443800356
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1443800350}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 239d8b5e0332586458f7471e5863d807, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Billboard
 --- !u!1001 &1443808236
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -290914,6 +290988,7 @@ GameObject:
   - component: {fileID: 1899641963}
   - component: {fileID: 1899641962}
   - component: {fileID: 1899641965}
+  - component: {fileID: 1899641966}
   m_Layer: 0
   m_Name: Kanroji Mitsuri_180-0
   m_TagString: Untagged
@@ -291038,6 +291113,18 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.21, y: 0.51, z: 0.2}
   m_Center: {x: 0.00063385814, y: -0.058948576, z: 0}
+--- !u!114 &1899641966
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1899641961}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 239d8b5e0332586458f7471e5863d807, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Billboard
 --- !u!1001 &1899753238
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -326378,8 +326465,28 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 4325532058982257013, guid: 989578c6050960243af4aea102dea712, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1504937540436165736}
   m_SourcePrefab: {fileID: 100100000, guid: 989578c6050960243af4aea102dea712, type: 3}
+--- !u!1 &1504937540436165735 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4325532058982257013, guid: 989578c6050960243af4aea102dea712, type: 3}
+  m_PrefabInstance: {fileID: 1504937540436165734}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1504937540436165736
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1504937540436165735}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 239d8b5e0332586458f7471e5863d807, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Billboard
 --- !u!1001 &7358473383460125808
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -326435,13 +326542,33 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 6859548592818205863, guid: 3060f5538a3c6f04ea8e02bdc10334af, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7358473383460125811}
   m_SourcePrefab: {fileID: 100100000, guid: 3060f5538a3c6f04ea8e02bdc10334af, type: 3}
 --- !u!4 &7358473383460125809 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1773630572345405892, guid: 3060f5538a3c6f04ea8e02bdc10334af, type: 3}
   m_PrefabInstance: {fileID: 7358473383460125808}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &7358473383460125810 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6859548592818205863, guid: 3060f5538a3c6f04ea8e02bdc10334af, type: 3}
+  m_PrefabInstance: {fileID: 7358473383460125808}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &7358473383460125811
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7358473383460125810}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 239d8b5e0332586458f7471e5863d807, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Billboard
 --- !u!1001 &7411186597928002749
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -326456,7 +326583,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5573241482218382083, guid: e128221c891c88e41a16ff90de34097f, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 55.43303
+      value: 78.79127
       objectReference: {fileID: 0}
     - target: {fileID: 5573241482218382083, guid: e128221c891c88e41a16ff90de34097f, type: 3}
       propertyPath: m_LocalPosition.y
@@ -326464,7 +326591,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5573241482218382083, guid: e128221c891c88e41a16ff90de34097f, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -339.57333
+      value: -314.17688
       objectReference: {fileID: 0}
     - target: {fileID: 5573241482218382083, guid: e128221c891c88e41a16ff90de34097f, type: 3}
       propertyPath: m_LocalRotation.w
