@@ -48,10 +48,36 @@ public class InventoryManager : MonoBehaviour
     void SaveToFile()
     {
         BinaryFormatter bf = new BinaryFormatter();
-        FileStream file = File.Create(savePath);
-        bf.Serialize(file, inventory);
-        file.Close();
-        Debug.Log("Inventory saved.");
+        const int maxAttempts = 5;
+        for (int attempt = 0; attempt < maxAttempts; attempt++)
+        {
+            try
+            {
+                using (FileStream file = new FileStream(savePath, FileMode.Create, FileAccess.Write, FileShare.None))
+                {
+                    bf.Serialize(file, inventory);
+                }
+                Debug.Log("Inventory saved.");
+                break;
+            }
+            catch (IOException ex)
+            {
+                // Possible sharing violation or transient IO error - retry a few times.
+                if (attempt == maxAttempts - 1)
+                {
+                    Debug.LogError($"Failed to save inventory after {maxAttempts} attempts: {ex}");
+                }
+                else
+                {
+                    System.Threading.Thread.Sleep(100);
+                }
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError("Unexpected error while saving inventory: " + ex);
+                break;
+            }
+        }
     }
 
     void LoadFromFile()
@@ -59,10 +85,39 @@ public class InventoryManager : MonoBehaviour
         if (File.Exists(savePath))
         {
             BinaryFormatter bf = new BinaryFormatter();
-            FileStream file = File.Open(savePath, FileMode.Open);
-            inventory = (Inventory)bf.Deserialize(file);
-            file.Close();
-            Debug.Log("Inventory loaded.");
+            try
+            {
+                using (FileStream file = new FileStream(savePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+                {
+                    if (file.Length == 0)
+                    {
+                        Debug.LogWarning("Save file is empty — deleting and starting fresh.");
+                        file.Close();
+                        try { File.Delete(savePath); } catch { }
+                        inventory = new Inventory();
+                        return;
+                    }
+
+                    inventory = (Inventory)bf.Deserialize(file);
+                    Debug.Log("Inventory loaded.");
+                }
+            }
+            catch (System.Runtime.Serialization.SerializationException)
+            {
+                Debug.LogWarning("Save file corrupted or incomplete — deleting and starting fresh.");
+                try { File.Delete(savePath); } catch { }
+                inventory = new Inventory();
+            }
+            catch (IOException ex)
+            {
+                Debug.LogError("IO error while loading inventory: " + ex);
+                inventory = new Inventory();
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError("Unexpected error while loading inventory: " + ex);
+                inventory = new Inventory();
+            }
         }
         else
         {
