@@ -26,6 +26,8 @@ using UnityEngine.UI;
 ///   4. Để trống `player` sẽ tự lấy từ MinimapController.Instance.Player.
 /// </summary>
 [DisallowMultipleComponent]
+// Chạy sau camera (LateUpdate order mặc định 0) — nhất quán với QuestMarkerUI/MinimapMarkerUI.
+[DefaultExecutionOrder(1000)]
 public class PlayerMarkerRing : MonoBehaviour
 {
     public enum RingMode { WorldSpaceRing, ScreenOverlayRing }
@@ -86,7 +88,7 @@ public class PlayerMarkerRing : MonoBehaviour
             Debug.LogWarning("[PlayerMarkerRing] Chưa gán player và không tìm được qua MinimapController.Instance.Player.");
     }
 
-    private void Update()
+    private void LateUpdate()
     {
         if (_mainCamera == null || !_mainCamera.gameObject.activeInHierarchy)
             _mainCamera = Camera.main;

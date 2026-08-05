@@ -27,6 +27,10 @@ using System.Collections.Generic;
 [RequireComponent(typeof(RectTransform))]
 [RequireComponent(typeof(CanvasGroup))]
 [DisallowMultipleComponent]
+// Chạy SAU mọi script camera (mặc định order = 0, kể cả HSRCameraController).
+// Đảm bảo marker luôn đọc transform camera ĐÃ CẬP NHẬT XONG của frame hiện tại,
+// không bị lệch 1 frame khi camera xoay 90° đột ngột (phím Z/X).
+[DefaultExecutionOrder(1000)]
 public class QuestMarkerUI : MonoBehaviour
 {
     [Header("UI References")]
@@ -124,7 +128,9 @@ public class QuestMarkerUI : MonoBehaviour
         _rectTransform.localScale = Vector3.one * worldCanvasScale;
     }
 
-    private void Update()
+    // LateUpdate (không phải Update) + DefaultExecutionOrder ở trên class: đảm bảo
+    // camera (LateUpdate, order mặc định 0) đã di chuyển/xoay xong trước khi marker tính toán.
+    private void LateUpdate()
     {
         if (_mainCamera == null || !_mainCamera.gameObject.activeInHierarchy)
             _mainCamera = Camera.main;
