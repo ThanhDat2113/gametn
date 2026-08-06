@@ -16,6 +16,12 @@ public int stacks = 1;
         var primaryTarget = targets[0];
         if (primaryTarget == null || !primaryTarget.IsAlive) return;
 
-        primaryTarget.ApplyStatus(StatusEffectType.ThieuDot, duration, damagePerStack, stacks);
+primaryTarget.ApplyStatus(StatusEffectType.ThieuDot, duration, damagePerStack, stacks);
+
+        // Kích hoạt sự kiện debuff cho Charlotte passive (Gió Tiên)
+        if (CombatManager.Instance != null)
+        {
+            CombatManager.Instance.TriggerDebuffApplied(caster, primaryTarget, StatusEffectType.ThieuDot);
+        }
     }
 }

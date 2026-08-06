@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "ApplyStatusEffect", menuName = "RPG/Effects/Apply Status")]
@@ -7,6 +8,15 @@ public class ApplyStatusEffect : SkillEffect
     public int duration = 1;
     public float value = 0f;
     public int stacks = 1;
+
+    // Danh sách hiệu ứng xấu (debuff) để kích hoạt nội tại Charlotte (Gió Tiên)
+    private static readonly HashSet<StatusEffectType> DebuffSet = new HashSet<StatusEffectType>
+    {
+        StatusEffectType.Stun,
+        StatusEffectType.Taunt,
+        StatusEffectType.ThieuDot,
+        StatusEffectType.DiemYeu
+    };
 
     public override void Apply(CombatUnit caster, CombatUnit[] targets)
     {
@@ -24,6 +34,12 @@ public class ApplyStatusEffect : SkillEffect
             if (target.IsAlive)
             {
                 target.ApplyStatus(status, duration, value, finalStacks);
+
+                // Kích hoạt sự kiện debuff cho Charlotte passive (Gió Tiên)
+                if (DebuffSet.Contains(status) && CombatManager.Instance != null)
+                {
+                    CombatManager.Instance.TriggerDebuffApplied(caster, target, status);
+                }
             }
         }
     }

@@ -3,71 +3,48 @@ using System.Linq;
 using UnityEngine;
 
 /// <summary>
-/// Nội tại Charlotte: mỗi khi Charlotte hoặc 1 đồng đội tấn công vào kẻ địch bị dính hiệu ứng xấu,
-/// cô tấn công thêm vào kẻ địch đấy bằng skill 1 với lượng sát thương bằng 50% sát thương gốc của skill 1.
+/// Nội tại Charlotte (Gió Tiên):
+/// Khi Charlotte hoặc một đồng minh áp hiệu ứng xấu (debuff) lên kẻ địch,
+/// Charlotte sẽ NHẢY LƯỢT và ngay lập tức dùng skill 1 (Cắt Gió) vào
+/// đúng kẻ địch vừa nhận hiệu ứng xấu đó.
 /// </summary>
 public class CharlottePassive : PassiveAbility
 {
-    private const float EXTRA_ATTACK_MULTIPLIER = 0.5f;
-    private SkillData skill1;
-
     public override void Initialize(CombatUnit owner)
     {
         base.Initialize(owner);
-        // Tìm skill 1 của Charlotte để tính sát thương
-        skill1 = Owner.AvailableSkills.FirstOrDefault(s => s.skillName == "Cắt Gió");
 
-        var allies = CombatManager.Instance.GetTeam(Owner.IsPlayer);
-        foreach (var ally in allies)
+        // Đăng ký sự kiện debuff toàn cục từ CombatManager
+        if (CombatManager.Instance != null)
         {
-            ally.OnDealDamage += OnAllyDealDamage;
+            CombatManager.Instance.OnDebuffApplied += OnDebuffApplied;
         }
+        Debug.Log($"[{Owner.UnitName}'s Passive] Gió Tiên kích hoạt! Khi đồng minh áp debuff lên kẻ địch, Charlotte nhảy lượt và dùng skill 1 ngay lập tức.");
     }
 
     public override void Cleanup()
     {
         if (CombatManager.Instance != null)
         {
-            var allies = CombatManager.Instance.GetTeam(Owner.IsPlayer);
-            foreach (var ally in allies)
-            {
-                if (ally != null)
-                {
-                    ally.OnDealDamage -= OnAllyDealDamage;
-                }
-            }
+            CombatManager.Instance.OnDebuffApplied -= OnDebuffApplied;
         }
         base.Cleanup();
     }
 
-    private void OnAllyDealDamage(CombatUnit target, int damage)
+private void OnDebuffApplied(CombatUnit caster, CombatUnit target, StatusEffectType status)
     {
-        // Nội tại không kích hoạt nếu Charlotte đã chết, hoặc người tấn công là Charlotte (tránh lặp vô hạn)
-        if (!Owner.IsAlive) return;
+        // Charlotte không hoạt động nếu đã chết
+        if (Owner == null || !Owner.IsAlive) return;
+        if (caster == null) return;
 
-        // Kiểm tra xem mục tiêu có phải là kẻ địch và có hiệu ứng xấu không
-        if (target.IsAlly(Owner) || !target.HasAnyDebuff())
+        // Nếu đồng minh (hoặc chính Charlotte) áp debuff lên kẻ địch → Charlotte nhảy lượt tấn công ngay
+        if (caster.IsAlly(Owner) && target != null && !target.IsAlly(Owner))
         {
-            return;
-        }
-
-        Debug.Log($"[CharlottePassive] Đồng minh tấn công {target.UnitName} có debuff. Kích hoạt nội tại.");
-
-        // Tính toán sát thương cho đòn đánh thêm
-        // Giả sử skill 1 là DamageEffect và có multiplier
-        int baseSkill1Damage = Owner.ATK; // Fallback
-        if (skill1 != null)
-        {
-            var damageEffect = skill1.effects.OfType<DamageEffect>().FirstOrDefault();
-            if (damageEffect != null)
+            Debug.Log($"[{Owner.UnitName}'s Passive] {caster.UnitName} áp {status} lên {target.UnitName}. Charlotte nhảy lượt tấn công!");
+            if (CombatManager.Instance != null)
             {
-                baseSkill1Damage = Mathf.RoundToInt(Owner.ATK * damageEffect.multiplier);
+                CombatManager.Instance.RequestCharlotteFollowUp(target);
             }
         }
-
-        int extraDamage = Mathf.RoundToInt(baseSkill1Damage * EXTRA_ATTACK_MULTIPLIER);
-
-        Debug.Log($"[CharlottePassive] Charlotte tấn công thêm vào {target.UnitName}, gây {extraDamage} sát thương.");
-        target.TakeDamage(Owner, extraDamage);
     }
 }
