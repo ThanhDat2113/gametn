@@ -1,0 +1,69 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6b16013e257e8246ac0b768d7079c9e, type: 3}
+  m_Name: Unblock
+  m_EditorClassIdentifier: Assembly-CSharp::PuzzleData
+  puzzleID: Unblock
+  puzzleName: Unblock
+  puzzleType: 10
+  allowedAttempts: 3
+  showOnComplete: 1
+  symbolConfig:
+    gridSize: 3
+    startLength: 3
+    maxLength: 7
+  riddleConfig:
+    riddles: []
+    correctAnswers: []
+    wrongAnswerA: []
+    wrongAnswerB: []
+    wrongAnswerC: []
+    requiredCorrect: 1
+  memoryConfig:
+    portraitPool: []
+    characterPool: []
+    gridCols: 4
+    gridRows: 3
+    showLoreOnMatch: 1
+  slideConfig:
+    gridSize: 3
+    maxMoves: 100
+  spireConfig:
+    diskCount: 4
+    maxMoves: 50
+  flowConfig:
+    pairCount: 4
+    wireColors: []
+    plugSprite: {fileID: 0}
+    socketSprite: {fileID: 0}
+    gridSize: 5
+    pairColors: []
+  unblockConfig:
+    gridWidth: 4
+    gridHeight: 5
+    boardLayout: []
+    emptyColor: {r: 0.1, g: 0.1, b: 0.1, a: 1}
+    wallColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+    blockColor: {r: 0.6, g: 0.4, b: 0.2, a: 1}
+    redBlockColor: {r: 1, g: 0, b: 0, a: 1}
+    goalColor: {r: 0, g: 1, b: 0, a: 1}
+  woodQuizConfig:
+    gridWidth: 4
+    gridHeight: 5
+    boardLayout: []
+    maxMoves: 50
+    emptyColor: {r: 0.12, g: 0.08, b: 0.05, a: 1}
+    wallColor: {r: 0.25, g: 0.18, b: 0.12, a: 1}
+    woodLightColor: {r: 0.72, g: 0.52, b: 0.3, a: 1}
+    woodDarkColor: {r: 0.55, g: 0.38, b: 0.2, a: 1}
+    masterColor: {r: 0.85, g: 0.25, b: 0.2, a: 1}
+    goalColor: {r: 0.2, g: 0.75, b: 0.35, a: 1}
