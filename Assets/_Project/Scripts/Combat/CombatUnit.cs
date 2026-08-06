@@ -361,21 +361,32 @@ public class CombatUnit
         _damageReductionPercent = 0f;
     }
 
-    public bool HasStatus(StatusEffectType type)
+public bool HasStatus(StatusEffectType type)
     {
         return activeStatuses.Exists(s => s.Type == type);
     }
 
     public bool HasAnyDebuff()
     {
-        var debuffTypes = new HashSet<StatusEffectType>
+        return activeStatuses.Any(s => IsDebuff(s.Type));
+    }
+
+    /// <summary>
+    /// Kiểm tra xem một loại trạng thái có phải là hiệu ứng xấu (debuff) hay không.
+    /// Dùng chung cho cả passive (Charlotte) và hệ thống kiểm tra debuff.
+    /// </summary>
+    public static bool IsDebuff(StatusEffectType type)
+    {
+        switch (type)
         {
-            StatusEffectType.Stun,
-            StatusEffectType.Taunt,
-            StatusEffectType.ThieuDot,
-            StatusEffectType.DiemYeu
-        };
-        return activeStatuses.Any(s => debuffTypes.Contains(s.Type));
+            case StatusEffectType.Stun:
+            case StatusEffectType.Taunt:
+            case StatusEffectType.ThieuDot:
+            case StatusEffectType.DiemYeu:
+                return true;
+            default:
+                return false;
+        }
     }
 
     public float GetStatMultiplier(StatType stat)

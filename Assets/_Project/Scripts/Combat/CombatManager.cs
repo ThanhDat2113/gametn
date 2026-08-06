@@ -57,11 +57,18 @@ public class CombatManager : MonoBehaviour
     private SkillData _selectedSkill = null;
     private List<CombatUnit> _selectedTargets = null;
 
-    // ── Interrupt System (Counter Attack giữa turn) ───────────
+// ── Interrupt System (Counter Attack giữa turn) ───────────
     private bool _isInterrupting = false;
     private bool _interruptPending = false;
     private CombatUnit _interruptAttacker = null;
     private CombatUnit _interruptTarget = null;
+
+    // ── Charlotte Follow-Up System (Gió Tiên) ─────────────────
+    private bool _charlotteFollowUpPending = false;
+    private bool _isProcessingCharlotteFollowUp = false;
+    private CombatUnit _charlotteFollowUpTarget = null;
+    private const int MAX_CHARLOTTE_FOLLOW_UPS_PER_TURN = 2;
+    private int _charlotteFollowUpCountThisTurn = 0;
 
     // ── Events ─────────────────────────────────────────────────
     public event System.Action OnCombatStarted;
@@ -76,9 +83,15 @@ public class CombatManager : MonoBehaviour
     public event System.Action<int> OnAPChanged;
     public event System.Action OnIntroEnded;
 
-    public delegate void DamageModificationHandler(ActionOutcome outcome, CombatUnit actor);
+public delegate void DamageModificationHandler(ActionOutcome outcome, CombatUnit actor);
     public event DamageModificationHandler OnDamageCalculation;
     public void TriggerDamageCalculation(ActionOutcome outcome, CombatUnit actor) => OnDamageCalculation?.Invoke(outcome, actor);
+
+    // ── Debuff Applied Event (Charlotte Gió Tiên) ─────────────
+    public event System.Action<CombatUnit, CombatUnit, StatusEffectType> OnDebuffApplied;
+    public void TriggerDebuffApplied(CombatUnit caster, CombatUnit target, StatusEffectType status)
+        => OnDebuffApplied?.Invoke(caster, target, status);
+
     public CombatPhase CurrentPhase => stateMachine.Current;
 
     private EnemyGroupData _currentEnemyGroup;
@@ -387,9 +400,14 @@ public class CombatManager : MonoBehaviour
     {
         Debug.Log("=== PLAYER TURN ===");
 
-        // Reset AP mỗi đầu lượt Player
+// Reset AP mỗi đầu lượt Player
         CurrentPlayerAP = STARTING_PLAYER_AP;
         OnAPChanged?.Invoke(CurrentPlayerAP);
+
+        // Reset Charlotte follow-up counter mỗi đầu lượt player
+        _charlotteFollowUpCountThisTurn = 0;
+        _charlotteFollowUpPending = false;
+        _charlotteFollowUpTarget = null;
 
 // Reset HasActedThisTurn cho tất cả player units
         foreach (var unit in PlayerUnits)
@@ -457,10 +475,17 @@ public class CombatManager : MonoBehaviour
             // Đánh dấu unit đã act
             _selectedUnit.HasActedThisTurn = true;
 
-            // Kiểm tra interrupt (Reinhard phản đòn)
+// Kiểm tra interrupt (Reinhard phản đòn)
             if (_interruptPending)
             {
                 yield return ProcessInterrupt();
+                if (CheckForCombatEnd()) yield break;
+            }
+
+            // Xử lý Charlotte follow-up (nhảy lượt + dùng skill 1 ngay)
+            if (_charlotteFollowUpPending)
+            {
+                yield return ProcessCharlotteFollowUp();
                 if (CheckForCombatEnd()) yield break;
             }
 
@@ -630,8 +655,91 @@ public class CombatManager : MonoBehaviour
         TickAllStatuses();
         CheckForCombatEnd();
 
-        _isInterrupting = false;
+_isInterrupting = false;
         Debug.Log($"[Interrupt] {enemy.UnitName} kết thúc phản đòn. Player turn tiếp tục.");
+    }
+
+    // ── Charlotte Follow-Up System (Gió Tiên) ─────────────────
+    /// <summary>
+    /// Charlotte passive gọi hàm này khi một đồng minh áp debuff lên kẻ địch.
+    /// Charlotte sẽ nhảy lượt (bỏ qua lượt chọn của chính cô) và ngay lập tức
+    /// dùng skill 1 (Cắt Gió) vào đúng kẻ địch vừa nhận debuff.
+    /// </summary>
+public void RequestCharlotteFollowUp(CombatUnit target)
+    {
+        if (target == null || !target.IsAlive) return;
+        if (_isProcessingCharlotteFollowUp) return; // Chống stack
+        if (_charlotteFollowUpCountThisTurn >= MAX_CHARLOTTE_FOLLOW_UPS_PER_TURN) return;
+
+        _charlotteFollowUpPending = true;
+        _charlotteFollowUpTarget = target;
+        Debug.Log($"[CharlotteFollowUp] Charlotte chuẩn bị nhảy lượt để tấn công {target.UnitName}!");
+
+        // Đánh dấu Charlotte đã act để UI bỏ qua lượt chọn của cô
+        var charlotte = GetCharlotteUnit();
+        if (charlotte != null && charlotte.IsAlive)
+        {
+            charlotte.HasActedThisTurn = true;
+            if (charlotte.SelectedSkill != null) charlotte.ClearSelection();
+        }
+    }
+
+    /// <summary>
+    /// Tìm unit có passive Charlotte. Tên nhân vật trong data có thể là "Kurumi",
+    /// nên tìm theo kiểu passive thay vì theo tên.
+    /// </summary>
+    private CombatUnit GetCharlotteUnit()
+    {
+        return PlayerUnits.FirstOrDefault(p => p.IsAlive && p.Passive is CharlottePassive);
+    }
+
+    /// <summary>
+    /// Xử lý follow-up: Charlotte dùng skill 1 ngay lập tức vào mục tiêu đã bị debuff.
+    /// </summary>
+private IEnumerator ProcessCharlotteFollowUp()
+    {
+        if (!_charlotteFollowUpPending || _charlotteFollowUpTarget == null || !_charlotteFollowUpTarget.IsAlive)
+        {
+            _charlotteFollowUpPending = false;
+            yield break;
+        }
+
+        _isProcessingCharlotteFollowUp = true;
+        _charlotteFollowUpPending = false;
+
+        var charlotte = GetCharlotteUnit();
+        if (charlotte == null || !charlotte.IsAlive)
+        {
+            _isProcessingCharlotteFollowUp = false;
+            yield break;
+        }
+
+        // Tìm skill 1 (Cắt Gió)
+        var skill1 = charlotte.AvailableSkills.FirstOrDefault(s => s.skillName == "Cắt Gió");
+        if (skill1 == null)
+        {
+            Debug.LogWarning($"[CharlotteFollowUp] Charlotte không tìm thấy skill 'Cắt Gió'!");
+            _isProcessingCharlotteFollowUp = false;
+            yield break;
+        }
+
+        Debug.Log($"[CharlotteFollowUp] Charlotte nhảy lượt và dùng [{skill1.skillName}] vào {_charlotteFollowUpTarget.UnitName}!");
+
+        // Trừ AP (chi phí skill 1)
+        if (CurrentPlayerAP >= skill1.apCost)
+        {
+            CurrentPlayerAP -= skill1.apCost;
+            OnAPChanged?.Invoke(CurrentPlayerAP);
+            charlotte.SpendAP(skill1.apCost);
+        }
+
+        // Resolve action
+        charlotte.SelectSkill(skill1, new List<CombatUnit> { _charlotteFollowUpTarget });
+        yield return ResolveAction(new PlannedAction(charlotte, skill1, new List<CombatUnit> { _charlotteFollowUpTarget }));
+
+        _charlotteFollowUpCountThisTurn++;
+        _isProcessingCharlotteFollowUp = false;
+        Debug.Log($"[CharlotteFollowUp] Hoàn tất follow-up #{_charlotteFollowUpCountThisTurn}.");
     }
 
     // ── Player Selection (gọi từ UI) ──────────────────────────
