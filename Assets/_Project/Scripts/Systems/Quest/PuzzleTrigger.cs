@@ -1,23 +1,16 @@
 using UnityEngine;
 
-/// <summary>
-/// Component gắn lên GameObject trong scene (tượng cổ, cánh cổng, khu rừng thiêng...).
-/// Khi player đến gần và nhấn nút tương tác, nó LUÔN mở puzzle UI
-/// (không phụ thuộc vào quest). Nếu quest đang có step tương ứng
-/// (step.type == puzzleType && step.targetId == puzzleData.puzzleID),
-/// thì tự động advance quest khi puzzle hoàn thành.
-/// </summary>
 public class PuzzleTrigger : MonoBehaviour
 {
     [Header("Puzzle Data (ScriptableObject)")]
-    public PuzzleData puzzleData; // Kéo PuzzleData asset vào đây
+    public PuzzleData puzzleData;
 
     [Header("Puzzle Prefab (UI Canvas)")]
-    public GameObject puzzleUIPrefab; // Prefab chứa PuzzleBase component
+    public GameObject puzzleUIPrefab;
 
     [Header("Visual")]
     public KeyCode interactKey = KeyCode.E;
-    public GameObject interactionPrompt; // Dấu nhắc "Nhấn E"
+    public GameObject interactionPrompt;
 
     private bool _playerInRange;
     private bool _hasPlayedSuccess;
@@ -31,9 +24,6 @@ public class PuzzleTrigger : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Luôn mở puzzle không cần check quest.
-    /// </summary>
     public void TryStartPuzzle()
     {
         if (_hasPlayedSuccess)
@@ -94,10 +84,14 @@ public class PuzzleTrigger : MonoBehaviour
         {
             _hasPlayedSuccess = true;
 
-            // Gửi event cho QuestManager (nếu có quest đang chờ step này)
             if (QuestManager.Instance != null && puzzleData != null)
             {
+                Debug.Log($"[PuzzleTrigger] ✅ Gọi QuestManager.OnPuzzleCompleted({puzzleData.puzzleID})");
                 QuestManager.Instance.OnPuzzleCompleted(puzzleData.puzzleID);
+            }
+            else
+            {
+                Debug.LogError($"[PuzzleTrigger] ❌ Không thể gọi QuestManager: Instance={QuestManager.Instance != null}, puzzleData={puzzleData != null}");
             }
         }
         else
@@ -105,6 +99,7 @@ public class PuzzleTrigger : MonoBehaviour
             // Cho phép thử lại
             if (interactionPrompt != null && _playerInRange)
                 interactionPrompt.SetActive(true);
+            Debug.Log("[PuzzleTrigger] Puzzle thất bại, có thể thử lại.");
         }
     }
 

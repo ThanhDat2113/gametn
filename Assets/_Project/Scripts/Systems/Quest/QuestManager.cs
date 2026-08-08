@@ -243,10 +243,31 @@ public class QuestManager : MonoBehaviour
 
     public void OnPuzzleCompleted(string triggerID)
     {
-        if (runtimeQuest == null) return;
-        if (currentStepIndex >= runtimeQuest.steps.Length) return;
+        Debug.Log($"[QuestManager] 🔔 OnPuzzleCompleted called with triggerID: '{triggerID}'");
+
+        // ✅ SỬA LỖI: Trim khoảng trắng để so sánh chính xác
+        if (!string.IsNullOrEmpty(triggerID))
+            triggerID = triggerID.Trim();
+
+        if (runtimeQuest == null)
+        {
+            Debug.LogWarning("[QuestManager] ❌ runtimeQuest is null!");
+            return;
+        }
+
+        if (currentStepIndex >= runtimeQuest.steps.Length)
+        {
+            Debug.LogWarning($"[QuestManager] ❌ currentStepIndex out of range: {currentStepIndex} >= {runtimeQuest.steps.Length}");
+            return;
+        }
 
         var step = runtimeQuest.steps[currentStepIndex];
+
+        // ✅ Trim targetId nếu có
+        string stepTargetId = step.targetId?.Trim() ?? "";
+
+        Debug.Log($"[QuestManager] 📌 Current step: type={step.type}, targetId='{stepTargetId}', isCompleted={step.isCompleted}");
+
         bool isPuzzleType = step.type == QuestStepType.SymbolSequence
                          || step.type == QuestStepType.RiddleGate
                          || step.type == QuestStepType.MemoryGrove
@@ -254,11 +275,25 @@ public class QuestManager : MonoBehaviour
                          || step.type == QuestStepType.SpirePuzzle
                          || step.type == QuestStepType.FlowPuzzle
                          || step.type == QuestStepType.Unblock
-                         || step.type == QuestStepType.WoodQuiz;
-        if (isPuzzleType && step.targetId == triggerID && !step.isCompleted)
+                         || step.type == QuestStepType.WoodQuiz
+                         || step.type == QuestStepType.JigsawPuzzle
+                         || step.type == QuestStepType.PullBlockPuzzle;
+
+        bool idMatch = string.Equals(stepTargetId, triggerID, System.StringComparison.OrdinalIgnoreCase);
+
+        Debug.Log($"[QuestManager] 🔍 isPuzzleType={isPuzzleType}, idMatch={idMatch}, step.isCompleted={step.isCompleted}");
+
+        if (isPuzzleType && idMatch && !step.isCompleted)
         {
-            Debug.Log($"[QuestManager] Puzzle completed: {step.description}");
+            Debug.Log($"[QuestManager] ✅ Puzzle step completed: {step.description}");
             CompleteCurrentStep();
+        }
+        else
+        {
+            Debug.LogWarning($"[QuestManager] ❌ Conditions not met. isPuzzleType={isPuzzleType}, idMatch={idMatch}, isCompleted={step.isCompleted}");
+            if (!isPuzzleType) Debug.LogWarning($"[QuestManager]    → Step type '{step.type}' không phải puzzle!");
+            if (!idMatch) Debug.LogWarning($"[QuestManager]    → step.targetId='{stepTargetId}' không khớp triggerID='{triggerID}'");
+            if (step.isCompleted) Debug.LogWarning($"[QuestManager]    → Step đã hoàn thành trước đó!");
         }
     }
 

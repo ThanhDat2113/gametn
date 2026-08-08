@@ -1,4 +1,4 @@
-using UnityEngine; // Thêm dòng này để sử dụng HeaderAttribute
+using UnityEngine;
 
 public enum QuestStepType
 {
@@ -15,7 +15,11 @@ public enum QuestStepType
     SpirePuzzle,
     FlowPuzzle,
     Unblock,
-    WoodQuiz
+    WoodQuiz,
+    
+    // 🆕 Minigame mới
+    JigsawPuzzle,   // Ghép hình 6 ô
+    PullBlockPuzzle // Rút gỗ
 }
 
 [System.Serializable]
@@ -24,10 +28,10 @@ public class QuestStep
     public string stepId;
     public QuestStepType type;
     public string targetId;          // ID của NPC, enemy, item, location, puzzle
-    public string description;       // Mô tả hiển thị, có thể dùng placeholder {current}/{required}
+    public string description;       // Mô tả hiển thị
     public bool isCompleted = false;
 
-    [Header("Kill Count Settings")] // Cần using UnityEngine để sử dụng Header
-    public int requiredAmount = 1;   // Số lượng cần tiêu diệt (chỉ dùng cho Kill)
-    public int currentAmount = 0;    // Số lượng đã tiêu diệt (runtime)
+    [Header("Kill Count Settings")]
+    public int requiredAmount = 1;
+    public int currentAmount = 0;
 }
