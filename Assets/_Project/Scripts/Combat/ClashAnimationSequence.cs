@@ -94,20 +94,6 @@ private bool ShouldCharacterMove(CombatUnit actor, SkillData skill)
         }
     }
 
-    /// <summary>
-    /// Kiểm tra skill có phải AOE (đánh nhiều mục tiêu) hay không.
-    /// AOE = targetType AllEnemies/AllAllies hoặc danh sách target có nhiều hơn 1.
-    /// </summary>
-    private bool IsAOESkill(SkillData skill, List<CombatUnit> targets)
-    {
-        if (skill != null)
-        {
-            if (skill.targetType == TargetType.AllEnemies || skill.targetType == TargetType.AllAllies)
-                return true;
-        }
-        return targets != null && targets.Count > 1;
-    }
-
     private IEnumerator SetupPhase(UnitView actorView, ActionResult result, bool isMoving)
     {
         SetAllUnitAlphas(1.0f);
@@ -119,40 +105,7 @@ private bool ShouldCharacterMove(CombatUnit actor, SkillData skill)
 
 if (cameraManager != null)
         {
-            bool isAOE = IsAOESkill(result.Skill, result.InitialTargets);
-            if (isAOE)
-            {
-                // AOE: LUÔN center = main target (InitialTargets.First()) và zoom out
-                // toàn bộ đội hình địch, không phụ thuộc isMoving.
-                // Mỗi hit (onHitHandler) sẽ gọi AdvanceAOEZoom để zoom ra xa dần.
-                var mainTarget = result.InitialTargets.FirstOrDefault();
-                var mainTargetView = mainTarget != null ? GetViewForUnit(mainTarget) : null;
-
-                // Đội hình địch để tính khung zoom out (dùng các target của AOE nếu có,
-                // nếu không thì toàn bộ enemy còn sống).
-                var aoeTargetViews = result.InitialTargets
-                    .Select(t => GetViewForUnit(t))
-                    .Where(v => v != null)
-                    .Distinct()
-                    .ToList();
-                var enemyTeamViews = aoeTargetViews.Count > 0
-                    ? aoeTargetViews
-                    : (CombatManager.Instance != null
-                        ? CombatManager.Instance.EnemyUnits.Where(e => e.IsAlive)
-                        : result.InitialTargets)
-                        .Select(t => GetViewForUnit(t))
-                        .Where(v => v != null)
-                        .Distinct()
-                        .ToList();
-
-                cameraManager.FocusAOEAction(
-                    mainTargetView != null ? mainTargetView.transform : actorView.transform,
-                    enemyTeamViews,
-                    cameraManager.damageZoomSize,
-                    cameraManager.clashZoomSize * 0.5f);
-                yield return new WaitForSeconds(cameraManager.zoomInDuration);
-            }
-            else if (isMoving)
+            if (isMoving)
             {
                 cameraManager.ZoomToUnit(actorView.transform, cameraManager.clashZoomSize);
                 yield return new WaitForSeconds(cameraManager.zoomInDuration);
@@ -188,15 +141,11 @@ if (cameraManager != null)
         SpawnSkillVFX(skill, actorView, targets);
 
         // 2. Hit Handler - chỉ SFX + shake + hurt (KHÔNG spawn VFX, VFX từ SpawnSkillVFX + animation event)
-        bool isAOE = IsAOESkill(skill, targets);
         _lastHitCounter = 0;
         Action onHitHandler = () => {
             int currentHit = _lastHitCounter++;
             if (CombatAudioManager.Instance != null && skill != null)
                 CombatAudioManager.Instance.PlaySkillSFX(skill.sfxClips, currentHit);
-            // AOE: mỗi hit → camera zoom ra xa dần (giữ center = main target)
-            if (isAOE && cameraManager != null)
-                cameraManager.AdvanceAOEZoom();
             foreach (var outcome in result.Outcomes)
             {
                 var targetView = GetViewForUnit(outcome.Target);

@@ -1,25 +1,16 @@
-# TODO - Thay đổi Passive Gilgamesh + Camera AOE
+# TODO - Thay đổi Passive Gilgamesh
 
 ## Mục tiêu
-- Thay cơ chế "phản sát thương ngẫu nhiên" của Gilgamesh bằng cơ chế "nhảy lượt"
-  giống Reinhard, không giới hạn số lần.
-- Cải thiện camera cho skill AOE: zoom out toàn bộ đội hình địch, center = main
-  target, zoom dần theo từng hit.
+- Thay cơ chế "phản sát thương ngẫu nhiên" (20% proc) của Gilgamesh bằng cơ chế
+  "nhảy lượt" giống Reinhard, không giới hạn số lần.
 
-## Phần 1: Passive Gilgamesh (HOÀN THÀNH)
-- [x] 1. Sửa `GilgameshPassive.cs`: đoạn `OnTakeDamage` bỏ 20% proc ngẫu nhiên,
-      thay bằng 100% `RequestInterrupt` + `GrantExtraAction` (giống Reinhard),
-      không giới hạn.
+## Trạng thái
+- [x] 1. `GilgameshPassive.cs`: đoạn `OnTakeDamage` bỏ proc ngẫu nhiên, thay bằng
+      100% `RequestInterrupt` + `GrantExtraAction` (giống Reinhard), không giới hạn.
 
-## Phần 2: Camera AOE skill (HOÀN THÀNH)
-- [x] 1. `CombatPlanningUI.cs`: đặt enemy người chơi click (main target) vào đầu
-      `finalTargets` → `InitialTargets.First()` = main target.
-- [x] 2. `CombatCameraManager.cs`: thêm `FocusAOEAction` + `AdvanceAOEZoom` +
-      `ZoomFromToCoroutine` (zoom từ orthographicSize thực tế → có hiệu ứng zoom ra).
-- [x] 3. `ClashAnimationSequence.cs`: thêm `IsAOESkill`; `SetupPhase` xử lý AOE
-      TRƯỚC `isMoving`; `ExecutePhase`'s onHitHandler gọi `AdvanceAOEZoom`.
-- [x] 4. `CombatCameraAnimationIntegration.cs`: bỏ qua skill AOE (không gọi
-      `ZoomToUnit` override) — để `FocusAOEAction` điều khiển camera.
+## Ghi chú
+- Camera focus AOE (FocusAOEAction / AdvanceAOEZoom) đã bị loại bỏ hoàn toàn
+  theo yêu cầu — sẽ xử lý lại sau nếu cần.
 
 ## Kiểm tra
-- [ ] 5. Kiểm tra compile + chạy trong Unity Editor.
+- [ ] 2. Kiểm tra compile + chạy trong Unity Editor.
