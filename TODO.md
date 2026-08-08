@@ -1,24 +1,25 @@
-# TODO: Charlotte Passive Rework (Gió Tiên)
+# TODO - Thay đổi Passive Gilgamesh + Camera AOE
 
-## ✅ Complete
+## Mục tiêu
+- Thay cơ chế "phản sát thương ngẫu nhiên" của Gilgamesh bằng cơ chế "nhảy lượt"
+  giống Reinhard, không giới hạn số lần.
+- Cải thiện camera cho skill AOE: zoom out toàn bộ đội hình địch, center = main
+  target, zoom dần theo từng hit.
 
-Cơ chế mới: mỗi khi đồng minh (hoặc chính Charlotte) áp debuff lên kẻ địch,
-Charlotte sẽ NHẢY LƯỢT (bỏ qua lượt chọn của cô) và ngay lập tức dùng
-skill 1 (Cắt Gió) vào đúng kẻ địch vừa nhận debuff.
+## Phần 1: Passive Gilgamesh (HOÀN THÀNH)
+- [x] 1. Sửa `GilgameshPassive.cs`: đoạn `OnTakeDamage` bỏ 20% proc ngẫu nhiên,
+      thay bằng 100% `RequestInterrupt` + `GrantExtraAction` (giống Reinhard),
+      không giới hạn.
 
-## Steps
-1. ✅ Add `OnDebuffApplied` event + `TriggerDebuffApplied` to `CombatManager.cs`.
-2. ✅ Add Charlotte follow-up state & methods to `CombatManager.cs`
-   (`RequestCharlotteFollowUp`, `ProcessCharlotteFollowUp`, count reset, loop integration).
-3. ✅ Add debuff detection trigger in `ApplyStatusEffect.cs`.
-4. ✅ Rewrite `CharlottePassive.cs` to subscribe to `OnDebuffApplied` and request follow-up.
-5. ✅ `CombatManager`: thay `UnitName == "Charlotte"` bằng `GetCharlotteUnit()` (tìm theo passive type)
-   vì nhân vật thật trong data tên **"Kurumi"** nhưng dùng script `CharlottePassive`.
-6. ✅ Verify compilation / summarize.
+## Phần 2: Camera AOE skill (HOÀN THÀNH)
+- [x] 1. `CombatPlanningUI.cs`: đặt enemy người chơi click (main target) vào đầu
+      `finalTargets` → `InitialTargets.First()` = main target.
+- [x] 2. `CombatCameraManager.cs`: thêm `FocusAOEAction` + `AdvanceAOEZoom` +
+      `ZoomFromToCoroutine` (zoom từ orthographicSize thực tế → có hiệu ứng zoom ra).
+- [x] 3. `ClashAnimationSequence.cs`: thêm `IsAOESkill`; `SetupPhase` xử lý AOE
+      TRƯỚC `isMoving`; `ExecutePhase`'s onHitHandler gọi `AdvanceAOEZoom`.
+- [x] 4. `CombatCameraAnimationIntegration.cs`: bỏ qua skill AOE (không gọi
+      `ZoomToUnit` override) — để `FocusAOEAction` điều khiển camera.
 
-## Lưu ý
-- `RequestCharlotteFollowUp(target)` đánh dấu `Charlotte.HasActedThisTurn = true`
-  để UI bỏ qua lượt chọn của cô.
-- `ProcessCharlotteFollowUp()` dùng skill 1 vào target, trừ AP, resolve action.
-- Tối đa 2 lần follow-up mỗi lượt player (reset ở đầu `DoPlayerTurn`).
-- Không dùng hệ thống cũ (50% sát thương thêm) — dùng skill 1 đầy đủ.
+## Kiểm tra
+- [ ] 5. Kiểm tra compile + chạy trong Unity Editor.

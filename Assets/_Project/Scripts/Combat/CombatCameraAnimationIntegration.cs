@@ -33,20 +33,25 @@ public class CombatCameraAnimationIntegration : MonoBehaviour
         }
     }
 
-    private void OnActionHappened(ActionResult result)
+private void OnActionHappened(ActionResult result)
     {
-        // Khi một hành động được thực hiện, có thể lia camera hoặc shake
-        if (cameraManager != null && result.InitialTargets.Any())
-        {
-            var primaryTarget = result.InitialTargets.First();
-            var targetView = FindObjectsByType<UnitView>(FindObjectsSortMode.None)
-                .FirstOrDefault(v => v.LinkedUnit == primaryTarget);
+        if (cameraManager == null || result.InitialTargets == null || !result.InitialTargets.Any()) return;
 
-            if(targetView != null)
-            {
-                cameraManager.ZoomToUnit(targetView.transform, cameraManager.damageZoomSize);
-                cameraManager.PlayImpactShake();
-            }
+        // Bỏ qua skill AOE ở đây: ClashAnimationSequence đã xử lý camera AOE
+        // (FocusAOEAction + AdvanceAOEZoom) để center = main target và zoom dần.
+        if (result.Skill != null &&
+            (result.Skill.targetType == TargetType.AllEnemies || result.Skill.targetType == TargetType.AllAllies))
+            return;
+
+        // Skill đơn mục tiêu: lia camera + shake như cũ
+        var primaryTarget = result.InitialTargets.First();
+        var targetView = FindObjectsByType<UnitView>(FindObjectsSortMode.None)
+            .FirstOrDefault(v => v.LinkedUnit == primaryTarget);
+
+        if (targetView != null)
+        {
+            cameraManager.ZoomToUnit(targetView.transform, cameraManager.damageZoomSize);
+            cameraManager.PlayImpactShake();
         }
     }
 }

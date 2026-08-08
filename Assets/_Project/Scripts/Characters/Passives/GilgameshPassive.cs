@@ -5,7 +5,7 @@ using System.Linq;
 /// Passive của Gilgamesh (Boss) - Đã sửa theo yêu cầu:
 /// 1. Mỗi lần gây sát thương → +1% sát thương vĩnh viễn (stack vô hạn)
 /// 2. Khi tấn công → 20% tấn công thêm bằng Skill 1 vào mục tiêu hiện tại
-/// 3. Khi bị tấn công hoặc tấn công → 20% tấn công bằng Skill 1 vào 1 kẻ địch ngẫu nhiên
+/// 3. Khi bị tấn công → 100% phản đòn ngay lập tức (Interrupt) + cộng thêm lượt hành động (nhảy lượt), KHÔNG giới hạn
 /// 4. Death Trigger: Khi chết, kích hoạt Enuma Elish - Final
 /// </summary>
 public class GilgameshPassive : PassiveAbility
@@ -21,7 +21,7 @@ public class GilgameshPassive : PassiveAbility
     {
         base.Initialize(owner);
         owner.MaxActionsPerTurn = 2;
-        Debug.Log($"[{Owner.UnitName}'s Passive] King's Accumulation! +1% sát thương vĩnh viễn mỗi lần gây sát thương. 20% proc Skill 1 khi tấn công/bị tấn công.");
+        Debug.Log($"[{Owner.UnitName}'s Passive] King's Accumulation! +1% sát thương vĩnh viễn mỗi lần gây sát thương. 20% proc Skill 1 khi tấn công. 100% phản đòn + nhảy lượt khi bị tấn công.");
     }
 
     public override void OnDealDamage(CombatUnit target, int damage)
@@ -48,23 +48,20 @@ public class GilgameshPassive : PassiveAbility
 
     public override void OnTakeDamage(CombatUnit attacker, int damage)
     {
-        if (Owner == null || !Owner.IsAlive) return;
+        if (Owner == null || !Owner.IsAlive || attacker == null) return;
+        if (!attacker.IsPlayer) return; // Chỉ phản đòn player
 
-        // 3. Khi bị tấn công → 20% tấn công bằng Skill 1 vào 1 kẻ địch ngẫu nhiên
-        if (Random.value < PROC_CHANCE)
+        // 3. Khi bị tấn công → 100% phản đòn ngay lập tức (Interrupt) + cộng thêm lượt hành động (nhảy lượt).
+        //    Hoạt động giống Reinhard: phản đòn đúng kẻ tấn công + extra action, KHÔNG giới hạn số lần.
+        if (CombatManager.Instance != null)
         {
-            var skill1 = Owner.AvailableSkills?.FirstOrDefault();
-            if (skill1 == null) return;
+            // 100% phản đòn ngay lập tức (Interrupt) - đánh trả attacker giữa lượt player
+            CombatManager.Instance.RequestInterrupt(Owner, attacker);
 
-            // Chọn target ngẫu nhiên từ player còn sống
-            var alivePlayers = CombatManager.Instance?.PlayerUnits.Where(p => p.IsAlive).ToList();
-            if (alivePlayers != null && alivePlayers.Count > 0)
-            {
-                var randomTarget = alivePlayers[Random.Range(0, alivePlayers.Count)];
-                Owner.SelectSkill(skill1, new System.Collections.Generic.List<CombatUnit> { randomTarget });
-                Owner.ExecuteSelectedSkill(0);
-                Debug.Log($"[{Owner.UnitName}'s Passive] 20% proc khi bị đánh! Tấn công [{skill1.skillName}] vào {randomTarget.UnitName}!");
-            }
+            // Cộng thêm extra action cho lượt enemy của Gilgamesh
+            CombatManager.Instance.GrantExtraAction(Owner);
+
+            Debug.Log($"[{Owner.UnitName}'s Passive] Vua Anh Hùng phản đòn ngay lập tức! Đánh trả {attacker.UnitName}. (Extra action +1, không giới hạn nhảy lượt)");
         }
     }
 
