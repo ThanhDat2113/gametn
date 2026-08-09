@@ -103,6 +103,9 @@ public class MapMenuManager : MonoBehaviour
 
     void Update()
     {
+        // ✅ Chặn mở menu nếu đang trong dialogue
+        if (DialogueBubbleUI.IsDialogueActive) return;
+
         if (Input.GetKeyDown(KeyCode.Escape) || Input.GetMouseButtonDown(1))
         {
             HandleBackAction();
@@ -258,7 +261,6 @@ public class MapMenuManager : MonoBehaviour
         currentAnim = null;
     }
 
-    // Public methods for buttons
     public void OpenCharacterPanel() => OpenSubPanel(characterPanel, MenuState.Character);
     public void OpenFormationPanel() => OpenSubPanel(formationPanel, MenuState.Formation);
     public void OpenInventoryPanel() => OpenSubPanel(inventoryPanel, MenuState.Inventory);
@@ -267,7 +269,6 @@ public class MapMenuManager : MonoBehaviour
     public void OpenLoadPanel() => OpenSubPanel(loadPanel, MenuState.Load);
     public void OpenQuit() => OpenQuitPanel();
 
-    // ─── Character Container ─────────────────────────────────
     private void RefreshCharacterContainer()
     {
         foreach (var slot in characterSlots)
@@ -303,7 +304,6 @@ public class MapMenuManager : MonoBehaviour
             var slotData = activeSlots[idx];
             var character = slotData.slot.data;
 
-            // Lấy dữ liệu từ PlayerProgression
             int level = 1;
             float expProgress = 0f;
             int currentExp = 0;
@@ -318,7 +318,6 @@ public class MapMenuManager : MonoBehaviour
             }
             else
             {
-                // Fallback
                 level = slotData.slot.level;
                 neededExp = 100;
             }

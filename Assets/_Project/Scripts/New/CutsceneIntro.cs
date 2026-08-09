@@ -23,7 +23,15 @@ public class CutsceneIntro : MonoBehaviour
     [Tooltip("Nếu true, tất cả các dòng trong cutscene sẽ dùng NPC Bubble (bất kể isPlayerLine)")]
     public bool forceNPCBubble = true;
 
+    [Header("Loading UI")]
+    [Tooltip("Loading panel sẽ tự động ẩn khi camera bắt đầu di chuyển")]
+    public bool autoHideLoadingOnStart = true;
+
     private bool dialogueFinished;
+    private bool _hasStartedMoving = false;
+
+    // Property để các hệ thống khác (LoadingUIManager) kiểm tra
+    public bool HasStartedMoving => _hasStartedMoving;
 
     private void Awake()
     {
@@ -65,26 +73,30 @@ public class CutsceneIntro : MonoBehaviour
 
     private IEnumerator PlayCutscene()
     {
-        // Chờ một frame để các hệ thống khác ổn định (SceneTransitionManager, FadeController, v.v.)
+        // ✅ Bật flag để ẩn toàn bộ UI (Quest, Minimap, Menu)
+        DialogueBubbleUI.SetDialogueActive(true);
+
+        // Chờ một frame để các hệ thống khác ổn định
         yield return null;
         yield return new WaitForSeconds(0.2f);
 
+        // Tắt điều khiển player
         if (playerController != null)
             playerController.enabled = false;
 
+        // Fade từ đen
         if (FadeController.Instance == null)
         {
             Debug.LogError("[CutsceneIntro] FadeController.Instance == null!");
         }
         else
         {
-            // Đảm bảo màn hình đang đen trước khi fade từ đen ra
-            // (FadeController mới khởi tạo có alpha = 0, cần set về 1 để thấy hiệu ứng fade)
             FadeController.Instance.SetAlpha(1f);
             yield return new WaitForSeconds(0.1f);
             yield return FadeController.Instance.FadeFromBlack();
         }
 
+        // Chuyển camera
         if (mainCamera != null) mainCamera.SetActive(false);
         if (cutsceneCamera != null)
         {
@@ -98,6 +110,16 @@ public class CutsceneIntro : MonoBehaviour
             yield break;
         }
 
+        // ✅ Đánh dấu cutscene đã bắt đầu di chuyển (để LoadingUIManager biết)
+        _hasStartedMoving = true;
+
+        // ✅ Ẩn loading UI ngay khi camera bắt đầu di chuyển
+        if (autoHideLoadingOnStart && LoadingUIManager.Instance != null)
+        {
+            LoadingUIManager.Instance.HideLoading();
+        }
+
+        // Di chuyển camera từ A đến B
         float timer = 0f;
         while (timer < moveDuration)
         {
@@ -108,6 +130,7 @@ public class CutsceneIntro : MonoBehaviour
             yield return null;
         }
 
+        // Phát dialogue (nếu có)
         dialogueFinished = false;
         if (DialogueBubbleUI.Instance != null && dialogueLines != null && dialogueLines.Length > 0)
         {
@@ -132,18 +155,38 @@ public class CutsceneIntro : MonoBehaviour
         }
         yield return new WaitUntil(() => dialogueFinished);
 
+        // Fade to black trước khi chuyển camera về
         if (FadeController.Instance != null)
             yield return FadeController.Instance.FadeToBlack();
 
+        // Chuyển về camera chính
         if (cutsceneCamera != null) cutsceneCamera.SetActive(false);
         if (mainCamera != null) mainCamera.SetActive(true);
 
+        // Fade from black
         if (FadeController.Instance != null)
             yield return FadeController.Instance.FadeFromBlack();
 
+        // Bật lại điều khiển player
         if (playerController != null)
             playerController.enabled = true;
 
+        // ✅ Kết thúc cutscene → tắt flag dialogue để hiện lại UI
+        DialogueBubbleUI.SetDialogueActive(false);
+
+        // ✅ BUỘC HIỆN LẠI QUEST UI NGAY LẬP TỨC
+        if (QuestUI.Instance != null)
+        {
+            QuestUI.Instance.Show();
+            Debug.Log("[CutsceneIntro] ✅ Đã gọi QuestUI.Instance.Show() để hiện lại UI");
+        }
+        else
+        {
+            Debug.LogWarning("[CutsceneIntro] QuestUI.Instance null, không thể hiện lại UI");
+        }
+
+        // Reset flag cutscene
+        _hasStartedMoving = false;
     }
 
     private void OnDialogueFinished()

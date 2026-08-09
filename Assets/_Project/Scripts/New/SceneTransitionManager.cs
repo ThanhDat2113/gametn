@@ -4,10 +4,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-/// <summary>
-/// Singleton quản lý chuyển đổi giữa các map (additive).
-/// Đặt trong Persistent Scene.
-/// </summary>
 public class SceneTransitionManager : MonoBehaviour
 {
     public static SceneTransitionManager Instance { get; private set; }
@@ -22,12 +18,13 @@ public class SceneTransitionManager : MonoBehaviour
     private string currentMapName;
     private bool isTransitioning;
 
-    // Cache player
     private GameObject player;
     private List<MonoBehaviour> playerScripts = new List<MonoBehaviour>();
 
-    // Track loaded maps để tránh reload lại map đã load
     private HashSet<string> loadedMaps = new HashSet<string>();
+
+    // ✅ Flag để kiểm tra cutscene đã bắt đầu chưa
+    private bool _cutsceneStarted = false;
 
     private void Awake()
     {
@@ -48,7 +45,7 @@ public class SceneTransitionManager : MonoBehaviour
         player = GameObject.FindGameObjectWithTag("Player");
         if (player == null)
         {
-            Debug.LogError("[SceneTransition] Không tìm thấy Player! Hãy đảm bảo có GameObject với tag 'Player' trong Persistent Scene.");
+            Debug.LogError("[SceneTransition] Không tìm thấy Player!");
             yield break;
         }
 
@@ -57,7 +54,6 @@ public class SceneTransitionManager : MonoBehaviour
 
         if (string.IsNullOrEmpty(currentMapName))
         {
-            // Load map đầu tiên KHÔNG fade để CutsceneIntro có thể xử lý fade
             yield return LoadFirstMap(initialMapName, initialSpawnID);
         }
     }
@@ -65,22 +61,36 @@ public class SceneTransitionManager : MonoBehaviour
     private IEnumerator LoadFirstMap(string newMapName, string spawnPointID)
     {
         isTransitioning = true;
+        _cutsceneStarted = false;
+
+        // ✅ Hiện Loading UI trước khi load map
+        if (LoadingUI.Instance != null)
+            LoadingUI.Instance.Show(0f);
+        else
+            Debug.LogError("[SceneTransition] LoadingUI.Instance is null!");
+
         Debug.Log($"[SceneTransition] Load map đầu tiên: '{newMapName}'");
 
-        // Load map additive
         AsyncOperation load = SceneManager.LoadSceneAsync(newMapName, LoadSceneMode.Additive);
-        yield return load;
+        while (!load.isDone)
+        {
+            float progress = Mathf.Clamp01(load.progress / 0.9f);
+            if (LoadingUI.Instance != null)
+                LoadingUI.Instance.UpdateProgress(progress);
+            yield return null;
+        }
 
         Scene newScene = SceneManager.GetSceneByName(newMapName);
         if (!newScene.IsValid())
         {
             Debug.LogError($"[SceneTransition] Không tìm thấy scene: {newMapName}");
             isTransitioning = false;
+            if (LoadingUI.Instance != null)
+                LoadingUI.Instance.Hide();
             yield break;
         }
         SceneManager.SetActiveScene(newScene);
 
-        // Teleport player đến spawn
         Vector3 targetPosition = Vector3.zero;
         Quaternion targetRotation = Quaternion.identity;
         if (!FindSpawnPoint(newScene, spawnPointID, out targetPosition, out targetRotation))
@@ -88,11 +98,29 @@ public class SceneTransitionManager : MonoBehaviour
 
         TeleportPlayerTo(targetPosition, targetRotation);
         currentMapName = newMapName;
-        loadedMaps.Add(newMapName); // Track map đầu tiên
+        loadedMaps.Add(newMapName);
 
-        // Chờ 2 frame cho CutsceneIntro khởi tạo
+        // ✅ Chờ 2 frame để các script trong map khởi tạo
         yield return null;
         yield return null;
+
+        // ✅ Kiểm tra có CutsceneIntro không
+        CutsceneIntro cutscene = FindObjectOfType<CutsceneIntro>();
+        if (cutscene != null)
+        {
+            Debug.Log("[SceneTransition] Tìm thấy CutsceneIntro, chờ cutscene bắt đầu...");
+            // Chờ cutscene gọi OnCutsceneStarted()
+            yield return new WaitUntil(() => _cutsceneStarted);
+            Debug.Log("[SceneTransition] Cutscene đã bắt đầu, ẩn Loading UI.");
+            if (LoadingUI.Instance != null)
+                LoadingUI.Instance.Hide();
+        }
+        else
+        {
+            Debug.Log("[SceneTransition] Không có CutsceneIntro, ẩn Loading UI ngay.");
+            if (LoadingUI.Instance != null)
+                LoadingUI.Instance.Hide();
+        }
 
         isTransitioning = false;
         Debug.Log($"[SceneTransition] ✅ Đã load map: {newMapName}");
@@ -122,24 +150,25 @@ public class SceneTransitionManager : MonoBehaviour
     private IEnumerator TransitionCoroutine(string newMapName, string spawnPointID, Action onComplete)
     {
         isTransitioning = true;
+        _cutsceneStarted = false;
+
+        // ✅ Hiện Loading UI
+        if (LoadingUI.Instance != null)
+            LoadingUI.Instance.Show(0f);
 
         Debug.Log($"[SceneTransition] Bắt đầu chuyển từ '{currentMapName}' -> '{newMapName}'");
 
-        // 1. Fade to black
         if (FadeController.Instance != null)
             yield return FadeController.Instance.FadeToBlack();
         else
             yield return new WaitForSeconds(fadeDuration);
 
-        // 2. Kiểm tra xem map mới đã load chưa
         bool mapAlreadyLoaded = loadedMaps.Contains(newMapName);
         Scene newScene = SceneManager.GetSceneByName(newMapName);
 
         if (mapAlreadyLoaded && newScene.IsValid())
         {
-            // Map đã load rồi - chỉ cần active nó lên
             Debug.Log($"[SceneTransition] Map '{newMapName}' đã load trước đó. Active lại...");
-            // SetActive(true) tất cả root objects trong scene
             foreach (var root in newScene.GetRootGameObjects())
             {
                 root.SetActive(true);
@@ -147,30 +176,35 @@ public class SceneTransitionManager : MonoBehaviour
         }
         else
         {
-            // Map chưa load - load lần đầu
             AsyncOperation load = SceneManager.LoadSceneAsync(newMapName, LoadSceneMode.Additive);
-            yield return load;
+            while (!load.isDone)
+            {
+                float progress = Mathf.Clamp01(load.progress / 0.9f);
+                if (LoadingUI.Instance != null)
+                    LoadingUI.Instance.UpdateProgress(progress);
+                yield return null;
+            }
 
             newScene = SceneManager.GetSceneByName(newMapName);
             if (!newScene.IsValid())
             {
                 Debug.LogError($"[SceneTransition] Không tìm thấy scene: {newMapName}");
                 isTransitioning = false;
+                if (LoadingUI.Instance != null)
+                    LoadingUI.Instance.Hide();
                 yield break;
             }
             loadedMaps.Add(newMapName);
         }
 
-        // 3. Unload/Deactivate map cũ (giữ trong loadedMaps để không cần load lại)
+        // Deactivate map cũ
         if (!string.IsNullOrEmpty(currentMapName))
         {
             Scene oldScene = SceneManager.GetSceneByName(currentMapName);
             if (oldScene.IsValid())
             {
-                // Ẩn tất cả root objects trong map cũ thay vì unload
                 foreach (var root in oldScene.GetRootGameObjects())
                 {
-                    // Không ẩn PersistentContainer và các object DontDestroyOnLoad
                     if (!root.CompareTag("Persistent") && root.name != "PersistentContainer")
                     {
                         root.SetActive(false);
@@ -183,7 +217,6 @@ public class SceneTransitionManager : MonoBehaviour
         SceneManager.SetActiveScene(newScene);
         Debug.Log($"[SceneTransition] Active scene: {newMapName}");
 
-        // 4. Đưa player đến spawn point
         Vector3 targetPosition = Vector3.zero;
         Quaternion targetRotation = Quaternion.identity;
         bool spawnFound = FindSpawnPoint(newScene, spawnPointID, out targetPosition, out targetRotation);
@@ -203,20 +236,16 @@ public class SceneTransitionManager : MonoBehaviour
             Debug.LogError($"[SceneTransition] KHÔNG TÌM THẤY SPAWN POINT trong scene {newMapName}!");
         }
 
-        // 5. Cập nhật currentMapName
         currentMapName = newMapName;
 
-        // 6. Fade from black
         if (FadeController.Instance != null)
             yield return FadeController.Instance.FadeFromBlack();
         else
             yield return new WaitForSeconds(fadeDuration);
 
-        // 7. Chờ 2 frame để tất cả các script khác update
         yield return null;
         yield return null;
 
-        // 8. Kiểm tra vị trí cuối cùng
         if (player != null)
         {
             Vector3 finalPos = player.transform.position;
@@ -227,10 +256,40 @@ public class SceneTransitionManager : MonoBehaviour
             }
         }
 
+        // ✅ Kiểm tra CutsceneIntro
+        CutsceneIntro cutscene = FindObjectOfType<CutsceneIntro>();
+        if (cutscene != null)
+        {
+            Debug.Log("[SceneTransition] Tìm thấy CutsceneIntro, chờ cutscene bắt đầu...");
+            yield return new WaitUntil(() => _cutsceneStarted);
+            Debug.Log("[SceneTransition] Cutscene đã bắt đầu, ẩn Loading UI.");
+            if (LoadingUI.Instance != null)
+                LoadingUI.Instance.Hide();
+        }
+        else
+        {
+            Debug.Log("[SceneTransition] Không có CutsceneIntro, ẩn Loading UI ngay.");
+            if (LoadingUI.Instance != null)
+                LoadingUI.Instance.Hide();
+        }
+
         isTransitioning = false;
         onComplete?.Invoke();
         Debug.Log($"[SceneTransition] ✅ Đã chuyển sang map: {newMapName}");
     }
+
+    // ─── Public method để CutsceneIntro báo hiệu bắt đầu ──────────
+
+    public void OnCutsceneStarted()
+    {
+        _cutsceneStarted = true;
+        Debug.Log("[SceneTransition] Cutscene đã bắt đầu (được gọi từ CutsceneIntro).");
+        // Ẩn Loading UI ngay lập tức
+        if (LoadingUI.Instance != null)
+            LoadingUI.Instance.Hide();
+    }
+
+    // ─── Helper Methods ──────────────────────────────────────────────
 
     private bool FindSpawnPoint(Scene scene, string spawnID, out Vector3 position, out Quaternion rotation)
     {
@@ -298,7 +357,6 @@ public class SceneTransitionManager : MonoBehaviour
 
         Debug.Log($"[SceneTransition] Bắt đầu teleport player đến {position}");
 
-        // 1. Tạm thời vô hiệu hóa tất cả script trên player (trừ Transform)
         List<MonoBehaviour> scripts = new List<MonoBehaviour>(player.GetComponents<MonoBehaviour>());
         foreach (var script in scripts)
         {
@@ -308,7 +366,6 @@ public class SceneTransitionManager : MonoBehaviour
             }
         }
 
-        // 2. Xử lý CharacterController
         CharacterController cc = player.GetComponent<CharacterController>();
         bool ccWasEnabled = false;
         if (cc != null)
@@ -320,7 +377,6 @@ public class SceneTransitionManager : MonoBehaviour
             }
         }
 
-        // 3. Xử lý Rigidbody
         Rigidbody rb = player.GetComponent<Rigidbody>();
         bool rbWasKinematic = false;
         bool rbWasGravity = false;
@@ -334,21 +390,17 @@ public class SceneTransitionManager : MonoBehaviour
             rb.angularVelocity = Vector3.zero;
         }
 
-        // 4. Đặt vị trí
         player.transform.position = position;
         player.transform.rotation = rotation;
 
-        // 5. Đồng bộ vật lý ngay lập tức
         Physics.SyncTransforms();
 
-        // 6. Khôi phục CharacterController
         if (cc != null && ccWasEnabled)
         {
             cc.enabled = true;
-            cc.Move(Vector3.zero); // Force update
+            cc.Move(Vector3.zero);
         }
 
-        // 7. Khôi phục Rigidbody
         if (rb != null)
         {
             rb.isKinematic = rbWasKinematic;
@@ -360,17 +412,12 @@ public class SceneTransitionManager : MonoBehaviour
             }
         }
 
-        // 8. Bật lại các script (trừ các script quan trọng có thể được bật lại sau)
-        //     THAY VÌ BẬT LẠI TẤT CẢ, chỉ bật lại những script cần thiết (ví dụ: PlayerController)
-        //     Nhưng đơn giản hơn, bật lại tất cả sau 1 frame.
         StartCoroutine(EnablePlayerScriptsDelayed(scripts));
-
         Debug.Log($"[SceneTransition] Player đặt tại {position}");
     }
 
     private IEnumerator EnablePlayerScriptsDelayed(List<MonoBehaviour> scripts)
     {
-        // Chờ 2 frame để các hệ thống khác ổn định
         yield return null;
         yield return null;
 

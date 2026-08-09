@@ -13,6 +13,16 @@ public class DialogueBubbleUI : MonoBehaviour
 {
     public static DialogueBubbleUI Instance { get; private set; }
 
+    // ✅ Static flag để các UI khác kiểm tra
+    public static bool IsDialogueActive { get; private set; }
+
+    // ✅ Phương thức để set flag từ bên ngoài (DialogueTrigger)
+    public static void SetDialogueActive(bool active)
+    {
+        IsDialogueActive = active;
+        Debug.Log($"[DialogueBubbleUI] SetDialogueActive = {active}");
+    }
+
     [Header("Bubble Prefabs")]
     public GameObject npcBubblePrefab;
     public GameObject playerBubblePrefab;
@@ -38,8 +48,8 @@ public class DialogueBubbleUI : MonoBehaviour
     private TextMeshProUGUI _speakerText;
     private TextMeshProUGUI _contentText;
     private bool _isShowing;
-    private System.Action _onHide;                    // callback mỗi bước (advance dòng tiếp theo)
-    private System.Action _sequenceCompleteCallback;  // callback khi toàn bộ sequence kết thúc
+    private System.Action _onHide;
+    private System.Action _sequenceCompleteCallback;
     private Coroutine _typingCoroutine;
     private bool _isTyping;
     private string _currentFullText;
@@ -54,6 +64,7 @@ public class DialogueBubbleUI : MonoBehaviour
             return;
         }
         Instance = this;
+        IsDialogueActive = false;
     }
 
     void Update()
@@ -62,7 +73,6 @@ public class DialogueBubbleUI : MonoBehaviour
 
         UpdateBillboard();
 
-        // Advance / complete typing
         bool keyPressed = Input.GetKeyDown(continueKey) || (clickToContinue && Input.GetMouseButtonDown(0));
         if (keyPressed)
         {
@@ -72,7 +82,6 @@ public class DialogueBubbleUI : MonoBehaviour
                 Hide();
         }
 
-        // Skip toàn bộ sequence
         if (Input.GetKeyDown(skipKey))
             SkipAll();
     }
@@ -87,18 +96,15 @@ public class DialogueBubbleUI : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Hiển thị một dòng hội thoại. onHide gọi khi dòng này kết thúc (advance sang dòng tiếp).
-    /// </summary>
     public void Show(DialogueLineData line, Transform npcTarget, Transform playerTarget,
                      InteractionSide? side = null, System.Action onHide = null)
     {
         if (_isShowing) Hide();
 
+        // ❌ KHÔNG set flag ở đây
         _onHide = onHide;
         _currentFullText = line.text;
 
-        // Xác định prefab và target theo side
         GameObject selectedPrefab;
         Transform target;
         bool isSwapped = false;
@@ -202,15 +208,14 @@ public class DialogueBubbleUI : MonoBehaviour
             _contentText.text = line.text;
     }
 
-    /// <summary>
-    /// Hiển thị tuần tự nhiều dòng. onComplete gọi khi toàn bộ sequence kết thúc (kể cả khi skip).
-    /// </summary>
     public void ShowSequential(DialogueLineData[] lines, Transform npcTarget, Transform playerTarget,
                                System.Action onComplete = null, int startIndex = 0, InteractionSide? side = null)
     {
-        // Lưu callback kết thúc sequence để SkipAll có thể gọi trực tiếp
         if (startIndex == 0)
+        {
+            // ❌ KHÔNG set flag ở đây
             _sequenceCompleteCallback = onComplete;
+        }
 
         if (startIndex >= lines.Length)
         {
@@ -224,16 +229,12 @@ public class DialogueBubbleUI : MonoBehaviour
              () => ShowSequential(lines, npcTarget, playerTarget, onComplete, startIndex + 1, side));
     }
 
-    /// <summary>
-    /// Skip toàn bộ sequence hiện tại, huỷ bubble và gọi callback kết thúc (OnDialogueComplete).
-    /// </summary>
     public void SkipAll()
     {
         if (!_isShowing) return;
 
         CompleteTyping();
 
-        // Destroy bubble ngay lập tức
         if (_currentBubbleInstance != null)
         {
             Destroy(_currentBubbleInstance);
@@ -241,17 +242,13 @@ public class DialogueBubbleUI : MonoBehaviour
         }
 
         _isShowing = false;
-
-        // Clear toàn bộ chain để không trigger từng bước
+        // ❌ KHÔNG set flag ở đây
         _onHide = null;
 
-        // Lấy và clear sequenceCompleteCallback trước khi invoke (tránh gọi lại)
         var finalCallback = _sequenceCompleteCallback;
         _sequenceCompleteCallback = null;
 
         AudioManager.Instance?.PlayUIDialogueAdvance();
-
-        // Gọi OnDialogueComplete trên DialogueTrigger
         finalCallback?.Invoke();
     }
 
@@ -289,6 +286,7 @@ public class DialogueBubbleUI : MonoBehaviour
     {
         if (!_isShowing) return;
         _isShowing = false;
+        // ❌ KHÔNG set flag ở đây
         CompleteTyping();
         AudioManager.Instance?.PlayUIDialogueAdvance();
 

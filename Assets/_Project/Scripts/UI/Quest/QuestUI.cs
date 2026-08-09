@@ -3,31 +3,81 @@ using UnityEngine;
 
 public class QuestUI : MonoBehaviour
 {
+    public static QuestUI Instance { get; private set; }
+
     public TextMeshProUGUI objectiveText;
     public GameObject panel;
 
+    private bool _isVisible = true;
+
+    private void Awake()
+    {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
+    }
+
     private void Start()
     {
-        if (panel != null) panel.SetActive(true);
-        else gameObject.SetActive(true);
-        // ❌ Xóa dòng này: objectiveText.text = "";
+        UpdateVisibility();
+    }
+
+    private void Update()
+    {
+        UpdateVisibility();
+    }
+
+    public void UpdateVisibility()
+    {
+        bool isDialogueActive = DialogueBubbleUI.IsDialogueActive;
+        bool hasActiveQuest = QuestManager.Instance != null
+                              && QuestManager.Instance.CurrentStep != null
+                              && !QuestManager.Instance.IsQuestCompleted();
+
+        bool shouldShow = !isDialogueActive && hasActiveQuest;
+
+        // 🔥 Log để debug
+        // Debug.Log($"[QuestUI] shouldShow={shouldShow}, isDialogueActive={isDialogueActive}, hasActiveQuest={hasActiveQuest}");
+
+        if (shouldShow && !_isVisible)
+        {
+            if (panel != null) panel.SetActive(true);
+            _isVisible = true;
+            Debug.Log("[QuestUI] ✅ Hiện panel");
+        }
+        else if (!shouldShow && _isVisible)
+        {
+            if (panel != null) panel.SetActive(false);
+            _isVisible = false;
+            Debug.Log("[QuestUI] ❌ Ẩn panel");
+        }
     }
 
     public void SetObjective(string description)
     {
-        objectiveText.text = description;
+        if (objectiveText != null)
+            objectiveText.text = description;
+        UpdateVisibility();
     }
 
     public void Show()
     {
-        if (panel != null) panel.SetActive(true);
-        else gameObject.SetActive(true);
+        // 🔥 Gọi UpdateVisibility để hiện nếu có thể
+        UpdateVisibility();
     }
 
     public void Hide()
     {
-        objectiveText.text = "";
-        if (panel != null) panel.SetActive(false);
-        else gameObject.SetActive(false);
+        if (objectiveText != null)
+            objectiveText.text = "";
+        if (panel != null && panel.activeSelf)
+        {
+            panel.SetActive(false);
+            _isVisible = false;
+            Debug.Log("[QuestUI] Hide() được gọi → ẩn panel");
+        }
     }
 }

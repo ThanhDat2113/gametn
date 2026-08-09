@@ -20990,7 +20990,6 @@ MonoBehaviour:
     playOnce: 1
     customPrompt: {fileID: 0}
   defaultLines: []
-  sideOverride: 1
   interactionPrompt: {fileID: 0}
   useBlackScreen: 1
   useBlackScreenOnEnd: 1
@@ -22368,7 +22367,7 @@ MonoBehaviour:
   puzzleData: {fileID: 11400000, guid: d4050d7b16802244ea75b233af922573, type: 2}
   puzzleUIPrefab: {fileID: 4406237021966243345, guid: 135a258bd0974ce4fb3541bad08c626c, type: 3}
   interactKey: 101
-  interactionPrompt: {fileID: 0}
+  interactionPrompt: {fileID: 973142511}
 --- !u!1001 &358102847
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -27603,7 +27602,6 @@ MonoBehaviour:
     playOnce: 1
     customPrompt: {fileID: 843531286}
   defaultLines: []
-  sideOverride: 0
   interactionPrompt: {fileID: 843531286}
   useBlackScreen: 1
   useBlackScreenOnEnd: 1
@@ -31317,7 +31315,6 @@ MonoBehaviour:
     playOnce: 1
     customPrompt: {fileID: 0}
   defaultLines: []
-  sideOverride: 1
   interactionPrompt: {fileID: 0}
   useBlackScreen: 1
   useBlackScreenOnEnd: 1
@@ -34431,7 +34428,6 @@ MonoBehaviour:
     playOnce: 1
     customPrompt: {fileID: 1308095474}
   defaultLines: []
-  sideOverride: 2
   interactionPrompt: {fileID: 1308095474}
   useBlackScreen: 1
   useBlackScreenOnEnd: 1
@@ -49534,7 +49530,6 @@ MonoBehaviour:
     playOnce: 1
     customPrompt: {fileID: 0}
   defaultLines: []
-  sideOverride: 1
   interactionPrompt: {fileID: 0}
   useBlackScreen: 1
   useBlackScreenOnEnd: 1
@@ -65335,7 +65330,6 @@ MonoBehaviour:
     playOnce: 1
     customPrompt: {fileID: 0}
   defaultLines: []
-  sideOverride: 1
   interactionPrompt: {fileID: 0}
   useBlackScreen: 1
   useBlackScreenOnEnd: 1
@@ -78323,6 +78317,7 @@ GameObject:
   - component: {fileID: 1326132797}
   - component: {fileID: 1326132796}
   - component: {fileID: 1326132799}
+  - component: {fileID: 1326132800}
   m_Layer: 0
   m_Name: Object 3-1
   m_TagString: Untagged
@@ -78389,6 +78384,21 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::QuestVisibilityController
   targetObject: {fileID: 291536830}
   config: {fileID: 11400000, guid: b9be51be233800d4a923f935c78a6d1d, type: 2}
+  defaultVisibility: 0
+--- !u!114 &1326132800
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1326132795}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 77a036252314dcd4dbde485624a8eedc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestVisibilityController
+  targetObject: {fileID: 357716850}
+  config: {fileID: 11400000, guid: a65182c6a570de04881c00777e21aa74, type: 2}
   defaultVisibility: 0
 --- !u!4 &1332164040 stripped
 Transform:
@@ -82830,7 +82840,6 @@ MonoBehaviour:
     playOnce: 1
     customPrompt: {fileID: 2135837555}
   defaultLines: []
-  sideOverride: 2
   interactionPrompt: {fileID: 2135837555}
   useBlackScreen: 1
   useBlackScreenOnEnd: 1
@@ -88262,7 +88271,6 @@ MonoBehaviour:
     playOnce: 1
     customPrompt: {fileID: 874787196}
   defaultLines: []
-  sideOverride: 0
   interactionPrompt: {fileID: 874787196}
   useBlackScreen: 1
   useBlackScreenOnEnd: 1
@@ -88900,7 +88908,6 @@ MonoBehaviour:
     playOnce: 1
     customPrompt: {fileID: 0}
   defaultLines: []
-  sideOverride: 1
   interactionPrompt: {fileID: 0}
   useBlackScreen: 1
   useBlackScreenOnEnd: 1
@@ -114065,7 +114072,6 @@ MonoBehaviour:
     playOnce: 1
     customPrompt: {fileID: 0}
   defaultLines: []
-  sideOverride: 1
   interactionPrompt: {fileID: 0}
   useBlackScreen: 1
   useBlackScreenOnEnd: 1
@@ -121628,7 +121634,6 @@ MonoBehaviour:
     playOnce: 1
     customPrompt: {fileID: 0}
   defaultLines: []
-  sideOverride: 0
   interactionPrompt: {fileID: 0}
   useBlackScreen: 1
   useBlackScreenOnEnd: 1

@@ -138,40 +138,30 @@ public class MinimapController : MonoBehaviour
              "Khi scene này load (kể cả Additive), minimap tự ẩn.")]
     [SerializeField] private List<string> combatSceneNames = new List<string>();
 
+    // ── Internal state ──────────────────────────────────────────────────────────
     private Camera _minimapCamera;
-    private CanvasGroup _uiRootCanvasGroup; // dùng cho DisableUpdatesOnly
+    private CanvasGroup _uiRootCanvasGroup;
     private bool _isHiddenByCombat = false;
-    private bool _isHiddenByUI = false;     // ẩn do MapMenuManager/UI panel đang mở
-    private bool _externalCombatFlag = false; // set bởi NotifyCombatStateChanged từ bên ngoài
+    private bool _isHiddenByUI = false;
+    private bool _externalCombatFlag = false;
+    private bool _isHiddenByDialogue = false; // ✅ Ẩn khi dialogue đang mở
 
     // ── Multi-terrain support ─────────────────────────────────────────────────
-    private Terrain[] _allTerrains;          // cache danh sách terrain để tìm nhanh
+    private Terrain[] _allTerrains;
 
-    /// <summary>Fire sau khi minimap đã refresh xong cho map mới (terrain/player/data đã cập nhật).</summary>
+    // ── Events ──────────────────────────────────────────────────────────────────
     public event System.Action<string> OnMapChanged;
-
-    /// <summary>Fire khi minimap bị ẩn/hiện do combat (true = vừa ẩn, false = vừa hiện lại).</summary>
     public event System.Action<bool> OnCombatVisibilityChanged;
 
+    // ── Public properties ──────────────────────────────────────────────────────
     public Transform Player => player;
     public bool RotateWithPlayer => rotateWithPlayer;
     public RectTransform MarkerContainer => markerContainer;
     public DisplayMode CurrentDisplayMode => displayMode;
     public bool IsHiddenByCombat => _isHiddenByCombat;
-
-    /// <summary>World units hiển thị theo chiều cao/rộng minimap, đã áp dụng zoom.</summary>
     public float EffectiveWorldSize => mapScale * zoomMultiplier;
 
-    /// <summary>
-    /// Gọi từ bất kỳ script nào (FormationManager, SceneLoaderManager, SceneTransitionManager, v.v.)
-    /// để báo hiệu trạng thái combat thay đổi, KHÔNG cần biết tên scene hay chờ scene load event.
-    /// An toàn gọi khi Instance chưa tồn tại — sẽ bị bỏ qua, không lỗi.
-    ///
-    /// Ví dụ dùng trong FormationManager trước khi gọi SceneManager.LoadScene("CombatScene"):
-    ///   MinimapController.NotifyCombatStateChanged(true);
-    /// Và khi rời combat (về lại map chính):
-    ///   MinimapController.NotifyCombatStateChanged(false);
-    /// </summary>
+    // ── Static API ──────────────────────────────────────────────────────────────
     public static void NotifyCombatStateChanged(bool isInCombat)
     {
         if (Instance == null)
@@ -189,6 +179,8 @@ public class MinimapController : MonoBehaviour
         RefreshCombatVisibility();
     }
 
+    // ── Unity lifecycle ─────────────────────────────────────────────────────────
+
     private void Awake()
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
@@ -202,9 +194,7 @@ public class MinimapController : MonoBehaviour
             if (p != null) player = p.transform;
         }
 
-        // Cache tất cả terrain trong scene hiện tại
         CacheAllTerrains();
-
         ResolveUIRoot();
         SetupDisplayMode();
         ApplyMaskShape();
@@ -213,21 +203,183 @@ public class MinimapController : MonoBehaviour
         SceneManager.sceneUnloaded += OnSceneUnloaded;
     }
 
-    /// <summary>
-    /// Cache tất cả Terrain trong scene hiện tại (bao gồm cả inactive).
-    /// </summary>
+    private void Start()
+    {
+        if (displayMode == DisplayMode.RenderTextureCamera)
+            SetupMinimapCamera();
+
+        RefreshCombatVisibility();
+    }
+
+    private void LateUpdate()
+    {
+        if (player == null) return;
+
+        // Cập nhật flag dialogue mỗi frame
+        _isHiddenByDialogue = DialogueBubbleUI.IsDialogueActive;
+
+        // Cập nhật flag UI panel
+        CheckUIPanelVisibility();
+
+        // Luôn áp dụng trạng thái hiển thị (ẩn/hiện) dựa trên các flag
+        ApplyMinimapVisibility();
+
+        // Nếu đang ẩn vì bất kỳ lý do gì, bỏ qua cập nhật camera
+        if (_isHiddenByCombat || _isHiddenByUI || _isHiddenByDialogue)
+            return;
+
+        // Cập nhật camera và map
+        if (displayMode == DisplayMode.RenderTextureCamera && _minimapCamera != null)
+            UpdateCameraFollow();
+
+        if (displayMode == DisplayMode.StaticTexture)
+            UpdateStaticTextureUV();
+
+        if (rotateWithPlayer)
+            ApplyMapRotation();
+        else
+            ApplyPlayerIconRotation();
+    }
+
+    private void OnDestroy()
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+        SceneManager.sceneUnloaded -= OnSceneUnloaded;
+        if (Instance == this) Instance = null;
+    }
+
+    // ─── Scene / Map Change Handling ───────────────────────────────────────────
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        Debug.Log($"[MinimapController] Scene loaded: '{scene.name}' (mode={mode}) → refresh minimap.");
+        CacheAllTerrains();
+        RefreshForMap(scene);
+        RefreshCombatVisibility();
+    }
+
+    private void OnSceneUnloaded(Scene scene)
+    {
+        Debug.Log($"[MinimapController] Scene unloaded: '{scene.name}'.");
+        if (terrain != null && terrain.gameObject.scene == scene) terrain = null;
+        if (player != null && player.gameObject.scene == scene) player = null;
+        CacheAllTerrains();
+        RefreshCombatVisibility();
+    }
+
+    private void RefreshForMap(Scene scene)
+    {
+        if (player == null)
+        {
+            GameObject p = GameObject.FindGameObjectWithTag("Player");
+            if (p != null)
+            {
+                player = p.transform;
+                Debug.Log($"[MinimapController] Tìm thấy lại Player: '{player.name}'.");
+            }
+            else
+            {
+                Debug.LogWarning("[MinimapController] Không tìm thấy Player sau khi đổi map!");
+            }
+        }
+
+        ApplyMapDataIfAvailable(scene.name);
+
+        if (displayMode == DisplayMode.RenderTextureCamera && _minimapCamera != null)
+            UpdateCameraOrthoSize();
+
+        OnMapChanged?.Invoke(scene.name);
+    }
+
+    // ─── Combat Auto-Hide ─────────────────────────────────────────────────────
+
+    private bool IsAnyCombatSceneLoaded()
+    {
+        if (combatSceneNames == null || combatSceneNames.Count == 0) return false;
+
+        for (int i = 0; i < SceneManager.sceneCount; i++)
+        {
+            Scene s = SceneManager.GetSceneAt(i);
+            if (!s.isLoaded) continue;
+
+            for (int j = 0; j < combatSceneNames.Count; j++)
+            {
+                if (string.Equals(s.name, combatSceneNames[j], System.StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+        }
+        return false;
+    }
+
+    private void RefreshCombatVisibility()
+    {
+        bool shouldHide = autoHideInCombat && (_externalCombatFlag || IsAnyCombatSceneLoaded());
+
+        if (shouldHide != _isHiddenByCombat)
+        {
+            _isHiddenByCombat = shouldHide;
+            ApplyMinimapVisibility();
+            OnCombatVisibilityChanged?.Invoke(shouldHide);
+            Debug.Log($"[MinimapController] Combat visibility → {(shouldHide ? "ẨN" : "HIỆN")} minimap.");
+        }
+    }
+
+    private void CheckUIPanelVisibility()
+    {
+        if (uiPanelsToWatch == null || uiPanelsToWatch.Length == 0) return;
+
+        bool anyPanelOpen = false;
+        foreach (var panel in uiPanelsToWatch)
+        {
+            if (panel != null && panel.activeInHierarchy)
+            {
+                anyPanelOpen = true;
+                break;
+            }
+        }
+
+        if (anyPanelOpen == _isHiddenByUI) return;
+        _isHiddenByUI = anyPanelOpen;
+        ApplyMinimapVisibility();
+    }
+
+    private void ApplyMinimapVisibility()
+    {
+        bool shouldHide = _isHiddenByCombat || _isHiddenByUI || _isHiddenByDialogue;
+
+        // Chỉ thay đổi khi cần, nhưng vẫn set đúng trạng thái mỗi lần
+        switch (hideBehavior)
+        {
+            case HideBehavior.DeactivateRoot:
+                if (minimapUIRoot != null && minimapUIRoot.activeSelf == shouldHide)
+                    minimapUIRoot.SetActive(!shouldHide);
+                if (_minimapCamera != null && _minimapCamera.enabled == shouldHide)
+                    _minimapCamera.enabled = !shouldHide;
+                break;
+            case HideBehavior.DisableUpdatesOnly:
+                if (_uiRootCanvasGroup != null)
+                {
+                    if (_uiRootCanvasGroup.alpha == (shouldHide ? 0f : 1f)) return;
+                    _uiRootCanvasGroup.alpha = shouldHide ? 0f : 1f;
+                    _uiRootCanvasGroup.blocksRaycasts = !shouldHide;
+                    _uiRootCanvasGroup.interactable = !shouldHide;
+                }
+                if (_minimapCamera != null && _minimapCamera.enabled == shouldHide)
+                    _minimapCamera.enabled = !shouldHide;
+                break;
+        }
+    }
+
+    // ─── Terrain helpers ────────────────────────────────────────────────────────
+
     private void CacheAllTerrains()
     {
         _allTerrains = FindObjectsByType<Terrain>(FindObjectsInactive.Include, FindObjectsSortMode.None);
         Debug.Log($"[MinimapController] Cached {_allTerrains.Length} terrains.");
     }
 
-    /// <summary>
-    /// Tìm Terrain đầu tiên chứa điểm worldPos (dựa trên bounds).
-    /// </summary>
     private Terrain GetTerrainAtPosition(Vector3 worldPos)
     {
-        // Ưu tiên terrain đã gán (nếu vẫn đang chứa player)
         if (terrain != null)
         {
             Bounds terrainBounds = terrain.terrainData.bounds;
@@ -236,7 +388,6 @@ public class MinimapController : MonoBehaviour
                 return terrain;
         }
 
-        // Duyệt cache để tìm terrain chứa điểm này
         foreach (Terrain t in _allTerrains)
         {
             if (t == null) continue;
@@ -246,14 +397,22 @@ public class MinimapController : MonoBehaviour
                 return t;
         }
 
-        // Không tìm thấy → fallback về terrain đầu tiên (hoặc null)
         return _allTerrains.Length > 0 ? _allTerrains[0] : null;
     }
 
-    /// <summary>
-    /// Tìm GameObject root của UI minimap để Activate/Deactivate khi vào combat.
-    /// Ưu tiên field minimapUIRoot; nếu trống, leo lên cha của minimapMaskImage.
-    /// </summary>
+    private float GetTerrainHeightOrFallback(Vector3 worldPos)
+    {
+        Terrain currentTerrain = GetTerrainAtPosition(worldPos);
+        if (currentTerrain != null)
+        {
+            return currentTerrain.SampleHeight(worldPos) + currentTerrain.transform.position.y;
+        }
+        // Fallback: nếu không tìm thấy terrain, dùng height = 0
+        return 0f;
+    }
+
+    // ─── UI Setup ──────────────────────────────────────────────────────────────
+
     private void ResolveUIRoot()
     {
         if (minimapUIRoot == null && minimapMaskImage != null)
@@ -273,251 +432,12 @@ public class MinimapController : MonoBehaviour
             _uiRootCanvasGroup = minimapUIRoot.AddComponent<CanvasGroup>();
     }
 
-    private void OnDestroy()
-    {
-        SceneManager.sceneLoaded -= OnSceneLoaded;
-        SceneManager.sceneUnloaded -= OnSceneUnloaded;
-
-        if (Instance == this) Instance = null;
-    }
-
-    private void Start()
-    {
-        if (displayMode == DisplayMode.RenderTextureCamera)
-            SetupMinimapCamera();
-
-        // Game có thể khởi động sẵn trong combat scene (vd test trực tiếp scene combat
-        // trong Editor) — check ngay từ đầu, không chỉ chờ OnSceneLoaded.
-        RefreshCombatVisibility();
-    }
-
-    private void LateUpdate()
-    {
-        if (player == null) return;
-
-        // Poll trạng thái UI panels — cập nhật _isHiddenByUI mỗi frame, rẻ vì chỉ check activeInHierarchy.
-        CheckUIPanelVisibility();
-
-        // Khi đang ẩn do combat hoặc UI panel mở, bỏ qua update để đỡ tốn performance.
-        if (_isHiddenByCombat || _isHiddenByUI) return;
-
-        if (displayMode == DisplayMode.RenderTextureCamera && _minimapCamera != null)
-            UpdateCameraFollow();
-
-        if (displayMode == DisplayMode.StaticTexture)
-            UpdateStaticTextureUV();
-
-        if (rotateWithPlayer)
-            ApplyMapRotation();
-        else
-            ApplyPlayerIconRotation();
-    }
-
-    // ── Scene / Map Change Handling ───────────────────────────────────────────
-
-    /// <summary>
-    /// Fire khi BẤT KỲ scene nào load xong — kể cả LoadScene thường, LoadSceneAsync,
-    /// hay Additive (qua SceneLoaderManager/SceneTransitionManager). Không cần biết
-    /// project dùng cách load nào, event này luôn fire đúng lúc.
-    /// </summary>
-    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
-    {
-        Debug.Log($"[MinimapController] Scene loaded: '{scene.name}' (mode={mode}) → refresh minimap.");
-        // Cache lại terrain cho scene mới
-        CacheAllTerrains();
-        RefreshForMap(scene);
-        RefreshCombatVisibility();
-    }
-
-    private void OnSceneUnloaded(Scene scene)
-    {
-        Debug.Log($"[MinimapController] Scene unloaded: '{scene.name}'.");
-
-        // Nếu Terrain/Player hiện tại thuộc scene vừa unload, object đó đã chết
-        // theo Unity (destroy cùng scene) → null ra, đợi OnSceneLoaded của scene mới gán lại.
-        if (terrain != null && terrain.gameObject.scene == scene) terrain = null;
-        if (player != null && player.gameObject.scene == scene) player = null;
-
-        // Cache lại terrain (loại bỏ terrain đã unload)
-        CacheAllTerrains();
-
-        // Quan trọng: nếu combat scene (Additive) vừa unload, phải re-check visibility
-        // ngay — không chờ scene khác load, vì có thể không có scene mới nào load tiếp theo
-        // (chỉ đơn giản là rời combat scene, quay lại scene chính đã loaded từ trước).
-        RefreshCombatVisibility();
-    }
-
-    /// <summary>
-    /// Tìm lại Terrain + Player ĐÚNG TRONG scene vừa load (không lấy nhầm từ scene
-    /// khác đang tồn tại song song do Additive), rồi áp dụng map data tương ứng.
-    /// </summary>
-    private void RefreshForMap(Scene scene)
-    {
-        // Player: nếu player cũ đã null (do scene cũ unload) hoặc chưa từng có, tìm lại.
-        if (player == null)
-        {
-            GameObject p = GameObject.FindGameObjectWithTag("Player");
-            if (p != null)
-            {
-                player = p.transform;
-                Debug.Log($"[MinimapController] Tìm thấy lại Player: '{player.name}'.");
-            }
-            else
-            {
-                Debug.LogWarning("[MinimapController] Không tìm thấy Player sau khi đổi map!");
-            }
-        }
-
-        // Không gán terrain cố định nữa — sẽ tự tìm mỗi frame.
-
-        ApplyMapDataIfAvailable(scene.name);
-
-        // Camera RT cần re-parent tâm theo terrain mới (vị trí Y sample lại đúng địa hình mới)
-        if (displayMode == DisplayMode.RenderTextureCamera && _minimapCamera != null)
-            UpdateCameraOrthoSize();
-
-        OnMapChanged?.Invoke(scene.name);
-    }
-
-    // ── Combat Auto-Hide ─────────────────────────────────────────────────────
-
-    /// <summary>
-    /// Quét TẤT CẢ scene đang loaded (an toàn với Additive — combat scene có thể
-    /// tồn tại song song với scene chính) để xem có scene nào khớp combatSceneNames không.
-    /// </summary>
-    private bool IsAnyCombatSceneLoaded()
-    {
-        if (combatSceneNames == null || combatSceneNames.Count == 0) return false;
-
-        for (int i = 0; i < SceneManager.sceneCount; i++)
-        {
-            Scene s = SceneManager.GetSceneAt(i);
-            if (!s.isLoaded) continue;
-
-            for (int j = 0; j < combatSceneNames.Count; j++)
-            {
-                if (string.Equals(s.name, combatSceneNames[j], System.StringComparison.OrdinalIgnoreCase))
-                    return true;
-            }
-        }
-        return false;
-    }
-
-    /// <summary>
-    /// Tính lại trạng thái ẩn/hiện dựa trên: (a) tên scene combat đang loaded HOẶC
-    /// (b) cờ ngoài được set qua NotifyCombatStateChanged. Chỉ cần 1 trong 2 đúng → ẩn.
-    /// Gọi sau mỗi lần scene load/unload và mỗi lần NotifyCombatStateChanged được gọi.
-    /// </summary>
-    private void RefreshCombatVisibility()
-    {
-        bool shouldHide = autoHideInCombat && (_externalCombatFlag || IsAnyCombatSceneLoaded());
-
-        if (shouldHide != _isHiddenByCombat)
-        {
-            _isHiddenByCombat = shouldHide;
-            ApplyMinimapVisibility();
-            OnCombatVisibilityChanged?.Invoke(shouldHide);
-            Debug.Log($"[MinimapController] Combat visibility → {(shouldHide ? "ẨN" : "HIỆN")} minimap.");
-        }
-    }
-
-
-    /// <summary>
-    /// Poll activeInHierarchy của từng panel trong uiPanelsToWatch mỗi frame.
-    /// Gọi từ LateUpdate — rẻ vì chỉ là property access, không có Reflection hay FindObject.
-    /// Cập nhật _isHiddenByUI và gọi ApplyMinimapVisibility nếu trạng thái thay đổi.
-    /// </summary>
-    private void CheckUIPanelVisibility()
-    {
-        if (uiPanelsToWatch == null || uiPanelsToWatch.Length == 0) return;
-
-        bool anyPanelOpen = false;
-        foreach (var panel in uiPanelsToWatch)
-        {
-            if (panel != null && panel.activeInHierarchy)
-            {
-                anyPanelOpen = true;
-                break;
-            }
-        }
-
-        if (anyPanelOpen == _isHiddenByUI) return; // không đổi → không làm gì
-        _isHiddenByUI = anyPanelOpen;
-        ApplyMinimapVisibility();
-    }
-
-    /// <summary>
-    /// Áp dụng trạng thái ẩn/hiện minimap dựa trên TẤT CẢ lý do hiện tại.
-    /// Minimap ẩn nếu BẤT KỲ lý do nào đúng (combat, menu UI, v.v.).
-    /// </summary>
-    private void ApplyMinimapVisibility()
-    {
-        bool shouldHide = _isHiddenByCombat || _isHiddenByUI;
-
-        switch (hideBehavior)
-        {
-            case HideBehavior.DeactivateRoot:
-                if (minimapUIRoot != null) minimapUIRoot.SetActive(!shouldHide);
-                if (_minimapCamera != null) _minimapCamera.enabled = !shouldHide;
-                break;
-
-            case HideBehavior.DisableUpdatesOnly:
-                if (_uiRootCanvasGroup != null)
-                {
-                    _uiRootCanvasGroup.alpha = shouldHide ? 0f : 1f;
-                    _uiRootCanvasGroup.blocksRaycasts = !shouldHide;
-                    _uiRootCanvasGroup.interactable = !shouldHide;
-                }
-                if (_minimapCamera != null) _minimapCamera.enabled = !shouldHide;
-                break;
-        }
-    }
-
-    /// <summary>Quét root objects của ĐÚNG scene này để tìm Terrain — an toàn với Additive.</summary>
-    private Terrain FindTerrainInScene(Scene scene)
-    {
-        if (!scene.IsValid() || !scene.isLoaded) return null;
-
-        foreach (GameObject root in scene.GetRootGameObjects())
-        {
-            Terrain t = root.GetComponentInChildren<Terrain>(true);
-            if (t != null) return t;
-        }
-        return null;
-    }
-
-    /// <summary>Nếu có entry trong perMapData khớp tên scene, áp dụng staticTexture/worldSize/worldCenter.</summary>
-    private void ApplyMapDataIfAvailable(string sceneName)
-    {
-        for (int i = 0; i < perMapData.Count; i++)
-        {
-            if (perMapData[i].sceneName == sceneName)
-            {
-                staticTexture = perMapData[i].staticTexture;
-                staticTextureWorldSize = perMapData[i].worldSize;
-                staticTextureWorldCenter = perMapData[i].worldCenter;
-
-                if (displayMode == DisplayMode.StaticTexture && minimapRawImage != null)
-                    minimapRawImage.texture = staticTexture;
-
-                Debug.Log($"[MinimapController] Áp dụng map data cho scene '{sceneName}' " +
-                          $"(worldSize={staticTextureWorldSize}, center={staticTextureWorldCenter}).");
-                return;
-            }
-        }
-
-        Debug.Log($"[MinimapController] Không có perMapData cho scene '{sceneName}' — " +
-                  "giữ staticTexture/worldSize hiện tại (nếu đang dùng StaticTexture mode, hãy thêm entry).");
-    }
-
-
-
     private void SetupDisplayMode()
     {
         bool useCamera = displayMode == DisplayMode.RenderTextureCamera;
 
         if (minimapRawImage != null)
-            minimapRawImage.gameObject.SetActive(true); // RawImage dùng cho cả 2 mode (texture khác nhau)
+            minimapRawImage.gameObject.SetActive(true);
 
         if (useCamera)
         {
@@ -549,19 +469,38 @@ public class MinimapController : MonoBehaviour
         _minimapCamera.backgroundColor = Color.black;
         _minimapCamera.nearClipPlane = 0.3f;
         _minimapCamera.farClipPlane = cameraHeight + 50f;
-
-        // Nhìn thẳng xuống terrain
         camGO.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
-
         UpdateCameraOrthoSize();
     }
 
+    private void ApplyMaskShape()
+    {
+        if (minimapMaskImage == null) return;
+
+        minimapMaskImage.sprite = maskShape == MaskShape.Circle ? circleMaskSprite : squareMaskSprite;
+
+        Mask mask = minimapMaskImage.GetComponent<Mask>();
+        if (mask == null) mask = minimapMaskImage.gameObject.AddComponent<Mask>();
+        mask.showMaskGraphic = false;
+    }
+
+    // ─── Update logic ──────────────────────────────────────────────────────────
+
     private void UpdateCameraFollow()
     {
-        if (player == null) return;
+        if (player == null || _minimapCamera == null) return;
 
         Vector3 pos = player.position;
-        pos.y = GetTerrainHeightOrFallback(pos) + cameraHeight;
+        float terrainHeight = GetTerrainHeightOrFallback(pos);
+
+        // ✅ Đảm bảo camera luôn ở trên mặt đất, ngay cả khi không có terrain
+        float yPos = terrainHeight + cameraHeight;
+        if (terrain == null && _allTerrains.Length == 0)
+        {
+            // Không có terrain nào, dùng y = 0 + cameraHeight
+            yPos = cameraHeight;
+        }
+        pos.y = yPos;
         _minimapCamera.transform.position = pos;
 
         if (rotateWithPlayer)
@@ -575,23 +514,8 @@ public class MinimapController : MonoBehaviour
     private void UpdateCameraOrthoSize()
     {
         if (_minimapCamera == null) return;
-        // orthographicSize = nửa chiều cao world hiển thị
         _minimapCamera.orthographicSize = EffectiveWorldSize * 0.5f;
     }
-
-    /// <summary>
-    /// Lấy độ cao của Terrain dưới chân player (tự động tìm terrain phù hợp).
-    /// Fallback về worldPos.y nếu không tìm thấy terrain.
-    /// </summary>
-    private float GetTerrainHeightOrFallback(Vector3 worldPos)
-    {
-        Terrain currentTerrain = GetTerrainAtPosition(worldPos);
-        if (currentTerrain != null)
-            return currentTerrain.SampleHeight(worldPos) + currentTerrain.transform.position.y;
-        return worldPos.y; // fallback
-    }
-
-    // ── Static Texture mode: pan ảnh tĩnh theo player bằng UV offset ─────────
 
     private void UpdateStaticTextureUV()
     {
@@ -607,53 +531,26 @@ public class MinimapController : MonoBehaviour
             uvX - halfUV, uvY - halfUV, halfUV * 2f, halfUV * 2f);
     }
 
-    // ── Mask shape ───────────────────────────────────────────────────────────
-
-    private void ApplyMaskShape()
-    {
-        if (minimapMaskImage == null) return;
-
-        minimapMaskImage.sprite = maskShape == MaskShape.Circle ? circleMaskSprite : squareMaskSprite;
-
-        Mask mask = minimapMaskImage.GetComponent<Mask>();
-        if (mask == null) mask = minimapMaskImage.gameObject.AddComponent<Mask>();
-        mask.showMaskGraphic = false;
-    }
-
-    // ── Rotation ─────────────────────────────────────────────────────────────
+    // ─── Rotation ──────────────────────────────────────────────────────────────
 
     private void ApplyMapRotation()
     {
-        // markerContainer và minimapRawImage phải là CON CỦA CÙNG MỘT PIVOT để xoay
-        // đồng bộ tuyệt đối. Auto Setup đặt cả 2 làm con trực tiếp của MinimapMask,
-        // nên ta xoay chính MinimapMask (cha chung) — không xoay từng cái riêng lẻ.
         Transform pivot = markerContainer != null ? markerContainer.parent : null;
         if (pivot != null)
             pivot.localRotation = Quaternion.Euler(0f, 0f, player.eulerAngles.y);
 
         if (playerIcon != null)
-            playerIcon.localRotation = Quaternion.identity; // player icon luôn thẳng lên
+            playerIcon.localRotation = Quaternion.identity;
     }
 
     private void ApplyPlayerIconRotation()
     {
-        // Map cố định hướng Bắc → chỉ xoay icon player theo hướng nhìn
         if (playerIcon != null)
             playerIcon.localRotation = Quaternion.Euler(0f, 0f, -player.eulerAngles.y);
     }
 
-    // ── World → Minimap conversion (dùng bởi MinimapMarkerUI) ─────────────────
+    // ─── World ↔ Minimap conversion ──────────────────────────────────────────
 
-    /// <summary>
-    /// Convert world position → anchored position trong markerContainer.
-    /// Trả về (position, isWithinRange) — isWithinRange = false nếu world point
-    /// nằm ngoài phạm vi minimap hiển thị hiện tại.
-    ///
-    /// LƯU Ý: vị trí trả về KHÔNG tự xoay theo player, vì rotateWithPlayer được
-    /// xử lý bằng cách xoay markerContainer.localRotation (xem ApplyMapRotation).
-    /// Marker là con của markerContainer nên tự động xoay theo khi container xoay —
-    /// tính rotation 2 lần (cả ở đây và ở container) sẽ làm marker xoay gấp đôi.
-    /// </summary>
     public Vector2 WorldToMinimapPosition(Vector3 worldPos, out bool isWithinRange)
     {
         if (player == null || markerContainer == null)
@@ -663,7 +560,7 @@ public class MinimapController : MonoBehaviour
         }
 
         Vector3 rel = worldPos - player.position;
-        Vector2 flat = new Vector2(rel.x, rel.z); // top-down: x→x, z→y(map lên)
+        Vector2 flat = new Vector2(rel.x, rel.z);
 
         float halfWorld = EffectiveWorldSize * 0.5f;
         float pixelsPerWorldUnit = (minimapUISize * 0.5f) / halfWorld;
@@ -676,7 +573,6 @@ public class MinimapController : MonoBehaviour
         return mapPos;
     }
 
-    /// <summary>Clamp một vị trí minimap (đã tính bởi WorldToMinimapPosition) về mép minimap.</summary>
     public Vector2 ClampToMinimapEdge(Vector2 mapPos, float padding = 10f)
     {
         float halfUI = minimapUISize * 0.5f - padding;
@@ -685,7 +581,7 @@ public class MinimapController : MonoBehaviour
         {
             float dist = mapPos.magnitude;
             if (dist < 0.0001f) return Vector2.zero;
-            if (dist <= halfUI) return mapPos; // đã trong phạm vi, không cần clamp
+            if (dist <= halfUI) return mapPos;
             return mapPos.normalized * halfUI;
         }
         else
@@ -695,6 +591,33 @@ public class MinimapController : MonoBehaviour
             return new Vector2(clampedX, clampedY);
         }
     }
+
+    // ─── Apply per-map data ────────────────────────────────────────────────────
+
+    private void ApplyMapDataIfAvailable(string sceneName)
+    {
+        for (int i = 0; i < perMapData.Count; i++)
+        {
+            if (perMapData[i].sceneName == sceneName)
+            {
+                staticTexture = perMapData[i].staticTexture;
+                staticTextureWorldSize = perMapData[i].worldSize;
+                staticTextureWorldCenter = perMapData[i].worldCenter;
+
+                if (displayMode == DisplayMode.StaticTexture && minimapRawImage != null)
+                    minimapRawImage.texture = staticTexture;
+
+                Debug.Log($"[MinimapController] Áp dụng map data cho scene '{sceneName}' " +
+                          $"(worldSize={staticTextureWorldSize}, center={staticTextureWorldCenter}).");
+                return;
+            }
+        }
+
+        Debug.Log($"[MinimapController] Không có perMapData cho scene '{sceneName}' — " +
+                  "giữ staticTexture/worldSize hiện tại (nếu đang dùng StaticTexture mode, hãy thêm entry).");
+    }
+
+    // ─── Editor tools ─────────────────────────────────────────────────────────
 
 #if UNITY_EDITOR
     [ContextMenu("Capture Static Snapshot")]
