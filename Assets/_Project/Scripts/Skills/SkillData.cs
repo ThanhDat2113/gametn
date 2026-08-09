@@ -65,6 +65,19 @@ public class SkillData : ScriptableObject
 
     [Header("Animation")]
     public string animationTrigger;
+
+    [Header("Beam Camera Settings")]
+    [Tooltip("Bật nếu là skill beam (luồng năng lượng liên tục, ví dụ Enuma Elish). Khi bật: camera rung lâu + càng ngày càng mạnh.")]
+    public bool isBeam = false;
+    [Tooltip("Cường độ rung ban đầu (khi beam bắt đầu).")]
+    public float beamShakeBaseIntensity = 0.35f;
+    [Tooltip("Cường độ rung tăng thêm mỗi hit — beam rung mạnh dần theo thời gian.")]
+    public float beamShakeStepIntensity = 0.12f;
+    [Tooltip("Thời lượng rung liên tục (giây) mỗi lần beam đánh. Dùng hitCount để duy trì.")]
+    public float beamShakeDuration = 0.5f;
+    [Tooltip("Tần số rung của beam.")]
+    public float beamShakeFrequency = 24f;
+    
     
     // Ranged skill visual
     public bool isRanged = false; // Set true for skills that fire a projectile

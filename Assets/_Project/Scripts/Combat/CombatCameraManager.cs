@@ -66,6 +66,22 @@ public class CombatCameraManager : MonoBehaviour
     private List<Behaviour> disabledBehaviours = new List<Behaviour>();
     private bool isIntroSequenceActive = false;
 
+    // AoE camera state: center luôn là tâm của nhóm target bị tấn công
+    private Vector3 _aoeCenter;
+    private float _aoeBaseOrthoSize;
+    private float _aoeZoomStepSize;
+    private int _aoeHitStep;
+    private bool _aoeActive = false;
+
+    // Beam shake state
+    private bool _beamShakeActive = false;
+    private float _beamShakeBaseIntensity = 0.35f;
+    private float _beamShakeStepIntensity = 0.12f;
+    private float _beamShakeDuration = 0.5f;
+    private float _beamShakeFrequency = 24f;
+    private float _beamCurrentIntensity = 0f;
+    private int _beamHitStep = 0;
+
     private void Awake()
     {
         mainCamera = GetComponent<Camera>();
@@ -181,6 +197,74 @@ public class CombatCameraManager : MonoBehaviour
         shakeCoroutine = StartCoroutine(ShakeCoroutine(true));
     }
 
+    // ── Beam Shake (rung liên tục + mạnh dần theo thời gian) ─────────────
+    /// <summary>
+    /// Bắt đầu rung beam: delay 1 hit ngắn rồi rung LIÊN TỤC, càng về sau càng mạnh.
+    /// </summary>
+    public void StartBeamShake(float baseIntensity, float stepIntensity, float duration, float frequency)
+    {
+        if (_beamShakeActive) return; // tránh gọi trùng
+
+        _beamShakeActive = true;
+        _beamShakeBaseIntensity = baseIntensity <= 0 ? shakeIntensity : baseIntensity;
+        _beamShakeStepIntensity = stepIntensity <= 0 ? 0.12f : stepIntensity;
+        _beamShakeDuration = duration <= 0 ? shakeDuration : duration;
+        _beamShakeFrequency = frequency <= 0 ? shakeFrequency : frequency;
+        _beamCurrentIntensity = _beamShakeBaseIntensity;
+        _beamHitStep = 0;
+
+        StopCoroutineIfRunning(shakeCoroutine);
+        StopCoroutineIfRunning(beamShakeCoroutine);
+        beamShakeCoroutine = StartCoroutine(BeamShakeRampingCoroutine());
+    }
+
+    /// <summary>
+    /// Mỗi hit beam → tăng độ rung (rung ngày càng mạnh).
+    /// </summary>
+    public void AdvanceBeamShake()
+    {
+        if (!_beamShakeActive) return;
+        _beamHitStep++;
+        _beamCurrentIntensity = _beamShakeBaseIntensity + _beamShakeStepIntensity * _beamHitStep;
+    }
+
+    public void StopBeamShake()
+    {
+        _beamShakeActive = false;
+        StopCoroutineIfRunning(beamShakeCoroutine);
+        _beamCurrentIntensity = 0f;
+        _beamHitStep = 0;
+        shakeOffset = Vector3.zero;
+        isShaking = false;
+    }
+
+    private Coroutine beamShakeCoroutine;
+
+    /// <summary>
+    /// Rung liên tục theo thời lượng beamShakeDuration, càng lâu càng rung mạnh.
+    /// (Không decay — beam rung liên tục, intensity tăng theo AdvanceBeamShake mỗi hit.)
+    /// </summary>
+    private IEnumerator BeamShakeRampingCoroutine()
+    {
+        isShaking = true;
+        shakeElapsed = 0f;
+        float duration = _beamShakeDuration;
+
+        while (_beamShakeActive && shakeElapsed < duration)
+        {
+            shakeElapsed += Time.deltaTime;
+            float noiseX = Mathf.PerlinNoise(Time.time * _beamShakeFrequency, 0f) * 2f - 1f;
+            float noiseY = Mathf.PerlinNoise(Time.time * _beamShakeFrequency, 1f) * 2f - 1f;
+            shakeOffset = new Vector3(noiseX * _beamCurrentIntensity, noiseY * _beamCurrentIntensity, 0f);
+            yield return null;
+        }
+        // Kết thúc 1 chu kỳ rung: trả vị trí về, NHƯNG vẫn giữ active để ClashAnimationSequence
+        // có thể gọi StartBeamShake lại cho hit tiếp theo (rung liên tục theo nhiều hit).
+        _beamShakeActive = false;
+        shakeOffset = Vector3.zero;
+        isShaking = false;
+    }
+
     public void SetCameraPositionAndSize(Vector3 position, float size)
     {
         float angleRad = transform.rotation.eulerAngles.x * Mathf.Deg2Rad;
@@ -201,6 +285,9 @@ public class CombatCameraManager : MonoBehaviour
         StopCoroutineIfRunning(zoomCoroutine);
         StopCoroutineIfRunning(followCoroutine);
         StopCoroutineIfRunning(frameTargetsCoroutine);
+        StopCoroutineIfRunning(beamShakeCoroutine);
+        _beamShakeActive = false;
+        _beamCurrentIntensity = 0f;
         followTarget = null;
         shakeOffset = Vector3.zero;
         isShaking = false;
@@ -259,6 +346,104 @@ public class CombatCameraManager : MonoBehaviour
         float zOffset = -cameraDistance * Mathf.Cos(angleRad);
         targetPosition = center + new Vector3(0, yOffset, zOffset);
         zoomCoroutine = StartCoroutine(ZoomInCoroutine(damageZoomSize));
+    }
+
+    // ── AoE Skill Camera ─────────────────────────────────────────────────
+    /// <summary>
+    /// Focus camera cho skill đa mục tiêu (AOE):
+    /// - Center = tâm khung bao (bounds) của TOÀN BỘ nhóm target bị tấn công.
+    /// - Zoom out dần để lấy full nhóm target làm trung tâm.
+    /// - Mỗi lần gọi AdvanceAOEZoom() sẽ zoom ra xa thêm nhưng vẫn giữ center = tâm nhóm.
+    /// </summary>
+    public void FocusAOEAction(List<UnitView> aoeTargetViews, float baseSize, float zoomStep)
+    {
+        StopCoroutineIfRunning(zoomCoroutine);
+        StopCoroutineIfRunning(followCoroutine);
+        followTarget = null;
+        _aoeActive = true;
+        _aoeZoomStepSize = zoomStep;
+        _aoeHitStep = 0;
+
+        if (aoeTargetViews == null || aoeTargetViews.Count == 0)
+        {
+            AutoFitUnitsInView();
+            return;
+        }
+
+        // Tâm khung bao của toàn bộ nhóm target bị tấn công
+        Vector3 min = aoeTargetViews[0].transform.position;
+        Vector3 max = aoeTargetViews[0].transform.position;
+        foreach (var v in aoeTargetViews)
+        {
+            if (v == null) continue;
+            Vector3 p = v.transform.position;
+            min = Vector3.Min(min, p);
+            max = Vector3.Max(max, p);
+        }
+        _aoeCenter = (min + max) * 0.5f;
+        _aoeCenter.y += verticalOffset;
+
+        float width = Mathf.Abs(max.x - min.x);
+        float height = Mathf.Abs(max.y - min.y);
+        float hPad = width * 0.5f;
+        float vPad = height * 0.5f;
+        float reqW = (width + hPad) * 0.5f / Mathf.Max(0.01f, mainCamera.aspect);
+        float reqH = (height + vPad) * 0.5f;
+        _aoeBaseOrthoSize = Mathf.Max(reqW, reqH, baseSize);
+
+        SetAoECenterPosition(_aoeCenter);
+
+        // Zoom từ orthographicSize THỰC TẾ hiện tại → đủ khung nhóm (có hiệu ứng zoom out)
+        float startSize = mainCamera.orthographicSize;
+        zoomCoroutine = StartCoroutine(ZoomFromToCoroutine(startSize, _aoeBaseOrthoSize));
+        Debug.Log($"[CombatCamera] AoE Focus: center={_aoeCenter}, baseSize={_aoeBaseOrthoSize:F2}, step={zoomStep:F2}");
+    }
+
+    /// <summary>
+    /// Mỗi hit AOE → zoom ra xa thêm, nhưng center LUÔN = tâm nhóm target.
+    /// </summary>
+    public void AdvanceAOEZoom()
+    {
+        if (!_aoeActive) return;
+        _aoeHitStep++;
+        float newSize = _aoeBaseOrthoSize + _aoeZoomStepSize * _aoeHitStep;
+
+        SetAoECenterPosition(_aoeCenter);
+
+        StopCoroutineIfRunning(zoomCoroutine);
+        float startSize = mainCamera.orthographicSize;
+        zoomCoroutine = StartCoroutine(ZoomFromToCoroutine(startSize, newSize));
+        Debug.Log($"[CombatCamera] AoE hit #{_aoeHitStep}: zoom out → {newSize:F2} (center giữ = tâm nhóm)");
+    }
+
+    public void EndAOEFocus()
+    {
+        _aoeActive = false;
+    }
+
+    private void SetAoECenterPosition(Vector3 center)
+    {
+        float angleRad = transform.rotation.eulerAngles.x * Mathf.Deg2Rad;
+        float yOffset = cameraDistance * Mathf.Sin(angleRad);
+        float zOffset = -cameraDistance * Mathf.Cos(angleRad);
+        targetPosition = center + new Vector3(0, yOffset, zOffset);
+    }
+
+    /// <summary>
+    /// Zoom (thay đổi orthographicSize) từ startSize sang targetSize.
+    /// KHÔNG set sẵn currentOrthoSize → start != target → có hiệu ứng zoom thật.
+    /// </summary>
+    private IEnumerator ZoomFromToCoroutine(float startSize, float targetSize)
+    {
+        float elapsed = 0f;
+        while (elapsed < zoomInDuration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / zoomInDuration);
+            currentOrthoSize = Mathf.Lerp(startSize, targetSize, EaseInOutQuad(t));
+            yield return null;
+        }
+        currentOrthoSize = targetSize;
     }
 
     public void ScamAdjustDistance(float factor)

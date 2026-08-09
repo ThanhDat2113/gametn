@@ -66,10 +66,13 @@ public class ClashAnimationSequence : MonoBehaviour
         float animationLength = ExecutePhase(result);
         yield return new WaitForSeconds(animationLength + postSkillWait);
 
-        if (_lastHitCounter == 0 && actorView != null)
+        // Flush bất kỳ hit nào còn lại (không nhất thiết chỉ khi _lastHitCounter == 0).
+        // Với skill nhiều hit, nếu clip chỉ phát ít hơn hitCount lần OnHit(int) thì các hit
+        // còn lại rơi vào đây → FlushPendingOutcomes vừa áp damage vừa bổ sung VFX còn thiếu
+        // (SpawnRemainingVFX) để skill luôn spawn ĐỦ hitCount VFX theo đúng thứ tự.
+        if (actorView != null)
         {
-            Debug.Log($"[Anim] {result.Skill?.skillName} không có Hit event — force flush fallback.");
-            if (CombatAudioManager.Instance != null && result.Skill != null)
+            if (_lastHitCounter == 0 && CombatAudioManager.Instance != null && result.Skill != null)
                 CombatAudioManager.Instance.PlaySkillSFX(result.Skill.sfxClips, 0);
             actorView.FlushPendingOutcomes();
         }
@@ -83,7 +86,7 @@ public class ClashAnimationSequence : MonoBehaviour
         yield return StartCoroutine(CleanupPhase(result));
     }
 
-private bool ShouldCharacterMove(CombatUnit actor, SkillData skill)
+    private bool ShouldCharacterMove(CombatUnit actor, SkillData skill)
     {
         if (skill == null) return true;
         switch (skill.movementOverride)
@@ -92,6 +95,20 @@ private bool ShouldCharacterMove(CombatUnit actor, SkillData skill)
             case SkillMovementOverride.ForceStationary: return false;
             default: return actor.Data.defaultCombatStyle == CombatStyle.Melee;
         }
+    }
+
+    /// <summary>
+    /// Kiểm tra skill có phải đa mục tiêu (AOE) hay không.
+    /// AOE = targetType AllEnemies/AllAllies HOẶC danh sách target có nhiều hơn 1.
+    /// </summary>
+    private bool IsAOESkill(SkillData skill, List<CombatUnit> targets)
+    {
+        if (skill != null)
+        {
+            if (skill.targetType == TargetType.AllEnemies || skill.targetType == TargetType.AllAllies)
+                return true;
+        }
+        return targets != null && targets.Count > 1;
     }
 
     private IEnumerator SetupPhase(UnitView actorView, ActionResult result, bool isMoving)
@@ -103,15 +120,46 @@ private bool ShouldCharacterMove(CombatUnit actor, SkillData skill)
             if (view.LinkedUnit != null && !involvedUnits.Contains(view.LinkedUnit))
                 view.SetAlpha(dimAlpha);
 
-if (cameraManager != null)
+        if (cameraManager != null)
         {
-            if (isMoving)
+            bool isAOE = IsAOESkill(result.Skill, result.InitialTargets);
+            bool isBeam = result.Skill != null && result.Skill.isBeam;
+            if (isAOE)
             {
+                // ── CAMERA ĐA MỤC TIÊU (AOE) ──
+                // Center = tâm khung bao của TOÀN BỘ nhóm target trúng chiêu.
+                // Zoom out dần, giữ nhóm target làm trung tâm.
+                var aoeTargetViews = result.InitialTargets
+                    .Select(t => GetViewForUnit(t))
+                    .Where(v => v != null)
+                    .Distinct()
+                    .ToList();
+
+                cameraManager.FocusAOEAction(
+                    aoeTargetViews,
+                    cameraManager.damageZoomSize,
+                    cameraManager.clashZoomSize * 0.5f);
+                yield return new WaitForSeconds(cameraManager.zoomInDuration);
+
+                // Beam: bắt đầu rung liên tục + mạnh dần theo thời gian
+                if (isBeam)
+                {
+                    cameraManager.StartBeamShake(
+                        result.Skill.beamShakeBaseIntensity,
+                        result.Skill.beamShakeStepIntensity,
+                        result.Skill.beamShakeDuration,
+                        result.Skill.beamShakeFrequency);
+                }
+            }
+            else if (isMoving)
+            {
+                // ── CAMERA ĐƠN MỤC TIÊU (melee) ──
                 cameraManager.ZoomToUnit(actorView.transform, cameraManager.clashZoomSize);
                 yield return new WaitForSeconds(cameraManager.zoomInDuration);
             }
             else
             {
+                // ── CAMERA ĐƠN MỤC TIÊU (không di chuyển) ──
                 var allTargets = new List<UnitView> { actorView };
                 allTargets.AddRange(result.InitialTargets.Select(t => GetViewForUnit(t)));
                 cameraManager.FrameTargets(allTargets.Where(v => v != null).Distinct().ToList());
@@ -137,20 +185,26 @@ if (cameraManager != null)
         if (targets.Any())
             actorView.SetCurrentTarget(targets.First());
 
-        // 1. Spawn VFX AtCaster + AtTarget + legacy - chạy 1 lần khi skill bắt đầu
-        SpawnSkillVFX(skill, actorView, targets);
-
-        // 2. Hit Handler - chỉ SFX + shake + hurt (KHÔNG spawn VFX, VFX từ SpawnSkillVFX + animation event)
+// Hit Handler - chỉ SFX + shake + hurt.
+            // VFX được spawn bởi UnitView.PlayHitVFXSequence (rải đều theo thời lượng animation)
+        // — KHÔNG spawn hết ở đây, tránh trùng lặp và spawn sai thứ tự.
+        bool isAOE = IsAOESkill(skill, targets);
         _lastHitCounter = 0;
         Action onHitHandler = () => {
             int currentHit = _lastHitCounter++;
             if (CombatAudioManager.Instance != null && skill != null)
                 CombatAudioManager.Instance.PlaySkillSFX(skill.sfxClips, currentHit);
+            // AOE: mỗi hit → camera zoom ra xa thêm (giữ center = tâm nhóm target)
+            if (isAOE && cameraManager != null)
+                cameraManager.AdvanceAOEZoom();
+            // Beam: mỗi hit → rung mạnh dần theo thời gian (nếu skill đang rung liên tục)
+            if (skill != null && skill.isBeam && cameraManager != null)
+                cameraManager.AdvanceBeamShake();
             foreach (var outcome in result.Outcomes)
             {
                 var targetView = GetViewForUnit(outcome.Target);
                 if (targetView == null) continue;
-                if (cameraManager != null) cameraManager.PlayImpactShake();
+                if (cameraManager != null && !isAOE) cameraManager.PlayImpactShake();
                 targetView.SetAnimationTrigger(AnimationConstants.Hurt);
             }
         };
@@ -165,78 +219,24 @@ if (cameraManager != null)
                 actorView.FlushPendingOutcomes();
             }
         };
-        actorView.OnAnimationEndEvent += cleanupHandler;
+actorView.OnAnimationEndEvent += cleanupHandler;
 
+        float animLength;
         if (!string.IsNullOrEmpty(skill.animationTrigger))
         {
             actorView.SetAnimationTrigger(skill.animationTrigger);
-            return actorView.GetClipLength(skill.animationTrigger);
+            animLength = actorView.GetClipLength(skill.animationTrigger);
         }
         else
         {
             actorView.SetAnimationTrigger(AnimationConstants.Attack);
-            return actorView.GetClipLength(AnimationConstants.Attack);
+            animLength = actorView.GetClipLength(AnimationConstants.Attack);
         }
-    }
 
-    private void SpawnSkillVFX(SkillData skill, UnitView actorView, List<CombatUnit> targets)
-    {
-        if (skill == null) return;
-        if (skill.vfxEvents != null)
-        {
-            foreach (var evt in skill.vfxEvents)
-            {
-                if (evt == null || evt.vfxPrefab == null) continue;
-                if (evt.spawnMode == VFXSpawnMode.AtCaster || evt.spawnMode == VFXSpawnMode.AtTarget)
-                {
-                    Vector3 pos = GetVFXPosition(skill, evt, actorView, targets);
-                    InstantiateVFX(evt, pos, actorView.transform);
-                }
-            }
-        }
-        if (skill.vfxPrefab != null)
-        {
-            var fakeEvent = new VFXEvent { vfxPrefab = skill.vfxPrefab, offset = new Vector3(0, skill.vfxOffset, 0), spawnMode = VFXSpawnMode.AtTarget };
-            Vector3 pos = GetVFXPosition(skill, fakeEvent, actorView, targets);
-            InstantiateVFX(fakeEvent, pos, null);
-        }
-        if (skill.rangedVfxEvents != null)
-        {
-            foreach (var evt in skill.rangedVfxEvents)
-            {
-                if (evt == null || evt.vfxPrefab == null) continue;
-                var fakeEvent = new VFXEvent { vfxPrefab = evt.vfxPrefab, offset = evt.offset, spawnMode = VFXSpawnMode.AtCaster, attachToCaster = evt.attachToCaster };
-                Vector3 pos = GetVFXPosition(skill, fakeEvent, actorView, targets);
-                InstantiateVFX(fakeEvent, pos, actorView.transform);
-            }
-        }
-    }
+        // Spawn ĐỦ hitCount VFX rải đều theo thời lượng animation (không phụ thuộc hit event).
+        actorView.PlayHitVFXSequence(animLength);
 
-    private Vector3 GetVFXPosition(SkillData skill, VFXEvent evt, UnitView actorView, List<CombatUnit> targets)
-    {
-        switch (evt.spawnMode)
-        {
-            case VFXSpawnMode.AtCaster:
-                return actorView.transform.position + evt.offset;
-            case VFXSpawnMode.AtTarget:
-                if (targets == null || !targets.Any())
-                    return actorView.transform.position + evt.offset;
-                var targetView = GetViewForUnit(targets.First());
-                return targetView != null ? targetView.transform.position + evt.offset : actorView.transform.position + evt.offset;
-            default:
-                return actorView.transform.position + evt.offset;
-        }
-    }
-
-    private void InstantiateVFX(VFXEvent evt, Vector3 position, Transform potentialParent)
-    {
-        if (evt.vfxPrefab == null) return;
-        var vfx = Instantiate(evt.vfxPrefab, position, Quaternion.identity);
-        if (evt.attachToCaster && potentialParent != null)
-            vfx.transform.SetParent(potentialParent);
-        var visualEffect = vfx.GetComponent<UnityEngine.VFX.VisualEffect>();
-        if (visualEffect != null) visualEffect.Play();
-        Destroy(vfx, 2f);
+        return animLength;
     }
 
     private IEnumerator MoveCoroutine(UnitView view, Vector3 targetPos, float duration)
@@ -278,6 +278,8 @@ if (cameraManager != null)
         SetAllUnitAlphas(1.0f);
         if (cameraManager != null)
         {
+            cameraManager.StopBeamShake(); // Dừng rung beam (nếu có)
+            cameraManager.EndAOEFocus(); // Kết thúc chế độ camera AOE
             cameraManager.ResetCamera();
             yield return new WaitForSeconds(cameraManager.zoomOutDuration);
         }

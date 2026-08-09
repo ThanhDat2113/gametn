@@ -46,6 +46,9 @@ public class UnitView : MonoBehaviour
     private CombatUnit pendingCaster;
     private int pendingHitCount = 1;
     private int currentHitIndex = 0;
+    // Bộ đếm VFX riêng — đảm bảo spawn ĐÚNG hitCount VFX theo đúng thứ tự vfxEvents,
+    // không phụ thuộc vào số lượng animation hit event (clip có thể thiếu hit frame).
+    private int vfxIndex = 0;
 
     // ─── Damage Text Position ────────────────────────────────────
     [Header("Damage Text Offset")]
@@ -173,10 +176,11 @@ public class UnitView : MonoBehaviour
         };
         unit.OnDied += () => StartCoroutine(DeathFade());
 
-        if (hitReceiver != null)
+if (hitReceiver != null)
         {
+            // Fires damage per hit-frame. VFX hiện được spawn độc lập bởi PlayHitVFXSequence
+            // (rải đều theo thời lượng animation), nên KHÔNG phụ thuộc số lượng hit event.
             hitReceiver.OnHitFrame += ProcessHitAtFrame;
-            hitReceiver.OnVFXFrame += ProcessVFXAtFrame;
         }
 
         if (healthBar != null)
@@ -217,12 +221,11 @@ public class UnitView : MonoBehaviour
         StartCoroutine(MonitorStunStatus());
     }
 
-    private void OnDestroy()
+private void OnDestroy()
     {
         if (hitReceiver != null)
         {
             hitReceiver.OnHitFrame -= ProcessHitAtFrame;
-            hitReceiver.OnVFXFrame -= ProcessVFXAtFrame;
         }
     }
 
@@ -294,12 +297,13 @@ public class UnitView : MonoBehaviour
         yield return new WaitForSeconds(ns.length - ns.normalizedTime * ns.length);
     }
 
-    public void SetPendingOutcomes(List<ActionOutcome> outcomes, CombatUnit caster, int hitCount)
+public void SetPendingOutcomes(List<ActionOutcome> outcomes, CombatUnit caster, int hitCount)
     {
         pendingOutcomes = outcomes;
         pendingCaster = caster;
         pendingHitCount = Mathf.Max(1, hitCount);
         currentHitIndex = 0;
+        vfxIndex = 0;
     }
 
     public void FlushPendingOutcomes()
@@ -332,15 +336,21 @@ public class UnitView : MonoBehaviour
             currentHitIndex++;
         }
 
+        // Fallback VFX: nếu animation clip có ÍT hit frame hơn hitCount (vd skill 4 hit nhưng
+        // clip chỉ có 3 OnHit), các hit còn lại rơi vào nhánh flush này → bổ sung VFX còn thiếu
+        // để spawn ĐỦ hitCount VFX theo đúng thứ tự vfxEvents.
+        SpawnRemainingVFX();
+
         pendingOutcomes.Clear();
         pendingCaster = null;
         pendingHitCount = 1;
         currentHitIndex = 0;
+        vfxIndex = 0;
     }
 
     public void OnHit() { OnHitAnimationEvent?.Invoke(); }
 
-    private void ProcessHitAtFrame(int hitIndex)
+private void ProcessHitAtFrame(int hitIndex)
     {
         if (pendingOutcomes.Count == 0 || pendingCaster == null) return;
         if (currentHitIndex >= pendingHitCount) return;
@@ -366,26 +376,103 @@ public class UnitView : MonoBehaviour
                 Debug.Log(logMessage + $" HP: {outcome.Target.CurrentHP}");
             }
         }
+
         currentHitIndex++;
     }
 
-    private void ProcessVFXAtFrame(int vfxIndex)
+    /// <summary>
+    /// Spawn ĐỦ hitCount VFX rải đều theo thời lượng animation bằng coroutine — KHÔNG phụ
+    /// thuộc animation hit event. Đảm bảo luôn spawn đúng số lượng, đúng thứ tự vfxEvents,
+    /// mỗi VFX cách nhau đều đặn trong cửa sổ animation.
+    /// </summary>
+    public void PlayHitVFXSequence(float duration)
     {
         if (currentSkill == null) return;
+        vfxIndex = 0;
+        StartCoroutine(SpawnHitVFXSequence(duration));
+    }
 
-        VFXEvent evt = null;
-        if (currentSkill.vfxEvents != null && vfxIndex >= 0 && vfxIndex < currentSkill.vfxEvents.Length)
-            evt = currentSkill.vfxEvents[vfxIndex];
-        else if (vfxIndex == 0 && currentSkill.vfxPrefab != null)
+    private IEnumerator SpawnHitVFXSequence(float duration)
+    {
+        int targetCount = GetVFXTargetCount();
+        if (targetCount <= 0) yield break;
+
+        if (duration <= 0f)
         {
-            evt = new VFXEvent 
-            { 
-                vfxPrefab = currentSkill.vfxPrefab, 
+            // Không có thời lượng animation → spawn tất cả ngay.
+            while (vfxIndex < targetCount)
+            {
+                VFXEvent evt = GetVFXEvent(vfxIndex);
+                vfxIndex++;
+                if (evt != null) SpawnVFX(evt);
+            }
+            yield break;
+        }
+
+        float interval = duration / targetCount;
+        for (int i = 0; i < targetCount; i++)
+        {
+            VFXEvent evt = GetVFXEvent(vfxIndex);
+            vfxIndex++;
+            if (evt != null) SpawnVFX(evt);
+            if (i < targetCount - 1)
+                yield return new WaitForSeconds(interval);
+        }
+    }
+
+    /// <summary>Bổ sung toàn bộ VFX còn thiếu (dùng trong fallback flush).</summary>
+    private void SpawnRemainingVFX()
+    {
+        if (currentSkill == null) return;
+        int targetCount = GetVFXTargetCount();
+        while (vfxIndex < targetCount)
+        {
+            VFXEvent evt = GetVFXEvent(vfxIndex);
+            vfxIndex++;
+            if (evt != null) SpawnVFX(evt);
+        }
+    }
+
+    /// <summary>Số VFX cần spawn = max(hitCount, vfxEvents.Length).</summary>
+    private int GetVFXTargetCount()
+    {
+        int count = pendingHitCount;
+        if (currentSkill != null && currentSkill.vfxEvents != null)
+            count = Mathf.Max(count, currentSkill.vfxEvents.Length);
+        return count;
+    }
+
+/// <summary>
+    /// Lấy VFXEvent theo index. Nếu skill có ÍT VFX event hơn hitCount (vd hitCount=4 nhưng
+    /// chỉ 1 vfxEvents), sẽ CYCLE/REUSE các event có sẵn để mỗi hit đều có VFX (index n % len).
+    /// Fallback vfxPrefab đơn lẻ nếu không có vfxEvents.
+    /// </summary>
+    private VFXEvent GetVFXEvent(int index)
+    {
+        if (currentSkill == null) return null;
+
+        if (currentSkill.vfxEvents != null && currentSkill.vfxEvents.Length > 0)
+        {
+            int i = index % currentSkill.vfxEvents.Length;
+            return currentSkill.vfxEvents[i];
+        }
+
+        if (currentSkill.vfxPrefab != null)
+        {
+            return new VFXEvent
+            {
+                vfxPrefab = currentSkill.vfxPrefab,
                 offset = new Vector3(0, currentSkill.vfxOffset, 0),
                 spawnMode = VFXSpawnMode.AtTarget
             };
         }
 
+        return null;
+    }
+
+    /// <summary>Instantiate 1 VFX event tại vị trí phù hợp theo spawnMode.</summary>
+    private void SpawnVFX(VFXEvent evt)
+    {
         if (evt == null || evt.vfxPrefab == null) return;
 
         Vector3 spawnPos;
@@ -420,7 +507,7 @@ public class UnitView : MonoBehaviour
         GameObject vfx = Instantiate(evt.vfxPrefab, spawnPos, Quaternion.identity);
         if (evt.attachToCaster && parent != null)
             vfx.transform.SetParent(parent);
-        
+
         var visualEffect = vfx.GetComponent<UnityEngine.VFX.VisualEffect>();
         if (visualEffect != null) visualEffect.Play();
 
