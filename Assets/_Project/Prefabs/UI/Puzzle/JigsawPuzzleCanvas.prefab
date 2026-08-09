@@ -168,7 +168,9 @@ MonoBehaviour:
   pieceSpacing: 5
   boardBackgroundColor: {r: 0.2, g: 0.2, b: 0.25, a: 1}
   emptySlotColor: {r: 0.3, g: 0.3, b: 0.35, a: 1}
-  highlightColor: {r: 0.5, g: 0.8, b: 1, a: 0.3}
+  correctSlotColor: {r: 0.2, g: 0.8, b: 0.2, a: 0.5}
+  wrongSlotColor: {r: 0.8, g: 0.2, b: 0.2, a: 0.5}
+  snapDistance: 40
   slots: []
 --- !u!1 &3121019978313917626
 GameObject:
@@ -823,7 +825,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0.392}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
