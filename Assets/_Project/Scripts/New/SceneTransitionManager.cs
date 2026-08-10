@@ -23,9 +23,6 @@ public class SceneTransitionManager : MonoBehaviour
 
     private HashSet<string> loadedMaps = new HashSet<string>();
 
-    // ✅ Flag để kiểm tra cutscene đã bắt đầu chưa
-    private bool _cutsceneStarted = false;
-
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -58,35 +55,26 @@ public class SceneTransitionManager : MonoBehaviour
         }
     }
 
+    // ─── LOAD MAP LẦN ĐẦU (có Loading UI) ────────────────────────
+
     private IEnumerator LoadFirstMap(string newMapName, string spawnPointID)
     {
         isTransitioning = true;
-        _cutsceneStarted = false;
 
-        // ✅ Hiện Loading UI trước khi load map
-        if (LoadingUI.Instance != null)
-            LoadingUI.Instance.Show(0f);
-        else
-            Debug.LogError("[SceneTransition] LoadingUI.Instance is null!");
+        // ✅ Hiển thị loading UI
+        if (LoadingUIManager.Instance != null)
+            LoadingUIManager.Instance.ShowLoading("Đang tải game...", true);
 
         Debug.Log($"[SceneTransition] Load map đầu tiên: '{newMapName}'");
 
         AsyncOperation load = SceneManager.LoadSceneAsync(newMapName, LoadSceneMode.Additive);
-        while (!load.isDone)
-        {
-            float progress = Mathf.Clamp01(load.progress / 0.9f);
-            if (LoadingUI.Instance != null)
-                LoadingUI.Instance.UpdateProgress(progress);
-            yield return null;
-        }
+        yield return load;
 
         Scene newScene = SceneManager.GetSceneByName(newMapName);
         if (!newScene.IsValid())
         {
             Debug.LogError($"[SceneTransition] Không tìm thấy scene: {newMapName}");
             isTransitioning = false;
-            if (LoadingUI.Instance != null)
-                LoadingUI.Instance.Hide();
             yield break;
         }
         SceneManager.SetActiveScene(newScene);
@@ -100,37 +88,36 @@ public class SceneTransitionManager : MonoBehaviour
         currentMapName = newMapName;
         loadedMaps.Add(newMapName);
 
-        // ✅ Chờ 2 frame để các script trong map khởi tạo
         yield return null;
         yield return null;
 
-        // ✅ Kiểm tra có CutsceneIntro không
-        CutsceneIntro cutscene = FindObjectOfType<CutsceneIntro>();
-        if (cutscene != null)
-        {
-            Debug.Log("[SceneTransition] Tìm thấy CutsceneIntro, chờ cutscene bắt đầu...");
-            // Chờ cutscene gọi OnCutsceneStarted()
-            yield return new WaitUntil(() => _cutsceneStarted);
-            Debug.Log("[SceneTransition] Cutscene đã bắt đầu, ẩn Loading UI.");
-            if (LoadingUI.Instance != null)
-                LoadingUI.Instance.Hide();
-        }
-        else
-        {
-            Debug.Log("[SceneTransition] Không có CutsceneIntro, ẩn Loading UI ngay.");
-            if (LoadingUI.Instance != null)
-                LoadingUI.Instance.Hide();
-        }
+        // ✅ Ẩn loading UI (CutsceneIntro sẽ tự ẩn khi bắt đầu)
+        if (LoadingUIManager.Instance != null)
+            LoadingUIManager.Instance.HideLoading();
 
         isTransitioning = false;
         Debug.Log($"[SceneTransition] ✅ Đã load map: {newMapName}");
     }
 
+    // ─── CHUYỂN MAP (có thể tùy chọn loading UI) ──────────────────
+
     public void TransitionToMap(string mapName, string spawnPointID = null, Action onComplete = null)
+    {
+        TransitionToMap(mapName, spawnPointID, false, onComplete);
+    }
+
+    /// <summary>
+    /// Chuyển đến map khác.
+    /// </summary>
+    /// <param name="mapName">Tên map cần chuyển</param>
+    /// <param name="spawnPointID">ID spawn point (tùy chọn)</param>
+    /// <param name="useLoadingUI">True: hiển thị Loading UI; False: chỉ dùng fade (mặc định cho Portal)</param>
+    /// <param name="onComplete">Callback khi hoàn thành</param>
+    public void TransitionToMap(string mapName, string spawnPointID, bool useLoadingUI, Action onComplete = null)
     {
         if (isTransitioning)
         {
-            Debug.LogWarning("[SceneTransition] Đang chuyển map, bỏ qua yêu cầu.");
+            Debug.LogWarning($"[SceneTransition] Đang chuyển map, bỏ qua yêu cầu đến '{mapName}'.");
             return;
         }
         if (string.IsNullOrEmpty(mapName))
@@ -144,25 +131,26 @@ public class SceneTransitionManager : MonoBehaviour
             return;
         }
 
-        StartCoroutine(TransitionCoroutine(mapName, spawnPointID, onComplete));
+        StartCoroutine(TransitionCoroutine(mapName, spawnPointID, useLoadingUI, onComplete));
     }
 
-    private IEnumerator TransitionCoroutine(string newMapName, string spawnPointID, Action onComplete)
+    private IEnumerator TransitionCoroutine(string newMapName, string spawnPointID, bool useLoadingUI, Action onComplete)
     {
         isTransitioning = true;
-        _cutsceneStarted = false;
-
-        // ✅ Hiện Loading UI
-        if (LoadingUI.Instance != null)
-            LoadingUI.Instance.Show(0f);
 
         Debug.Log($"[SceneTransition] Bắt đầu chuyển từ '{currentMapName}' -> '{newMapName}'");
 
+        // ✅ Nếu dùng Loading UI thì hiển thị
+        if (useLoadingUI && LoadingUIManager.Instance != null)
+            LoadingUIManager.Instance.ShowLoading($"Đang tải {newMapName}...", true);
+
+        // 1. Fade to black
         if (FadeController.Instance != null)
             yield return FadeController.Instance.FadeToBlack();
         else
             yield return new WaitForSeconds(fadeDuration);
 
+        // 2. Kiểm tra xem map mới đã load chưa
         bool mapAlreadyLoaded = loadedMaps.Contains(newMapName);
         Scene newScene = SceneManager.GetSceneByName(newMapName);
 
@@ -177,27 +165,21 @@ public class SceneTransitionManager : MonoBehaviour
         else
         {
             AsyncOperation load = SceneManager.LoadSceneAsync(newMapName, LoadSceneMode.Additive);
-            while (!load.isDone)
-            {
-                float progress = Mathf.Clamp01(load.progress / 0.9f);
-                if (LoadingUI.Instance != null)
-                    LoadingUI.Instance.UpdateProgress(progress);
-                yield return null;
-            }
+            yield return load;
 
             newScene = SceneManager.GetSceneByName(newMapName);
             if (!newScene.IsValid())
             {
                 Debug.LogError($"[SceneTransition] Không tìm thấy scene: {newMapName}");
                 isTransitioning = false;
-                if (LoadingUI.Instance != null)
-                    LoadingUI.Instance.Hide();
+                if (useLoadingUI && LoadingUIManager.Instance != null)
+                    LoadingUIManager.Instance.HideLoading();
                 yield break;
             }
             loadedMaps.Add(newMapName);
         }
 
-        // Deactivate map cũ
+        // 3. Unload/Deactivate map cũ
         if (!string.IsNullOrEmpty(currentMapName))
         {
             Scene oldScene = SceneManager.GetSceneByName(currentMapName);
@@ -217,6 +199,7 @@ public class SceneTransitionManager : MonoBehaviour
         SceneManager.SetActiveScene(newScene);
         Debug.Log($"[SceneTransition] Active scene: {newMapName}");
 
+        // 4. Spawn point
         Vector3 targetPosition = Vector3.zero;
         Quaternion targetRotation = Quaternion.identity;
         bool spawnFound = FindSpawnPoint(newScene, spawnPointID, out targetPosition, out targetRotation);
@@ -238,14 +221,17 @@ public class SceneTransitionManager : MonoBehaviour
 
         currentMapName = newMapName;
 
+        // 5. Fade from black
         if (FadeController.Instance != null)
             yield return FadeController.Instance.FadeFromBlack();
         else
             yield return new WaitForSeconds(fadeDuration);
 
+        // 6. Chờ 2 frame để ổn định
         yield return null;
         yield return null;
 
+        // 7. Kiểm tra vị trí cuối cùng
         if (player != null)
         {
             Vector3 finalPos = player.transform.position;
@@ -256,37 +242,13 @@ public class SceneTransitionManager : MonoBehaviour
             }
         }
 
-        // ✅ Kiểm tra CutsceneIntro
-        CutsceneIntro cutscene = FindObjectOfType<CutsceneIntro>();
-        if (cutscene != null)
-        {
-            Debug.Log("[SceneTransition] Tìm thấy CutsceneIntro, chờ cutscene bắt đầu...");
-            yield return new WaitUntil(() => _cutsceneStarted);
-            Debug.Log("[SceneTransition] Cutscene đã bắt đầu, ẩn Loading UI.");
-            if (LoadingUI.Instance != null)
-                LoadingUI.Instance.Hide();
-        }
-        else
-        {
-            Debug.Log("[SceneTransition] Không có CutsceneIntro, ẩn Loading UI ngay.");
-            if (LoadingUI.Instance != null)
-                LoadingUI.Instance.Hide();
-        }
+        // ✅ Nếu dùng Loading UI thì ẩn đi
+        if (useLoadingUI && LoadingUIManager.Instance != null)
+            LoadingUIManager.Instance.HideLoading();
 
         isTransitioning = false;
         onComplete?.Invoke();
         Debug.Log($"[SceneTransition] ✅ Đã chuyển sang map: {newMapName}");
-    }
-
-    // ─── Public method để CutsceneIntro báo hiệu bắt đầu ──────────
-
-    public void OnCutsceneStarted()
-    {
-        _cutsceneStarted = true;
-        Debug.Log("[SceneTransition] Cutscene đã bắt đầu (được gọi từ CutsceneIntro).");
-        // Ẩn Loading UI ngay lập tức
-        if (LoadingUI.Instance != null)
-            LoadingUI.Instance.Hide();
     }
 
     // ─── Helper Methods ──────────────────────────────────────────────
@@ -355,7 +317,7 @@ public class SceneTransitionManager : MonoBehaviour
             }
         }
 
-        Debug.Log($"[SceneTransition] Bắt đầu teleport player đến {position}");
+        Debug.Log($"[SceneTransition] Teleport player đến {position}");
 
         List<MonoBehaviour> scripts = new List<MonoBehaviour>(player.GetComponents<MonoBehaviour>());
         foreach (var script in scripts)
@@ -428,6 +390,17 @@ public class SceneTransitionManager : MonoBehaviour
                 script.enabled = true;
             }
         }
+
+        if (player != null)
+        {
+            HSRPlayerController hsr = player.GetComponent<HSRPlayerController>();
+            if (hsr != null && !hsr.enabled)
+            {
+                hsr.enabled = true;
+                Debug.Log("[SceneTransition] HSRPlayerController đã được bật lại.");
+            }
+        }
+
         Debug.Log("[SceneTransition] Player scripts re-enabled.");
     }
 
