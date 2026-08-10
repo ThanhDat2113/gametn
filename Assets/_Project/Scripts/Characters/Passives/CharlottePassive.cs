@@ -4,9 +4,12 @@ using UnityEngine;
 
 /// <summary>
 /// Nội tại Charlotte (Gió Tiên):
-/// Khi Charlotte hoặc một đồng minh áp hiệu ứng xấu (debuff) lên kẻ địch,
+/// Khi Charlotte HAY một đồng minh áp hiệu ứng xấu (debuff) lên kẻ địch,
 /// Charlotte sẽ NHẢY LƯỢT và ngay lập tức dùng skill 1 (Cắt Gió) vào
 /// đúng kẻ địch vừa nhận hiệu ứng xấu đó.
+/// Lưu ý: Khi chính Charlotte gây debuff (vd: skill 3 Bão Cắt có kèm ATK debuff),
+/// follow-up sẽ xảy ra SAU khi skill hoàn tất (không nhảy giữa chừng) - nhờ cơ chế
+/// _charlotteFollowUpPending được xử lý sau ResolveAction.
 /// </summary>
 public class CharlottePassive : PassiveAbility
 {
@@ -37,7 +40,10 @@ private void OnDebuffApplied(CombatUnit caster, CombatUnit target, StatusEffectT
         if (Owner == null || !Owner.IsAlive) return;
         if (caster == null) return;
 
-        // Nếu đồng minh (hoặc chính Charlotte) áp debuff lên kẻ địch → Charlotte nhảy lượt tấn công ngay
+        // Kích hoạt khi Charlotte HOẶC đồng minh áp debuff lên kẻ địch.
+        // Khi chính Charlotte gây debuff (vd: skill 3 Bão Cắt), follow-up chỉ xảy ra
+        // SAU khi resolve skill hiện tại hoàn tất - nhờ _charlotteFollowUpPending trong
+        // DoPlayerTurn được xử lý sau ResolveAction. Điều này tránh nhảy lượt giữa chừng.
         if (caster.IsAlly(Owner) && target != null && !target.IsAlly(Owner))
         {
             Debug.Log($"[{Owner.UnitName}'s Passive] {caster.UnitName} áp {status} lên {target.UnitName}. Charlotte nhảy lượt tấn công!");

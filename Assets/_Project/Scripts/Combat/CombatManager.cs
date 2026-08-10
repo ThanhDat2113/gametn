@@ -259,6 +259,14 @@ public delegate void DamageModificationHandler(ActionOutcome outcome, CombatUnit
         }
     }
 
+    // Mapping fallback: tên nhân vật → tên passive class tương ứng.
+    // Dùng khi passiveScript bị null/missing trên CharacterData asset.
+    private static readonly Dictionary<string, string> PassiveNameFallback = new Dictionary<string, string>
+    {
+        { "Kurumi", "CharlottePassive" },   // Kurumi dùng passive của Charlotte (Gió Tiên)
+        { "Charlotte", "CharlottePassive" }
+    };
+
     private void InitializePassives(CombatUnit unit)
     {
         // Thử lấy className từ passiveScript (nếu MonoScript còn tồn tại)
@@ -269,11 +277,20 @@ public delegate void DamageModificationHandler(ActionOutcome outcome, CombatUnit
             className = unit.Data.passiveScript.name;
         }
 
-        // Fallback: nếu MonoScript bị null (Unity fake null) hoặc broken reference (name rỗng)
+        // Fallback 1: nếu MonoScript bị null (Unity fake null) hoặc broken reference (name rỗng),
+        // tra cứu mapping theo tên nhân vật.
         if (string.IsNullOrEmpty(className))
         {
-            className = unit.UnitName + "Passive";
-            Debug.Log($"[CM] passiveScript cho {unit.UnitName} bị missing, fallback: '{className}'");
+            if (PassiveNameFallback.TryGetValue(unit.UnitName, out var mapped))
+            {
+                className = mapped;
+                Debug.Log($"[CM] passiveScript cho {unit.UnitName} bị missing. Dùng mapping fallback: '{mapped}'");
+            }
+            else
+            {
+                className = unit.UnitName + "Passive";
+                Debug.Log($"[CM] passiveScript cho {unit.UnitName} bị missing, fallback: '{className}'");
+            }
         }
 
         var passiveType = System.Type.GetType(className);
@@ -675,13 +692,10 @@ public void RequestCharlotteFollowUp(CombatUnit target)
         _charlotteFollowUpTarget = target;
         Debug.Log($"[CharlotteFollowUp] Charlotte chuẩn bị nhảy lượt để tấn công {target.UnitName}!");
 
-        // Đánh dấu Charlotte đã act để UI bỏ qua lượt chọn của cô
-        var charlotte = GetCharlotteUnit();
-        if (charlotte != null && charlotte.IsAlive)
-        {
-            charlotte.HasActedThisTurn = true;
-            if (charlotte.SelectedSkill != null) charlotte.ClearSelection();
-        }
+        // KHÔNG set HasActedThisTurn ở đây.
+        // Lý do: nếu Charlotte tự gây debuff (vd: skill 3 Bão Cắt), việc set HasActedThisTurn
+        // ngay lập tức sẽ làm UI reset giữa chừng skill → cả 2 skill xử lý cùng lúc.
+        // HasActedThisTurn chỉ được set khi follow-up THỰC SỰ bắt đầu (trong ProcessCharlotteFollowUp).
     }
 
     /// <summary>
@@ -714,6 +728,12 @@ private IEnumerator ProcessCharlotteFollowUp()
             yield break;
         }
 
+        // Đánh dấu Charlotte đã act để UI bỏ qua lượt chọn của cô trong lúc follow-up.
+        // Set ở ĐÂY (khi follow-up thực sự bắt đầu) thay vì trong RequestCharlotteFollowUp,
+        // để skill hiện tại (vd: skill 3) chạy xong trước khi follow-up bắt đầu.
+        charlotte.HasActedThisTurn = true;
+        if (charlotte.SelectedSkill != null) charlotte.ClearSelection();
+
         // Tìm skill 1 (Cắt Gió)
         var skill1 = charlotte.AvailableSkills.FirstOrDefault(s => s.skillName == "Cắt Gió");
         if (skill1 == null)
@@ -739,7 +759,12 @@ private IEnumerator ProcessCharlotteFollowUp()
 
         _charlotteFollowUpCountThisTurn++;
         _isProcessingCharlotteFollowUp = false;
-        Debug.Log($"[CharlotteFollowUp] Hoàn tất follow-up #{_charlotteFollowUpCountThisTurn}.");
+
+        // FIX: Khôi phục lượt hành động cho Charlotte — follow-up KHÔNG được làm cô ấy mất lượt.
+        // Charlotte vẫn có thể chọn và hành động bình thường trong lượt này sau khi follow-up xong.
+        charlotte.HasActedThisTurn = false;
+
+        Debug.Log($"[CharlotteFollowUp] Hoàn tất follow-up #{_charlotteFollowUpCountThisTurn}. Charlotte vẫn còn lượt hành động bình thường.");
     }
 
     // ── Player Selection (gọi từ UI) ──────────────────────────
