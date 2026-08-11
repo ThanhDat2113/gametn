@@ -426,10 +426,11 @@ public delegate void DamageModificationHandler(ActionOutcome outcome, CombatUnit
         _charlotteFollowUpPending = false;
         _charlotteFollowUpTarget = null;
 
-// Reset HasActedThisTurn cho tất cả player units
+// Reset HasActedThisTurn và ActionsRemainingThisTurn cho tất cả player units
         foreach (var unit in PlayerUnits)
         {
             unit.HasActedThisTurn = false;
+            unit.ActionsRemainingThisTurn = unit.MaxActionsPerTurn;
         }
 
         // Xử lý burn (ThieuDot) đầu lượt player: đối tượng bị burn sẽ
@@ -489,8 +490,16 @@ public delegate void DamageModificationHandler(ActionOutcome outcome, CombatUnit
             // Kiểm tra kết thúc combat
             if (CheckForCombatEnd()) yield break;
 
-            // Đánh dấu unit đã act
-            _selectedUnit.HasActedThisTurn = true;
+            // Giảm số action còn lại sau mỗi lần act.
+            // Mặc định ActionsRemainingThisTurn = 1 → sau action đầu tiên giảm xuống 0.
+            // Nếu unit được GrantExtraAction (vd: NicholasPassive kết liễu kẻ địch → extra turn),
+            // ActionsRemainingThisTurn sẽ > 1 → sau action đầu tiên vẫn còn > 0 → GIỮ
+            // HasActedThisTurn = false để unit được chọn hành động thêm lần nữa.
+            _selectedUnit.ActionsRemainingThisTurn--;
+
+            // Đánh dấu unit đã act nếu không còn action nào.
+            if (_selectedUnit.ActionsRemainingThisTurn <= 0)
+                _selectedUnit.HasActedThisTurn = true;
 
 // Kiểm tra interrupt (Reinhard phản đòn)
             if (_interruptPending)
