@@ -19,7 +19,12 @@ public class UnblockMePuzzle : PuzzleBase
     public Button resetButton;
     public Button closeButton;
 
-    [Header("Block Prefab (optional)")]
+    [Header("Block Prefabs")]
+    [Tooltip("Prefab cho khối nằm NGANG (width > height)")]
+    public GameObject horizontalBlockPrefab;
+    [Tooltip("Prefab cho khối nằm DỌC (height > width)")]
+    public GameObject verticalBlockPrefab;
+    [Tooltip("Prefab fallback nếu không có prefab tương ứng")]
     public GameObject blockPrefab;
 
     [Header("Visual Settings")]
@@ -58,10 +63,8 @@ public class UnblockMePuzzle : PuzzleBase
     private int moves = 0;
     private bool puzzleCompleted = false;
 
-    // ✅ Public property để UnblockBlockDrag có thể kiểm tra
     public bool IsPuzzleCompleted => puzzleCompleted;
 
-    // Vị trí đích: E3:F3 → (row=2, col=4) và (row=2, col=5)
     private Vector2Int[] goalPositions = new Vector2Int[]
     {
         new Vector2Int(4, 2),
@@ -93,21 +96,20 @@ public class UnblockMePuzzle : PuzzleBase
 
         blocks.Clear();
 
-        // Định nghĩa các khối theo dữ liệu đề bài
         var rawBlocks = new List<(int id, List<(int row, int col)> cells)>
         {
-            (1, new List<(int,int)> { (0,0), (0,1) }),      // A1:B1
-            (2, new List<(int,int)> { (0,3), (1,3) }),      // D1:D2
-            (3, new List<(int,int)> { (0,4), (1,4), (2,4) }),// E1:E3
-            (4, new List<(int,int)> { (0,5), (1,5) }),      // F1:F2
-            (5, new List<(int,int)> { (1,0), (1,1) }),      // A2:B2
-            (6, new List<(int,int)> { (2,0), (3,0) }),      // A3:A4
-            (7, new List<(int,int)> { (2,1), (3,1) }),      // B3:B4
-            (8, new List<(int,int)> { (2,2), (2,3) }),      // C3:D3 – TARGET
-            (9, new List<(int,int)> { (3,2), (4,2) }),      // C4:C5
-            (10, new List<(int,int)> { (4,0), (5,0) }),     // A5:A6
-            (11, new List<(int,int)> { (4,3), (4,4) }),     // D5:E5
-            (12, new List<(int,int)> { (5,3), (5,4) }),     // D6:E6
+            (1, new List<(int,int)> { (0,0), (0,1) }),
+            (2, new List<(int,int)> { (0,3), (1,3) }),
+            (3, new List<(int,int)> { (0,4), (1,4), (2,4) }),
+            (4, new List<(int,int)> { (0,5), (1,5) }),
+            (5, new List<(int,int)> { (1,0), (1,1) }),
+            (6, new List<(int,int)> { (2,0), (3,0) }),
+            (7, new List<(int,int)> { (2,1), (3,1) }),
+            (8, new List<(int,int)> { (2,2), (2,3) }),
+            (9, new List<(int,int)> { (3,2), (4,2) }),
+            (10, new List<(int,int)> { (4,0), (5,0) }),
+            (11, new List<(int,int)> { (4,3), (4,4) }),
+            (12, new List<(int,int)> { (5,3), (5,4) }),
         };
 
         for (int i = 0; i < rawBlocks.Count; i++)
@@ -125,7 +127,6 @@ public class UnblockMePuzzle : PuzzleBase
                 block.cells.Add(pos);
                 board[pos.y, pos.x] = raw.id;
             }
-            // Xác định hướng
             if (block.cells.Count > 1)
             {
                 bool sameRow = true;
@@ -177,7 +178,6 @@ public class UnblockMePuzzle : PuzzleBase
                 Image img = cell.AddComponent<Image>();
                 img.raycastTarget = false;
 
-                // Đánh dấu ô đích
                 bool isGoal = false;
                 foreach (var goal in goalPositions)
                 {
@@ -204,23 +204,66 @@ public class UnblockMePuzzle : PuzzleBase
 
         foreach (var block in blocks)
         {
+            // ✅ Chọn prefab phù hợp theo hướng
+            GameObject prefabToUse = null;
+            if (block.isHorizontal && horizontalBlockPrefab != null)
+                prefabToUse = horizontalBlockPrefab;
+            else if (!block.isHorizontal && verticalBlockPrefab != null)
+                prefabToUse = verticalBlockPrefab;
+            else if (blockPrefab != null)
+                prefabToUse = blockPrefab;
+
             GameObject go;
-            if (blockPrefab != null)
+            if (prefabToUse != null)
             {
-                go = Instantiate(blockPrefab, container, false);
+                go = Instantiate(prefabToUse, container, false);
+                // Đảm bảo Image co giãn chính xác
                 var img = go.GetComponent<Image>();
-                if (img == null) img = go.AddComponent<Image>();
+                if (img != null)
+                {
+                    img.preserveAspect = false;
+                    img.type = Image.Type.Simple;
+                    img.raycastTarget = true;
+                    img.color = block.color;
+                }
+                else
+                {
+                    // Nếu prefab thiếu Image, tự thêm
+                    img = go.AddComponent<Image>();
+                    img.preserveAspect = false;
+                    img.type = Image.Type.Simple;
+                    img.raycastTarget = true;
+                    img.color = block.color;
+                }
+
                 var drag = go.GetComponent<UnblockBlockDrag>();
                 if (drag == null) drag = go.AddComponent<UnblockBlockDrag>();
-                block.gameObject = go;
+                drag.puzzle = this;
+                drag.blockId = block.id;
+
+                var cg = go.GetComponent<CanvasGroup>();
+                if (cg == null) cg = go.AddComponent<CanvasGroup>();
+                cg.blocksRaycasts = true;
+                cg.interactable = true;
             }
             else
             {
+                // Fallback
                 go = new GameObject($"Block_{block.id}");
                 go.transform.SetParent(container, false);
                 var img = go.AddComponent<Image>();
+                img.preserveAspect = false;
+                img.type = Image.Type.Simple;
+                img.raycastTarget = true;
+                img.color = block.color;
+
                 var drag = go.AddComponent<UnblockBlockDrag>();
-                block.gameObject = go;
+                drag.puzzle = this;
+                drag.blockId = block.id;
+
+                var cg = go.AddComponent<CanvasGroup>();
+                cg.blocksRaycasts = true;
+                cg.interactable = true;
             }
 
             int minCol = int.MaxValue, minRow = int.MaxValue;
@@ -239,18 +282,7 @@ public class UnblockMePuzzle : PuzzleBase
             rt.sizeDelta = new Vector2(blockW * cellSize - 4f, blockH * cellSize - 4f);
             rt.anchoredPosition = CellToBlockPosition(minCol, minRow, blockW, blockH);
 
-            var imgComp = go.GetComponent<Image>();
-            imgComp.color = block.color;
-            imgComp.raycastTarget = true;
-
-            var dragComp = go.GetComponent<UnblockBlockDrag>();
-            dragComp.puzzle = this;
-            dragComp.blockId = block.id;
-
-            var cg = go.GetComponent<CanvasGroup>();
-            if (cg == null) cg = go.AddComponent<CanvasGroup>();
-            cg.blocksRaycasts = true;
-            cg.interactable = true;
+            block.gameObject = go;
         }
 
         UpdateCellColors();
@@ -309,7 +341,6 @@ public class UnblockMePuzzle : PuzzleBase
         if (block.isHorizontal && dy != 0) return false;
         if (!block.isHorizontal && dx != 0) return false;
 
-        // ── Tính số bước di chuyển tối đa (chỉ trong bảng) ──
         int maxSteps = 0;
         while (true)
         {
@@ -336,14 +367,10 @@ public class UnblockMePuzzle : PuzzleBase
 
         if (maxSteps == 0) return false;
 
-        // ── Lưu vị trí cũ để rollback nếu cần ──
         var oldCells = new List<Vector2Int>(block.cells);
-
-        // ── Xóa vị trí cũ ──
         foreach (var cell in oldCells)
             board[cell.y, cell.x] = -1;
 
-        // ── Cập nhật vị trí mới ──
         for (int i = 0; i < block.cells.Count; i++)
         {
             int newX = oldCells[i].x + dx * maxSteps;
@@ -352,7 +379,6 @@ public class UnblockMePuzzle : PuzzleBase
             board[newY, newX] = blockId;
         }
 
-        // ── Kiểm tra chiến thắng ──
         if (block.isTarget)
         {
             if (CheckWinCondition(block))
@@ -423,6 +449,7 @@ public class UnblockMePuzzle : PuzzleBase
             var rt = block.gameObject.GetComponent<RectTransform>();
             if (rt != null)
             {
+                rt.sizeDelta = new Vector2(blockW * cellSize - 4f, blockH * cellSize - 4f);
                 rt.anchoredPosition = CellToBlockPosition(minCol, minRow, blockW, blockH);
             }
         }
@@ -434,10 +461,8 @@ public class UnblockMePuzzle : PuzzleBase
     public void ResetPuzzle()
     {
         StopAllCoroutines();
-
         foreach (var block in blocks)
             if (block.gameObject != null) Destroy(block.gameObject);
-
         puzzleCompleted = false;
         moves = 0;
         InitBoard();

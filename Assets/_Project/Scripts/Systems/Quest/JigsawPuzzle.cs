@@ -5,9 +5,6 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using TMPro;
 
-/// <summary>
-/// Puzzle ghép hình – kéo mảnh vào slot, snap chặt, có thể kéo ra, và hoán đổi vị trí khi kéo vào ô đã có mảnh.
-/// </summary>
 public class JigsawPuzzle : PuzzleBase
 {
     [Header("UI References")]
@@ -21,18 +18,23 @@ public class JigsawPuzzle : PuzzleBase
     [Header("Grid Settings")]
     public int gridCols = 3;
     public int gridRows = 2;
-    public float boardWidth = 400f;
-    public float boardHeight = 300f;
-    public float pieceSpacing = 5f;
+    public float boardWidth = 600f;
+    public float boardHeight = 450f;
+
+    [Header("Piece Sprites")]
+    public Sprite[] pieceSprites;
 
     [Header("Visual Settings")]
     public Color boardBackgroundColor = new Color(0.2f, 0.2f, 0.25f, 1f);
     public Color emptySlotColor = new Color(0.3f, 0.3f, 0.35f, 1f);
-    public Color correctSlotColor = new Color(0.2f, 0.8f, 0.2f, 0.5f);
-    public Color wrongSlotColor = new Color(0.8f, 0.2f, 0.2f, 0.5f);
 
     [Header("Snap Settings")]
-    public float snapDistance = 40f;
+    [Tooltip("Khoảng cách tối đa để snap (để 0 để tự tính)")]
+    public float snapDistance = 0f;
+
+    [Header("Piece Spacing")]
+    [Tooltip("Khoảng cách giữa các piece ban đầu với board")]
+    public float pieceMargin = 30f;
 
     // ── Data ──────────────────────────────────────────────────────
     [System.Serializable]
@@ -43,6 +45,7 @@ public class JigsawPuzzle : PuzzleBase
         public Vector2 slotCenter;
         public int OccupiedPieceIndex = -1;
         public bool IsOccupied => OccupiedPieceIndex >= 0;
+        public Vector2 slotSize;
     }
 
     public class PieceData
@@ -54,6 +57,8 @@ public class JigsawPuzzle : PuzzleBase
         public int correctSlotIndex;
         public int snappedSlotIndex = -1;
         public bool isDragging;
+        public Image image;
+        public Vector2 slotSize;
     }
 
     public List<SlotData> slots = new List<SlotData>();
@@ -96,13 +101,17 @@ public class JigsawPuzzle : PuzzleBase
             Destroy(child.gameObject);
 
         int totalSlots = gridCols * gridRows;
-        pieceWidth = (boardWidth - (gridCols - 1) * pieceSpacing) / gridCols;
-        pieceHeight = (boardHeight - (gridRows - 1) * pieceSpacing) / gridRows;
 
+        // Tính kích thước ô
+        pieceWidth = boardWidth / gridCols;
+        pieceHeight = boardHeight / gridRows;
+
+        // Board nằm chính giữa màn hình
         boardContainer.sizeDelta = new Vector2(boardWidth, boardHeight);
         boardContainer.anchorMin = new Vector2(0.5f, 0.5f);
         boardContainer.anchorMax = new Vector2(0.5f, 0.5f);
         boardContainer.pivot = new Vector2(0.5f, 0.5f);
+        boardContainer.anchoredPosition = Vector2.zero;
 
         Image boardBg = boardContainer.GetComponent<Image>();
         if (boardBg == null) boardBg = boardContainer.gameObject.AddComponent<Image>();
@@ -121,8 +130,8 @@ public class JigsawPuzzle : PuzzleBase
             slotRect.anchorMax = new Vector2(0, 1);
             slotRect.pivot = new Vector2(0, 1);
 
-            float xPos = col * (pieceWidth + pieceSpacing);
-            float yPos = -(row * (pieceHeight + pieceSpacing));
+            float xPos = col * pieceWidth;
+            float yPos = -row * pieceHeight;
             slotRect.anchoredPosition = new Vector2(xPos, yPos);
             slotRect.sizeDelta = new Vector2(pieceWidth, pieceHeight);
 
@@ -130,26 +139,34 @@ public class JigsawPuzzle : PuzzleBase
             slotImg.color = emptySlotColor;
             slotImg.raycastTarget = false;
 
-            // Tính vị trí trung tâm slot trong pieceContainer
+            // Tính slotCenter trong hệ tọa độ của pieceContainer
             Vector3[] corners = new Vector3[4];
             slotRect.GetWorldCorners(corners);
             Vector3 centerWorld = (corners[0] + corners[2]) / 2f;
-            Vector2 localPos;
+            Vector2 localCenter;
             RectTransformUtility.ScreenPointToLocalPointInRectangle(
                 pieceContainer,
                 RectTransformUtility.WorldToScreenPoint(parentCanvas.worldCamera, centerWorld),
                 parentCanvas.worldCamera,
-                out localPos
+                out localCenter
             );
 
             slots.Add(new SlotData
             {
                 index = i,
                 slotRect = slotRect,
-                slotCenter = localPos,
-                OccupiedPieceIndex = -1
+                slotCenter = localCenter,
+                OccupiedPieceIndex = -1,
+                slotSize = new Vector2(pieceWidth, pieceHeight)
             });
         }
+
+        // Tự tính snapDistance nếu chưa set
+        if (snapDistance <= 0)
+        {
+            snapDistance = Mathf.Min(pieceWidth, pieceHeight) * 0.4f;
+        }
+        Debug.Log($"[Jigsaw] Snap distance: {snapDistance}");
     }
 
     private void CreatePieces()
@@ -159,6 +176,25 @@ public class JigsawPuzzle : PuzzleBase
             Debug.LogError("JigsawPuzzle: piecePrefab chưa gán!");
             return;
         }
+
+        bool useSprites = (pieceSprites != null && pieceSprites.Length >= totalPieces);
+        bool hasAllSprites = true;
+        if (useSprites)
+        {
+            for (int i = 0; i < totalPieces; i++)
+            {
+                if (pieceSprites[i] == null)
+                {
+                    hasAllSprites = false;
+                    break;
+                }
+            }
+        }
+        useSprites = useSprites && hasAllSprites;
+
+        // Lấy tâm board trong hệ tọa độ của pieceContainer
+        Vector2 boardCenter = boardContainer.anchoredPosition;
+        float halfBoardWidth = boardWidth / 2f;
 
         for (int i = 0; i < totalPieces; i++)
         {
@@ -171,24 +207,45 @@ public class JigsawPuzzle : PuzzleBase
 
             Image img = pieceGo.GetComponent<Image>();
             if (img == null) img = pieceGo.AddComponent<Image>();
-            img.color = GetPieceColor(i);
+
+            if (useSprites)
+            {
+                img.sprite = pieceSprites[i];
+                img.preserveAspect = false;
+                img.type = Image.Type.Simple;
+                img.color = Color.white;
+            }
+            else
+            {
+                img.color = GetPieceColor(i);
+                img.preserveAspect = false;
+                img.type = Image.Type.Simple;
+            }
             img.raycastTarget = true;
 
-            TextMeshProUGUI txt = pieceGo.GetComponentInChildren<TextMeshProUGUI>();
-            if (txt == null)
+            if (useSprites)
             {
-                GameObject txtGo = new GameObject("Number");
-                txtGo.transform.SetParent(pieceGo.transform, false);
-                txt = txtGo.AddComponent<TextMeshProUGUI>();
-                txt.text = (i + 1).ToString();
-                txt.fontSize = 30;
-                txt.alignment = TextAlignmentOptions.Center;
-                txt.color = Color.white;
-                RectTransform txtRt = txt.GetComponent<RectTransform>();
-                txtRt.anchorMin = Vector2.zero;
-                txtRt.anchorMax = Vector2.one;
-                txtRt.sizeDelta = Vector2.zero;
-                txtRt.anchoredPosition = Vector2.zero;
+                TextMeshProUGUI txt = pieceGo.GetComponentInChildren<TextMeshProUGUI>();
+                if (txt != null) Destroy(txt.gameObject);
+            }
+            else
+            {
+                TextMeshProUGUI txt = pieceGo.GetComponentInChildren<TextMeshProUGUI>();
+                if (txt == null)
+                {
+                    GameObject txtGo = new GameObject("Number");
+                    txtGo.transform.SetParent(pieceGo.transform, false);
+                    txt = txtGo.AddComponent<TextMeshProUGUI>();
+                    txt.text = (i + 1).ToString();
+                    txt.fontSize = 30;
+                    txt.alignment = TextAlignmentOptions.Center;
+                    txt.color = Color.white;
+                    RectTransform txtRt = txt.GetComponent<RectTransform>();
+                    txtRt.anchorMin = Vector2.zero;
+                    txtRt.anchorMax = Vector2.one;
+                    txtRt.sizeDelta = Vector2.zero;
+                    txtRt.anchoredPosition = Vector2.zero;
+                }
             }
 
             var drag = pieceGo.GetComponent<JigsawPieceDrag>();
@@ -201,20 +258,24 @@ public class JigsawPuzzle : PuzzleBase
             cg.blocksRaycasts = true;
             cg.interactable = true;
 
+            // Tính vị trí ban đầu căn đều 2 bên
             Vector2 startPos;
-            if (i < 3)
+            float ySpacing = (pieceHeight + 20f) * 0.8f;
+            float yOffset = (i % 3 - 1) * ySpacing; // i%3 = 0,1,2 -> -1,0,1
+
+            if (i < 3) // 3 mảnh bên trái
             {
-                float x = -boardWidth / 2 - pieceWidth - 100f;
-                float y = (i - 1) * (pieceHeight + 30f);
-                startPos = new Vector2(x, y);
+                float xOffset = -(halfBoardWidth + pieceWidth / 2f + pieceMargin);
+                startPos = boardCenter + new Vector2(xOffset, yOffset);
             }
-            else
+            else // 3 mảnh bên phải
             {
-                float x = boardWidth / 2 + 100f;
                 int idx = i - 3;
-                float y = (idx - 1) * (pieceHeight + 30f);
-                startPos = new Vector2(x, y);
+                float yOffset2 = (idx % 3 - 1) * ySpacing;
+                float xOffset = halfBoardWidth + pieceWidth / 2f + pieceMargin;
+                startPos = boardCenter + new Vector2(xOffset, yOffset2);
             }
+
             rt.anchoredPosition = startPos;
 
             pieces.Add(new PieceData
@@ -225,7 +286,9 @@ public class JigsawPuzzle : PuzzleBase
                 originalPosition = startPos,
                 correctSlotIndex = i,
                 snappedSlotIndex = -1,
-                isDragging = false
+                isDragging = false,
+                image = img,
+                slotSize = new Vector2(pieceWidth, pieceHeight)
             });
         }
     }
@@ -270,10 +333,8 @@ public class JigsawPuzzle : PuzzleBase
         var piece = pieces[pieceIndex];
         piece.isDragging = false;
 
-        // Cập nhật vị trí hiện tại
         piece.rectTransform.anchoredPosition = dropPos;
 
-        // Lưu vị trí cũ của mảnh kéo (nếu nó đang ở slot nào đó)
         Vector2 previousPosition = dropPos;
         int previousSlotIndex = piece.snappedSlotIndex;
         if (previousSlotIndex >= 0 && previousSlotIndex < slots.Count)
@@ -292,34 +353,25 @@ public class JigsawPuzzle : PuzzleBase
             }
         }
 
-        // Nếu tìm thấy slot
         if (nearestSlot >= 0)
         {
             var targetSlot = slots[nearestSlot];
+            piece.rectTransform.sizeDelta = targetSlot.slotSize;
 
-            // Nếu slot đã có mảnh khác
             if (targetSlot.OccupiedPieceIndex >= 0 && targetSlot.OccupiedPieceIndex != pieceIndex)
             {
                 int oldPieceIndex = targetSlot.OccupiedPieceIndex;
                 var oldPiece = pieces[oldPieceIndex];
 
-                // Hoán đổi: mảnh cũ sẽ được đặt tại vị trí cũ của mảnh kéo
-                // Nếu mảnh kéo đang ở slot nào, thì mảnh cũ sẽ chiếm slot đó
-                // Ngược lại, nếu mảnh kéo đang tự do, đặt mảnh cũ tại vị trí thả (dropPos)
                 if (previousSlotIndex >= 0 && previousSlotIndex < slots.Count)
                 {
-                    // Mảnh kéo đang ở một slot -> mảnh cũ sẽ chiếm slot đó
-                    // Giải phóng slot cũ của mảnh kéo
                     slots[previousSlotIndex].OccupiedPieceIndex = -1;
-                    // Đặt mảnh cũ vào slot đó
                     oldPiece.rectTransform.anchoredPosition = slots[previousSlotIndex].slotCenter;
                     oldPiece.snappedSlotIndex = previousSlotIndex;
                     slots[previousSlotIndex].OccupiedPieceIndex = oldPieceIndex;
                 }
                 else
                 {
-                    // Mảnh kéo tự do -> mảnh cũ sẽ ở vị trí thả (dropPos)
-                    // Giải phóng slot cũ của mảnh cũ (nếu có) trước khi đẩy ra
                     if (oldPiece.snappedSlotIndex >= 0)
                     {
                         slots[oldPiece.snappedSlotIndex].OccupiedPieceIndex = -1;
@@ -328,18 +380,16 @@ public class JigsawPuzzle : PuzzleBase
                     oldPiece.snappedSlotIndex = -1;
                 }
 
-                // Bây giờ, gán mảnh kéo vào slot mục tiêu
                 piece.rectTransform.anchoredPosition = targetSlot.slotCenter;
                 piece.snappedSlotIndex = nearestSlot;
                 targetSlot.OccupiedPieceIndex = pieceIndex;
             }
             else if (targetSlot.OccupiedPieceIndex == pieceIndex)
             {
-                // Slot đã là của mảnh này (không làm gì)
+                // đã ở slot này
             }
             else
             {
-                // Slot trống -> gán mảnh vào
                 piece.rectTransform.anchoredPosition = targetSlot.slotCenter;
                 piece.snappedSlotIndex = nearestSlot;
                 targetSlot.OccupiedPieceIndex = pieceIndex;
@@ -347,9 +397,7 @@ public class JigsawPuzzle : PuzzleBase
         }
         else
         {
-            // Không snap -> giữ nguyên vị trí, không có slot
             piece.snappedSlotIndex = -1;
-            // Nếu mảnh đang ở slot cũ, đã được giải phóng ở StartDragging, nên không cần xử lý thêm
         }
 
         CheckWinCondition();
@@ -387,6 +435,7 @@ public class JigsawPuzzle : PuzzleBase
             piece.rectTransform.anchoredPosition = piece.originalPosition;
             piece.snappedSlotIndex = -1;
             piece.isDragging = false;
+            piece.rectTransform.sizeDelta = piece.slotSize;
         }
 
         foreach (var slot in slots)
@@ -411,24 +460,13 @@ public class JigsawPuzzle : PuzzleBase
             instructionText.text = $"Sắp xếp các mảnh vào đúng vị trí ({correct}/{totalPieces})";
         }
 
+        // Giữ slot màu nền, không đổi màu
         foreach (var slot in slots)
         {
             if (slot.slotRect == null) continue;
             Image img = slot.slotRect.GetComponent<Image>();
             if (img == null) continue;
-
-            if (slot.OccupiedPieceIndex >= 0)
-            {
-                int pieceIndex = slot.OccupiedPieceIndex;
-                if (pieceIndex == slot.index)
-                    img.color = correctSlotColor;
-                else
-                    img.color = wrongSlotColor;
-            }
-            else
-            {
-                img.color = emptySlotColor;
-            }
+            img.color = emptySlotColor;
         }
     }
 

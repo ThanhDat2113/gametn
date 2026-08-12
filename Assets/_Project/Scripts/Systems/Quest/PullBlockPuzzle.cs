@@ -30,13 +30,17 @@ public class PullBlockPuzzle : PuzzleBase
     public float containerHeight = 400f;
 
     [Header("Stack Settings")]
-    public float stackOffsetX = 15f;   // Độ lệch ngang giữa các layer
-    public float stackOffsetY = 12f;   // Độ lệch dọc giữa các layer
-    public float rotationSpread = 15f; // Xoay ngẫu nhiên mỗi thanh
+    public float stackOffsetX = 15f;
+    public float stackOffsetY = 12f;
+    public float rotationSpread = 15f;
 
     [Header("Visual Settings")]
     public Color[] blockColors;
     public Color topBlockColor = Color.yellow;
+
+    [Header("Block Sprites")]
+    [Tooltip("Kéo ảnh cho từng thanh gỗ (có thể để trống để dùng màu)")]
+    public Sprite[] blockSprites;
 
     // ── Data ──────────────────────────────────────────────────────
     public class BlockData
@@ -107,8 +111,6 @@ public class PullBlockPuzzle : PuzzleBase
         }
 
         // ── Xây dựng vị trí đè chồng theo layer ──
-        // Layer 1 ở dưới cùng, layer totalBlocks ở trên cùng
-        // Mỗi layer dịch một khoảng ngẫu nhiên so với layer dưới
         List<Vector2> positions = new List<Vector2>();
         Vector2 basePos = Vector2.zero;
 
@@ -118,17 +120,30 @@ public class PullBlockPuzzle : PuzzleBase
             float offsetY = Random.Range(-stackOffsetY, stackOffsetY);
             Vector2 pos = basePos + new Vector2(offsetX, offsetY);
 
-            // Giới hạn trong container
             float halfW = blockWidth / 2f;
             float halfH = blockHeight / 2f;
             pos.x = Mathf.Clamp(pos.x, -containerWidth / 2f + halfW, containerWidth / 2f - halfW);
             pos.y = Mathf.Clamp(pos.y, -containerHeight / 2f + halfH, containerHeight / 2f - halfH);
 
             positions.Add(pos);
-
-            // Layer tiếp theo sẽ dịch thêm một chút để tạo hiệu ứng đè chồng tự nhiên
             basePos = pos;
         }
+
+        // ── Kiểm tra có đủ ảnh không ──
+        bool useSprites = (blockSprites != null && blockSprites.Length >= totalBlocks);
+        bool hasAllSprites = true;
+        if (useSprites)
+        {
+            for (int i = 0; i < totalBlocks; i++)
+            {
+                if (blockSprites[i] == null)
+                {
+                    hasAllSprites = false;
+                    break;
+                }
+            }
+        }
+        useSprites = useSprites && hasAllSprites;
 
         // ── Tạo các thanh gỗ ──
         for (int i = 0; i < totalBlocks; i++)
@@ -149,10 +164,25 @@ public class PullBlockPuzzle : PuzzleBase
 
             Image img = go.GetComponent<Image>();
             if (img == null) img = go.AddComponent<Image>();
-            Color color = blockColors != null && blockColors.Length > 0
-                ? blockColors[i % blockColors.Length]
-                : new Color(Random.value, Random.value, Random.value);
-            img.color = color;
+
+            // ✅ Nếu có ảnh, dùng ảnh thay vì màu
+            if (useSprites)
+            {
+                img.sprite = blockSprites[i];
+                img.preserveAspect = false; // co giãn vừa khít
+                img.type = Image.Type.Simple;
+                img.color = Color.white;
+            }
+            else
+            {
+                Color color = blockColors != null && blockColors.Length > 0
+                    ? blockColors[i % blockColors.Length]
+                    : new Color(Random.value, Random.value, Random.value);
+                img.color = color;
+                img.preserveAspect = false;
+                img.type = Image.Type.Simple;
+            }
+            img.raycastTarget = true;
 
             CanvasGroup cg = go.GetComponent<CanvasGroup>();
             if (cg == null) cg = go.AddComponent<CanvasGroup>();
@@ -164,22 +194,31 @@ public class PullBlockPuzzle : PuzzleBase
             drag.blockIndex = i;
             drag.puzzle = this;
 
-            // Số thứ tự (tuỳ chọn)
-            TextMeshProUGUI txt = go.GetComponentInChildren<TextMeshProUGUI>();
-            if (txt == null)
+            // Nếu dùng ảnh, xóa số thứ tự (nếu có)
+            if (useSprites)
             {
-                GameObject txtGo = new GameObject("Number");
-                txtGo.transform.SetParent(go.transform, false);
-                txt = txtGo.AddComponent<TextMeshProUGUI>();
-                txt.text = (i + 1).ToString();
-                txt.fontSize = 20;
-                txt.alignment = TextAlignmentOptions.Center;
-                txt.color = Color.white;
-                RectTransform txtRt = txt.GetComponent<RectTransform>();
-                txtRt.anchorMin = Vector2.zero;
-                txtRt.anchorMax = Vector2.one;
-                txtRt.sizeDelta = Vector2.zero;
-                txtRt.anchoredPosition = Vector2.zero;
+                TextMeshProUGUI txt = go.GetComponentInChildren<TextMeshProUGUI>();
+                if (txt != null) Destroy(txt.gameObject);
+            }
+            else
+            {
+                // Thêm số thứ tự nếu chưa có
+                TextMeshProUGUI txt = go.GetComponentInChildren<TextMeshProUGUI>();
+                if (txt == null)
+                {
+                    GameObject txtGo = new GameObject("Number");
+                    txtGo.transform.SetParent(go.transform, false);
+                    txt = txtGo.AddComponent<TextMeshProUGUI>();
+                    txt.text = (i + 1).ToString();
+                    txt.fontSize = 20;
+                    txt.alignment = TextAlignmentOptions.Center;
+                    txt.color = Color.white;
+                    RectTransform txtRt = txt.GetComponent<RectTransform>();
+                    txtRt.anchorMin = Vector2.zero;
+                    txtRt.anchorMax = Vector2.one;
+                    txtRt.sizeDelta = Vector2.zero;
+                    txtRt.anchoredPosition = Vector2.zero;
+                }
             }
 
             blocks.Add(new BlockData
@@ -210,9 +249,6 @@ public class PullBlockPuzzle : PuzzleBase
 
     // ── Public API ──────────────────────────────────────────────
 
-    /// <summary>
-    /// Lấy thanh gỗ trên cùng (layer lớn nhất, chưa bị xóa)
-    /// </summary>
     public BlockData GetTopBlock()
     {
         BlockData top = null;
@@ -225,9 +261,6 @@ public class PullBlockPuzzle : PuzzleBase
         return top;
     }
 
-    /// <summary>
-    /// Kiểm tra xem một thanh có phải là thanh trên cùng không
-    /// </summary>
     public bool IsTopBlock(int blockIndex)
     {
         var top = GetTopBlock();
@@ -339,10 +372,29 @@ public class PullBlockPuzzle : PuzzleBase
         foreach (var block in blocks)
         {
             if (block.isRemoved) continue;
-            block.image.color = (block == top) ? topBlockColor : 
-                (blockColors != null && blockColors.Length > 0 
-                    ? blockColors[block.id % blockColors.Length] 
-                    : new Color(Random.value, Random.value, Random.value));
+
+            if (block == top)
+            {
+                block.image.color = topBlockColor;
+            }
+            else
+            {
+                // Nếu dùng ảnh, giữ nguyên màu trắng, không đổi màu
+                // Nếu dùng màu, giữ màu gốc
+                if (blockSprites != null && blockSprites.Length > block.id && blockSprites[block.id] != null)
+                {
+                    // Dùng ảnh → giữ màu trắng
+                    block.image.color = Color.white;
+                }
+                else
+                {
+                    // Dùng màu → giữ màu gốc
+                    Color color = blockColors != null && blockColors.Length > 0
+                        ? blockColors[block.id % blockColors.Length]
+                        : new Color(Random.value, Random.value, Random.value);
+                    block.image.color = color;
+                }
+            }
         }
     }
 
