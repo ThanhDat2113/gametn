@@ -15,6 +15,10 @@ public class SceneTransitionManager : MonoBehaviour
     [Header("Transition Settings")]
     public float fadeDuration = 0.5f;
 
+    [Header("Scene Management")]
+    [Tooltip("Các tên scene được giữ lại (không ẩn)")]
+    public string[] persistentSceneNames = new string[] { "PersistentScene", "LoadingScene" };
+
     private string currentMapName;
     private bool isTransitioning;
 
@@ -55,13 +59,12 @@ public class SceneTransitionManager : MonoBehaviour
         }
     }
 
-    // ─── LOAD MAP LẦN ĐẦU (có Loading UI) ────────────────────────
+    // ─── LOAD MAP LẦN ĐẦU ────────────────────────────────────────
 
     private IEnumerator LoadFirstMap(string newMapName, string spawnPointID)
     {
         isTransitioning = true;
 
-        // ✅ Hiển thị loading UI
         if (LoadingUIManager.Instance != null)
             LoadingUIManager.Instance.ShowLoading("Đang tải game...", true);
 
@@ -91,7 +94,9 @@ public class SceneTransitionManager : MonoBehaviour
         yield return null;
         yield return null;
 
-        // ✅ Ẩn loading UI (CutsceneIntro sẽ tự ẩn khi bắt đầu)
+        // ✅ Ẩn các scene không cần thiết (BootScene, MenuScene, ...)
+        HideUnnecessaryScenes(newMapName);
+
         if (LoadingUIManager.Instance != null)
             LoadingUIManager.Instance.HideLoading();
 
@@ -99,20 +104,13 @@ public class SceneTransitionManager : MonoBehaviour
         Debug.Log($"[SceneTransition] ✅ Đã load map: {newMapName}");
     }
 
-    // ─── CHUYỂN MAP (có thể tùy chọn loading UI) ──────────────────
+    // ─── CHUYỂN MAP ────────────────────────────────────────────────
 
     public void TransitionToMap(string mapName, string spawnPointID = null, Action onComplete = null)
     {
         TransitionToMap(mapName, spawnPointID, false, onComplete);
     }
 
-    /// <summary>
-    /// Chuyển đến map khác.
-    /// </summary>
-    /// <param name="mapName">Tên map cần chuyển</param>
-    /// <param name="spawnPointID">ID spawn point (tùy chọn)</param>
-    /// <param name="useLoadingUI">True: hiển thị Loading UI; False: chỉ dùng fade (mặc định cho Portal)</param>
-    /// <param name="onComplete">Callback khi hoàn thành</param>
     public void TransitionToMap(string mapName, string spawnPointID, bool useLoadingUI, Action onComplete = null)
     {
         if (isTransitioning)
@@ -140,17 +138,14 @@ public class SceneTransitionManager : MonoBehaviour
 
         Debug.Log($"[SceneTransition] Bắt đầu chuyển từ '{currentMapName}' -> '{newMapName}'");
 
-        // ✅ Nếu dùng Loading UI thì hiển thị
         if (useLoadingUI && LoadingUIManager.Instance != null)
             LoadingUIManager.Instance.ShowLoading($"Đang tải {newMapName}...", true);
 
-        // 1. Fade to black
         if (FadeController.Instance != null)
             yield return FadeController.Instance.FadeToBlack();
         else
             yield return new WaitForSeconds(fadeDuration);
 
-        // 2. Kiểm tra xem map mới đã load chưa
         bool mapAlreadyLoaded = loadedMaps.Contains(newMapName);
         Scene newScene = SceneManager.GetSceneByName(newMapName);
 
@@ -227,11 +222,10 @@ public class SceneTransitionManager : MonoBehaviour
         else
             yield return new WaitForSeconds(fadeDuration);
 
-        // 6. Chờ 2 frame để ổn định
         yield return null;
         yield return null;
 
-        // 7. Kiểm tra vị trí cuối cùng
+        // 6. Kiểm tra vị trí cuối cùng
         if (player != null)
         {
             Vector3 finalPos = player.transform.position;
@@ -242,7 +236,9 @@ public class SceneTransitionManager : MonoBehaviour
             }
         }
 
-        // ✅ Nếu dùng Loading UI thì ẩn đi
+        // ✅ Ẩn các scene không cần thiết
+        HideUnnecessaryScenes(newMapName);
+
         if (useLoadingUI && LoadingUIManager.Instance != null)
             LoadingUIManager.Instance.HideLoading();
 
@@ -251,7 +247,36 @@ public class SceneTransitionManager : MonoBehaviour
         Debug.Log($"[SceneTransition] ✅ Đã chuyển sang map: {newMapName}");
     }
 
-    // ─── Helper Methods ──────────────────────────────────────────────
+    // ─── ẨN CÁC SCENE KHÔNG CẦN THIẾT ─────────────────────────────
+
+    private void HideUnnecessaryScenes(string currentMapName)
+    {
+        // Tạo HashSet để tra cứu nhanh
+        HashSet<string> keepSceneNames = new HashSet<string>(persistentSceneNames);
+        keepSceneNames.Add(currentMapName);
+
+        for (int i = 0; i < SceneManager.sceneCount; i++)
+        {
+            Scene scene = SceneManager.GetSceneAt(i);
+            if (!scene.isLoaded) continue;
+
+            // Nếu scene nằm trong danh sách được giữ → bỏ qua
+            if (keepSceneNames.Contains(scene.name))
+                continue;
+
+            // Ẩn tất cả root objects của scene
+            foreach (var root in scene.GetRootGameObjects())
+            {
+                // Không ẩn các object có tag "Persistent" hoặc tên "PersistentContainer"
+                if (root.CompareTag("Persistent") || root.name == "PersistentContainer")
+                    continue;
+                root.SetActive(false);
+            }
+            Debug.Log($"[SceneTransition] 🚫 Đã ẩn scene: '{scene.name}'");
+        }
+    }
+
+    // ─── HELPER METHODS ────────────────────────────────────────────
 
     private bool FindSpawnPoint(Scene scene, string spawnID, out Vector3 position, out Quaternion rotation)
     {

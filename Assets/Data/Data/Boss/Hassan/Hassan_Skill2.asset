@@ -24,19 +24,7 @@ MonoBehaviour:
   doesNotEndTurn: 0
   apCost: 0
   hitCount: 1
-  vfxEvents:
-  - vfxPrefab: {fileID: 549589715935439664, guid: 19919f3484110874dac0e56d18546a9b, type: 3}
-    spawnMode: 1
-    offset: {x: 0, y: 0, z: 0}
-    attachToCaster: 0
-  - vfxPrefab: {fileID: 4466071702895166870, guid: e11b24689d9fdc945acf398c827cc56d, type: 3}
-    spawnMode: 1
-    offset: {x: 0, y: 0, z: 0}
-    attachToCaster: 0
-  - vfxPrefab: {fileID: 7900733920166045555, guid: ca35442a485b99d44b48e9c5d974fbd8, type: 3}
-    spawnMode: 1
-    offset: {x: 0, y: 0, z: 0}
-    attachToCaster: 0
+  vfxEvents: []
   rangedVfxEvents: []
   hitVfxEvents: []
   sfxClips:
@@ -44,6 +32,11 @@ MonoBehaviour:
   chargeSound: {fileID: 0}
   voiceLines: []
   animationTrigger: Skill2
+  isBeam: 0
+  beamShakeBaseIntensity: 0.35
+  beamShakeStepIntensity: 0.12
+  beamShakeDuration: 0.5
+  beamShakeFrequency: 24
   isRanged: 0
   projectilePrefab: {fileID: 0}
   projectileOffset: {x: 0, y: 0, z: 0}
