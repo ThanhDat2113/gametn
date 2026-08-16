@@ -71899,6 +71899,7 @@ Transform:
   - {fileID: 535414955}
   - {fileID: 229725752}
   - {fileID: 1932656405}
+  - {fileID: 1714422339}
   m_Father: {fileID: 2118859792}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!43 &1150047644
@@ -90809,7 +90810,7 @@ MonoBehaviour:
     playOnce: 1
     customPrompt: {fileID: 1364122716}
   defaultLines: []
-  sideOverride: 0
+  sideOverride: 1
   interactionPrompt: {fileID: 1364122716}
   useBlackScreen: 1
   useBlackScreenOnEnd: 1
@@ -104447,6 +104448,37 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 7829826630940522290, guid: b7b1e8fd761e0f849a0a65eb500ff448, type: 3}
   m_PrefabInstance: {fileID: 1713700022}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1714422338
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1714422339}
+  m_Layer: 6
+  m_Name: tele
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1714422339
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1714422338}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -58, y: -42.02, z: 13.8}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1145806071}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1718964926
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -122667,6 +122699,7 @@ GameObject:
   - component: {fileID: 2013239492}
   - component: {fileID: 2013239491}
   - component: {fileID: 2013239490}
+  - component: {fileID: 2013239498}
   m_Layer: 7
   m_Name: Veldora 2
   m_TagString: Untagged
@@ -122900,6 +122933,29 @@ Transform:
   - {fileID: 1902093652}
   m_Father: {fileID: 1145806071}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2013239498
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2013239489}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8e315741d89cc654db028e87a1b8a417, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestTeleportTrigger
+  questId: 7
+  stepIndex: 2
+  destinationTransform: {fileID: 1714422339}
+  useTimeline: 0
+  teleportTimeline: {fileID: 0}
+  waitForTimeline: 0
+  useSceneTransition: 0
+  targetSceneName: 
+  spawnPosKeyPrefix: Spawn
+  playerTransform: {fileID: 0}
+  dialogueWaitTimeout: 30
 --- !u!1001 &2013321027
 PrefabInstance:
   m_ObjectHideFlags: 0
