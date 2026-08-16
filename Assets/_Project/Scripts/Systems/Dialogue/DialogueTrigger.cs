@@ -13,6 +13,13 @@ public class DialogueEntry
     public GameObject customPrompt;
 }
 
+public enum SideOverrideMode
+{
+    Auto,       // Tự động xác định dựa trên vị trí player
+    ForceLeft,  // Luôn coi như player đứng bên trái NPC
+    ForceRight  // Luôn coi như player đứng bên phải NPC
+}
+
 public class DialogueTrigger : MonoBehaviour
 {
     [Header("Trigger Identity")]
@@ -23,6 +30,10 @@ public class DialogueTrigger : MonoBehaviour
 
     [Header("Fallback Dialogue")]
     public DialogueLineData[] defaultLines;
+
+    [Header("Side Override")]
+    [Tooltip("Chọn hướng tương tác cố định. Auto = tự động theo vị trí player, ForceLeft/ForceRight = luôn dùng hướng đó.")]
+    public SideOverrideMode sideOverride = SideOverrideMode.Auto;
 
     [Header("Visual")]
     public GameObject interactionPrompt;
@@ -345,8 +356,15 @@ public class DialogueTrigger : MonoBehaviour
         return entry != null ? entry.customPrompt : null;
     }
 
+    // ─── XÁC ĐỊNH HƯỚNG TƯƠNG TÁC (CÓ GHI ĐÈ) ──────────────────
+
     private InteractionSide DetermineInteractionSide()
     {
+        // Nếu đã chọn ForceLeft hoặc ForceRight thì dùng luôn
+        if (sideOverride == SideOverrideMode.ForceLeft) return InteractionSide.Left;
+        if (sideOverride == SideOverrideMode.ForceRight) return InteractionSide.Right;
+
+        // Mặc định Auto: tính dựa trên vị trí player so với NPC
         GameObject player = PlayerManager.Instance?.GetPlayer();
         if (player == null) return InteractionSide.Left;
         float diff = player.transform.position.x - transform.position.x;
@@ -556,6 +574,7 @@ public class DialogueTrigger : MonoBehaviour
             return;
         }
 
+        // ✅ Xác định hướng tương tác (có hỗ trợ override)
         _currentSide = DetermineInteractionSide();
 
         var entry = GetAppropriateEntry();
@@ -606,34 +625,27 @@ public class DialogueTrigger : MonoBehaviour
         Vector3? teleportTarget = GetTeleportTarget();
         bool hasCamPoint = GetCameraPointTarget(out Vector3 camPos, out Quaternion camRot);
 
-        // Fade to black
         yield return FadeController.Instance.FadeToBlack();
 
-        // Reset camera về hướng gốc (nếu có)
         if (_cameraController != null)
         {
             _cameraController.ResetYaw();
             Debug.Log("[DialogueTrigger] Camera reset về hướng gốc (yaw = 0).");
         }
 
-        // Teleport player
         ApplyTeleportToPosition(teleportTarget);
 
-        // Chuyển sang dialogue camera (nếu có)
         if (switchCamera && hasCamPoint)
         {
             SwitchToDialogueCameraAtPoint(camPos, camRot);
         }
 
-        // Flip player và NPC dựa trên side
         ApplyCharacterFlips();
 
         yield return new WaitForSeconds(blackScreenDelay);
 
-        // Fade from black
         yield return FadeController.Instance.FadeFromBlack();
 
-        // Flag đã được set true từ trước, không set lại ở đây
         StartDialogueInternal(lines);
     }
 
@@ -706,7 +718,6 @@ public class DialogueTrigger : MonoBehaviour
         _isDialogueTriggered = false;
         _questNotified = false;
 
-        // ✅ Xử lý kết thúc dialogue với/không có fade
         if (useBlackScreenOnEnd)
             StartCoroutine(EndDialogueWithFade());
         else
@@ -715,7 +726,6 @@ public class DialogueTrigger : MonoBehaviour
 
     private void EndDialogueImmediate()
     {
-        // ✅ Khi kết thúc ngay, set flag false
         DialogueBubbleUI.SetDialogueActive(false);
 
         RestoreCameraState();
@@ -728,9 +738,6 @@ public class DialogueTrigger : MonoBehaviour
 
     private IEnumerator EndDialogueWithFade()
     {
-        // 🔥 Quan trọng: giữ flag true trong suốt quá trình fade
-        // (không set false ở đây)
-
         yield return FadeController.Instance.FadeToBlack();
 
         RestoreCameraState();
@@ -740,7 +747,6 @@ public class DialogueTrigger : MonoBehaviour
 
         yield return FadeController.Instance.FadeFromBlack();
 
-        // ✅ Sau khi fade from black hoàn tất, mới set flag false
         DialogueBubbleUI.SetDialogueActive(false);
 
         UnlockPlayerMovement();

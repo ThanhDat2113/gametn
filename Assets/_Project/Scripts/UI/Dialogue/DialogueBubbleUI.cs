@@ -13,10 +13,10 @@ public class DialogueBubbleUI : MonoBehaviour
 {
     public static DialogueBubbleUI Instance { get; private set; }
 
-    // ✅ Static flag để các UI khác kiểm tra
+    // Static flag để các UI khác kiểm tra
     public static bool IsDialogueActive { get; private set; }
 
-    // ✅ Phương thức để set flag từ bên ngoài (DialogueTrigger)
+    // Phương thức để set flag từ bên ngoài (DialogueTrigger)
     public static void SetDialogueActive(bool active)
     {
         IsDialogueActive = active;
@@ -101,7 +101,7 @@ public class DialogueBubbleUI : MonoBehaviour
     {
         if (_isShowing) Hide();
 
-        // ❌ KHÔNG set flag ở đây
+        // KHÔNG set flag ở đây – DialogueTrigger đã set trước
         _onHide = onHide;
         _currentFullText = line.text;
 
@@ -213,7 +213,7 @@ public class DialogueBubbleUI : MonoBehaviour
     {
         if (startIndex == 0)
         {
-            // ❌ KHÔNG set flag ở đây
+            // KHÔNG set flag ở đây
             _sequenceCompleteCallback = onComplete;
         }
 
@@ -242,7 +242,7 @@ public class DialogueBubbleUI : MonoBehaviour
         }
 
         _isShowing = false;
-        // ❌ KHÔNG set flag ở đây
+        // KHÔNG set flag ở đây
         _onHide = null;
 
         var finalCallback = _sequenceCompleteCallback;
@@ -286,7 +286,7 @@ public class DialogueBubbleUI : MonoBehaviour
     {
         if (!_isShowing) return;
         _isShowing = false;
-        // ❌ KHÔNG set flag ở đây
+        // KHÔNG set flag ở đây
         CompleteTyping();
         AudioManager.Instance?.PlayUIDialogueAdvance();
 
