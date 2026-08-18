@@ -14,8 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SkillData
   autoConfirmOnSelect: 0
   movementOverride: 0
-  skillName: "Uchiha Strike"
-  description: "Đấm mạnh vào 1 mục tiêu bằng sức mạnh Uchiha, gây sát thương vật lý."
+  skillName: Uchiha Strike
+  description: "\u0110\u1EA5m m\u1EA1nh v\xE0o 1 m\u1EE5c ti\xEAu b\u1EB1ng s\u1EE9c
+    m\u1EA1nh Uchiha, g\xE2y s\xE1t th\u01B0\u01A1ng v\u1EADt l\xFD."
   icon: {fileID: 0}
   type: 0
   targetType: 0
@@ -24,7 +25,7 @@ MonoBehaviour:
   apCost: 0
   hitCount: 1
   vfxEvents:
-  - vfxPrefab: {fileID: 7414220670958588435, guid: 8b31cb33494b83747953dad528e0e621, type: 3}
+  - vfxPrefab: {fileID: 7536595439091039426, guid: 2b70744d88f884e47afe2d7f55fe51b6, type: 3}
     spawnMode: 1
     offset: {x: 0, y: 0, z: 0}
     attachToCaster: 0
@@ -35,6 +36,11 @@ MonoBehaviour:
   chargeSound: {fileID: 0}
   voiceLines: []
   animationTrigger: Skill1
+  isBeam: 0
+  beamShakeBaseIntensity: 0.35
+  beamShakeStepIntensity: 0.12
+  beamShakeDuration: 0.5
+  beamShakeFrequency: 24
   isRanged: 0
   projectilePrefab: {fileID: 0}
   projectileOffset: {x: 0, y: 0, z: 0}
