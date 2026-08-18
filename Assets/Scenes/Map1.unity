@@ -14851,6 +14851,7 @@ GameObject:
   - component: {fileID: 179514176}
   - component: {fileID: 179514178}
   - component: {fileID: 179514177}
+  - component: {fileID: 179514179}
   m_Layer: 0
   m_Name: Object 1-3
   m_TagString: Untagged
@@ -14904,6 +14905,21 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::QuestVisibilityController
   targetObject: {fileID: 1804322746}
   config: {fileID: 11400000, guid: 2b5057e7455aaba4293b9d290a8cb83c, type: 2}
+  defaultVisibility: 0
+--- !u!114 &179514179
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 179514175}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 77a036252314dcd4dbde485624a8eedc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestVisibilityController
+  targetObject: {fileID: 655515103}
+  config: {fileID: 11400000, guid: a2283f858026baa42b9fcb73628e1f76, type: 2}
   defaultVisibility: 0
 --- !u!1001 &181188250
 PrefabInstance:
@@ -22626,6 +22642,59 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpawnPoint
   spawnID: Spawn_Start
+--- !u!1 &331103493
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 331103494}
+  - component: {fileID: 331103495}
+  m_Layer: 0
+  m_Name: Block
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &331103494
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 331103493}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -319.2, y: 107, z: 25.9}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 554073902}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &331103495
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 331103493}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1, y: 19.040657, z: 28.045036}
+  m_Center: {x: 0, y: 6.3310432, z: 0.2600956}
 --- !u!1 &331403534
 GameObject:
   m_ObjectHideFlags: 0
@@ -24524,7 +24593,7 @@ Transform:
   m_GameObject: {fileID: 374202600}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -278.3, y: 107.94, z: 27.22}
+  m_LocalPosition: {x: -283, y: 107.94, z: 27.22}
   m_LocalScale: {x: 9, y: 9, z: 9}
   m_ConstrainProportionsScale: 1
   m_Children:
@@ -45618,6 +45687,7 @@ Transform:
   - {fileID: 2032668842}
   - {fileID: 726349023}
   - {fileID: 1946745647}
+  - {fileID: 331103494}
   - {fileID: 2089988908}
   - {fileID: 341095629}
   - {fileID: 975771801}
@@ -45626,6 +45696,7 @@ Transform:
   - {fileID: 179514176}
   - {fileID: 991643741}
   - {fileID: 1363369442}
+  - {fileID: 655515104}
   - {fileID: 648330767}
   - {fileID: 1606156169}
   - {fileID: 1290094778}
@@ -51999,12 +52070,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 655515103}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 1122.22, y: 110.06, z: 90}
+  m_LocalScale: {x: 9, y: 9, z: 9}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1586788783}
+  m_Father: {fileID: 554073902}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &655515105
 MonoBehaviour:
@@ -52039,8 +52110,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.57474786, y: 1.3334901, z: 0.93730015}
-  m_Center: {x: 0.09480108, y: 0.012076908, z: -0.0031841067}
+  m_Size: {x: 3.084432, y: 1.3334901, z: 3.7065823}
+  m_Center: {x: -0.90041095, y: 0.012076908, z: -0.19068718}
 --- !u!1 &658898415
 GameObject:
   m_ObjectHideFlags: 0
@@ -71418,6 +71489,7 @@ GameObject:
   - component: {fileID: 991643748}
   - component: {fileID: 991643750}
   - component: {fileID: 991643749}
+  - component: {fileID: 991643751}
   m_Layer: 0
   m_Name: Object 1-4
   m_TagString: Untagged
@@ -71578,6 +71650,21 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::QuestVisibilityController
   targetObject: {fileID: 1882786525}
   config: {fileID: 11400000, guid: 7adbc3a00035644428a8d1e6b32df8d3, type: 2}
+  defaultVisibility: 0
+--- !u!114 &991643751
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 991643740}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 77a036252314dcd4dbde485624a8eedc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestVisibilityController
+  targetObject: {fileID: 1946745646}
+  config: {fileID: 11400000, guid: 58f5af5cfde496c4ab832c4f7bae3356, type: 2}
   defaultVisibility: 0
 --- !u!1 &992423061 stripped
 GameObject:
@@ -120397,7 +120484,6 @@ Transform:
   - {fileID: 1585115645}
   - {fileID: 198291}
   - {fileID: 1458498240}
-  - {fileID: 655515104}
   m_Father: {fileID: 314064806}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1586788788
@@ -146582,8 +146668,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1.4036391, y: 0.51000005, z: 0.7273034}
-  m_Center: {x: 0.120798744, y: 0, z: 0.0025592248}
+  m_Size: {x: 3.1921387, y: 0.51000005, z: 3.42447}
+  m_Center: {x: -0.7734511, y: 0, z: -0.24984953}
 --- !u!114 &2021228289
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -146695,7 +146781,7 @@ MonoBehaviour:
   talkPrompt: {fileID: 13538217}
   combatPrompt: {fileID: 0}
   interactKey: 101
-  autoStartCombatOnTouch: 0
+  autoStartCombatOnTouch: 1
 --- !u!114 &2021228293
 MonoBehaviour:
   m_ObjectHideFlags: 0

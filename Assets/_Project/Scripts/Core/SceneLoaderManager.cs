@@ -71,6 +71,15 @@ public class SceneLoaderManager : MonoBehaviour
             Debug.Log("[SceneLoaderManager] Player movement enabled.");
         }
 
+        // 🔥 Reset camera yaw về hướng gốc khi quay về map
+        // (tránh bug: camera giữ nguyên góc xoay sau khi vào combat rồi nói chuyện NPC)
+        var cameraController = Object.FindFirstObjectByType<HSRCameraController>();
+        if (cameraController != null)
+        {
+            cameraController.ResetYaw();
+            Debug.Log("[SceneLoaderManager] Camera yaw reset về 0.");
+        }
+
         // Quay lại active scene là map hiện tại
         if (SceneTransitionManager.Instance != null)
         {
