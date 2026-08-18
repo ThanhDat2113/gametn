@@ -25,7 +25,7 @@ MonoBehaviour:
   apCost: 0
   hitCount: 1
   vfxEvents:
-  - vfxPrefab: {fileID: 204355416896773010, guid: cdda3ece994ed5e4ea4aa4916aa00e24, type: 3}
+  - vfxPrefab: {fileID: 4480369989879239961, guid: f38ec3b2510098742b6ea6f9da1c24a0, type: 3}
     spawnMode: 1
     offset: {x: 0, y: 0, z: 0}
     attachToCaster: 0
@@ -35,6 +35,11 @@ MonoBehaviour:
   chargeSound: {fileID: 0}
   voiceLines: []
   animationTrigger: Skill3
+  isBeam: 0
+  beamShakeBaseIntensity: 0.35
+  beamShakeStepIntensity: 0.12
+  beamShakeDuration: 0.5
+  beamShakeFrequency: 24
   isRanged: 0
   projectilePrefab: {fileID: 0}
   projectileOffset: {x: 0, y: 0, z: 0}
