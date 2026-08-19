@@ -25,7 +25,22 @@ public class NPCInteraction : MonoBehaviour
 
     private void Update()
     {
-        if (!isPlayerInRange || isProcessing) return;
+        if (isProcessing) return;
+
+        // 🔥 SAFETY NET: OnTriggerExit có thể bị bỏ lỡ khi CharacterController của player
+        // bị disable/enable trong lúc dialogue (Unity không gọi trigger events chính xác).
+        // Kiểm tra lại khoảng cách thực tế để không thể kích hoạt dialogue từ xa.
+        if (isPlayerInRange && !IsPlayerActuallyInRange())
+        {
+            isPlayerInRange = false;
+            HideAllPrompts();
+            return;
+        }
+
+        if (!isPlayerInRange) return;
+
+        // Chặn tương tác trong khi dialogue đang chạy
+        if (dialogueTrigger != null && dialogueTrigger.IsPlaying()) return;
 
         if (autoStartCombatOnTouch)
         {
@@ -42,6 +57,16 @@ public class NPCInteraction : MonoBehaviour
     public void TryInteract()
     {
         if (isProcessing) return;
+        if (!isPlayerInRange) return;
+
+        // 🔥 Xác nhận player thật sự ở trong trigger trước khi cho tương tác
+        if (!IsPlayerActuallyInRange())
+        {
+            isPlayerInRange = false;
+            HideAllPrompts();
+            return;
+        }
+
         isProcessing = true;
 
         // Ẩn prompt ngay khi bắt đầu tương tác
@@ -138,6 +163,46 @@ public class NPCInteraction : MonoBehaviour
 
         isPlayerInRange = false;
         HideAllPrompts();
+    }
+
+    /// <summary>
+    /// Lấy trigger collider dùng cho tương tác NPC.
+    /// Ưu tiên collider trên chính GameObject, sau đó tìm trong children.
+    /// </summary>
+    private Collider GetTriggerCollider()
+    {
+        Collider ownCollider = GetComponent<Collider>();
+        if (ownCollider != null && ownCollider.isTrigger)
+            return ownCollider;
+
+        Collider[] colliders = GetComponentsInChildren<Collider>(true);
+        foreach (var c in colliders)
+            if (c != null && c.isTrigger) return c;
+
+        return ownCollider;
+    }
+
+    /// <summary>
+    /// Kiểm tra player có thực sự nằm trong trigger collider hay không.
+    /// Dùng làm safety net khi OnTriggerExit bị bỏ lỡ (ví dụ: CharacterController bị
+    /// disable/enable trong lúc dialogue khiến Unity không gọi trigger events chính xác).
+    /// </summary>
+    private bool IsPlayerActuallyInRange()
+    {
+        Collider triggerCollider = GetTriggerCollider();
+        if (triggerCollider == null || !triggerCollider.enabled)
+            return false;
+
+        GameObject player = PlayerManager.Instance?.GetPlayer();
+        if (player == null) return false;
+
+        Collider playerCollider = player.GetComponent<Collider>();
+        if (playerCollider != null && playerCollider.enabled)
+            return triggerCollider.bounds.Intersects(playerCollider.bounds);
+
+        // Fallback: nếu player collider đang bị disable (ví dụ trong lúc dialogue),
+        // kiểm tra vị trí player có nằm trong bounds của trigger không.
+        return triggerCollider.bounds.Contains(player.transform.position);
     }
 
     /// <summary>
