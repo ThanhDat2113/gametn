@@ -27,9 +27,11 @@ namespace QLDATN.ProjectTracker
         private const double HeartbeatSeconds = 30.0;
         private const double GitRefreshSeconds = 60.0;
         private const double RecentSourceActivitySeconds = 90.0;
-        private const string ClientVersion = "qldatn-unity-3.3.1";
+        private const string ClientVersion = "qldatn-unity-3.4.0";
         private const string PendingUpdatePreference = "QLDATN_PROJECT_TRACKER_PENDING_UPDATE";
         private const int MaximumOfflinePayloads = 50;
+        private const string TrackerFileName = "QLDATNSceneTracker.cs";
+        private const string BranchRecoveryHookMarker = "# QLDATN_UNITY_TRACKER_POST_CHECKOUT";
         private static readonly double[] RetryDelaysSeconds = { 2.0, 5.0, 15.0 };
 
         private static readonly string SessionIdPath = Path.Combine(
@@ -65,6 +67,7 @@ namespace QLDATN.ProjectTracker
 
         static SceneTracker()
         {
+            EnsureBranchRecoveryCache();
             RestorePendingPayloads();
             EditorApplication.update += OnEditorUpdate;
             EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
@@ -220,6 +223,242 @@ namespace QLDATN.ProjectTracker
             )
             {
                 QueueSend(CurrentStatus(), "REVISION_CHANGED", 1, 0, true, _revision);
+            }
+        }
+
+        // Keep a credential-free copy inside .git so a branch switch can restore
+        // this ignored tracker file without relying on any branch's source tree.
+        private static void EnsureBranchRecoveryCache()
+        {
+            try
+            {
+                var projectDirectory = Directory.GetParent(Application.dataPath)?.FullName;
+                if (string.IsNullOrEmpty(projectDirectory)) return;
+                var trackerPath = Path.Combine(
+                    Application.dataPath,
+                    "Editor",
+                    TrackerFileName
+                );
+                if (!IsQldatnTrackerFile(trackerPath)) return;
+
+                var gitDirectory = ResolveGitDirectory(projectDirectory);
+                if (string.IsNullOrEmpty(gitDirectory)) return;
+                var cacheDirectory = Path.Combine(gitDirectory, "qldatn-tracker");
+                Directory.CreateDirectory(cacheDirectory);
+                File.Copy(
+                    trackerPath,
+                    Path.Combine(cacheDirectory, TrackerFileName),
+                    true
+                );
+                InstallUnityBranchRecoveryHook(projectDirectory, gitDirectory);
+            }
+            catch
+            {
+                // Recovery is best-effort and must never interrupt Unity Editor.
+            }
+        }
+
+        private static bool IsQldatnTrackerFile(string sourcePath)
+        {
+            try
+            {
+                if (!File.Exists(sourcePath)) return false;
+                var source = File.ReadAllText(sourcePath, Encoding.UTF8);
+                return source.Contains("namespace QLDATN.ProjectTracker")
+                    && source.Contains("public static class SceneTracker")
+                    && source.Contains("QLDATN_PROJECT_TRACKER_URL");
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private static string ResolveGitDirectory(string projectDirectory)
+        {
+            var rawGitDirectory = RunGit(
+                projectDirectory,
+                "rev-parse --absolute-git-dir",
+                2000
+            );
+            if (string.IsNullOrEmpty(rawGitDirectory))
+            {
+                rawGitDirectory = RunGit(
+                    projectDirectory,
+                    "rev-parse --git-dir",
+                    2000
+                );
+            }
+            if (string.IsNullOrEmpty(rawGitDirectory)) return "";
+            try
+            {
+                return Path.GetFullPath(
+                    Path.IsPathRooted(rawGitDirectory)
+                        ? rawGitDirectory
+                        : Path.Combine(projectDirectory, rawGitDirectory)
+                );
+            }
+            catch
+            {
+                return "";
+            }
+        }
+
+        private static bool IsInsideDirectory(string candidate, string parent)
+        {
+            try
+            {
+                var normalizedCandidate = Path.GetFullPath(candidate);
+                var normalizedParent = Path.GetFullPath(parent)
+                    .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+                    + Path.DirectorySeparatorChar;
+                return normalizedCandidate.StartsWith(
+                    normalizedParent,
+                    StringComparison.OrdinalIgnoreCase
+                );
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private static void InstallUnityBranchRecoveryHook(
+            string projectDirectory,
+            string gitDirectory
+        )
+        {
+            var configuredHooksPath = RunGit(
+                projectDirectory,
+                "config --get core.hooksPath",
+                2000
+            );
+            var hooksDirectory = string.IsNullOrEmpty(configuredHooksPath)
+                ? Path.Combine(gitDirectory, "hooks")
+                : Path.GetFullPath(
+                    Path.IsPathRooted(configuredHooksPath)
+                        ? configuredHooksPath
+                        : Path.Combine(projectDirectory, configuredHooksPath)
+                );
+            var hooksInsideGitDirectory = IsInsideDirectory(hooksDirectory, gitDirectory);
+            var hooksInsideProject = IsInsideDirectory(hooksDirectory, projectDirectory);
+            if (!hooksInsideGitDirectory && !hooksInsideProject) return;
+
+            Directory.CreateDirectory(hooksDirectory);
+            var hookPath = Path.Combine(hooksDirectory, "post-checkout");
+            var backupPath = Path.Combine(
+                hooksDirectory,
+                "post-checkout.qldatn-unity-original"
+            );
+            var existingHook = File.Exists(hookPath)
+                ? File.ReadAllText(hookPath, Encoding.UTF8)
+                : "";
+            if (!existingHook.Contains(BranchRecoveryHookMarker))
+            {
+                if (!string.IsNullOrEmpty(existingHook))
+                {
+                    // A project-owned hooks path may be committed/shared. Do not rewrite it.
+                    if (!hooksInsideGitDirectory || File.Exists(backupPath)) return;
+                    File.Move(hookPath, backupPath);
+                }
+                var hookSource = string.Join("\n", new[]
+                {
+                    "#!/bin/sh",
+                    BranchRecoveryHookMarker,
+                    "root=\"$(git rev-parse --show-toplevel 2>/dev/null || pwd)\"",
+                    "status=0",
+                    "original_hook=" + ShellQuote(backupPath),
+                    "if [ -x \"$original_hook\" ]; then",
+                    "  \"$original_hook\" \"$@\" || status=$?",
+                    "fi",
+                    "git_dir=\"$(git rev-parse --absolute-git-dir 2>/dev/null || git rev-parse --git-dir 2>/dev/null || true)\"",
+                    "case \"$git_dir\" in",
+                    "  /*|[A-Za-z]:/*) ;;",
+                    "  *) git_dir=\"$root/$git_dir\" ;;",
+                    "esac",
+                    "cache=\"$git_dir/qldatn-tracker/" + TrackerFileName + "\"",
+                    "target=\"$root/Assets/Editor/" + TrackerFileName + "\"",
+                    "if [ ! -f \"$target\" ] && [ -f \"$cache\" ]; then",
+                    "  mkdir -p \"$(dirname \"$target\")\"",
+                    "  cp \"$cache\" \"$target\"",
+                    "  echo \"[QLDATN Tracker] Đã khôi phục tracker Unity sau khi chuyển branch.\"",
+                    "fi",
+                    "exit \"$status\"",
+                    ""
+                });
+                File.WriteAllText(hookPath, hookSource, new UTF8Encoding(false));
+                MarkExecutable(hookPath, projectDirectory);
+            }
+            if (hooksInsideProject)
+            {
+                EnsureLocalGitIgnore(projectDirectory, gitDirectory, hookPath);
+            }
+        }
+
+        private static string ShellQuote(string value)
+        {
+            return "'" + value.Replace("'", "'\"'\"'") + "'";
+        }
+
+        private static void MarkExecutable(string path, string workingDirectory)
+        {
+            if (Application.platform == RuntimePlatform.WindowsEditor) return;
+            try
+            {
+                var startInfo = new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = "chmod",
+                    Arguments = "+x \"" + path.Replace("\"", "\\\"") + "\"",
+                    WorkingDirectory = workingDirectory,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+                using var process = System.Diagnostics.Process.Start(startInfo);
+                process?.WaitForExit(2000);
+            }
+            catch
+            {
+                // Git will ignore a non-executable hook; this remains non-fatal.
+            }
+        }
+
+        private static void EnsureLocalGitIgnore(
+            string projectDirectory,
+            string gitDirectory,
+            string hookPath
+        )
+        {
+            try
+            {
+                var relativeHookPath = hookPath
+                    .Substring(projectDirectory.TrimEnd(
+                        Path.DirectorySeparatorChar,
+                        Path.AltDirectorySeparatorChar
+                    ).Length)
+                    .TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+                    .Replace(Path.DirectorySeparatorChar, '/');
+                if (string.IsNullOrEmpty(relativeHookPath)) return;
+                var excludePath = Path.Combine(gitDirectory, "info", "exclude");
+                var current = File.Exists(excludePath)
+                    ? File.ReadAllText(excludePath, Encoding.UTF8)
+                    : "";
+                var rules = new HashSet<string>(
+                    current.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
+                );
+                if (rules.Contains(relativeHookPath)) return;
+                var parentDirectory = Path.GetDirectoryName(excludePath);
+                if (!string.IsNullOrEmpty(parentDirectory)) Directory.CreateDirectory(parentDirectory);
+                File.AppendAllText(
+                    excludePath,
+                    (string.IsNullOrEmpty(current) || current.EndsWith("\n")
+                        ? ""
+                        : "\n") + relativeHookPath + "\n",
+                    new UTF8Encoding(false)
+                );
+            }
+            catch
+            {
+                // An ignored local hook is convenient but not required for recovery.
             }
         }
 
