@@ -70,9 +70,10 @@ public class ClashAnimationSequence : MonoBehaviour
         // Với skill nhiều hit, nếu clip chỉ phát ít hơn hitCount lần OnHit(int) thì các hit
         // còn lại rơi vào đây → FlushPendingOutcomes vừa áp damage vừa bổ sung VFX còn thiếu
         // (SpawnRemainingVFX) để skill luôn spawn ĐỦ hitCount VFX theo đúng thứ tự.
-        // ❌ SFX fallback đã bỏ: SFX giờ được spawn cùng VFX qua PlayHitVFXSequence(animLength, skill.sfxClips)
         if (actorView != null)
         {
+            if (_lastHitCounter == 0 && CombatAudioManager.Instance != null && result.Skill != null)
+                CombatAudioManager.Instance.PlaySkillSFX(result.Skill.sfxClips, 0);
             actorView.FlushPendingOutcomes();
         }
 
@@ -178,6 +179,13 @@ public class ClashAnimationSequence : MonoBehaviour
         var actorView = GetViewForUnit(result.Actor);
         var skill = result.Skill;
         var targets = result.InitialTargets;
+        
+        // Null safety checks
+        if (skill == null || targets == null)
+        {
+            Debug.LogError($"[ClashAnimationSequence] ExecutePhase: skill or targets is null");
+            return 0.5f;
+        }
         if (actorView == null) return 0.5f;
 
         actorView.SetCurrentSkill(skill);
@@ -191,8 +199,7 @@ public class ClashAnimationSequence : MonoBehaviour
         _lastHitCounter = 0;
         Action onHitHandler = () => {
             int currentHit = _lastHitCounter++;
-            if (CombatAudioManager.Instance != null && skill != null)
-                CombatAudioManager.Instance.PlaySkillSFX(skill.sfxClips, currentHit);
+            // SFX được spawn bởi SpawnHitVFXSequence, không cần spawn ở đây
             // AOE: mỗi hit → camera zoom ra xa thêm (giữ center = tâm nhóm target)
             if (isAOE && cameraManager != null)
                 cameraManager.AdvanceAOEZoom();
@@ -232,9 +239,10 @@ actorView.OnAnimationEndEvent += cleanupHandler;
             animLength = actorView.GetClipLength(AnimationConstants.Attack);
         }
 
-        // Spawn ĐỦ hitCount VFX & SFX rải đều theo thời lượng animation (không phụ thuộc hit event).
-        // SFX sẽ spawn cùng lúc với VFX cho tất cả skill, kể cả skill không có OnHit event.
-        actorView.PlayHitVFXSequence(animLength, skill.sfxClips);
+        // Spawn ĐỦ hitCount VFX rải đều theo thời lượng animation (không phụ thuộc hit event).
+        // SFX được spawn đồng thời với VFX nếu skill có sfxClips
+        AudioClip[] sfxClips = skill != null ? skill.sfxClips : null;
+        actorView.PlayHitVFXSequence(animLength, sfxClips);
 
         return animLength;
     }

@@ -627,10 +627,6 @@ public class DialogueTrigger : MonoBehaviour
 
         yield return FadeController.Instance.FadeToBlack();
 
-        // 🔥 Tìm lại camera controller mỗi lần dùng (có thể bị null nếu camera bị disable khi vào combat)
-        if (_cameraController == null)
-            _cameraController = FindObjectOfType<HSRCameraController>();
-
         if (_cameraController != null)
         {
             _cameraController.ResetYaw();
@@ -657,10 +653,6 @@ public class DialogueTrigger : MonoBehaviour
     {
         Vector3? teleportTarget = GetTeleportTarget();
         bool hasCamPoint = GetCameraPointTarget(out Vector3 camPos, out Quaternion camRot);
-
-        // 🔥 Tìm lại camera controller mỗi lần dùng (có thể bị null nếu camera bị disable khi vào combat)
-        if (_cameraController == null)
-            _cameraController = FindObjectOfType<HSRCameraController>();
 
         if (_cameraController != null)
         {
