@@ -186,6 +186,7 @@ public class QuestTeleportTrigger : MonoBehaviour
             // Nếu Timeline nằm trong 1 container cha đang bị tắt, chỉ SetActive
             // object con thôi sẽ không đủ (activeInHierarchy vẫn false → Play() không chạy).
             ActivateHierarchy(teleportTimeline.transform);
+            TimelinePlaybackManager.BeginTimeline();
             teleportTimeline.Play();
             Debug.Log($"[QuestTeleportTrigger] '{name}': Playing timeline '{teleportTimeline.name}'...");
 
@@ -207,6 +208,9 @@ public class QuestTeleportTrigger : MonoBehaviour
                 else
                     Debug.Log($"[QuestTeleportTrigger] '{name}': Timeline finished.");
             }
+
+            // Timeline chạy xong — báo TimelinePlaybackManager để nhân vật/UI được mở khoá
+            TimelinePlaybackManager.EndTimeline();
 
             // Timeline chạy xong — dừng, tắt lại object cha về trạng thái ẩn ban đầu,
             // rồi xoá hẳn object chứa Timeline (dùng 1 lần, không cần giữ lại).

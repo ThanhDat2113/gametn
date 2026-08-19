@@ -27,11 +27,13 @@ namespace QLDATN.ProjectTracker
         private const double HeartbeatSeconds = 30.0;
         private const double GitRefreshSeconds = 60.0;
         private const double RecentSourceActivitySeconds = 90.0;
-        private const string ClientVersion = "qldatn-unity-3.4.0";
+        private const string ClientVersion = "qldatn-unity-3.5.0";
         private const string PendingUpdatePreference = "QLDATN_PROJECT_TRACKER_PENDING_UPDATE";
         private const int MaximumOfflinePayloads = 50;
         private const string TrackerFileName = "QLDATNSceneTracker.cs";
         private const string BranchRecoveryHookMarker = "# QLDATN_UNITY_TRACKER_POST_CHECKOUT";
+        private const double LiveActivityDebounceSeconds = 0.35;
+        private const int MaximumLiveActivitiesPerBatch = 24;
         private static readonly double[] RetryDelaysSeconds = { 2.0, 5.0, 15.0 };
 
         private static readonly string SessionIdPath = Path.Combine(
@@ -64,6 +66,8 @@ namespace QLDATN.ProjectTracker
         private static double _lastSourceActivity = -RecentSourceActivitySeconds;
         private static long _lastSequence;
         private static bool _updateCompilationFailed;
+        private static readonly Dictionary<string, double> LastLiveActivityAt =
+            new Dictionary<string, double>();
 
         static SceneTracker()
         {
@@ -128,6 +132,7 @@ namespace QLDATN.ProjectTracker
             RefreshState(false);
             _lastKnownDirty = _isDirty;
             QueueSend(CurrentStatus());
+            QueueLiveActivity("UNITY_SCENE_OPENED", _sceneValue.path);
         }
 
         private static void OnSceneClosed(Scene _sceneValue)
@@ -145,6 +150,7 @@ namespace QLDATN.ProjectTracker
             RefreshState(false);
             _lastKnownDirty = _isDirty;
             QueueSend(CurrentStatus(), "SCENE_SAVED", 1);
+            QueueLiveActivity("UNITY_SCENE_SAVED", _sceneValue.path);
         }
 
         private static void OnPlayModeStateChanged(PlayModeStateChange state)
@@ -917,12 +923,125 @@ namespace QLDATN.ProjectTracker
             return difference == 0;
         }
 
-        public static void ReportAssetChanges(int count)
+        public static void ReportAssetChanges(
+            string[] importedAssets,
+            string[] deletedAssets,
+            string[] movedAssets
+        )
         {
+            var count = importedAssets.Length + deletedAssets.Length + movedAssets.Length;
             if (count <= 0) return;
             _lastSourceActivity = EditorApplication.timeSinceStartup;
             _pendingAssetChanges += count;
             _assetFlushAt = EditorApplication.timeSinceStartup + 2.0;
+            QueueLiveActivityBatch("UNITY_ASSET_CHANGED", importedAssets);
+            QueueLiveActivityBatch("UNITY_ASSET_DELETED", deletedAssets);
+            QueueLiveActivityBatch("UNITY_ASSET_CHANGED", movedAssets);
+        }
+
+        private static void QueueLiveActivityBatch(string action, string[] assetPaths)
+        {
+            if (assetPaths == null) return;
+            for (var index = 0; index < assetPaths.Length && index < MaximumLiveActivitiesPerBatch; index++)
+            {
+                QueueLiveActivity(action, assetPaths[index]);
+            }
+        }
+
+        // Live source activity is sent directly to Redis Pub/Sub; it is never queued or persisted.
+        private static void QueueLiveActivity(string action, string sourcePath)
+        {
+            if (!IsConfigured()) return;
+            var path = NormalizeLiveSourcePath(sourcePath);
+            if (string.IsNullOrEmpty(path)) return;
+            var key = action + ":" + path;
+            var now = EditorApplication.timeSinceStartup;
+            if (
+                LastLiveActivityAt.TryGetValue(key, out var previous)
+                && now - previous < LiveActivityDebounceSeconds
+            ) {
+                return;
+            }
+            LastLiveActivityAt[key] = now;
+            if (LastLiveActivityAt.Count > 1000) LastLiveActivityAt.Clear();
+            _ = SendLiveActivityAsync(action, path);
+        }
+
+        private static string NormalizeLiveSourcePath(string sourcePath)
+        {
+            if (string.IsNullOrEmpty(sourcePath)) return "";
+            var normalized = sourcePath.Replace("\\", "/").Trim();
+            if (
+                !normalized.StartsWith("Assets/", StringComparison.Ordinal)
+                || normalized.Contains("../")
+                || normalized.EndsWith(".meta", StringComparison.OrdinalIgnoreCase)
+                || normalized.Contains("/QLDATNSceneTracker", StringComparison.OrdinalIgnoreCase)
+            ) {
+                return "";
+            }
+            var extension = Path.GetExtension(normalized).ToLowerInvariant();
+            switch (extension)
+            {
+                case ".asmdef":
+                case ".cs":
+                case ".hlsl":
+                case ".json":
+                case ".prefab":
+                case ".shader":
+                case ".unity":
+                case ".yaml":
+                case ".yml":
+                    return normalized.Length <= 240 ? normalized : normalized.Substring(0, 240);
+                default:
+                    return "";
+            }
+        }
+
+        private static async Task SendLiveActivityAsync(string action, string sourcePath)
+        {
+            try
+            {
+                var heartbeatUrl = EditorPrefs.GetString(TrackerUrlPreference);
+                var heartbeatUri = new Uri(heartbeatUrl);
+                var endpoint = heartbeatUri.GetLeftPart(UriPartial.Authority)
+                    + "/api/project-tracker/live-activity";
+                var json = JsonUtility.ToJson(new LiveActivityPayload
+                {
+                    action = action,
+                    path = sourcePath
+                });
+                var timestamp = UnixTimeMilliseconds().ToString();
+                var sequence = NextSequence().ToString();
+                var body = Encoding.UTF8.GetBytes(json);
+                using var request = new UnityWebRequest(endpoint, "POST");
+                request.timeout = 5;
+                request.uploadHandler = new UploadHandlerRaw(body);
+                request.downloadHandler = new DownloadHandlerBuffer();
+                request.SetRequestHeader("Content-Type", "application/json");
+                request.SetRequestHeader(
+                    "Authorization",
+                    "Device " + EditorPrefs.GetString(DeviceKeyIdPreference)
+                );
+                request.SetRequestHeader("X-Tracker-Timestamp", timestamp);
+                request.SetRequestHeader("X-Tracker-Sequence", sequence);
+                request.SetRequestHeader(
+                    "X-Tracker-Device",
+                    EditorPrefs.GetString(DeviceIdPreference)
+                );
+                request.SetRequestHeader(
+                    "X-Tracker-Signature",
+                    SignRequest(
+                        EditorPrefs.GetString(DeviceSecretPreference),
+                        timestamp + "." + sequence + "." + json
+                    )
+                );
+                var operation = request.SendWebRequest();
+                while (!operation.isDone) await Task.Delay(50);
+            }
+            catch
+            {
+                // Live events are intentionally best-effort and leave no offline record.
+            }
         }
 
         public static void ReportBuildStarted(string target)
@@ -1085,6 +1204,13 @@ namespace QLDATN.ProjectTracker
         }
 
         [Serializable]
+        private class LiveActivityPayload
+        {
+            public string action;
+            public string path;
+        }
+
+        [Serializable]
         private class HeartbeatResponse
         {
             public ClientUpdatePayload clientUpdate;
@@ -1110,9 +1236,7 @@ namespace QLDATN.ProjectTracker
             string[] _movedFromAssetPaths
         )
         {
-            SceneTracker.ReportAssetChanges(
-                importedAssets.Length + deletedAssets.Length + movedAssets.Length
-            );
+            SceneTracker.ReportAssetChanges(importedAssets, deletedAssets, movedAssets);
         }
     }
 

@@ -55,6 +55,13 @@ public class HSRPlayerController : MonoBehaviour
 
     void Update()
     {
+        // 🔥 Chặn di chuyển khi Timeline đang chạy
+        if (TimelinePlaybackManager.IsTimelinePlaying)
+        {
+            ResetToIdle();
+            return;
+        }
+
         float h = Input.GetAxisRaw("Horizontal");
         float v = Input.GetAxisRaw("Vertical");
 

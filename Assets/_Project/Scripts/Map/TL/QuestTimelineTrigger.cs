@@ -195,6 +195,7 @@ public class QuestTimelineTrigger : MonoBehaviour
             Debug.LogWarning($"[QuestTimelineTrigger] '{name}': timelineCamera chưa được gán — bỏ qua bước tắt camera khác.");
         }
 
+        TimelinePlaybackManager.BeginTimeline();
         timeline.Play();
         Debug.Log($"[QuestTimelineTrigger] '{name}': Playing timeline '{timeline.name}'...");
 
@@ -222,6 +223,9 @@ public class QuestTimelineTrigger : MonoBehaviour
             else
                 Debug.Log($"[QuestTimelineTrigger] '{name}': Timeline finished.");
         }
+
+        // Timeline chạy xong — báo TimelinePlaybackManager để nhân vật/UI được mở khoá
+        TimelinePlaybackManager.EndTimeline();
 
         // Timeline chạy xong — dừng, tắt lại object cha về trạng thái ẩn ban đầu,
         // rồi xoá hẳn object chứa Timeline (dùng 1 lần, không cần giữ lại).

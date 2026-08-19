@@ -33,11 +33,12 @@ public class QuestUI : MonoBehaviour
     public void UpdateVisibility()
     {
         bool isDialogueActive = DialogueBubbleUI.IsDialogueActive;
+        bool isTimelinePlaying = TimelinePlaybackManager.IsTimelinePlaying;
         bool hasActiveQuest = QuestManager.Instance != null
                               && QuestManager.Instance.CurrentStep != null
                               && !QuestManager.Instance.IsQuestCompleted();
 
-        bool shouldShow = !isDialogueActive && hasActiveQuest;
+        bool shouldShow = !isDialogueActive && !isTimelinePlaying && hasActiveQuest;
 
         // 🔥 Log để debug
         // Debug.Log($"[QuestUI] shouldShow={shouldShow}, isDialogueActive={isDialogueActive}, hasActiveQuest={hasActiveQuest}");

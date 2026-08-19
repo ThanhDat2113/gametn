@@ -91,6 +91,7 @@ public class MinimapController : MonoBehaviour
     private bool _isHiddenByUI = false;
     private bool _externalCombatFlag = false;
     private bool _isHiddenByDialogue = false;
+    private bool _isHiddenByTimeline = false;
 
     // ── Multi-terrain support ────────────────────────────────────
     private Terrain[] _allTerrains;
@@ -166,12 +167,13 @@ public class MinimapController : MonoBehaviour
         // ✅ Cập nhật flag dialogue
         _isHiddenByDialogue = DialogueBubbleUI.IsDialogueActive;
         CheckUIPanelVisibility();
+        _isHiddenByTimeline = TimelinePlaybackManager.IsTimelinePlaying;
 
         // ✅ LUÔN áp dụng trạng thái ẩn/hiện (fix lỗi không hiện lại sau cutscene)
         ApplyMinimapVisibility();
 
         // Nếu đang ẩn vì bất kỳ lý do gì, bỏ qua cập nhật camera
-        if (_isHiddenByCombat || _isHiddenByUI || _isHiddenByDialogue)
+        if (_isHiddenByCombat || _isHiddenByUI || _isHiddenByDialogue || _isHiddenByTimeline)
             return;
 
         // Cập nhật camera, UV, rotation...
@@ -293,7 +295,7 @@ public class MinimapController : MonoBehaviour
 
     private void ApplyMinimapVisibility()
     {
-        bool shouldHide = _isHiddenByCombat || _isHiddenByUI || _isHiddenByDialogue;
+        bool shouldHide = _isHiddenByCombat || _isHiddenByUI || _isHiddenByDialogue || _isHiddenByTimeline;
 
         switch (hideBehavior)
         {

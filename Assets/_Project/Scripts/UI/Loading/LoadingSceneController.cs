@@ -10,6 +10,10 @@ public class LoadingSceneController : MonoBehaviour
 
     private IEnumerator Start()
     {
+        // Scene mới sắp được load — reset toàn bộ trạng thái Timeline cũ
+        // để tránh counter bị kẹt khi Timeline đang chạy mà bị chuyển scene.
+        TimelinePlaybackManager.Reset();
+
         AsyncOperation operation =
             SceneManager.LoadSceneAsync(SceneLoader.sceneToLoad);
 

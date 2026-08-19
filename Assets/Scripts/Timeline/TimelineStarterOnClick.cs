@@ -36,6 +36,9 @@ public class TimelineStarter : MonoBehaviour
         // Đăng ký sự kiện kết thúc Timeline
         timelineDirector.stopped += OnTimelineFinished;
 
+        // Báo hệ thống đang phát Timeline (chặn di chuyển/ẩn UI + minimap)
+        TimelinePlaybackManager.BeginTimeline();
+
         // Chạy Timeline ngay khi vào scene
         timelineDirector.Play();
     }
@@ -85,12 +88,18 @@ public class TimelineStarter : MonoBehaviour
         if (timelineDirector != null)
             timelineDirector.Stop();
 
+        // Timeline bị dừng sớm bởi skip — báo hệ thống kết thúc phát
+        TimelinePlaybackManager.EndTimeline();
+
         LoadNextScene();
     }
 
     private void OnTimelineFinished(PlayableDirector director)
     {
         if (isSkipping) return;
+
+        // Timeline chạy hết tự nhiên — báo hệ thống kết thúc phát
+        TimelinePlaybackManager.EndTimeline();
 
         LoadNextScene();
     }
