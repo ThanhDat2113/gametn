@@ -26,6 +26,8 @@ public class CombatCameraManager : MonoBehaviour
     public float followZoomSize = 9.5f;
     public float zoomInDuration = 0.15f;
     public float zoomOutDuration = 0.2f;
+    [Tooltip("Giới hạn orthographicSize tối đa khi zoom ra xa. Ngăn camera zoom quá xa gây culling VFX/sprite.")]
+    public float maxOrthoSize = 30f;
 
     [Header("Follow Settings")]
     private Transform followTarget;
@@ -172,7 +174,7 @@ public class CombatCameraManager : MonoBehaviour
     }
 
     public float GetCurrentOrthoSize() => currentOrthoSize;
-    public void SetCameraSize(float newSize) { currentOrthoSize = newSize; mainCamera.orthographicSize = currentOrthoSize; }
+    public void SetCameraSize(float newSize) { currentOrthoSize = Mathf.Min(newSize, maxOrthoSize); mainCamera.orthographicSize = currentOrthoSize; }
 
     public void ZoomToUnit(Transform unit, float zoomSize = 0)
     {
@@ -271,7 +273,8 @@ public class CombatCameraManager : MonoBehaviour
         float yOffset = cameraDistance * Mathf.Sin(angleRad);
         float zOffset = -cameraDistance * Mathf.Cos(angleRad);
         targetPosition = position + new Vector3(0, yOffset, zOffset);
-        currentOrthoSize = size;
+        // ── FIX CULLING: Giới hạn ortho size tối đa ──
+        currentOrthoSize = Mathf.Min(size, maxOrthoSize);
         if (isIntroSequenceActive || followTarget == null)
         {
             cameraTransform.position = targetPosition;
@@ -325,6 +328,8 @@ public class CombatCameraManager : MonoBehaviour
         float requiredWidth = (width + horizontalPadding) * 0.5f / mainCamera.aspect;
         float requiredHeight = (height + verticalPadding) * 0.5f;
         float bufferSize = Mathf.Max(requiredWidth, requiredHeight, 12f);
+        // ── FIX CULLING: Giới hạn ortho size tối đa để tránh zoom quá xa gây culling ──
+        bufferSize = Mathf.Min(bufferSize, maxOrthoSize);
         defaultOrthoSize = bufferSize;
         defaultPosition = center;
         currentOrthoSize = bufferSize;
@@ -390,6 +395,8 @@ public class CombatCameraManager : MonoBehaviour
         float reqW = (width + hPad) * 0.5f / Mathf.Max(0.01f, mainCamera.aspect);
         float reqH = (height + vPad) * 0.5f;
         _aoeBaseOrthoSize = Mathf.Max(reqW, reqH, baseSize);
+        // ── FIX CULLING: Giới hạn ortho size tối đa để tránh zoom quá xa gây culling ──
+        _aoeBaseOrthoSize = Mathf.Min(_aoeBaseOrthoSize, maxOrthoSize);
 
         SetAoECenterPosition(_aoeCenter);
 
@@ -407,6 +414,8 @@ public class CombatCameraManager : MonoBehaviour
         if (!_aoeActive) return;
         _aoeHitStep++;
         float newSize = _aoeBaseOrthoSize + _aoeZoomStepSize * _aoeHitStep;
+        // ── FIX CULLING: Giới hạn ortho size tối đa để tránh zoom quá xa gây culling ──
+        newSize = Mathf.Min(newSize, maxOrthoSize);
 
         SetAoECenterPosition(_aoeCenter);
 
@@ -449,6 +458,8 @@ public class CombatCameraManager : MonoBehaviour
     public void ScamAdjustDistance(float factor)
     {
         defaultOrthoSize = Mathf.Max(defaultOrthoSize * Mathf.Clamp(factor, 0.5f, 2f), 10f);
+        // ── FIX CULLING: Giới hạn ortho size tối đa ──
+        defaultOrthoSize = Mathf.Min(defaultOrthoSize, maxOrthoSize);
         Debug.Log($"[CombatCamera] Distance adjusted: {defaultOrthoSize:F2}");
     }
 
@@ -490,6 +501,7 @@ public class CombatCameraManager : MonoBehaviour
 
     private IEnumerator ZoomInCoroutine(float targetSize)
     {
+        targetSize = Mathf.Min(targetSize, maxOrthoSize);
         float startSize = currentOrthoSize;
         float elapsed = 0f;
         while (elapsed < zoomInDuration)
@@ -637,6 +649,8 @@ public class CombatCameraManager : MonoBehaviour
         float requiredSizeX = bounds.size.x * Screen.height / Screen.width * 0.5f;
         float requiredSizeY = bounds.size.y * 0.5f;
         float targetSize = Mathf.Max(requiredSizeX, requiredSizeY, 7f);
+        // ── FIX CULLING: Giới hạn ortho size tối đa ──
+        targetSize = Mathf.Min(targetSize, maxOrthoSize);
         float angleRad = transform.rotation.eulerAngles.x * Mathf.Deg2Rad;
         float yOffset = cameraDistance * Mathf.Sin(angleRad);
         float zOffset = -cameraDistance * Mathf.Cos(angleRad);

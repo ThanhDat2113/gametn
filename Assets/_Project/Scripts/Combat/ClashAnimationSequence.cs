@@ -70,10 +70,9 @@ public class ClashAnimationSequence : MonoBehaviour
         // Với skill nhiều hit, nếu clip chỉ phát ít hơn hitCount lần OnHit(int) thì các hit
         // còn lại rơi vào đây → FlushPendingOutcomes vừa áp damage vừa bổ sung VFX còn thiếu
         // (SpawnRemainingVFX) để skill luôn spawn ĐỦ hitCount VFX theo đúng thứ tự.
+        // ❌ SFX fallback đã bỏ: SFX giờ được spawn cùng VFX qua PlayHitVFXSequence(animLength, skill.sfxClips)
         if (actorView != null)
         {
-            if (_lastHitCounter == 0 && CombatAudioManager.Instance != null && result.Skill != null)
-                CombatAudioManager.Instance.PlaySkillSFX(result.Skill.sfxClips, 0);
             actorView.FlushPendingOutcomes();
         }
 
@@ -233,8 +232,9 @@ actorView.OnAnimationEndEvent += cleanupHandler;
             animLength = actorView.GetClipLength(AnimationConstants.Attack);
         }
 
-        // Spawn ĐỦ hitCount VFX rải đều theo thời lượng animation (không phụ thuộc hit event).
-        actorView.PlayHitVFXSequence(animLength);
+        // Spawn ĐỦ hitCount VFX & SFX rải đều theo thời lượng animation (không phụ thuộc hit event).
+        // SFX sẽ spawn cùng lúc với VFX cho tất cả skill, kể cả skill không có OnHit event.
+        actorView.PlayHitVFXSequence(animLength, skill.sfxClips);
 
         return animLength;
     }

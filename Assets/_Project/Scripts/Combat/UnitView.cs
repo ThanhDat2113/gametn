@@ -381,18 +381,18 @@ private void ProcessHitAtFrame(int hitIndex)
     }
 
     /// <summary>
-    /// Spawn ĐỦ hitCount VFX rải đều theo thời lượng animation bằng coroutine — KHÔNG phụ
+    /// Spawn ĐỦ hitCount VFX & SFX rải đều theo thời lượng animation bằng coroutine — KHÔNG phụ
     /// thuộc animation hit event. Đảm bảo luôn spawn đúng số lượng, đúng thứ tự vfxEvents,
-    /// mỗi VFX cách nhau đều đặn trong cửa sổ animation.
+    /// mỗi VFX cách nhau đều đặn trong cửa sổ animation. SFX spawn cùng lúc với VFX.
     /// </summary>
-    public void PlayHitVFXSequence(float duration)
+    public void PlayHitVFXSequence(float duration, AudioClip[] sfxClips = null)
     {
         if (currentSkill == null) return;
         vfxIndex = 0;
-        StartCoroutine(SpawnHitVFXSequence(duration));
+        StartCoroutine(SpawnHitVFXSequence(duration, sfxClips));
     }
 
-    private IEnumerator SpawnHitVFXSequence(float duration)
+    private IEnumerator SpawnHitVFXSequence(float duration, AudioClip[] sfxClips = null)
     {
         int targetCount = GetVFXTargetCount();
         if (targetCount <= 0) yield break;
@@ -400,11 +400,15 @@ private void ProcessHitAtFrame(int hitIndex)
         if (duration <= 0f)
         {
             // Không có thời lượng animation → spawn tất cả ngay.
+            int sfxIndex = 0;
             while (vfxIndex < targetCount)
             {
                 VFXEvent evt = GetVFXEvent(vfxIndex);
                 vfxIndex++;
                 if (evt != null) SpawnVFX(evt);
+                // Spawn SFX cùng lúc với VFX
+                if (sfxClips != null && sfxClips.Length > 0)
+                    CombatAudioManager.Instance?.PlaySkillSFX(sfxClips, sfxIndex++);
             }
             yield break;
         }
@@ -415,6 +419,9 @@ private void ProcessHitAtFrame(int hitIndex)
             VFXEvent evt = GetVFXEvent(vfxIndex);
             vfxIndex++;
             if (evt != null) SpawnVFX(evt);
+            // Spawn SFX cùng lúc với VFX
+            if (sfxClips != null && sfxClips.Length > 0)
+                CombatAudioManager.Instance?.PlaySkillSFX(sfxClips, i);
             if (i < targetCount - 1)
                 yield return new WaitForSeconds(interval);
         }
@@ -509,7 +516,22 @@ private void ProcessHitAtFrame(int hitIndex)
             vfx.transform.SetParent(parent);
 
         var visualEffect = vfx.GetComponent<UnityEngine.VFX.VisualEffect>();
-        if (visualEffect != null) visualEffect.Play();
+        if (visualEffect != null)
+        {
+            // ── FIX CULLING: Tăng bounds để VFX không bị culling khi camera zoom ra xa ──
+            // VFX Graph mặc định có bounds nhỏ (1x1x1) + CullByViewportSize/CullByDistance
+            // → khi camera zoom xa, VFX bị culling và không hiển thị.
+            // Cách 1: Set bounds lớn hơn qua property (nếu VFX Graph có expose property này)
+            // Cách 2 (chính): Editor script FixVFXCulling.cs sẽ tắt culling trực tiếp trong file .vfx
+            // Cách 3: Set bounds qua property sheet nếu VFX Graph có expose
+            try
+            {
+                visualEffect.SetVector3("boundsCenter", spawnPos);
+                visualEffect.SetVector3("boundsSize", new Vector3(100f, 100f, 100f));
+            }
+            catch (System.Exception) { /* Bỏ qua nếu VFX không có property bounds */ }
+            visualEffect.Play();
+        }
 
         Destroy(vfx, 2f);
     }
