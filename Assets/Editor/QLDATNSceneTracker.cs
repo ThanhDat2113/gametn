@@ -27,13 +27,17 @@ namespace QLDATN.ProjectTracker
         private const double HeartbeatSeconds = 30.0;
         private const double GitRefreshSeconds = 60.0;
         private const double RecentSourceActivitySeconds = 90.0;
-        private const string ClientVersion = "qldatn-unity-3.5.0";
+        private const string ClientVersion = "qldatn-unity-3.6.0";
         private const string PendingUpdatePreference = "QLDATN_PROJECT_TRACKER_PENDING_UPDATE";
         private const int MaximumOfflinePayloads = 50;
         private const string TrackerFileName = "QLDATNSceneTracker.cs";
         private const string BranchRecoveryHookMarker = "# QLDATN_UNITY_TRACKER_POST_CHECKOUT";
         private const double LiveActivityDebounceSeconds = 0.35;
         private const int MaximumLiveActivitiesPerBatch = 24;
+        private const int MaximumLiveSourceSnapshotChars = 96000;
+        private const int MaximumLiveSourceDiffChars = 8000;
+        private const int MaximumLiveSourceSnapshots = 500;
+        private const int MaximumInitialLiveSourceChars = 2000000;
         private static readonly double[] RetryDelaysSeconds = { 2.0, 5.0, 15.0 };
 
         private static readonly string SessionIdPath = Path.Combine(
@@ -68,6 +72,8 @@ namespace QLDATN.ProjectTracker
         private static bool _updateCompilationFailed;
         private static readonly Dictionary<string, double> LastLiveActivityAt =
             new Dictionary<string, double>();
+        private static readonly Dictionary<string, string> LiveSourceSnapshots =
+            new Dictionary<string, string>();
 
         static SceneTracker()
         {
@@ -85,6 +91,7 @@ namespace QLDATN.ProjectTracker
 
             EditorApplication.delayCall += () =>
             {
+                PrimeLiveSourceSnapshots();
                 RefreshState(true);
                 _lastKnownDirty = _isDirty;
                 QueueSend(CurrentStatus());
@@ -948,7 +955,7 @@ namespace QLDATN.ProjectTracker
             }
         }
 
-        // Live source activity is sent directly to Redis Pub/Sub; it is never queued or persisted.
+        // Live source activity only holds a baseline in editor memory to build a diff.
         private static void QueueLiveActivity(string action, string sourcePath)
         {
             if (!IsConfigured()) return;
@@ -964,7 +971,10 @@ namespace QLDATN.ProjectTracker
             }
             LastLiveActivityAt[key] = now;
             if (LastLiveActivityAt.Count > 1000) LastLiveActivityAt.Clear();
-            _ = SendLiveActivityAsync(action, path);
+            var sourceChange = action != "UNITY_SCENE_OPENED";
+            var diff = sourceChange ? CaptureLiveSourceDiff(path) : "";
+            if (sourceChange && string.IsNullOrEmpty(diff)) return;
+            _ = SendLiveActivityAsync(action, path, diff);
         }
 
         private static string NormalizeLiveSourcePath(string sourcePath)
@@ -997,7 +1007,153 @@ namespace QLDATN.ProjectTracker
             }
         }
 
-        private static async Task SendLiveActivityAsync(string action, string sourcePath)
+        private static void PrimeLiveSourceSnapshots()
+        {
+            try
+            {
+                var totalCharacters = 0;
+                foreach (var fullPath in Directory.GetFiles(
+                    Application.dataPath,
+                    "*",
+                    SearchOption.AllDirectories
+                ))
+                {
+                    if (
+                        LiveSourceSnapshots.Count >= MaximumLiveSourceSnapshots
+                        || totalCharacters >= MaximumInitialLiveSourceChars
+                    ) {
+                        return;
+                    }
+                    var relative = fullPath.Substring(Application.dataPath.Length)
+                        .TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+                        .Replace("\\", "/");
+                    var sourcePath = NormalizeLiveSourcePath("Assets/" + relative);
+                    if (string.IsNullOrEmpty(sourcePath)) continue;
+                    if (!TryReadLiveSource(sourcePath, out var source)) continue;
+                    if (source.Length > MaximumInitialLiveSourceChars - totalCharacters) continue;
+                    LiveSourceSnapshots[sourcePath] = source;
+                    totalCharacters += source.Length;
+                }
+            }
+            catch
+            {
+                // Priming only improves the first live diff and must not affect the editor.
+            }
+        }
+
+        private static bool TryReadLiveSource(string sourcePath, out string source)
+        {
+            source = "";
+            try
+            {
+                var projectDirectory = Directory.GetParent(Application.dataPath)?.FullName;
+                if (string.IsNullOrEmpty(projectDirectory)) return false;
+                var fullPath = Path.GetFullPath(Path.Combine(projectDirectory, sourcePath));
+                var projectRoot = Path.GetFullPath(projectDirectory) + Path.DirectorySeparatorChar;
+                if (!fullPath.StartsWith(projectRoot, StringComparison.Ordinal)) return false;
+                var info = new FileInfo(fullPath);
+                if (!info.Exists || info.Length > MaximumLiveSourceSnapshotChars) return false;
+                source = File.ReadAllText(fullPath)
+                    .Replace("\r\n", "\n")
+                    .Replace("\r", "\n");
+                return source.Length <= MaximumLiveSourceSnapshotChars;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private static string CaptureLiveSourceDiff(string sourcePath)
+        {
+            var hasPrevious = LiveSourceSnapshots.TryGetValue(sourcePath, out var previous);
+            if (!TryReadLiveSource(sourcePath, out var current))
+            {
+                if (!hasPrevious) return "";
+                LiveSourceSnapshots.Remove(sourcePath);
+                return CreateLiveSourceDiff(previous, "", false);
+            }
+            if (hasPrevious || LiveSourceSnapshots.Count < MaximumLiveSourceSnapshots)
+            {
+                LiveSourceSnapshots[sourcePath] = current;
+            }
+            return CreateLiveSourceDiff(previous ?? "", current, !hasPrevious);
+        }
+
+        private static string CreateLiveSourceDiff(
+            string previous,
+            string current,
+            bool isInitial
+        )
+        {
+            if (!isInitial && previous == current) return "";
+            var previousLines = string.IsNullOrEmpty(previous)
+                ? new string[0]
+                : previous.Split('\n');
+            var currentLines = string.IsNullOrEmpty(current)
+                ? new string[0]
+                : current.Split('\n');
+            var prefix = 0;
+            while (
+                prefix < previousLines.Length
+                && prefix < currentLines.Length
+                && previousLines[prefix] == currentLines[prefix]
+            ) {
+                prefix++;
+            }
+            var suffix = 0;
+            while (
+                suffix < previousLines.Length - prefix
+                && suffix < currentLines.Length - prefix
+                && previousLines[previousLines.Length - 1 - suffix]
+                    == currentLines[currentLines.Length - 1 - suffix]
+            ) {
+                suffix++;
+            }
+
+            var output = new StringBuilder(isInitial
+                ? "@@ current source snapshot (initial baseline) @@"
+                : "@@ source change @@");
+            var contextStart = Math.Max(0, prefix - 2);
+            for (var index = contextStart; index < prefix; index++)
+            {
+                AppendLiveDiffLine(output, ' ', currentLines[index]);
+            }
+            for (var index = prefix; index < previousLines.Length - suffix; index++)
+            {
+                AppendLiveDiffLine(output, '-', previousLines[index]);
+            }
+            for (var index = prefix; index < currentLines.Length - suffix; index++)
+            {
+                AppendLiveDiffLine(output, '+', currentLines[index]);
+            }
+            var suffixStart = currentLines.Length - suffix;
+            for (
+                var index = suffixStart;
+                index < Math.Min(currentLines.Length, suffixStart + 2);
+                index++
+            ) {
+                AppendLiveDiffLine(output, ' ', currentLines[index]);
+            }
+
+            var text = output.ToString();
+            if (text.Length <= MaximumLiveSourceDiffChars) return text;
+            var marker = "\n... [live diff truncated]";
+            return text.Substring(0, MaximumLiveSourceDiffChars - marker.Length) + marker;
+        }
+
+        private static void AppendLiveDiffLine(StringBuilder output, char prefix, string line)
+        {
+            output.Append('\n');
+            output.Append(prefix);
+            output.Append(line);
+        }
+
+        private static async Task SendLiveActivityAsync(
+            string action,
+            string sourcePath,
+            string diff
+        )
         {
             try
             {
@@ -1008,7 +1164,8 @@ namespace QLDATN.ProjectTracker
                 var json = JsonUtility.ToJson(new LiveActivityPayload
                 {
                     action = action,
-                    path = sourcePath
+                    path = sourcePath,
+                    diff = string.IsNullOrEmpty(diff) ? null : diff
                 });
                 var timestamp = UnixTimeMilliseconds().ToString();
                 var sequence = NextSequence().ToString();
@@ -1208,6 +1365,7 @@ namespace QLDATN.ProjectTracker
         {
             public string action;
             public string path;
+            public string diff;
         }
 
         [Serializable]

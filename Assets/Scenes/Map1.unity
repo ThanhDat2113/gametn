@@ -10159,6 +10159,59 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: d05fa8828be199048bb709f826cc3c53, type: 3}
   m_PrefabInstance: {fileID: 97747475}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &98631964
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 98631966}
+  - component: {fileID: 98631965}
+  m_Layer: 0
+  m_Name: Block
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!65 &98631965
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 98631964}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1, y: 19.040657, z: 28.045036}
+  m_Center: {x: 0, y: 6.3310432, z: 0.2600956}
+--- !u!4 &98631966
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 98631964}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -315.8, y: 107, z: 25.9}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 554073902}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &99319323
 GameObject:
   m_ObjectHideFlags: 0
@@ -45544,6 +45597,7 @@ Transform:
   - {fileID: 2032668842}
   - {fileID: 726349023}
   - {fileID: 1946745647}
+  - {fileID: 98631966}
   - {fileID: 2089988908}
   - {fileID: 341095629}
   - {fileID: 975771801}
@@ -71292,6 +71346,8 @@ GameObject:
   - component: {fileID: 991643748}
   - component: {fileID: 991643750}
   - component: {fileID: 991643749}
+  - component: {fileID: 991643752}
+  - component: {fileID: 991643751}
   m_Layer: 0
   m_Name: Object 1-4
   m_TagString: Untagged
@@ -71452,6 +71508,36 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::QuestVisibilityController
   targetObject: {fileID: 1882786525}
   config: {fileID: 11400000, guid: 7adbc3a00035644428a8d1e6b32df8d3, type: 2}
+  defaultVisibility: 0
+--- !u!114 &991643751
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 991643740}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 77a036252314dcd4dbde485624a8eedc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestVisibilityController
+  targetObject: {fileID: 98631964}
+  config: {fileID: 11400000, guid: 62fcf1ecf165ad049b7cd919d306ed43, type: 2}
+  defaultVisibility: 1
+--- !u!114 &991643752
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 991643740}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 77a036252314dcd4dbde485624a8eedc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestVisibilityController
+  targetObject: {fileID: 1946745646}
+  config: {fileID: 11400000, guid: 679a72e01310de54891ca76b41d560e9, type: 2}
   defaultVisibility: 0
 --- !u!1 &992423061 stripped
 GameObject:
