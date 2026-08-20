@@ -3,7 +3,7 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using TMPro;
 
-public class EquipmentSlotUI : MonoBehaviour, IDropHandler, IPointerClickHandler
+public class EquipmentSlotUI : MonoBehaviour, IDropHandler, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
 {
     [Header("Slot Info")]
     public EquipmentSlot slotType;
@@ -61,12 +61,7 @@ public class EquipmentSlotUI : MonoBehaviour, IDropHandler, IPointerClickHandler
         var dragItem = eventData.pointerDrag?.GetComponent<EquipmentDragItem>();
         if (dragItem == null || dragItem.Equipment == null) return;
 
-        if (dragItem.Equipment.slot != slotType)
-        {
-            Debug.Log($"Cannot equip {dragItem.Equipment.slot} into {slotType} slot");
-            return;
-        }
-
+        // Bất kỳ loại trang bị nào cũng có thể gắn vào bất kỳ slot nào
         EquipmentManager.Instance.Equip(currentCharacter, slotType, dragItem.Equipment);
         Refresh();
         panel?.RefreshEquipmentList();
@@ -93,6 +88,26 @@ public class EquipmentSlotUI : MonoBehaviour, IDropHandler, IPointerClickHandler
                 panel.ClearPreview();
                 panel.RefreshStatsDisplay();
             }
+        }
+    }
+
+    public void OnPointerEnter(PointerEventData eventData)
+    {
+        // Nếu đang kéo trang bị, hiển thị preview stats theo slot này
+        var dragging = EquipmentDragItem.CurrentDragging;
+        if (dragging != null && dragging.Equipment != null && panel != null)
+        {
+            panel.ShowPreviewForSlot(dragging.Equipment, slotType);
+        }
+    }
+
+    public void OnPointerExit(PointerEventData eventData)
+    {
+        // Khi rời slot, nếu đang kéo thì quay lại preview mặc định của item đang kéo
+        var dragging = EquipmentDragItem.CurrentDragging;
+        if (dragging != null && dragging.Equipment != null && panel != null)
+        {
+            panel.StartDragPreview(dragging.Equipment);
         }
     }
 }

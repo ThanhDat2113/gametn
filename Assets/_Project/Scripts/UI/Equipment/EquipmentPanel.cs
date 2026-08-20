@@ -161,6 +161,24 @@ public class EquipmentPanel : MonoBehaviour
         UpdateStatText(statMdefText, curMdef, newMdef, "M.DEF");
     }
 
+    // Preview stats khi kéo trang bị vào một slot cụ thể (bất kỳ loại nào)
+    public void ShowPreviewForSlot(EquipmentData equip, EquipmentSlot slot)
+    {
+        if (selectedCharacter == null || equip == null) return;
+
+        previewEquipment = equip;
+        previewSlot = slot;
+        isPreviewing = true;
+
+        GetCurrentTotalStats(selectedCharacter, out int curHp, out int curAtk, out int curPdef, out int curMdef);
+        GetStatsWithEquipment(selectedCharacter, equip, slot, out int newHp, out int newAtk, out int newPdef, out int newMdef);
+
+        UpdateStatText(statHpText, curHp, newHp, "HP");
+        UpdateStatText(statAtkText, curAtk, newAtk, "ATK");
+        UpdateStatText(statPdefText, curPdef, newPdef, "P.DEF");
+        UpdateStatText(statMdefText, curMdef, newMdef, "M.DEF");
+    }
+
     public void ClearPreview()
     {
         _isDraggingPreview = false; // reset flag khi clear

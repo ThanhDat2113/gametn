@@ -27,7 +27,7 @@ namespace QLDATN.ProjectTracker
         private const double HeartbeatSeconds = 30.0;
         private const double GitRefreshSeconds = 60.0;
         private const double RecentSourceActivitySeconds = 90.0;
-        private const string ClientVersion = "qldatn-unity-3.6.0";
+        private const string ClientVersion = "qldatn-unity-3.7.0";
         private const string PendingUpdatePreference = "QLDATN_PROJECT_TRACKER_PENDING_UPDATE";
         private const int MaximumOfflinePayloads = 50;
         private const string TrackerFileName = "QLDATNSceneTracker.cs";
@@ -1194,6 +1194,15 @@ namespace QLDATN.ProjectTracker
                 );
                 var operation = request.SendWebRequest();
                 while (!operation.isDone) await Task.Delay(50);
+                if (request.result != UnityWebRequest.Result.Success)
+                {
+                    Debug.LogWarning(
+                        "[QLDATN Tracker] Live activity không gửi được (HTTP "
+                        + request.responseCode
+                        + "): "
+                        + (request.error ?? "unknown error")
+                    );
+                }
             }
             catch
             {

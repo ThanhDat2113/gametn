@@ -28,11 +28,10 @@ public class EquipmentManager : MonoBehaviour
         return eq;
     }
 
-    // Gắn trang bị vào slot
+    // Gắn trang bị vào slot (bất kỳ loại trang bị nào cũng có thể gắn vào bất kỳ slot nào)
     public bool Equip(CharacterData character, EquipmentSlot slot, EquipmentData equip)
     {
         if (equip == null) return false;
-        if (equip.slot != slot) return false;
 
         var eq = GetEquipment(character);
         var old = eq.GetEquipment(slot);

@@ -5,6 +5,8 @@ using TMPro;
 
 public class EquipmentDragItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerEnterHandler, IPointerExitHandler
 {
+    public static EquipmentDragItem CurrentDragging { get; private set; }
+
     public EquipmentData Equipment { get; private set; }
 
     [SerializeField] private Image icon;
@@ -78,6 +80,7 @@ public class EquipmentDragItem : MonoBehaviour, IBeginDragHandler, IDragHandler,
         if (Equipment == null) return;
 
         _isDragging = true;
+        CurrentDragging = this;
         canvasGroup.alpha = 0.6f;
         canvasGroup.blocksRaycasts = false;
 
@@ -114,6 +117,7 @@ public class EquipmentDragItem : MonoBehaviour, IBeginDragHandler, IDragHandler,
     public void OnEndDrag(PointerEventData eventData)
     {
         _isDragging = false;
+        CurrentDragging = null;
         DestroyGhost();
         if (canvasGroup != null)
         {
