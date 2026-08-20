@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Gilgamesh_Skill1
   m_EditorClassIdentifier: Assembly-CSharp::SkillData
   autoConfirmOnSelect: 0
-  movementOverride: 0
+  movementOverride: 2
   skillName: Gate of Babylon - Strike
   description: "M\u1EDF kho b\xE1u, b\u1EAFn v\u0169 kh\xED v\xE0o 1 m\u1EE5c ti\xEAu
     g\xE2y s\xE1t th\u01B0\u01A1ng v\u1EADt l\xFD."
@@ -31,10 +31,18 @@ MonoBehaviour:
     attachToCaster: 0
   rangedVfxEvents: []
   hitVfxEvents: []
-  sfxClips: []
+  sfxClips:
+  - {fileID: 8300000, guid: f2e58036cd78a674e994db153e191210, type: 3}
+  playSFX: 1
+  sfxTriggerMode: 1
   chargeSound: {fileID: 0}
   voiceLines: []
   animationTrigger: Skill1
+  isBeam: 0
+  beamShakeBaseIntensity: 0.35
+  beamShakeStepIntensity: 0.12
+  beamShakeDuration: 0.5
+  beamShakeFrequency: 24
   isRanged: 0
   projectilePrefab: {fileID: 0}
   projectileOffset: {x: 0, y: 0, z: 0}

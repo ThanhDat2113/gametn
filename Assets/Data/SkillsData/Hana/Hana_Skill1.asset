@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Hana_Skill1
   m_EditorClassIdentifier: Assembly-CSharp::SkillData
   autoConfirmOnSelect: 0
-  movementOverride: 0
-  skillName: Magic Sphere
+  movementOverride: 2
+  skillName: "Th\u1EE7y C\u1EA7u"
   description: "T\u1EA5n c\xF4ng k\u1EBB \u0111\u1ECBch b\u1EB1ng 1 qu\u1EA3 c\u1EA7u
     ma ph\xE1p."
   icon: {fileID: 0}
@@ -32,9 +32,16 @@ MonoBehaviour:
   rangedVfxEvents: []
   hitVfxEvents: []
   sfxClips: []
+  playSFX: 1
+  sfxTriggerMode: 0
   chargeSound: {fileID: 0}
   voiceLines: []
   animationTrigger: Skill1
+  isBeam: 0
+  beamShakeBaseIntensity: 0.35
+  beamShakeStepIntensity: 0.12
+  beamShakeDuration: 0.5
+  beamShakeFrequency: 24
   isRanged: 0
   projectilePrefab: {fileID: 0}
   projectileOffset: {x: 0, y: 0, z: 0}

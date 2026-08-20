@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Hana_Skill3
   m_EditorClassIdentifier: Assembly-CSharp::SkillData
   autoConfirmOnSelect: 0
-  movementOverride: 0
-  skillName: Immediate Action
+  movementOverride: 2
+  skillName: "Gia T\u1ED1c"
   description: "Ch\u1ECDn 1 \u0111\u1ED3ng minh, cho ph\xE9p \u0111\u1ED3ng minh
     \u1EA5y h\xE0nh \u0111\u1ED9ng ngay l\u1EADp t\u1EE9c."
   icon: {fileID: 0}
@@ -33,9 +33,16 @@ MonoBehaviour:
   hitVfxEvents: []
   sfxClips:
   - {fileID: 8300000, guid: 6928d721e1ea8b047aa7a0331babda86, type: 3}
+  playSFX: 1
+  sfxTriggerMode: 1
   chargeSound: {fileID: 0}
   voiceLines: []
   animationTrigger: Skill3
+  isBeam: 0
+  beamShakeBaseIntensity: 0.35
+  beamShakeStepIntensity: 0.12
+  beamShakeDuration: 0.5
+  beamShakeFrequency: 24
   isRanged: 0
   projectilePrefab: {fileID: 0}
   projectileOffset: {x: 0, y: 0, z: 0}

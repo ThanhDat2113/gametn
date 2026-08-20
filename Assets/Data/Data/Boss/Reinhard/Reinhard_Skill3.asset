@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Reinhard_Skill3
   m_EditorClassIdentifier: Assembly-CSharp::SkillData
   autoConfirmOnSelect: 0
-  movementOverride: 0
+  movementOverride: 1
   skillName: Sword Saint Descends
   description: "Tung \u0111\xF2n k\u1EBFt li\u1EC5u mang uy l\u1EF1c c\u1EE7a Ki\u1EBFm
     Th\xE1nh, l\xE0m \u0111\u1ED1i th\u1EE7 cho\xE1ng v\xE1ng."
@@ -32,6 +32,8 @@ MonoBehaviour:
   rangedVfxEvents: []
   hitVfxEvents: []
   sfxClips: []
+  playSFX: 1
+  sfxTriggerMode: 0
   chargeSound: {fileID: 0}
   voiceLines: []
   animationTrigger: Skill3

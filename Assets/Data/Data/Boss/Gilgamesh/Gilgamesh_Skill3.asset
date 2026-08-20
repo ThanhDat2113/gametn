@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Gilgamesh_Skill3
   m_EditorClassIdentifier: Assembly-CSharp::SkillData
   autoConfirmOnSelect: 0
-  movementOverride: 0
+  movementOverride: 2
   skillName: Enuma Elish
   description: "Gi\u1EA3i ph\xF3ng thanh ki\u1EBFm ph\xE2n tr\u1EDDi Ea, g\xE2y s\xE1t
     th\u01B0\u01A1ng h\u1EE7y di\u1EC7t to\xE0n b\u1ED9 k\u1EBB \u0111\u1ECBch."
@@ -31,7 +31,10 @@ MonoBehaviour:
     attachToCaster: 0
   rangedVfxEvents: []
   hitVfxEvents: []
-  sfxClips: []
+  sfxClips:
+  - {fileID: 8300000, guid: d64e4487ce196b64b97f65f33819a0e0, type: 3}
+  playSFX: 1
+  sfxTriggerMode: 1
   chargeSound: {fileID: 0}
   voiceLines: []
   animationTrigger: Skill3

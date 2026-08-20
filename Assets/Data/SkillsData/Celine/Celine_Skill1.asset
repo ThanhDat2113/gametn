@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SkillData
   autoConfirmOnSelect: 0
   movementOverride: 0
-  skillName: Bash
+  skillName: "Thi\xEAn Tr\u1EA3m"
   description: "T\u1EA5n c\xF4ng m\u1EA1nh v\u1EC1 ph\xEDa tr\u01B0\u1EDBc b\u1EB1ng
     khi\xEAn "
   icon: {fileID: 0}
@@ -33,9 +33,16 @@ MonoBehaviour:
   hitVfxEvents: []
   sfxClips:
   - {fileID: 8300000, guid: 66e90a62b9047754fb7e49d1a5c1fe16, type: 3}
+  playSFX: 1
+  sfxTriggerMode: 0
   chargeSound: {fileID: 0}
   voiceLines: []
   animationTrigger: Skill1
+  isBeam: 0
+  beamShakeBaseIntensity: 0.35
+  beamShakeStepIntensity: 0.12
+  beamShakeDuration: 0.5
+  beamShakeFrequency: 24
   isRanged: 0
   projectilePrefab: {fileID: 0}
   projectileOffset: {x: 0, y: 0, z: 0}

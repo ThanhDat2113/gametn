@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Gilgamesh_Skill2
   m_EditorClassIdentifier: Assembly-CSharp::SkillData
   autoConfirmOnSelect: 0
-  movementOverride: 0
+  movementOverride: 2
   skillName: Enkidu
   description: "Ph\xF3ng s\u1EE3i x\xEDch th\u1EA7n Enkidu tr\xF3i bu\u1ED9c 1 m\u1EE5c
     ti\xEAu, g\xE2y s\xE1t th\u01B0\u01A1ng v\xE0 l\xE0m cho\xE1ng."
@@ -32,10 +32,17 @@ MonoBehaviour:
   rangedVfxEvents: []
   hitVfxEvents: []
   sfxClips:
-  - {fileID: 0}
+  - {fileID: 8300000, guid: d043519c03adf5b4bbba96049cd1de44, type: 3}
+  playSFX: 1
+  sfxTriggerMode: 0
   chargeSound: {fileID: 0}
   voiceLines: []
   animationTrigger: Skill2
+  isBeam: 0
+  beamShakeBaseIntensity: 0.35
+  beamShakeStepIntensity: 0.12
+  beamShakeDuration: 0.5
+  beamShakeFrequency: 24
   isRanged: 0
   projectilePrefab: {fileID: 0}
   projectileOffset: {x: 0, y: 0, z: 0}

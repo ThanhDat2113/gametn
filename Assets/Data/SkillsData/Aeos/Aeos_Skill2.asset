@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SkillData
   autoConfirmOnSelect: 0
   movementOverride: 0
-  skillName: Triple Strike
+  skillName: "Lo\u1EA1n Tr\u1EA3m"
   description: "T\u1EA5n c\xF4ng 3 \u0111\xF2n li\xEAn ti\u1EBFp v\xE0o 1 k\u1EBB
     \u0111\u1ECBch l\xE0m gi\u1EA3m s\xE1t th\u01B0\u01A1ng k\u1EBB \u0111\u1ECBch
     \u0111\xF3 g\xE2y ra trong 2 l\u01B0\u1EE3t, n\u1EBFu k\u1EF9 n\u0103ng n\xE0y
@@ -44,9 +44,16 @@ MonoBehaviour:
   hitVfxEvents: []
   sfxClips:
   - {fileID: 8300000, guid: 9fbcf9e10a8ca094eb674a0b205b1b26, type: 3}
+  playSFX: 1
+  sfxTriggerMode: 0
   chargeSound: {fileID: 0}
   voiceLines: []
   animationTrigger: Skill2
+  isBeam: 0
+  beamShakeBaseIntensity: 0.35
+  beamShakeStepIntensity: 0.12
+  beamShakeDuration: 0.5
+  beamShakeFrequency: 24
   isRanged: 0
   projectilePrefab: {fileID: 0}
   projectileOffset: {x: 0, y: 0, z: 0}

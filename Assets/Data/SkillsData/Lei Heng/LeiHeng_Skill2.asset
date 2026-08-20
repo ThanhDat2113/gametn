@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: LeiHeng_Skill2
   m_EditorClassIdentifier: Assembly-CSharp::SkillData
   autoConfirmOnSelect: 0
-  movementOverride: 0
-  skillName: triple slash
+  movementOverride: 1
+  skillName: "Vi\xEAm Li\xEAn Tam Tr\u1EA3m"
   description: "Ch\xE9m 3 \u0111\xF2n g\xE2y s\xE1t th\u01B0\u01A1ng v\u1EADt l\xFD
     v\xE0 g\xE1n 3 \u1EA5n thi\xEAu \u0111\u1ED1t l\xEAn ng\u01B0\u1EDDi k\u1EBB
     \u0111\u1ECBch "
@@ -34,17 +34,24 @@ MonoBehaviour:
     spawnMode: 1
     offset: {x: 0, y: 1.5, z: 0}
     attachToCaster: 0
-  - vfxPrefab: {fileID: 4210069854599678876, guid: e189a07a130990542b0b77fdf3154504, type: 3}
+  - vfxPrefab: {fileID: 2176528317272923985, guid: 6a3da6d49d3985e40b3083c6448a7852, type: 3}
     spawnMode: 1
     offset: {x: 0, y: 1.5, z: 0}
     attachToCaster: 0
   rangedVfxEvents: []
   hitVfxEvents: []
   sfxClips:
-  - {fileID: 8300000, guid: 6a9f9de4ac0fc994e869645439e76c4c, type: 3}
+  - {fileID: 8300000, guid: 8709e5d3fffacd546b46d34e5530b4e2, type: 3}
+  playSFX: 1
+  sfxTriggerMode: 0
   chargeSound: {fileID: 0}
   voiceLines: []
   animationTrigger: Skill2
+  isBeam: 0
+  beamShakeBaseIntensity: 0.35
+  beamShakeStepIntensity: 0.12
+  beamShakeDuration: 0.5
+  beamShakeFrequency: 24
   isRanged: 0
   projectilePrefab: {fileID: 0}
   projectileOffset: {x: 0, y: 0, z: 0}

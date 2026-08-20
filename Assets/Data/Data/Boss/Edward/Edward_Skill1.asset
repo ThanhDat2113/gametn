@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Edward_Skill1
   m_EditorClassIdentifier: Assembly-CSharp::SkillData
   autoConfirmOnSelect: 0
-  movementOverride: 0
+  movementOverride: 1
   skillName: Automail Strike
   description: "\u0110\u1EA5m m\u1EA1nh b\u1EB1ng tay c\u01A1 kh\xED automail, l\xE0m
     ch\u1EADm \u0111\u1ED1i th\u1EE7."
@@ -33,9 +33,16 @@ MonoBehaviour:
   hitVfxEvents: []
   sfxClips:
   - {fileID: 8300000, guid: e5c7d64f4c429ad489b6609b37cae71b, type: 3}
+  playSFX: 1
+  sfxTriggerMode: 0
   chargeSound: {fileID: 0}
   voiceLines: []
   animationTrigger: Skill1
+  isBeam: 0
+  beamShakeBaseIntensity: 0.35
+  beamShakeStepIntensity: 0.12
+  beamShakeDuration: 0.5
+  beamShakeFrequency: 24
   isRanged: 0
   projectilePrefab: {fileID: 0}
   projectileOffset: {x: 0, y: 0, z: 0}

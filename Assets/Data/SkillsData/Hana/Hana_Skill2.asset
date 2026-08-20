@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Hana_Skill2
   m_EditorClassIdentifier: Assembly-CSharp::SkillData
   autoConfirmOnSelect: 0
-  movementOverride: 0
-  skillName: Empower
+  movementOverride: 2
+  skillName: "Th\u1EE7y Th\u1EC3"
   description: "C\u01B0\u1EDDng h\xF3a cho 1 \u0111\u1ED3ng minh +20% s\xE1t th\u01B0\u01A1ng,
     +10% t\u1ED1c \u0111\u1ED9 trong 2 l\u01B0\u1EE3t v\xE0 t\u0103ng cho ch\xEDnh
     hana th\xEAm 30% t\u1ED1c \u0111\u1ED9 trong 3 l\u01B0\u1EE3t."
@@ -34,9 +34,16 @@ MonoBehaviour:
   hitVfxEvents: []
   sfxClips:
   - {fileID: 8300000, guid: 6928d721e1ea8b047aa7a0331babda86, type: 3}
+  playSFX: 1
+  sfxTriggerMode: 1
   chargeSound: {fileID: 0}
   voiceLines: []
   animationTrigger: Skill2
+  isBeam: 0
+  beamShakeBaseIntensity: 0.35
+  beamShakeStepIntensity: 0.12
+  beamShakeDuration: 0.5
+  beamShakeFrequency: 24
   isRanged: 0
   projectilePrefab: {fileID: 0}
   projectileOffset: {x: 0, y: 0, z: 0}

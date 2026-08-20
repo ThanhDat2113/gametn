@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: LeiHeng_Skill1
   m_EditorClassIdentifier: Assembly-CSharp::SkillData
   autoConfirmOnSelect: 0
-  movementOverride: 0
-  skillName: slash
+  movementOverride: 1
+  skillName: "Li\u1EC7t Vi\xEAm Tr\u1EA3m"
   description: "L\xF4i thanh \u0111ao ra ch\xE9m m\u1EA1nh g\xE2y s\xE1t th\u01B0\u01A1ng
     v\u1EADt l\xFD g\xE1n 1 \u1EA5n thi\xEAu \u0111\u1ED1t l\xEAn ng\u01B0\u1EDDi
     k\u1EBB \u0111\u1ECBch"
@@ -33,10 +33,17 @@ MonoBehaviour:
   rangedVfxEvents: []
   hitVfxEvents: []
   sfxClips:
-  - {fileID: 8300000, guid: e985bbe4bb158ec4191429ab0cbf4b47, type: 3}
+  - {fileID: 8300000, guid: 8709e5d3fffacd546b46d34e5530b4e2, type: 3}
+  playSFX: 1
+  sfxTriggerMode: 0
   chargeSound: {fileID: 0}
   voiceLines: []
   animationTrigger: Skill1
+  isBeam: 0
+  beamShakeBaseIntensity: 0.35
+  beamShakeStepIntensity: 0.12
+  beamShakeDuration: 0.5
+  beamShakeFrequency: 24
   isRanged: 0
   projectilePrefab: {fileID: 0}
   projectileOffset: {x: 0, y: 0, z: 0}

@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SkillData
   autoConfirmOnSelect: 0
   movementOverride: 2
-  skillName: Guard
+  skillName: "H\u1ED9 Th\u1EC3"
   description: "T\u1EA1o khi\xEAn cho b\u1EA3n th\xE2n b\u1EB1ng 20% m\xE1u t\u1ED1i
     \u0111a c\u1EE7a c\xF4 "
   icon: {fileID: 0}
@@ -33,9 +33,16 @@ MonoBehaviour:
   hitVfxEvents: []
   sfxClips:
   - {fileID: 8300000, guid: bf7f3539db50869478365cfa47769585, type: 3}
+  playSFX: 1
+  sfxTriggerMode: 1
   chargeSound: {fileID: 0}
   voiceLines: []
   animationTrigger: Skill2
+  isBeam: 0
+  beamShakeBaseIntensity: 0.35
+  beamShakeStepIntensity: 0.12
+  beamShakeDuration: 0.5
+  beamShakeFrequency: 24
   isRanged: 0
   projectilePrefab: {fileID: 0}
   projectileOffset: {x: 0, y: 0, z: 0}
