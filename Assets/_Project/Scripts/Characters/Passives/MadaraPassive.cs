@@ -81,11 +81,15 @@ public class MadaraPassive : PassiveAbility
 
             Debug.Log($"[{Owner.UnitName}'s Passive] IZANAGI! Hồi sinh với {Owner.CurrentHP} HP! Stats giảm 20% nhưng MaxActions = {IZANAGI_MAX_ACTIONS}!");
 
+        // Text hiệu ứng Izanagi
+        var view = CombatManager.Instance?.GetUnitView(Owner);
+        if (view != null)
+            DamageTextManager.Instance?.ShowStatusText("IZANAGI!", view.GetDamageTextPosition(), DamageTextManager.Instance.reviveColor, Vector2.up);
+
 // Cập nhật visual - khôi phục đầy đủ view giống cách Hassan hồi sinh.
             // DeathFade (kích hoạt bởi OnDied event) đã tắt GameObject và fade alpha về 0.
             // Nếu không khôi phục ở đây, Madara sau hồi sinh sẽ vô hình và không thể
             // được chọn/tấn công (view không active trong scene).
-            var view = CombatManager.Instance?.GetUnitView(Owner);
             if (view != null)
             {
                 // Dừng DeathFade (và mọi coroutine đang chạy) trước khi khôi phục view
@@ -164,18 +168,23 @@ public class MadaraPassive : PassiveAbility
             {
                 var go = UnityEngine.Object.Instantiate(prefab, gridSlots[cloneSlot].position, Quaternion.identity);
                 UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(go, CombatManager.Instance.gameObject.scene);
-                var view = go.GetComponent<UnitView>();
-                if (view != null)
+                var cloneView = go.GetComponent<UnitView>();
+                if (cloneView != null)
                 {
-                    view.Setup(clone);
-                    view.StoreOriginalPosition(gridSlots[cloneSlot].position);
-                    CombatManager.Instance.AddUnitView(view);
-                    _cloneView = view;
+                    cloneView.Setup(clone);
+                    cloneView.StoreOriginalPosition(gridSlots[cloneSlot].position);
+                    CombatManager.Instance.AddUnitView(cloneView);
+                    _cloneView = cloneView;
                 }
             }
         }
 
         Debug.Log($"[{Owner.UnitName}'s Passive] Shadow Clone đã được triệu hồi! HP: {clone.CurrentHP}/{clone.MaxHP}");
+
+        // Text hiệu ứng
+        var view = CombatManager.Instance?.GetUnitView(Owner);
+        if (view != null)
+            DamageTextManager.Instance?.ShowStatusText("PHÂN THÂN!", view.GetDamageTextPosition(), DamageTextManager.Instance.illusionColor, Vector2.up);
     }
 
     private void DestroyClone()

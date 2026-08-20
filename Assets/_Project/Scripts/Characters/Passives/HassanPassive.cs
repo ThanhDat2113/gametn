@@ -71,6 +71,11 @@ public class HassanPassive : PassiveAbility
         // Spawn 2 Afterimage khi combat đã khởi tạo xong hoàn toàn
         SpawnAfterimages(AFTERIMAGE_SPAWN_COUNT);
         Debug.Log($"[HassanPassive] Zabaniya - Ảo Ảnh Tử Thần kích hoạt! {AFTERIMAGE_SPAWN_COUNT} Afterimage được tạo ra.");
+
+        // Text hiệu ứng
+        var view = CombatManager.Instance?.GetUnitView(Owner);
+        if (view != null)
+            DamageTextManager.Instance?.ShowStatusText("ẢO ẢNH!", view.GetDamageTextPosition(), DamageTextManager.Instance.illusionColor, Vector2.up);
     }
 
     public override void Cleanup()
@@ -337,6 +342,11 @@ AlwaysActsFirst = false,
             Owner.ApplyBuff(StatType.ATK, EXPOSED_ATK_BUFF, EXPOSED_BUFF_DURATION);
 
             Debug.Log($"[HassanPassive] Hassan lộ diện! ATK +50% trong {EXPOSED_BUFF_DURATION} lượt.");
+
+            // Text hiệu ứng
+            var view = CombatManager.Instance?.GetUnitView(Owner);
+            if (view != null)
+                DamageTextManager.Instance?.ShowStatusText("LỘ DIỆN!", view.GetDamageTextPosition(), DamageTextManager.Instance.rageColor, Vector2.up);
         }
     }
 
@@ -382,6 +392,10 @@ AlwaysActsFirst = false,
         }
         
         Debug.Log($"[HassanPassive] Battle Continuation! Hassan hồi sinh với {reviveHP} HP.");
+
+        // Text hiệu ứng hồi sinh
+        if (view != null)
+            DamageTextManager.Instance?.ShowStatusText("HỒI SINH!", view.GetDamageTextPosition(), DamageTextManager.Instance.reviveColor, Vector2.up);
         
         // Nếu chưa có afterimage, spawn 1 cái
         if (afterimages.Count == 0)

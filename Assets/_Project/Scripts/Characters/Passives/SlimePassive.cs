@@ -42,6 +42,11 @@ public class SlimePassive : PassiveAbility
         // Choáng chính mục tiêu bị slime tấn công
         target.ApplyStatus(StatusEffectType.Stun, STUN_DURATION);
         Debug.Log($"[SlimePassive] {Owner.UnitName} làm choáng {target.UnitName} trong {STUN_DURATION} lượt!");
+
+        // Text hiệu ứng
+        var view = CombatManager.Instance?.GetUnitView(target);
+        if (view != null)
+            DamageTextManager.Instance?.ShowStatusText("DÍNH!", view.GetDamageTextPosition(), DamageTextManager.Instance.stickyColor, Vector2.up);
     }
 
     public override void Cleanup()

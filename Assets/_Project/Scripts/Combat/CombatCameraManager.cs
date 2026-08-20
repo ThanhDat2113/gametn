@@ -177,6 +177,8 @@ public class CombatCameraManager : MonoBehaviour
     public void ZoomToUnit(Transform unit, float zoomSize = 0)
     {
         if (unit == null) return;
+        // 🔥 THÊM: Nếu đang trong AOE mode, KHÔNG zoom lại — giữ nguyên khung toàn bộ 2 đội
+        if (_aoeActive) return;
         if (zoomSize <= 0) zoomSize = Mathf.Max(damageZoomSize, 8.5f);
         else zoomSize = Mathf.Max(zoomSize, 8.5f);
         StopCoroutineIfRunning(zoomCoroutine);
@@ -364,18 +366,23 @@ public class CombatCameraManager : MonoBehaviour
         _aoeZoomStepSize = zoomStep;
         _aoeHitStep = 0;
 
-        if (aoeTargetViews == null || aoeTargetViews.Count == 0)
+        // 🔥 THAY ĐỔI: Zoom out để thấy TOÀN BỘ cả 2 đội hình
+        // Lấy tất cả unit views (cả player + enemy) thay vì chỉ nhóm target
+        var allUnitViews = FindObjectsOfType<UnitView>()
+            .Where(v => v != null && v.LinkedUnit != null && v.LinkedUnit.IsAlive)
+            .ToList();
+
+        if (allUnitViews.Count == 0)
         {
             AutoFitUnitsInView();
             return;
         }
 
-        // Tâm khung bao của toàn bộ nhóm target bị tấn công
-        Vector3 min = aoeTargetViews[0].transform.position;
-        Vector3 max = aoeTargetViews[0].transform.position;
-        foreach (var v in aoeTargetViews)
+        // Center = tâm khung bao của TOÀN BỘ units (cả 2 đội)
+        Vector3 min = allUnitViews[0].transform.position;
+        Vector3 max = allUnitViews[0].transform.position;
+        foreach (var v in allUnitViews)
         {
-            if (v == null) continue;
             Vector3 p = v.transform.position;
             min = Vector3.Min(min, p);
             max = Vector3.Max(max, p);
@@ -383,37 +390,36 @@ public class CombatCameraManager : MonoBehaviour
         _aoeCenter = (min + max) * 0.5f;
         _aoeCenter.y += verticalOffset;
 
+        // Tính ortho size đủ để thấy toàn bộ 2 đội hình
         float width = Mathf.Abs(max.x - min.x);
         float height = Mathf.Abs(max.y - min.y);
-        float hPad = width * 0.5f;
-        float vPad = height * 0.5f;
+        float hPad = width * 0.4f;
+        float vPad = height * 0.6f;
         float reqW = (width + hPad) * 0.5f / Mathf.Max(0.01f, mainCamera.aspect);
         float reqH = (height + vPad) * 0.5f;
-        _aoeBaseOrthoSize = Mathf.Max(reqW, reqH, baseSize);
+        // 🔥 THAY ĐỔI: Tăng baseSize tối thiểu lên 15f để đảm bảo zoom out đủ xa
+        _aoeBaseOrthoSize = Mathf.Max(reqW, reqH, 15f);
 
         SetAoECenterPosition(_aoeCenter);
 
-        // Zoom từ orthographicSize THỰC TẾ hiện tại → đủ khung nhóm (có hiệu ứng zoom out)
+        // Zoom từ orthographicSize THỰC TẾ hiện tại → đủ khung toàn bộ 2 đội
         float startSize = mainCamera.orthographicSize;
         zoomCoroutine = StartCoroutine(ZoomFromToCoroutine(startSize, _aoeBaseOrthoSize));
-        Debug.Log($"[CombatCamera] AoE Focus: center={_aoeCenter}, baseSize={_aoeBaseOrthoSize:F2}, step={zoomStep:F2}");
+        Debug.Log($"[CombatCamera] AoE Focus (ALL UNITS): center={_aoeCenter}, size={_aoeBaseOrthoSize:F2}");
     }
 
     /// <summary>
-    /// Mỗi hit AOE → zoom ra xa thêm, nhưng center LUÔN = tâm nhóm target.
+    /// Mỗi hit AOE → giữ nguyên khung toàn bộ 2 đội hình (KHÔNG zoom thêm).
     /// </summary>
     public void AdvanceAOEZoom()
     {
         if (!_aoeActive) return;
         _aoeHitStep++;
-        float newSize = _aoeBaseOrthoSize + _aoeZoomStepSize * _aoeHitStep;
 
+        // 🔥 THAY ĐỔI: KHÔNG zoom thêm mỗi hit — giữ nguyên khung toàn bộ 2 đội
+        // Chỉ giữ center = tâm toàn bộ units
         SetAoECenterPosition(_aoeCenter);
-
-        StopCoroutineIfRunning(zoomCoroutine);
-        float startSize = mainCamera.orthographicSize;
-        zoomCoroutine = StartCoroutine(ZoomFromToCoroutine(startSize, newSize));
-        Debug.Log($"[CombatCamera] AoE hit #{_aoeHitStep}: zoom out → {newSize:F2} (center giữ = tâm nhóm)");
+        Debug.Log($"[CombatCamera] AoE hit #{_aoeHitStep}: giữ nguyên khung toàn bộ 2 đội");
     }
 
     public void EndAOEFocus()
@@ -431,19 +437,23 @@ public class CombatCameraManager : MonoBehaviour
 
     /// <summary>
     /// Zoom (thay đổi orthographicSize) từ startSize sang targetSize.
-    /// KHÔNG set sẵn currentOrthoSize → start != target → có hiệu ứng zoom thật.
+    /// 🔥 THAY ĐỔI: Tăng thời lượng zoom lên 0.5s và set trực tiếp mainCamera.orthographicSize
+    /// để tránh bị LateUpdate làm chậm hiệu ứng zoom.
     /// </summary>
     private IEnumerator ZoomFromToCoroutine(float startSize, float targetSize)
     {
         float elapsed = 0f;
-        while (elapsed < zoomInDuration)
+        float duration = 0.5f; // 🔥 THAY ĐỔI: 0.5s thay vì zoomInDuration (0.15s)
+        while (elapsed < duration)
         {
             elapsed += Time.deltaTime;
-            float t = Mathf.Clamp01(elapsed / zoomInDuration);
+            float t = Mathf.Clamp01(elapsed / duration);
             currentOrthoSize = Mathf.Lerp(startSize, targetSize, EaseInOutQuad(t));
+            mainCamera.orthographicSize = currentOrthoSize; // 🔥 THÊM: set trực tiếp
             yield return null;
         }
         currentOrthoSize = targetSize;
+        mainCamera.orthographicSize = targetSize; // 🔥 THÊM: set trực tiếp
     }
 
     public void ScamAdjustDistance(float factor)
@@ -454,6 +464,8 @@ public class CombatCameraManager : MonoBehaviour
 
     public void PlayPlayerImpactEffect(Transform target)
     {
+        // 🔥 THÊM: Nếu đang trong AOE mode, KHÔNG lunge camera — giữ nguyên khung toàn bộ 2 đội
+        if (_aoeActive) return;
         StopCoroutineIfRunning(shakeCoroutine);
         shakeCoroutine = StartCoroutine(PlayerImpactCoroutine(target));
     }

@@ -26,6 +26,32 @@ public class DamageTextManager : MonoBehaviour
     [Tooltip("Màu cho buff tăng phòng thủ (DEF UP).")]
     public Color defenseUpColor = new Color(0.8f, 0.8f, 0.85f); // bạc
 
+    [Header("New Passive Colors (Overrides)")]
+    [Tooltip("Màu cho hiệu ứng Nọc Độc (Nhện).")]
+    public Color poisonColor = new Color(0f, 0.8f, 0f); // xanh lá độc
+    [Tooltip("Màu cho hiệu ứng Bầy Đàn (Goblin).")]
+    public Color packColor = new Color(1f, 0.5f, 0f); // cam
+    [Tooltip("Màu cho hiệu ứng Thịnh Nộ (Orc).")]
+    public Color rageColor = new Color(1f, 0f, 0f); // đỏ
+    [Tooltip("Màu cho hiệu ứng Bào Tử Nổ (Nấm).")]
+    public Color explosionColor = new Color(0.6f, 0f, 0f); // đỏ thẫm
+    [Tooltip("Màu cho hiệu ứng Kỷ Luật Sắt (Lính tinh nhuệ).")]
+    public Color ironColor = new Color(0.8f, 0.8f, 0.85f); // bạc
+    [Tooltip("Màu cho hiệu ứng Hồi Sinh (Skeleton, Hassan, Madara).")]
+    public Color reviveColor = Color.yellow; // vàng
+    [Tooltip("Màu cho hiệu ứng Ảo Ảnh (Hassan, Madara).")]
+    public Color illusionColor = new Color(0.6f, 0.2f, 1f); // tím
+    [Tooltip("Màu cho hiệu ứng Huyết Mạch (Reinhard).")]
+    public Color bloodColor = new Color(0.8f, 0f, 0f); // đỏ máu
+    [Tooltip("Màu cho hiệu ứng Tích Lũy (Gilgamesh).")]
+    public Color accumulateColor = new Color(1f, 0.5f, 0f); // cam
+    [Tooltip("Màu cho hiệu ứng Dính (Slime).")]
+    public Color stickyColor = new Color(0.3f, 0.6f, 1f); // xanh dương
+    [Tooltip("Màu cho hiệu ứng Sói Đi Săn (Wolf).")]
+    public Color wolfColor = new Color(0.7f, 0.7f, 0.7f); // xám
+    [Tooltip("Màu cho hiệu ứng Hồi Máu (Treant Sinh Khí).")]
+    public Color healColor = Color.green; // xanh lá
+
     // Các màu mặc định (fallback)
     private static readonly Color DefaultPhysical = new Color(1f, 0.5f, 0f);
     private static readonly Color DefaultMagical = new Color(0.6f, 0f, 1f);

@@ -23,6 +23,17 @@ public enum SkillMovementOverride
     ForceStationary
 }
 
+/// <summary>
+/// 🔥 THÊM: Chế độ phát SFX cho skill.
+/// - OnHit: SFX phát theo animation event OnHit (mỗi hit phát 1 SFX).
+/// - OnSpawnVFX: SFX phát theo animation event OnSpawnVFX (mỗi VFX spawn phát 1 SFX).
+/// </summary>
+public enum SFXTriggerMode
+{
+    OnHit,          // SFX phát theo OnHit event
+    OnSpawnVFX      // SFX phát theo OnSpawnVFX event
+}
+
 [CreateAssetMenu(fileName = "NewSkill", menuName = "RPG/Skill")]
 public class SkillData : ScriptableObject
 {
@@ -60,6 +71,9 @@ public class SkillData : ScriptableObject
 
     [Header("Audio")]
     public AudioClip[] sfxClips;  // SFX cho skill, mỗi hit 1 clip (nếu có)
+    public bool playSFX = true; // Nếu false, skill sẽ không play SFX (dùng cho passive heal, etc)
+    [Tooltip("🔥 Chọn chế độ phát SFX: OnHit (theo hit event) hoặc OnSpawnVFX (theo vfx spawn event).")]
+    public SFXTriggerMode sfxTriggerMode = SFXTriggerMode.OnHit; // 🔥 THÊM: Option chọn chế độ SFX
     public AudioClip chargeSound;    // SFX khi bắt đầu charge skill
     public AudioClip[] voiceLines;   // Giọng nhân vật khi dùng skill (random)
 

@@ -49,8 +49,8 @@ public class UnitView : MonoBehaviour
     // Bộ đếm VFX riêng — đảm bảo spawn ĐÚNG hitCount VFX theo đúng thứ tự vfxEvents,
     // không phụ thuộc vào số lượng animation hit event (clip có thể thiếu hit frame).
     private int vfxIndex = 0;
-    // SFX clips cho skill hiện tại (dùng trong SpawnRemainingVFX để spawn SFX cho remaining VFX)
-    private AudioClip[] pendingSFXClips = null;
+    // 🔥 THÊM: HashSet theo dõi các hit đã được xử lý qua OnHit (để tránh spawn VFX trùng lặp)
+    private HashSet<int> hitProcessed = new HashSet<int>();
 
     // ─── Damage Text Position ────────────────────────────────────
     [Header("Damage Text Offset")]
@@ -180,9 +180,10 @@ public class UnitView : MonoBehaviour
 
 if (hitReceiver != null)
         {
-            // Fires damage per hit-frame. VFX hiện được spawn độc lập bởi PlayHitVFXSequence
-            // (rải đều theo thời lượng animation), nên KHÔNG phụ thuộc số lượng hit event.
+            // Fires damage per hit-frame.
             hitReceiver.OnHitFrame += ProcessHitAtFrame;
+            // 🔥 Đăng ký OnVFXFrame: spawn VFX theo animation event OnSpawnVFX
+            hitReceiver.OnVFXFrame += SpawnVFXAtFrame;
         }
 
         if (healthBar != null)
@@ -228,6 +229,7 @@ private void OnDestroy()
         if (hitReceiver != null)
         {
             hitReceiver.OnHitFrame -= ProcessHitAtFrame;
+            hitReceiver.OnVFXFrame -= SpawnVFXAtFrame;
         }
     }
 
@@ -306,6 +308,7 @@ public void SetPendingOutcomes(List<ActionOutcome> outcomes, CombatUnit caster, 
         pendingHitCount = Mathf.Max(1, hitCount);
         currentHitIndex = 0;
         vfxIndex = 0;
+        hitProcessed.Clear(); // 🔥 Reset mỗi skill mới
     }
 
     public void FlushPendingOutcomes()
@@ -348,15 +351,83 @@ public void SetPendingOutcomes(List<ActionOutcome> outcomes, CombatUnit caster, 
         pendingHitCount = 1;
         currentHitIndex = 0;
         vfxIndex = 0;
-        pendingSFXClips = null;
     }
 
     public void OnHit() { OnHitAnimationEvent?.Invoke(); }
 
-private void ProcessHitAtFrame(int hitIndex)
+    /// <summary>
+    /// Spawn VFX tại frame được chỉ định bởi animation event OnSpawnVFX.
+    /// 🔥 SFX theo option sfxTriggerMode:
+    /// - OnSpawnVFX: phát SFX theo vfxIndex (mỗi VFX spawn phát 1 SFX).
+    /// - OnHit: KHÔNG phát SFX ở đây (SFX do ProcessHitAtFrame xử lý).
+    /// </summary>
+    private void SpawnVFXAtFrame(int vfxIndex)
+    {
+        if (currentSkill == null) return;
+        // Nếu VFX index đã được spawn (bởi ProcessHitAtFrame trước đó), bỏ qua
+        if (vfxIndex < this.vfxIndex) return;
+
+        bool hasMultipleVFX = currentSkill.vfxEvents != null && currentSkill.vfxEvents.Length > 1;
+
+        // 🔥 Nếu sfxTriggerMode == OnSpawnVFX → phát SFX theo vfxIndex
+        bool sfxOnSpawnVFX = currentSkill.sfxTriggerMode == SFXTriggerMode.OnSpawnVFX;
+
+        if (!hasMultipleVFX)
+        {
+            VFXEvent evt = GetVFXEvent(vfxIndex);
+            if (evt != null) SpawnVFX(evt);
+            if (sfxOnSpawnVFX) PlaySFXAt(vfxIndex); // 🔥 SFX theo OnSpawnVFX
+        }
+        else
+        {
+            // Nếu skill có >1 vfx → chỉ spawn VFX
+            if (hitProcessed.Contains(vfxIndex)) return;
+            VFXEvent evt = GetVFXEvent(vfxIndex);
+            if (evt != null) SpawnVFX(evt);
+            if (sfxOnSpawnVFX) PlaySFXAt(vfxIndex); // 🔥 SFX theo OnSpawnVFX
+        }
+        // Đánh dấu VFX này đã spawn
+        this.vfxIndex = Mathf.Max(this.vfxIndex, vfxIndex + 1);
+    }
+
+    /// <summary>
+    /// Xử lý hit: áp damage + spawn VFX/SFX.
+    /// 🔥 SFX theo option sfxTriggerMode:
+    /// - OnHit: phát SFX theo hitIndex (mỗi hit phát 1 SFX).
+    /// - OnSpawnVFX: KHÔNG phát SFX ở đây (SFX do SpawnVFXAtFrame xử lý).
+    /// </summary>
+    private void ProcessHitAtFrame(int hitIndex)
     {
         if (pendingOutcomes.Count == 0 || pendingCaster == null) return;
         if (currentHitIndex >= pendingHitCount) return;
+
+        bool hasMultipleVFX = currentSkill != null && currentSkill.vfxEvents != null && currentSkill.vfxEvents.Length > 1;
+
+        // 🔥 Nếu sfxTriggerMode == OnHit → phát SFX theo hitIndex
+        bool sfxOnHit = currentSkill != null && currentSkill.sfxTriggerMode == SFXTriggerMode.OnHit;
+
+        // Nếu skill có >1 vfx → spawn VFX theo OnHit
+        if (hasMultipleVFX)
+        {
+            // Nếu VFX index này chưa được spawn (clip thiếu OnSpawnVFX), bổ sung VFX
+            if (hitIndex >= this.vfxIndex)
+            {
+                VFXEvent evt = GetVFXEvent(hitIndex);
+                if (evt != null) SpawnVFX(evt);
+                this.vfxIndex = Mathf.Max(this.vfxIndex, hitIndex + 1);
+            }
+
+            // 🔥 SFX theo OnHit (mỗi hit phát 1 SFX)
+            if (sfxOnHit) PlaySFXAt(hitIndex);
+
+            // Đánh dấu hit này đã được xử lý
+            hitProcessed.Add(hitIndex);
+        }
+        else if (sfxOnHit)
+        {
+            // Skill có 1 vfx nhưng sfxTriggerMode = OnHit → phát SFX theo hit
+            PlaySFXAt(hitIndex);
+        }
 
         foreach (var outcome in pendingOutcomes)
         {
@@ -383,44 +454,50 @@ private void ProcessHitAtFrame(int hitIndex)
         currentHitIndex++;
     }
 
-    /// <summary>
-    /// Spawn ĐỦ hitCount VFX rải đều theo thời lượng animation bằng coroutine — KHÔNG phụ
-    /// thuộc animation hit event. Đảm bảo luôn spawn đúng số lượng, đúng thứ tự vfxEvents,
-    /// mỗi VFX cách nhau đều đặn trong cửa sổ animation. Nếu sfxClips được cung cấp, SFX sẽ
-    /// được spawn đồng thời với VFX tại các khoảng thời gian tương ứng.
-    /// </summary>
-    public void PlayHitVFXSequence(float duration, AudioClip[] sfxClips = null)
+    /// <summary>Phát SFX tại index (helper method dùng chung).</summary>
+    private void PlaySFXAt(int index)
     {
-        if (currentSkill == null) return;
-        vfxIndex = 0;
-        pendingSFXClips = sfxClips; // Lưu sfxClips để SpawnRemainingVFX có thể dùng
-        StartCoroutine(SpawnHitVFXSequence(duration, sfxClips));
+        if (currentSkill == null || currentSkill.sfxClips == null || currentSkill.sfxClips.Length == 0 || !currentSkill.playSFX) return;
+        int sfxIndex = index % currentSkill.sfxClips.Length;
+        if (currentSkill.sfxClips[sfxIndex] != null)
+            CombatAudioManager.Instance?.PlaySFX(currentSkill.sfxClips[sfxIndex]);
     }
 
-    private IEnumerator SpawnHitVFXSequence(float duration, AudioClip[] sfxClips = null)
+    /// <summary>
+    /// 🔥 Fallback spawn VFX theo thời gian chia đều — AN TOÀN không trùng lặp.
+    /// ⚠️ KHÔNG phát SFX — SFX chỉ do animation events xử lý:
+    ///    - 1 vfx → OnSpawnVFX
+    ///    - >1 vfx → OnHit
+    /// Chờ 1 frame đầu tiên (yield return null) để animation events chạy trước,
+    /// sau đó chỉ spawn các VFX còn thiếu (vfxIndex chưa cover).
+    /// </summary>
+    public void PlaySkillEffects(float duration)
     {
+        if (currentSkill == null) return;
         int targetCount = GetVFXTargetCount();
-        if (targetCount <= 0) yield break;
+        if (targetCount <= 0) return;
+        StartCoroutine(SpawnSkillEffectsCoroutine(duration, targetCount));
+    }
+
+    private IEnumerator SpawnSkillEffectsCoroutine(float duration, int targetCount)
+    {
+        // 🔥 Chờ 1 frame — để animation events (OnSpawnVFX/OnHit) được xử lý trước,
+        // vfxIndex đã được cập nhật → timer KHÔNG spawn trùng lặp.
+        yield return null;
+
+        // 🔥 Nếu sfxTriggerMode == OnSpawnVFX → phát SFX fallback cho skill buff
+        // (skill buff thường không có OnHit/OnSpawnVFX events → cần fallback)
+        bool sfxOnSpawnVFX = currentSkill != null && currentSkill.sfxTriggerMode == SFXTriggerMode.OnSpawnVFX;
 
         if (duration <= 0f)
         {
-            // Không có thời lượng animation → spawn tất cả ngay.
-            for (int i = 0; i < targetCount; i++)
+            while (vfxIndex < targetCount)
             {
-                if (currentSkill == null) break;
                 VFXEvent evt = GetVFXEvent(vfxIndex);
                 vfxIndex++;
                 if (evt != null) SpawnVFX(evt);
-                
-                // Spawn SFX đồng thời với VFX (dùng modulo nếu sfxClips ít hơn hitCount)
-                if (sfxClips != null && sfxClips.Length > 0)
-                {
-                    int sfxIndex = i % sfxClips.Length;
-                    if (sfxClips[sfxIndex] != null)
-                    {
-                        CombatAudioManager.Instance?.PlaySFX(sfxClips[sfxIndex]);
-                    }
-                }
+                // 🔥 THÊM: Phát SFX fallback nếu skill buff không có events
+                if (sfxOnSpawnVFX) PlaySFXAt(vfxIndex - 1);
             }
             yield break;
         }
@@ -428,27 +505,21 @@ private void ProcessHitAtFrame(int hitIndex)
         float interval = duration / targetCount;
         for (int i = 0; i < targetCount; i++)
         {
-            if (currentSkill == null) break;
+            if (vfxIndex >= targetCount) break;
             VFXEvent evt = GetVFXEvent(vfxIndex);
             vfxIndex++;
             if (evt != null) SpawnVFX(evt);
-            
-            // Spawn SFX đồng thời với VFX (dùng modulo nếu sfxClips ít hơn hitCount)
-            if (sfxClips != null && sfxClips.Length > 0)
-            {
-                int sfxIndex = i % sfxClips.Length;
-                if (sfxClips[sfxIndex] != null)
-                {
-                    CombatAudioManager.Instance?.PlaySFX(sfxClips[sfxIndex]);
-                }
-            }
-            
+            // 🔥 THÊM: Phát SFX fallback nếu skill buff không có events
+            if (sfxOnSpawnVFX) PlaySFXAt(vfxIndex - 1);
             if (i < targetCount - 1)
                 yield return new WaitForSeconds(interval);
         }
     }
 
-    /// <summary>Bổ sung toàn bộ VFX còn thiếu (dùng trong fallback flush).</summary>
+    /// <summary>Trả về index VFX hiện tại (dùng để debug).</summary>
+    public int GetCurrentVFXIndex() => vfxIndex;
+
+    /// <summary>Bổ sung toàn bộ via VFX còn thiếu (dùng trong fallback flush).</summary>
     private void SpawnRemainingVFX()
     {
         if (currentSkill == null) return;
@@ -456,19 +527,8 @@ private void ProcessHitAtFrame(int hitIndex)
         while (vfxIndex < targetCount)
         {
             VFXEvent evt = GetVFXEvent(vfxIndex);
-            if (evt != null) SpawnVFX(evt);
-            
-            // Spawn SFX tương ứng cho remaining VFX (dùng modulo nếu pendingSFXClips ít hơn)
-            if (pendingSFXClips != null && pendingSFXClips.Length > 0)
-            {
-                int sfxIndex = vfxIndex % pendingSFXClips.Length;
-                if (pendingSFXClips[sfxIndex] != null)
-                {
-                    CombatAudioManager.Instance?.PlaySFX(pendingSFXClips[sfxIndex]);
-                }
-            }
-            
             vfxIndex++;
+            if (evt != null) SpawnVFX(evt);
         }
     }
 

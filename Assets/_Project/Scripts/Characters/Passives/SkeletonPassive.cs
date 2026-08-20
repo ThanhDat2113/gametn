@@ -32,8 +32,12 @@ public class SkeletonPassive : PassiveAbility
 
         Debug.Log($"<color=yellow>[SkeletonPassive] {Owner.UnitName} hồi sinh với {reviveHP} HP!</color>");
 
-        // Ngăn DeathFade của UnitView và hiển thị revive
+        // Text hiệu ứng hồi sinh
         var view = CombatManager.Instance?.GetUnitView(Owner);
+        if (view != null)
+            DamageTextManager.Instance?.ShowStatusText("HỒI SINH!", view.GetDamageTextPosition(), DamageTextManager.Instance.reviveColor, Vector2.up);
+
+        // Ngăn DeathFade của UnitView và hiển thị revive
         if (view != null)
         {
             // Dừng DeathFade coroutine, reset về trạng thái sống

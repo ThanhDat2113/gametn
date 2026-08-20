@@ -42,7 +42,12 @@ public class ReinhardPassive : PassiveAbility
             // 2. Cộng thêm action cho lượt enemy của Reinhard
             CombatManager.Instance.GrantExtraAction(Owner);
 
-            Debug.Log($"[{Owner.UnitName}'s Passive] Huyết Mạch Kiếm Thánh phản đòn ngay lập tức! Đánh trả {attacker.UnitName}. (Extra action +1)");
+            Debug.Log($"[ReinhardPassive] Huyết Mạch Kiếm Thánh phản đòn ngay lập tức! Đánh trả {attacker.UnitName}. (Extra action +1)");
+
+            // Text hiệu ứng
+            var view = CombatManager.Instance?.GetUnitView(Owner);
+            if (view != null)
+                DamageTextManager.Instance?.ShowStatusText("HUYẾT MẠCH!", view.GetDamageTextPosition(), DamageTextManager.Instance.bloodColor, Vector2.up);
         }
     }
 }

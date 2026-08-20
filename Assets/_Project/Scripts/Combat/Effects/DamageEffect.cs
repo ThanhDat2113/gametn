@@ -29,7 +29,18 @@ public class DamageEffect : SkillEffect
         float defenseStat = damageType == DamageType.Physical ? target.PDEF : target.MDEF;
         float effectiveDefense = defenseStat * (1f - caster.ArmorPenetration);
         
-        int baseDamage = Mathf.Max(1, raw - Mathf.RoundToInt(effectiveDefense));
+        int baseDamage;
+        if (!caster.IsPlayer)
+        {
+            // Quái vật & boss: min damage ngẫu nhiên 9-12
+            int minDamage = Random.Range(9, 13); // 9, 10, 11, 12
+            baseDamage = Mathf.Max(minDamage, raw - Mathf.RoundToInt(effectiveDefense));
+        }
+        else
+        {
+            // Player: giữ nguyên min damage = 1
+            baseDamage = Mathf.Max(1, raw - Mathf.RoundToInt(effectiveDefense));
+        }
 
         bool isCritical = Random.value < caster.CritChance;
         if (isCritical)

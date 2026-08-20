@@ -70,10 +70,9 @@ public class ClashAnimationSequence : MonoBehaviour
         // Với skill nhiều hit, nếu clip chỉ phát ít hơn hitCount lần OnHit(int) thì các hit
         // còn lại rơi vào đây → FlushPendingOutcomes vừa áp damage vừa bổ sung VFX còn thiếu
         // (SpawnRemainingVFX) để skill luôn spawn ĐỦ hitCount VFX theo đúng thứ tự.
+        // ❌ SFX fallback đã bỏ: SFX giờ được spawn cùng VFX qua PlayHitVFXSequence.
         if (actorView != null)
         {
-            if (_lastHitCounter == 0 && CombatAudioManager.Instance != null && result.Skill != null)
-                CombatAudioManager.Instance.PlaySkillSFX(result.Skill.sfxClips, 0);
             actorView.FlushPendingOutcomes();
         }
 
@@ -139,7 +138,8 @@ public class ClashAnimationSequence : MonoBehaviour
                     aoeTargetViews,
                     cameraManager.damageZoomSize,
                     cameraManager.clashZoomSize * 0.5f);
-                yield return new WaitForSeconds(cameraManager.zoomInDuration);
+                // 🔥 THAY ĐỔI: Chờ 0.5s để camera zoom out hoàn tất (thay vì zoomInDuration 0.15s)
+                yield return new WaitForSeconds(0.5f);
 
                 // Beam: bắt đầu rung liên tục + mạnh dần theo thời gian
                 if (isBeam)
@@ -179,14 +179,10 @@ public class ClashAnimationSequence : MonoBehaviour
         var actorView = GetViewForUnit(result.Actor);
         var skill = result.Skill;
         var targets = result.InitialTargets;
-        
-        // Null safety checks
-        if (skill == null || targets == null)
-        {
-            Debug.LogError($"[ClashAnimationSequence] ExecutePhase: skill or targets is null");
-            return 0.5f;
-        }
         if (actorView == null) return 0.5f;
+
+        // 🔥 Tính lại shouldMove — không dùng trực tiếp từ PlayAction (ngoài scope)
+        bool shouldMove = ShouldCharacterMove(result.Actor, result.Skill);
 
         actorView.SetCurrentSkill(skill);
         if (targets.Any())
@@ -199,7 +195,8 @@ public class ClashAnimationSequence : MonoBehaviour
         _lastHitCounter = 0;
         Action onHitHandler = () => {
             int currentHit = _lastHitCounter++;
-            // SFX được spawn bởi SpawnHitVFXSequence, không cần spawn ở đây
+            // SFX được phát bởi UnitView.PlayHitVFXSequence (đồng bộ với VFX) — KHÔNG phát ở đây
+            // để tránh SFX chạy 2 lần.
             // AOE: mỗi hit → camera zoom ra xa thêm (giữ center = tâm nhóm target)
             if (isAOE && cameraManager != null)
                 cameraManager.AdvanceAOEZoom();
@@ -230,6 +227,9 @@ actorView.OnAnimationEndEvent += cleanupHandler;
         float animLength;
         if (!string.IsNullOrEmpty(skill.animationTrigger))
         {
+            // 🔥 SỬA LẠI: Dùng SetAnimationTrigger CHO CẢ 2 (như ban đầu) — animation luôn chạy.
+            // Lỗi trước: PlayAnimation(skill.animationTrigger) dùng trigger name như state name
+            // → Animator không tìm thấy state → animation không chạy.
             actorView.SetAnimationTrigger(skill.animationTrigger);
             animLength = actorView.GetClipLength(skill.animationTrigger);
         }
@@ -239,10 +239,16 @@ actorView.OnAnimationEndEvent += cleanupHandler;
             animLength = actorView.GetClipLength(AnimationConstants.Attack);
         }
 
-        // Spawn ĐỦ hitCount VFX rải đều theo thời lượng animation (không phụ thuộc hit event).
-        // SFX được spawn đồng thời với VFX nếu skill có sfxClips
-        AudioClip[] sfxClips = skill != null ? skill.sfxClips : null;
-        actorView.PlayHitVFXSequence(animLength, sfxClips);
+        // 🔥 PHÂN LOẠI RIÊNG TỪNG LOẠI SKILL:
+        // - Skill DI CHUYỂN (shouldMove=true): Dựa hoàn toàn vào animation events
+        //   (OnSpawnVFX / OnHit) — KHÔNG gọi PlaySkillEffects để tránh VFX spawn ngay
+        //   khi skill vừa kích hoạt trước khi nhân vật lao tới mục tiêu.
+        // - Skill ĐỨNG YÊN (shouldMove=false): Dùng PlaySkillEffects fallback an toàn
+        //   (chờ 1 frame) để đảm bảo VFX luôn có hiệu ứng kể cả khi clip thiếu events.
+        if (!shouldMove)
+        {
+            actorView.PlaySkillEffects(animLength);
+        }
 
         return animLength;
     }

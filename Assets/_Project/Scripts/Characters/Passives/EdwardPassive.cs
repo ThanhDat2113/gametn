@@ -30,6 +30,11 @@ public class EdwardPassive : PassiveAbility
             {
                 attacker.ApplyStatus(StatusEffectType.Stun, STUN_DURATION);
                 Debug.Log($"[{Owner.UnitName}'s Passive] Automail phản đòn! {attacker.UnitName} bị choáng trong {STUN_DURATION} lượt.");
+
+                // Text hiệu ứng
+                var view = CombatManager.Instance?.GetUnitView(attacker);
+                if (view != null)
+                    DamageTextManager.Instance?.ShowStatusText("PHẢN GIÁP!", view.GetDamageTextPosition(), DamageTextManager.Instance.ironColor, Vector2.up);
             }
         }
     }

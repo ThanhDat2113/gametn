@@ -32,6 +32,14 @@ public class GilgameshPassive : PassiveAbility
         _bonusDamageMultiplier += DMG_INCREASE_PER_HIT;
         Debug.Log($"[{Owner.UnitName}'s Passive] Sát thương tích lũy: +{((_bonusDamageMultiplier - 1f) * 100):F1}% (x{_bonusDamageMultiplier:F3})");
 
+        // Text hiệu ứng (chỉ hiển thị mỗi 10 lần để tránh spam)
+        if (Mathf.RoundToInt((_bonusDamageMultiplier - 1f) * 100) % 10 == 0)
+        {
+            var view = CombatManager.Instance?.GetUnitView(Owner);
+            if (view != null)
+                DamageTextManager.Instance?.ShowStatusText("TÍCH LŨY!", view.GetDamageTextPosition(), DamageTextManager.Instance.accumulateColor, Vector2.up);
+        }
+
         // 2. Khi tấn công → 20% tấn công thêm bằng Skill 1
         if (Random.value < PROC_CHANCE)
         {
@@ -71,6 +79,12 @@ public class GilgameshPassive : PassiveAbility
         _deathTriggerActivated = true;
 
         Debug.Log($"[{Owner.UnitName}'s Passive] ENUMA ELISH - FINAL! Kích hoạt khi chết!");
+
+        // Text hiệu ứng
+        var view = CombatManager.Instance?.GetUnitView(Owner);
+        if (view != null)
+            DamageTextManager.Instance?.ShowStatusText("ENUMA ELISH!", view.GetDamageTextPosition(), DamageTextManager.Instance.explosionColor, Vector2.up);
+
         TriggerFinalEnumaElish();
     }
 
