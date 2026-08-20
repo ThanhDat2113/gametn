@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SkillData
   autoConfirmOnSelect: 0
   movementOverride: 2
-  skillName: Attack Command
+  skillName: "Chi\u1EBFn L\u1EC7nh"
   description: "Gi\u01B0\u01A1ng ki\u1EBFm v\xE0 chi\u1EBFu s\xE1ng v\xE0o 1 \u0111\u1ED3ng
     minh buff cho \u0111\u1ED3ng minh \u0111\u1EA5y 10% t\u1ED1c \u0111\u1ED9 v\xE0
     10% t\u1EA5n c\xF4ng trong 2 l\u01B0\u1EE3t."
@@ -34,9 +34,16 @@ MonoBehaviour:
   hitVfxEvents: []
   sfxClips:
   - {fileID: 8300000, guid: a1322079467e5af41889bf401bc64d2d, type: 3}
+  playSFX: 1
+  sfxTriggerMode: 1
   chargeSound: {fileID: 0}
   voiceLines: []
   animationTrigger: Skill2
+  isBeam: 0
+  beamShakeBaseIntensity: 0.35
+  beamShakeStepIntensity: 0.12
+  beamShakeDuration: 0.5
+  beamShakeFrequency: 24
   isRanged: 0
   projectilePrefab: {fileID: 0}
   projectileOffset: {x: 0, y: 0, z: 0}
@@ -44,5 +51,5 @@ MonoBehaviour:
   vfxPrefab: {fileID: 0}
   vfxOffset: 0
   effects:
-  - {fileID: 11400000, guid: 22decdcf66878e047b9052c164a6d83b, type: 2}
+  - {fileID: 0}
   - {fileID: 11400000, guid: 3139f9fbd76b95347a535dced7084212, type: 2}

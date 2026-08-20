@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Reinhard_Skill2
   m_EditorClassIdentifier: Assembly-CSharp::SkillData
   autoConfirmOnSelect: 0
-  movementOverride: 0
+  movementOverride: 1
   skillName: Dragon Flame Slash
   description: "\u0110\xF2n ch\xE9m long di\u1EC7m, v\u1EEBa g\xE2y s\xE1t th\u01B0\u01A1ng
     v\u1EEBa huy \u0111\u1ED9ng long l\u1EF1c t\u0103ng c\u01B0\u1EDDng s\u1EE9c
@@ -33,9 +33,16 @@ MonoBehaviour:
   rangedVfxEvents: []
   hitVfxEvents: []
   sfxClips: []
+  playSFX: 1
+  sfxTriggerMode: 0
   chargeSound: {fileID: 0}
   voiceLines: []
   animationTrigger: Skill2
+  isBeam: 0
+  beamShakeBaseIntensity: 0.35
+  beamShakeStepIntensity: 0.12
+  beamShakeDuration: 0.5
+  beamShakeFrequency: 24
   isRanged: 0
   projectilePrefab: {fileID: 0}
   projectileOffset: {x: 0, y: 0, z: 0}

@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Luluka_Skill3
   m_EditorClassIdentifier: Assembly-CSharp::SkillData
   autoConfirmOnSelect: 0
-  movementOverride: 0
-  skillName: Desperate Measures
+  movementOverride: 1
+  skillName: "Thi\xEAn V\u0129 K\xEDch"
   description: "G\xE2y s\xE1t th\u01B0\u01A1ng cho to\xE0n b\u1ED9 k\u1EBB \u0111\u1ECBch
     v\u1EDBi s\xE1t th\u01B0\u01A1ng t\u0103ng theo l\u01B0\u1EE3ng HP \u0111\xE3
     m\u1EA5t c\u1EE7a c\xF4 (t\u1ED1i \u0111a 20%) v\xE0 t\u0103ng ph\xF2ng th\u1EE7
@@ -33,7 +33,18 @@ MonoBehaviour:
     attachToCaster: 0
   rangedVfxEvents: []
   hitVfxEvents: []
+  sfxClips:
+  - {fileID: 8300000, guid: c54d31c7df8cb7d4e80622a6f62f4507, type: 3}
+  playSFX: 1
+  sfxTriggerMode: 0
+  chargeSound: {fileID: 0}
+  voiceLines: []
   animationTrigger: Skill3
+  isBeam: 0
+  beamShakeBaseIntensity: 0.35
+  beamShakeStepIntensity: 0.12
+  beamShakeDuration: 0.5
+  beamShakeFrequency: 24
   isRanged: 0
   projectilePrefab: {fileID: 0}
   projectileOffset: {x: 0, y: 0, z: 0}

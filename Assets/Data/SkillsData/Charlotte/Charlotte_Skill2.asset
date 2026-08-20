@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Charlotte_Skill2
   m_EditorClassIdentifier: Assembly-CSharp::SkillData
   autoConfirmOnSelect: 0
-  movementOverride: 0
-  skillName: "Gi\xF3 Ti\xEAn"
+  movementOverride: 2
+  skillName: "Th\u1EDDi Lu\xE2n"
   description: "C\xF4 b\u1EAFt \u0111\u1EA7u t\u1EE5 ph\xE9p v\xE0 c\u01B0\u1EDDng
     h\xF3a cho b\u1EA3n th\xE2n v\xE0 nh\u1EADn cho b\u1EA3n th\xE2n hi\u1EC7u \u1EE9ng
     gi\xF3 ti\xEAn k\xE9o d\xE0i trong 3 l\u01B0\u1EE3t."
@@ -34,9 +34,16 @@ MonoBehaviour:
   hitVfxEvents: []
   sfxClips:
   - {fileID: 8300000, guid: abb52b650ca49a644ace4777a633728e, type: 3}
+  playSFX: 1
+  sfxTriggerMode: 1
   chargeSound: {fileID: 0}
   voiceLines: []
   animationTrigger: Skill2
+  isBeam: 0
+  beamShakeBaseIntensity: 0.35
+  beamShakeStepIntensity: 0.12
+  beamShakeDuration: 0.5
+  beamShakeFrequency: 24
   isRanged: 0
   projectilePrefab: {fileID: 0}
   projectileOffset: {x: 0, y: 0, z: 0}

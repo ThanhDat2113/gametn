@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &7536595439091039426
+--- !u!1 &6775382798245114515
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,40 +8,40 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 6708951453040127590}
-  - component: {fileID: 6874166372513708391}
-  - component: {fileID: 1356477575441980936}
+  - component: {fileID: 5000448412724506328}
+  - component: {fileID: 1694803906665884389}
+  - component: {fileID: 1765431611915343252}
   m_Layer: 0
-  m_Name: Has 1
+  m_Name: Has2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &6708951453040127590
+--- !u!4 &5000448412724506328
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7536595439091039426}
+  m_GameObject: {fileID: 6775382798245114515}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -679.8998, y: 296.93423, z: -76.08983}
-  m_LocalScale: {x: 2, y: 2, z: 2}
+  m_LocalPosition: {x: 183.91438, y: 0.00000045054367, z: 10.4798565}
+  m_LocalScale: {x: 5, y: 5, z: 5}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!2083052967 &6874166372513708391
+--- !u!2083052967 &1694803906665884389
 VisualEffect:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7536595439091039426}
+  m_GameObject: {fileID: 6775382798245114515}
   m_Enabled: 1
-  m_Asset: {fileID: 8926484042661614526, guid: 85e99d25f6f33cd4e990658dc4f5d184, type: 3}
+  m_Asset: {fileID: 8926484042661614526, guid: 4f2bf2de9ba0130469a78eb5a461ea2d, type: 3}
   m_InitialEventName: OnPlay
   m_InitialEventNameOverriden: 0
   m_StartSeed: 0
@@ -57,7 +57,7 @@ VisualEffect:
       m_Array: []
     m_Vector4f:
       m_Array:
-      - m_Value: {x: 0.4245283, y: 0, z: 0, w: 0}
+      - m_Value: {x: 433.9632, y: 433.9632, z: 433.9632, w: 1}
         m_Name: New Color
         m_Overridden: 1
     m_Uint:
@@ -74,16 +74,16 @@ VisualEffect:
       m_Array: []
     m_Bool:
       m_Array: []
---- !u!73398921 &1356477575441980936
+--- !u!73398921 &1765431611915343252
 VFXRenderer:
   serializedVersion: 1
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7536595439091039426}
+  m_GameObject: {fileID: 6775382798245114515}
   m_Enabled: 1
-  m_CastShadows: 0
+  m_CastShadows: 1
   m_ReceiveShadows: 0
   m_DynamicOccludee: 1
   m_StaticShadowCaster: 0

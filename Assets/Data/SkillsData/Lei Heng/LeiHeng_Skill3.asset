@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: LeiHeng_Skill3
   m_EditorClassIdentifier: Assembly-CSharp::SkillData
   autoConfirmOnSelect: 0
-  movementOverride: 0
-  skillName: "Savage Tigerslayer's Perfected Flurry of Blades [\u8D85\u7D55\u731B\u864E\u6BBA\u64CA\u4E82\u65AC]"
+  movementOverride: 1
+  skillName: "B\u1EA1o Vi\xEAm Tr\u1EA3m"
   description: "Nh\u1EA3y l\xEAn cao v\xE0 \u0111\u1EADp m\u1EA1nh xu\u1ED1ng g\xE2y
     l\u01B0\u1EE3ng s\xE1t th\u01B0\u01A1ng si\xEAu l\u1EDBn v\xE0o 1 k\u1EBB \u0111\u1ECBch
     \u0111\u1ED3ng th\u1EDDi k\xEDch n\u1ED5 to\xE0n b\u1ED9 hi\u1EC7u \u1EE9ng thi\xEAu
@@ -35,9 +35,16 @@ MonoBehaviour:
   hitVfxEvents: []
   sfxClips:
   - {fileID: 8300000, guid: 8709e5d3fffacd546b46d34e5530b4e2, type: 3}
+  playSFX: 1
+  sfxTriggerMode: 0
   chargeSound: {fileID: 0}
   voiceLines: []
   animationTrigger: Skill3
+  isBeam: 0
+  beamShakeBaseIntensity: 0.35
+  beamShakeStepIntensity: 0.12
+  beamShakeDuration: 0.5
+  beamShakeFrequency: 24
   isRanged: 0
   projectilePrefab: {fileID: 0}
   projectileOffset: {x: 0, y: 0, z: 0}

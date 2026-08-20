@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SkillData
   autoConfirmOnSelect: 0
   movementOverride: 2
-  skillName: Look At Me
+  skillName: "N\u1ED9 Kh\xEDch"
   description: "T\u0103ng kh\u1EA3 n\u0103ng khi\xEAu kh\xEDch c\u1EE7a b\u1EA3n
     th\xE2n th\xE0nh 100% trong v\xF2ng 3 l\u01B0\u1EE3t trong th\u1EDDi gian n\xE0y
     c\xF4 ph\u1EA3n l\u1EA1i 10% s\xE1t th\u01B0\u01A1ng nh\u1EADn v\xE0o t\u1EEB
@@ -36,9 +36,16 @@ MonoBehaviour:
   hitVfxEvents: []
   sfxClips:
   - {fileID: 8300000, guid: 101a5581a56bbc0419a5f0d01d0e609b, type: 3}
+  playSFX: 1
+  sfxTriggerMode: 1
   chargeSound: {fileID: 0}
   voiceLines: []
   animationTrigger: Skill3
+  isBeam: 0
+  beamShakeBaseIntensity: 0.35
+  beamShakeStepIntensity: 0.12
+  beamShakeDuration: 0.5
+  beamShakeFrequency: 24
   isRanged: 0
   projectilePrefab: {fileID: 0}
   projectileOffset: {x: 0, y: 0, z: 0}
