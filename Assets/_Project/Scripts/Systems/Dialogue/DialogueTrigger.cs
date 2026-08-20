@@ -475,7 +475,7 @@ public class DialogueTrigger : MonoBehaviour
 
     // ─── CHUYỂN CAMERA ────────────────────────────────────────────
 
-    private void SwitchToDialogueCameraAtPoint(Vector3 position, Quaternion rotation)
+    private void SwitchToDialogueCamera(Vector3 position, Quaternion rotation)
     {
         Debug.Log("[DialogueTrigger] === SWITCH CAMERA START ===");
 
@@ -637,7 +637,7 @@ public class DialogueTrigger : MonoBehaviour
 
         if (switchCamera && hasCamPoint)
         {
-            SwitchToDialogueCameraAtPoint(camPos, camRot);
+            SwitchToDialogueCamera(camPos, camRot);
         }
 
         ApplyCharacterFlips();
@@ -663,7 +663,7 @@ public class DialogueTrigger : MonoBehaviour
 
         if (switchCamera && hasCamPoint)
         {
-            SwitchToDialogueCameraAtPoint(camPos, camRot);
+            SwitchToDialogueCamera(camPos, camRot);
         }
 
         ApplyCharacterFlips();

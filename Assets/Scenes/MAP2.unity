@@ -2810,7 +2810,6 @@ Transform:
   - {fileID: 1050040102}
   - {fileID: 1584642038}
   - {fileID: 1859772330}
-  - {fileID: 1171929643}
   - {fileID: 1554740004}
   m_Father: {fileID: 1145806071}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -13727,6 +13726,7 @@ MonoBehaviour:
   combatPrompt: {fileID: 0}
   interactKey: 101
   autoStartCombatOnTouch: 0
+  interactionRange: 0
 --- !u!114 &217935061
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -15016,6 +15016,7 @@ MonoBehaviour:
   combatPrompt: {fileID: 0}
   interactKey: 101
   autoStartCombatOnTouch: 1
+  interactionRange: 0
 --- !u!114 &230062182
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -26068,6 +26069,7 @@ GameObject:
   - component: {fileID: 438927812}
   - component: {fileID: 438927811}
   - component: {fileID: 438927810}
+  - component: {fileID: 438927813}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -26160,6 +26162,18 @@ Canvas:
   m_SortingLayerID: 0
   m_SortingOrder: 0
   m_TargetDisplay: 0
+--- !u!114 &438927813
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 438927808}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 239d8b5e0332586458f7471e5863d807, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Billboard
 --- !u!1001 &440955036
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -29832,6 +29846,7 @@ MonoBehaviour:
   combatPrompt: {fileID: 0}
   interactKey: 101
   autoStartCombatOnTouch: 0
+  interactionRange: 0
 --- !u!114 &488575184
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -43938,6 +43953,7 @@ MonoBehaviour:
   combatPrompt: {fileID: 0}
   interactKey: 101
   autoStartCombatOnTouch: 0
+  interactionRange: 0
 --- !u!114 &686970186
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -46250,6 +46266,7 @@ MonoBehaviour:
   combatPrompt: {fileID: 0}
   interactKey: 101
   autoStartCombatOnTouch: 1
+  interactionRange: 0
 --- !u!114 &714097193
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -54916,6 +54933,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 48712180}
     m_Modifications:
+    - target: {fileID: 1030678204966316802, guid: 398b156fac7c6f44db09e9ad046c24dd, type: 3}
+      propertyPath: m_LODs.Array.data[0].renderers.Array.data[0].renderer
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 1030678204966316802, guid: 398b156fac7c6f44db09e9ad046c24dd, type: 3}
+      propertyPath: m_LODs.Array.data[2].renderers.Array.data[0].renderer
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 1030678204986712960, guid: 398b156fac7c6f44db09e9ad046c24dd, type: 3}
       propertyPath: m_Layer
       value: 3
@@ -61453,6 +61478,7 @@ MonoBehaviour:
   combatPrompt: {fileID: 0}
   interactKey: 101
   autoStartCombatOnTouch: 1
+  interactionRange: 0
 --- !u!114 &958566438
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -72749,6 +72775,7 @@ Transform:
   - {fileID: 1863882893}
   - {fileID: 1933329473}
   - {fileID: 1578327704}
+  - {fileID: 1171929643}
   - {fileID: 1988333405}
   - {fileID: 1072765413}
   - {fileID: 1410123422}
@@ -74294,7 +74321,7 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 48712180}
+    m_TransformParent: {fileID: 1145806071}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 5f1a5e9f4414cc1419bb668d9cb8a7f0, type: 3}
       propertyPath: m_LocalScale.x
@@ -74302,11 +74329,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 5f1a5e9f4414cc1419bb668d9cb8a7f0, type: 3}
       propertyPath: m_LocalScale.y
-      value: 699.9999
+      value: 699.9998
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 5f1a5e9f4414cc1419bb668d9cb8a7f0, type: 3}
       propertyPath: m_LocalScale.z
-      value: 699.9999
+      value: 699.9998
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 5f1a5e9f4414cc1419bb668d9cb8a7f0, type: 3}
       propertyPath: m_LocalPosition.x
@@ -81083,6 +81110,7 @@ MonoBehaviour:
   combatPrompt: {fileID: 0}
   interactKey: 101
   autoStartCombatOnTouch: 1
+  interactionRange: 0
 --- !u!114 &1307763001
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -89807,6 +89835,7 @@ MonoBehaviour:
   combatPrompt: {fileID: 0}
   interactKey: 101
   autoStartCombatOnTouch: 0
+  interactionRange: 0
 --- !u!114 &1440698923
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -91640,6 +91669,7 @@ MonoBehaviour:
   combatPrompt: {fileID: 1819590260}
   interactKey: 101
   autoStartCombatOnTouch: 1
+  interactionRange: 0
 --- !u!114 &1486577649
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -104940,6 +104970,7 @@ MonoBehaviour:
   combatPrompt: {fileID: 0}
   interactKey: 101
   autoStartCombatOnTouch: 0
+  interactionRange: 0
 --- !u!114 &1712404861
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -111639,6 +111670,7 @@ MonoBehaviour:
   combatPrompt: {fileID: 0}
   interactKey: 101
   autoStartCombatOnTouch: 1
+  interactionRange: 0
 --- !u!114 &1863882896
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -118449,6 +118481,7 @@ MonoBehaviour:
   combatPrompt: {fileID: 0}
   interactKey: 101
   autoStartCombatOnTouch: 1
+  interactionRange: 0
 --- !u!114 &1933329476
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -123807,6 +123840,7 @@ MonoBehaviour:
   combatPrompt: {fileID: 0}
   interactKey: 101
   autoStartCombatOnTouch: 1
+  interactionRange: 0
 --- !u!114 &2013239492
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -128527,6 +128561,7 @@ MonoBehaviour:
   combatPrompt: {fileID: 0}
   interactKey: 101
   autoStartCombatOnTouch: 0
+  interactionRange: 0
 --- !u!114 &2048439744
 MonoBehaviour:
   m_ObjectHideFlags: 0

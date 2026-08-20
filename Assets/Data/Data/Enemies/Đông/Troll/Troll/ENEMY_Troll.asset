@@ -18,12 +18,15 @@ MonoBehaviour:
   characterName: Troll
   portrait: {fileID: -1487776161, guid: 321de225a15175540a8a100320c124fe, type: 3}
   battleSprite: {fileID: -1487776161, guid: 321de225a15175540a8a100320c124fe, type: 3}
+  characterImage: {fileID: 0}
   lore: 
+  title: 
+  role: 
+  previewAnimation: {fileID: 0}
   baseHP: 100
   baseATK: 90
   basePDEF: 8
   baseMDEF: 4
-  baseSpeed: 10
   baseLevel: 1
   expReward: 100
   baseExpThreshold: 100
@@ -32,10 +35,9 @@ MonoBehaviour:
   atkPerLevel: 2
   pdefPerLevel: 1
   mdefPerLevel: 1
-  speedPerLevel: 1
   skills:
   - {fileID: 11400000, guid: d01d42627396e5548bae5e267a01221b, type: 2}
-  passiveScript: {fileID: 0}
+  passiveScript: {fileID: 11500000, guid: 3bc36615d4bf62040a6c11c2f264af78, type: 3}
   hitVoiceClips: []
   attackVoiceClips: []
   deathVoiceClips: []

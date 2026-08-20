@@ -186,6 +186,33 @@ public class PlayerProgression : MonoBehaviour
     }
 
     /// <summary>
+    /// Cộng toàn bộ exp cho TẤT CẢ nhân vật đã sở hữu (unlocked characters).
+    /// Mỗi nhân vật nhận ĐẦY ĐỦ amount — không chia nhỏ.
+    /// Dùng cho phần thưởng quest.
+    /// </summary>
+    public void AddExperienceToAllOwnedCharacters(int amount)
+    {
+        if (amount <= 0) return;
+
+        var formationMgr = GameObject.FindFirstObjectByType<FormationManager>();
+        if (formationMgr == null || formationMgr.UnlockedCharacters == null || formationMgr.UnlockedCharacters.Count == 0)
+        {
+            Debug.LogWarning("[PlayerProgression] Không tìm thấy FormationManager hoặc không có nhân vật đã sở hữu — fallback về AddPartyExperience.");
+            AddPartyExperience(amount);
+            return;
+        }
+
+        var ownedCharacters = formationMgr.UnlockedCharacters;
+        foreach (var character in ownedCharacters)
+        {
+            if (character != null)
+                AddExperience(character, amount);
+        }
+
+        Debug.Log($"[Exp] Quest: Toàn bộ {ownedCharacters.Count} nhân vật đã sở hữu nhận {amount} EXP mỗi người.");
+    }
+
+    /// <summary>
     /// Cộng exp đồng đều cho toàn bộ party (alive units).
     /// </summary>
     public void AddPartyExperience(int totalExp)

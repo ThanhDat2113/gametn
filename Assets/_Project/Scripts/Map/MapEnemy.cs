@@ -22,10 +22,13 @@ public class MapEnemy : MonoBehaviour
 
     private IEnumerator StartCombatTransition()
     {
+        StopPlayer();
+
         var formationManager = FindFirstObjectByType<FormationManager>();
         if (formationManager == null)
         {
-            Debug.LogError("[MapEnemy] Không tìm thấy FormationManager!");
+            Debug.LogError("[MapEnemy] Khong tim thay FormationManager!");
+            RestorePlayer();
             yield break;
         }
         formationManager.SaveFormation();
@@ -64,6 +67,59 @@ public class MapEnemy : MonoBehaviour
         }
 
         SceneLoaderManager.LoadCombatScene();
+    }
+
+    private void StopPlayer()
+    {
+        GameObject player = PlayerManager.Instance?.GetPlayer();
+        if (player == null) return;
+
+        var hsrController = player.GetComponent<HSRPlayerController>();
+        if (hsrController != null)
+            hsrController.ResetToIdle();
+
+        var movementScript = PlayerManager.Instance?.playerMovementScript;
+        if (movementScript != null && movementScript.enabled)
+        {
+            movementScript.enabled = false;
+            Debug.Log("[MapEnemy] Disabled player movement script.");
+        }
+
+        var cc = player.GetComponent<CharacterController>();
+        if (cc != null && cc.enabled)
+        {
+            cc.enabled = false;
+            Debug.Log("[MapEnemy] Disabled CharacterController.");
+        }
+
+        var rb = player.GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+        }
+
+        Debug.Log("[MapEnemy] Player stopped for combat transition.");
+    }
+
+    private void RestorePlayer()
+    {
+        GameObject player = PlayerManager.Instance?.GetPlayer();
+        if (player == null) return;
+
+        var cc = player.GetComponent<CharacterController>();
+        if (cc != null && !cc.enabled)
+        {
+            cc.enabled = true;
+            Debug.Log("[MapEnemy] Re-enabled CharacterController.");
+        }
+
+        var movementScript = PlayerManager.Instance?.playerMovementScript;
+        if (movementScript != null && !movementScript.enabled)
+        {
+            movementScript.enabled = true;
+            Debug.Log("[MapEnemy] Re-enabled player movement script.");
+        }
     }
 
     public void MarkAsDefeated()

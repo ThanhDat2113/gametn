@@ -64,6 +64,15 @@ public class PlayerManager : MonoBehaviour
     public void EnableMovement()
     {
         if (player == null) return;
+
+        // 🔥 Bật lại CharacterController trước (nếu đã bị tắt bởi StopPlayer/MapEnemy/EncounterZone)
+        var cc = player.GetComponent<CharacterController>();
+        if (cc != null && !cc.enabled)
+        {
+            cc.enabled = true;
+            Debug.Log("[PlayerManager] Re-enabled CharacterController.");
+        }
+
         if (playerMovementScript != null && !playerMovementScript.enabled)
         {
             playerMovementScript.enabled = true;

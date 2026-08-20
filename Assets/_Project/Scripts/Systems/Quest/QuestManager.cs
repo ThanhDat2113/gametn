@@ -434,8 +434,8 @@ public class QuestManager : MonoBehaviour
                 case QuestRewardType.Experience:
                     if (reward.amount > 0 && PlayerProgression.Instance != null)
                     {
-                        PlayerProgression.Instance.AddPartyExperience(reward.amount);
-                        Debug.Log($"[Quest Reward] Party nhận {reward.amount} kinh nghiệm!");
+                        PlayerProgression.Instance.AddExperienceToAllOwnedCharacters(reward.amount);
+                        Debug.Log($"[Quest Reward] Toàn bộ nhân vật đã sở hữu nhận {reward.amount} kinh nghiệm mỗi người!");
                     }
                     break;
 

@@ -18,12 +18,15 @@ MonoBehaviour:
   characterName: Ant
   portrait: {fileID: 351422097, guid: ce9b1688ce363c54ab66ef0c1e3f1a02, type: 3}
   battleSprite: {fileID: 351422097, guid: ce9b1688ce363c54ab66ef0c1e3f1a02, type: 3}
+  characterImage: {fileID: 0}
   lore: 
+  title: 
+  role: 
+  previewAnimation: {fileID: 0}
   baseHP: 100
   baseATK: 90
   basePDEF: 8
   baseMDEF: 4
-  baseSpeed: 10
   baseLevel: 1
   expReward: 100
   baseExpThreshold: 100
@@ -32,10 +35,9 @@ MonoBehaviour:
   atkPerLevel: 2
   pdefPerLevel: 1
   mdefPerLevel: 1
-  speedPerLevel: 1
   skills:
   - {fileID: 11400000, guid: 271beb892d3551f43acc4cfdd091b5e7, type: 2}
-  passiveScript: {fileID: 0}
+  passiveScript: {fileID: 11500000, guid: 754a6d8ca2e3e0d4799d6b609cb0f802, type: 3}
   hitVoiceClips: []
   attackVoiceClips: []
   deathVoiceClips: []

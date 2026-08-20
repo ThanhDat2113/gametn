@@ -18,12 +18,15 @@ MonoBehaviour:
   characterName: Goblin Dual
   portrait: {fileID: -134513929, guid: 26da2f431f8c50f4189a2cafbca8819c, type: 3}
   battleSprite: {fileID: -134513929, guid: 26da2f431f8c50f4189a2cafbca8819c, type: 3}
+  characterImage: {fileID: 0}
   lore: 
+  title: 
+  role: 
+  previewAnimation: {fileID: 0}
   baseHP: 100
   baseATK: 100
   basePDEF: 8
   baseMDEF: 4
-  baseSpeed: 10
   baseLevel: 1
   expReward: 100
   baseExpThreshold: 100
@@ -32,10 +35,9 @@ MonoBehaviour:
   atkPerLevel: 2
   pdefPerLevel: 1
   mdefPerLevel: 1
-  speedPerLevel: 1
   skills:
   - {fileID: 11400000, guid: 9ef2caea883e4f84da034f15804f7448, type: 2}
-  passiveScript: {fileID: 0}
+  passiveScript: {fileID: 11500000, guid: 6dd317edc109ec24eaab02b6f19642a5, type: 3}
   hitVoiceClips: []
   attackVoiceClips: []
   deathVoiceClips: []
