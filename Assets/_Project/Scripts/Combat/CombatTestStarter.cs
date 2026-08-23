@@ -57,21 +57,23 @@ public class CombatTestStarter : MonoBehaviour
             return;
         }
 
-        var playerSetup = new List<(CharacterData, int, int)>();
+        // Tạo FormationData từ testPlayerCharacters
+        var slotList = new List<FormationSlot>();
         for (int i = 0; i < testPlayerCharacters.Length; i++)
         {
             if (testPlayerCharacters[i] == null) continue;
-            int lvl  = (i < testPlayerLevels.Length) ? testPlayerLevels[i] : 1;
-            int slot = (i < testPlayerSlots.Length)  ? testPlayerSlots[i]  : i;
-            playerSetup.Add((testPlayerCharacters[i], lvl, slot));
+            slotList.Add(new FormationSlot
+            {
+                data = testPlayerCharacters[i],
+                level = (i < testPlayerLevels.Length) ? testPlayerLevels[i] : 1,
+                gridSlot = (i < testPlayerSlots.Length) ? testPlayerSlots[i] : i
+            });
         }
+        var formation = new FormationData { slots = slotList.ToArray() };
 
-        var enemySetup = new List<(CharacterData, int, int)>();
-        foreach (var e in testEnemyGroup.enemies)
-            if (e?.data != null)
-                enemySetup.Add((e.data, e.level, e.gridSlot));
-
-        combat.StartCombat(playerSetup, enemySetup);
+        // Truyền trực tiếp testEnemyGroup gốc để giữ nguyên backgroundImage,
+        // bgmClip, introStinger, victoryFanfare... thay vì tạo EnemyGroupData mới.
+        combat.StartCombat(formation, testEnemyGroup);
         started = true;
         enabled = false;
     }
