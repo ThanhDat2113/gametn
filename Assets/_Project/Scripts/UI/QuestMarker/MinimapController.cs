@@ -108,6 +108,15 @@ public class MinimapController : MonoBehaviour
     public bool IsHiddenByCombat => _isHiddenByCombat;
     public float EffectiveWorldSize => mapScale * zoomMultiplier;
 
+    /// <summary>
+    /// Kích thước icon player trên minimap (pixel, lấy từ sizeDelta của playerIcon).
+    /// MinimapMarkerUI dùng giá trị này để đồng bộ dotSize với player.
+    /// Trả về 0 nếu playerIcon chưa được gán.
+    /// </summary>
+    public float PlayerIconSize => playerIcon != null
+        ? Mathf.Max(playerIcon.sizeDelta.x, playerIcon.sizeDelta.y)
+        : 0f;
+
     // ── Static API ─────────────────────────────────────────────────
     public static void NotifyCombatStateChanged(bool isInCombat)
     {
