@@ -560,7 +560,13 @@ public delegate void DamageModificationHandler(ActionOutcome outcome, CombatUnit
             {
                 unit.ClearStatus(StatusEffectType.Stun);
                 var view = GetUnitView(unit);
-                if (view != null) view.SetStunVisual(false);
+                if (view != null)
+                {
+                    view.SetStunVisual(false);
+                    // 🔥 FIX (kẹt animation khi hết stun): đưa nhân vật về Idle ngay lập tức,
+                    // không để nó giữ nguyên pose Knockback/Hurt từ đòn gây stun.
+                    view.SetAnimationTrigger(AnimationConstants.Idle);
+                }
                 Debug.Log($"[CombatManager] {unit.UnitName} hết Stun sau khi player turn kết thúc.");
             }
         }
@@ -890,6 +896,12 @@ private IEnumerator ProcessCharlotteFollowUp()
             var view = unitViews.FirstOrDefault(v => v.LinkedUnit == unit);
             if (view != null) view.TriggerHitFlash();
             yield return new WaitForSeconds(0.5f);
+
+            // 🔥 FIX (kẹt animation đầu lượt): burn tick chạy ngoài ClashAnimationSequence,
+            // nên OnDamageTaken → SetAnimationTrigger("Knockback") không có bước reset về Idle
+            // phía sau — nhân vật bị kẹt trong animation Knockback/Hurt suốt lượt của chính nó.
+            // Trả nhân vật về Idle sau khi hết nhịp hit để kết thúc trạng thái burn.
+            if (view != null) view.SetAnimationTrigger(AnimationConstants.Idle);
         }
     }
 

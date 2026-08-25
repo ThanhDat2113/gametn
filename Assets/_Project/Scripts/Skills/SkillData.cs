@@ -34,6 +34,17 @@ public enum SFXTriggerMode
     OnSpawnVFX      // SFX phát theo OnSpawnVFX event
 }
 
+/// <summary>
+/// Chế do spawn VFX cho skill (tuong tu SFXTriggerMode).
+/// - OnHit: VFX spawn theo animation event OnHit (moi hit spawn 1 VFX).
+/// - OnSpawnVFX: VFX spawn theo animation event OnSpawnVFX (moi VFX spawn event spawn 1 VFX).
+/// </summary>
+public enum VFXTriggerMode
+{
+    OnHit,          // VFX spawn theo OnHit event
+    OnSpawnVFX      // VFX spawn theo OnSpawnVFX event
+}
+
 [CreateAssetMenu(fileName = "NewSkill", menuName = "RPG/Skill")]
 public class SkillData : ScriptableObject
 {
@@ -61,6 +72,8 @@ public class SkillData : ScriptableObject
     
     [Header("VFX")]
     public VFXEvent[] vfxEvents; // This is now the main array for all VFX
+    [Tooltip("Chon che do spawn VFX: OnHit (theo hit event) hoac OnSpawnVFX (theo vfx spawn event).")]
+    public VFXTriggerMode vfxTriggerMode = VFXTriggerMode.OnHit; // Mac dinh OnHit de giu nguyen hanh vi cu
 
     // HIDE: Old fields are hidden but kept for backward compatibility
     [HideInInspector, Header("DEPRECATED: Use vfxEvents with 'AtCaster' mode")]

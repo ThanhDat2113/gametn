@@ -49,8 +49,10 @@ public class UnitView : MonoBehaviour
     // Bộ đếm VFX riêng — đảm bảo spawn ĐÚNG hitCount VFX theo đúng thứ tự vfxEvents,
     // không phụ thuộc vào số lượng animation hit event (clip có thể thiếu hit frame).
     private int vfxIndex = 0;
-    // 🔥 THÊM: HashSet theo dõi các hit đã được xử lý qua OnHit (để tránh spawn VFX trùng lặp)
-    private HashSet<int> hitProcessed = new HashSet<int>();
+    // FORCE: danh dau khi an motion event cua chinh che do (vfxTriggerMode) da spawn VFX.
+    // Neu true, cac fallback theo thoi gian PHÁI bo qua VFX (chi giu SFX) de dam bao
+    // skill co ca OnHit va OnSpawnVFX chi tuan theo dung che do da setup, khong spa nen 2.
+    private bool _eventVFXSeenForMode = false;
 
     // ─── Damage Text Position ────────────────────────────────────
     [Header("Damage Text Offset")]
@@ -308,7 +310,7 @@ public void SetPendingOutcomes(List<ActionOutcome> outcomes, CombatUnit caster, 
         pendingHitCount = Mathf.Max(1, hitCount);
         currentHitIndex = 0;
         vfxIndex = 0;
-        hitProcessed.Clear(); // 🔥 Reset mỗi skill mới
+        _eventVFXSeenForMode = false; // FORCE: reset moi skill
     }
 
     public void FlushPendingOutcomes()
@@ -364,29 +366,26 @@ public void SetPendingOutcomes(List<ActionOutcome> outcomes, CombatUnit caster, 
     private void SpawnVFXAtFrame(int vfxIndex)
     {
         if (currentSkill == null) return;
-        // Nếu VFX index đã được spawn (bởi ProcessHitAtFrame trước đó), bỏ qua
+        // If VFX index was already spawned (by ProcessHitAtFrame), skip
         if (vfxIndex < this.vfxIndex) return;
 
-        bool hasMultipleVFX = currentSkill.vfxEvents != null && currentSkill.vfxEvents.Length > 1;
-
-        // 🔥 Nếu sfxTriggerMode == OnSpawnVFX → phát SFX theo vfxIndex
+        // VFX follows vfxTriggerMode: only spawn here when mode == OnSpawnVFX.
+        bool vfxOnSpawnVFX = currentSkill.vfxTriggerMode == VFXTriggerMode.OnSpawnVFX;
+        // SFX follows sfxTriggerMode independently of VFX.
         bool sfxOnSpawnVFX = currentSkill.sfxTriggerMode == SFXTriggerMode.OnSpawnVFX;
 
-        if (!hasMultipleVFX)
-        {
-            VFXEvent evt = GetVFXEvent(vfxIndex);
-            if (evt != null) SpawnVFX(evt);
-            if (sfxOnSpawnVFX) PlaySFXAt(vfxIndex); // 🔥 SFX theo OnSpawnVFX
-        }
-        else
-        {
-            // Nếu skill có >1 vfx → chỉ spawn VFX
-            if (hitProcessed.Contains(vfxIndex)) return;
-            VFXEvent evt = GetVFXEvent(vfxIndex);
-            if (evt != null) SpawnVFX(evt);
-            if (sfxOnSpawnVFX) PlaySFXAt(vfxIndex); // 🔥 SFX theo OnSpawnVFX
-        }
-        // Đánh dấu VFX này đã spawn
+        // SFX on OnSpawnVFX event (independent of VFX spawn choice)
+        if (sfxOnSpawnVFX) PlaySFXAt(vfxIndex);
+
+        // In OnHit mode, do NOT spawn VFX here and do NOT advance vfxIndex
+        // (so OnHit spawning is not disturbed).
+        if (!vfxOnSpawnVFX) return;
+
+        _eventVFXSeenForMode = true; // FORCE: VFX cua che do OnSpawnVFX da spawn
+        VFXEvent evt = GetVFXEvent(vfxIndex);
+        if (evt != null) SpawnVFX(evt);
+
+        // Mark this VFX as spawned
         this.vfxIndex = Mathf.Max(this.vfxIndex, vfxIndex + 1);
     }
 
@@ -401,33 +400,25 @@ public void SetPendingOutcomes(List<ActionOutcome> outcomes, CombatUnit caster, 
         if (pendingOutcomes.Count == 0 || pendingCaster == null) return;
         if (currentHitIndex >= pendingHitCount) return;
 
-        bool hasMultipleVFX = currentSkill != null && currentSkill.vfxEvents != null && currentSkill.vfxEvents.Length > 1;
-
-        // 🔥 Nếu sfxTriggerMode == OnHit → phát SFX theo hitIndex
+        // VFX follows vfxTriggerMode: spawn VFX from OnHit when mode == OnHit.
+        bool vfxOnHit = currentSkill != null && currentSkill.vfxTriggerMode == VFXTriggerMode.OnHit;
+        // SFX follows sfxTriggerMode independently of VFX.
         bool sfxOnHit = currentSkill != null && currentSkill.sfxTriggerMode == SFXTriggerMode.OnHit;
 
-        // Nếu skill có >1 vfx → spawn VFX theo OnHit
-        if (hasMultipleVFX)
+        // VFX from OnHit (each hit spawns 1 VFX, cycling vfxEvents if fewer than hitCount)
+        if (vfxOnHit)
         {
-            // Nếu VFX index này chưa được spawn (clip thiếu OnSpawnVFX), bổ sung VFX
             if (hitIndex >= this.vfxIndex)
             {
+                _eventVFXSeenForMode = true; // FORCE: VFX cua che do OnHit da spawn
                 VFXEvent evt = GetVFXEvent(hitIndex);
                 if (evt != null) SpawnVFX(evt);
                 this.vfxIndex = Mathf.Max(this.vfxIndex, hitIndex + 1);
             }
-
-            // 🔥 SFX theo OnHit (mỗi hit phát 1 SFX)
-            if (sfxOnHit) PlaySFXAt(hitIndex);
-
-            // Đánh dấu hit này đã được xử lý
-            hitProcessed.Add(hitIndex);
         }
-        else if (sfxOnHit)
-        {
-            // Skill có 1 vfx nhưng sfxTriggerMode = OnHit → phát SFX theo hit
-            PlaySFXAt(hitIndex);
-        }
+
+        // SFX on OnHit (each hit plays 1 SFX)
+        if (sfxOnHit) PlaySFXAt(hitIndex);
 
         foreach (var outcome in pendingOutcomes)
         {
@@ -471,9 +462,27 @@ public void SetPendingOutcomes(List<ActionOutcome> outcomes, CombatUnit caster, 
     /// Chờ 1 frame đầu tiên (yield return null) để animation events chạy trước,
     /// sau đó chỉ spawn các VFX còn thiếu (vfxIndex chưa cover).
     /// </summary>
-    public void PlaySkillEffects(float duration)
+        /// <summary>
+    /// Skill tan cong da duoc designer setup VFX (hitCount > 0 + vfxEvents/vfxPrefab + vfxTriggerMode)
+    /// -> VFX phai theo DUNG animation event cua che do da chon, TAT fallback thoi gian.
+    /// Skill buff/heal (hitCount <= 0) -> KHONG force, van dung fallback thoi gian de co VFX/SFX.
+    /// </summary>
+    private bool HasAttackConfiguredVFX()
+    {
+        if (currentSkill == null) return false;
+        if (currentSkill.hitCount <= 0) return false;
+        return (currentSkill.vfxEvents != null && currentSkill.vfxEvents.Length > 0) || currentSkill.vfxPrefab != null;
+    }
+public void PlaySkillEffects(float duration)
     {
         if (currentSkill == null) return;
+
+        // FORCE: skill da duoc designer cau hinh VFX (vfxEvents/vfxPrefab + vfxTriggerMode)
+        // -> VFX CHI do animation event cua che do kiem soat. KHONG chay fallback thoi gian o day
+        // (tranh lam tang/lam on vfxIndex lam pha che do spawn theo event, gay VFX "theo on hit").
+        bool hasConfiguredVFX = HasAttackConfiguredVFX();
+        if (hasConfiguredVFX) return;
+
         int targetCount = GetVFXTargetCount();
         if (targetCount <= 0) return;
         StartCoroutine(SpawnSkillEffectsCoroutine(duration, targetCount));
@@ -485,6 +494,13 @@ public void SetPendingOutcomes(List<ActionOutcome> outcomes, CombatUnit caster, 
         // vfxIndex đã được cập nhật → timer KHÔNG spawn trùng lặp.
         yield return null;
 
+        // FORCE: chi spawn VFX theo fallback thoi gian CHO SKILL CHUA CAU HINH VFX
+        // (buff skill khong co vfxEvents/vfxPrefab). Neu skill da duoc designer setup VFX
+        // (vfxEvents/ vfxPrefab + vfxTriggerMode), VFX phai theo dung animation event cua che do
+        // da chon — TAT fallback thoi gian de khong spawn VFX "theo hit"/"theo thoi gian" sai setup.
+        bool hasConfiguredVFX = HasAttackConfiguredVFX();
+        bool canSpawnVFXFallback = !hasConfiguredVFX && !_eventVFXSeenForMode;
+
         // 🔥 Nếu sfxTriggerMode == OnSpawnVFX → phát SFX fallback cho skill buff
         // (skill buff thường không có OnHit/OnSpawnVFX events → cần fallback)
         bool sfxOnSpawnVFX = currentSkill != null && currentSkill.sfxTriggerMode == SFXTriggerMode.OnSpawnVFX;
@@ -493,9 +509,12 @@ public void SetPendingOutcomes(List<ActionOutcome> outcomes, CombatUnit caster, 
         {
             while (vfxIndex < targetCount)
             {
-                VFXEvent evt = GetVFXEvent(vfxIndex);
+                if (canSpawnVFXFallback)
+                {
+                    VFXEvent evt = GetVFXEvent(vfxIndex);
+                    if (evt != null) SpawnVFX(evt);
+                }
                 vfxIndex++;
-                if (evt != null) SpawnVFX(evt);
                 // 🔥 THÊM: Phát SFX fallback nếu skill buff không có events
                 if (sfxOnSpawnVFX) PlaySFXAt(vfxIndex - 1);
             }
@@ -506,9 +525,12 @@ public void SetPendingOutcomes(List<ActionOutcome> outcomes, CombatUnit caster, 
         for (int i = 0; i < targetCount; i++)
         {
             if (vfxIndex >= targetCount) break;
-            VFXEvent evt = GetVFXEvent(vfxIndex);
+            if (canSpawnVFXFallback)
+            {
+                VFXEvent evt = GetVFXEvent(vfxIndex);
+                if (evt != null) SpawnVFX(evt);
+            }
             vfxIndex++;
-            if (evt != null) SpawnVFX(evt);
             // 🔥 THÊM: Phát SFX fallback nếu skill buff không có events
             if (sfxOnSpawnVFX) PlaySFXAt(vfxIndex - 1);
             if (i < targetCount - 1)
@@ -523,6 +545,14 @@ public void SetPendingOutcomes(List<ActionOutcome> outcomes, CombatUnit caster, 
     private void SpawnRemainingVFX()
     {
         if (currentSkill == null) return;
+
+        bool hasConfiguredVFX = HasAttackConfiguredVFX();
+
+        // FORCE: skill da duoc designer cau hinh VFX -> VFX CHI theo dung animation event cua
+        // che do da chon (OnHit hoac OnSpawnVFX). Khong fill them VFX nao o day — ngay ca khi
+        // clip phat it event hon hitCount — de trai ve dung setup event, khong "spawn on hit".
+        if (hasConfiguredVFX) return;
+
         int targetCount = GetVFXTargetCount();
         while (vfxIndex < targetCount)
         {
@@ -702,6 +732,12 @@ public void SetPendingOutcomes(List<ActionOutcome> outcomes, CombatUnit caster, 
             if (isStunned != wasStunned)
             {
                 SetStunVisual(isStunned);
+                // 🔥 FIX (kẹt animation khi hết stun): khi bắt đầu bị stun, trên người nhân vật
+                // có thể còn animation Knockback/Hurt từ chính đòn gây stun. SetStunVisual chỉ
+                // đổi màu, KHÔNG reset animation — nên sau khi hết stun nhân vật vẫn kẹt ở pose đó.
+                // Khi phát hiện stun vừa KẾT THÚC, đưa animation về Idle để hết kẹt.
+                if (!isStunned && wasStunned)
+                    SetAnimationTrigger(AnimationConstants.Idle);
                 wasStunned = isStunned;
             }
             yield return new WaitForSeconds(0.2f);
