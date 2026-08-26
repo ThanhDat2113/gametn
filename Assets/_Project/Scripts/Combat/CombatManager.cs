@@ -770,20 +770,32 @@ private IEnumerator ProcessCharlotteFollowUp()
             yield break;
         }
 
+        // ⚠️ BUG CŨ (nội tại Charlotte khiến cô mất lượt): code từng tìm skill 1 theo tên
+        // "Cắt Gió", nhưng skill 1 trong data thực tế đang đặt tên "Xạ Kích"
+        // (Assets/Data/SkillsData/Charlotte/Charlotte_Skill1.asset) → lookup luôn trả về null
+        // → Coroutine yield break NGAY TẠI ĐÂY mà chưa kịp chạy tới câu khôi phục
+        // HasActedThisTurn ở cuối hàm → Charlotte bị kẹt HasActedThisTurn=true suốt lượt
+        // player → không thể được chọn → MẤT LUỢT, đồng thời KHÔNG hề có đòn follow-up.
+        // Fix: tách hàm tìm skill riêng (FindCharlotteSkill1) và chỉ đụng tới
+        // HasActedThisTurn SAU khi chắc chắn có skill để dùng.
+        var skill1 = FindCharlotteSkill1(charlotte);
+        if (skill1 == null)
+        {
+            Debug.LogWarning($"[CharlotteFollowUp] {charlotte.UnitName} không có skill 1 khả dụng. Bỏ qua follow-up.");
+            _isProcessingCharlotteFollowUp = false;
+            yield break;
+        }
+
+        // Lưu trạng thái lượt ban đầu để khôi phục ĐÚNG như cũ sau follow-up:
+        // - Charlotte chưa act → giữ HasActedThisTurn=false (cô vẫn còn lượt thông thường).
+        // - Charlotte đã act rồi → giữ true (không được cấp thêm lượt miễn phí).
+        bool charlotteHadActedBeforeFollowUp = charlotte.HasActedThisTurn;
+
         // Đánh dấu Charlotte đã act để UI bỏ qua lượt chọn của cô trong lúc follow-up.
         // Set ở ĐÂY (khi follow-up thực sự bắt đầu) thay vì trong RequestCharlotteFollowUp,
         // để skill hiện tại (vd: skill 3) chạy xong trước khi follow-up bắt đầu.
         charlotte.HasActedThisTurn = true;
         if (charlotte.SelectedSkill != null) charlotte.ClearSelection();
-
-        // Tìm skill 1 (Cắt Gió)
-        var skill1 = charlotte.AvailableSkills.FirstOrDefault(s => s.skillName == "Cắt Gió");
-        if (skill1 == null)
-        {
-            Debug.LogWarning($"[CharlotteFollowUp] Charlotte không tìm thấy skill 'Cắt Gió'!");
-            _isProcessingCharlotteFollowUp = false;
-            yield break;
-        }
 
         Debug.Log($"[CharlotteFollowUp] Charlotte nhảy lượt và dùng [{skill1.skillName}] vào {_charlotteFollowUpTarget.UnitName}!");
 
@@ -802,11 +814,32 @@ private IEnumerator ProcessCharlotteFollowUp()
         _charlotteFollowUpCountThisTurn++;
         _isProcessingCharlotteFollowUp = false;
 
-        // FIX: Khôi phục lượt hành động cho Charlotte — follow-up KHÔNG được làm cô ấy mất lượt.
-        // Charlotte vẫn có thể chọn và hành động bình thường trong lượt này sau khi follow-up xong.
-        charlotte.HasActedThisTurn = false;
+        // Khôi phục ĐÚNG trạng thái lượt ban đầu của Charlotte (xem charlotteHadActedBeforeFollowUp):
+        // follow-up là đòn đánh THÊM — không lấy mất lượt của cô, cũng không cấp thêm lượt thừa.
+        charlotte.HasActedThisTurn = charlotteHadActedBeforeFollowUp;
 
-        Debug.Log($"[CharlotteFollowUp] Hoàn tất follow-up #{_charlotteFollowUpCountThisTurn}. Charlotte vẫn còn lượt hành động bình thường.");
+        Debug.Log($"[CharlotteFollowUp] Hoàn tất follow-up #{_charlotteFollowUpCountThisTurn}. " +
+                  (charlotteHadActedBeforeFollowUp
+                      ? $"{charlotte.UnitName} đã dùng lượt thường trước đó."
+                      : $"{charlotte.UnitName} vẫn còn lượt hành động bình thường."));
+    }
+
+    /// <summary>
+    /// Tìm skill 1 của Charlotte một cách bền vững:
+    /// 1) Theo tên hiển thị hiện tại trong data: "Xạ Kích" (Charlotte_Skill1.asset).
+    /// 2) Fallback: skill đầu tiên trong AvailableSkills (data.skills được author theo thứ tự skill1→skill3),
+    ///    tương thích với nhân vật khác dùng chung passive này (vd: Kurumi).
+    /// Lưu ý: KHÔNG hard-code lại tên cũ "Cắt Gió" — tên đó không tồn tại trong data
+    /// và từng gây lỗi nội tại Charlotte mất lượt (xem ProcessCharlotteFollowUp).
+    /// </summary>
+    private SkillData FindCharlotteSkill1(CombatUnit charlotte)
+    {
+        if (charlotte?.AvailableSkills == null || charlotte.AvailableSkills.Count == 0) return null;
+        var byName = charlotte.AvailableSkills.FirstOrDefault(s => s != null && s.skillName == "Xạ Kích");
+        if (byName != null) return byName;
+
+        Debug.Log($"[CharlotteFollowUp] Không tìm thấy skill tên 'Xạ Kích', dùng skill đầu tiên trong danh sách làm skill 1.");
+        return charlotte.AvailableSkills[0];
     }
 
     // ── Player Selection (gọi từ UI) ──────────────────────────
