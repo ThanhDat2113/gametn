@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Hassan_Skill1
   m_EditorClassIdentifier: Assembly-CSharp::SkillData
   autoConfirmOnSelect: 0
-  movementOverride: 0
+  movementOverride: 1
   skillName: Automail Strike
   description: "\u0110\u1EA5m m\u1EA1nh b\u1EB1ng tay c\u01A1 kh\xED automail, l\xE0m
     ch\u1EADm \u0111\u1ED1i th\u1EE7."
@@ -26,13 +26,14 @@ MonoBehaviour:
   hitCount: 1
   vfxEvents:
   - vfxPrefab: {fileID: 3961079190934410881, guid: 393e3f26e2bd7e442a153727437565eb, type: 3}
-    spawnMode: 0
+    spawnMode: 1
     offset: {x: 0, y: 0, z: 0}
     attachToCaster: 0
-  - vfxPrefab: {fileID: 6775382798245114515, guid: 0dbe33caff973a345a36e4161111337c, type: 3}
-    spawnMode: 0
+  - vfxPrefab: {fileID: 3055487856557947535, guid: d05b1793926605349ba892f0a8a57040, type: 3}
+    spawnMode: 1
     offset: {x: 0, y: 0, z: 0}
     attachToCaster: 0
+  vfxTriggerMode: 1
   rangedVfxEvents: []
   hitVfxEvents: []
   sfxClips: []
