@@ -25,6 +25,10 @@ MonoBehaviour:
   apCost: 0
   hitCount: 4
   vfxEvents:
+  - vfxPrefab: {fileID: 204355416896773010, guid: 30fb34659639bac4281663c710c4fbe1, type: 3}
+    spawnMode: 1
+    offset: {x: 0, y: 0, z: 0}
+    attachToCaster: 0
   - vfxPrefab: {fileID: 947519132301063729, guid: b91e0c4a0a83ea342afc822e675d5cc8, type: 3}
     spawnMode: 1
     offset: {x: 0, y: 0, z: 0}
@@ -37,13 +41,13 @@ MonoBehaviour:
     spawnMode: 1
     offset: {x: 0, y: 0, z: 0}
     attachToCaster: 0
-  vfxTriggerMode: 1
+  vfxTriggerMode: 0
   rangedVfxEvents: []
   hitVfxEvents: []
   sfxClips:
   - {fileID: 8300000, guid: e66a95e107614ae41a67b7dd2c3b02ab, type: 3}
   playSFX: 1
-  sfxTriggerMode: 0
+  sfxTriggerMode: 1
   chargeSound: {fileID: 0}
   voiceLines: []
   animationTrigger: Skill1
