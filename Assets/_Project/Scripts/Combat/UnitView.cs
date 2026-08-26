@@ -54,6 +54,13 @@ public class UnitView : MonoBehaviour
     // skill co ca OnHit va OnSpawnVFX chi tuan theo dung che do da setup, khong spa nen 2.
     private bool _eventVFXSeenForMode = false;
 
+    // ─── Quản lý phản hồi bị đánh (tránh kẹt animation khi damage liên tục) ───
+    // Generation dùng để chỉ coroutine reset-to-Idle MỚI NHẤT mới được phép trả nhân vật về Idle.
+    private int _hurtCoGeneration = 0;
+    // Thời điểm đặt trigger Knockback gần nhất (để chống spam trong cùng một chuỗi hit).
+    private float _lastHurtAnimTime = -999f;
+    private const float HurtTriggerMinInterval = 0.15f;
+
     // ─── Damage Text Position ────────────────────────────────────
     [Header("Damage Text Offset")]
     [Tooltip("Độ cao so với vị trí transform của nhân vật (world units)")]
@@ -97,8 +104,13 @@ public class UnitView : MonoBehaviour
         // ── ĐÃ SỬA: delegate đúng 3 tham số ──
         unit.OnDamageTaken += (caster, dmg, damageType) => 
         {
-            SetAnimationTrigger("Knockback");
-            TriggerHitFlash();
+            // 🔥 FIX (kẹt animation khi bị gây sát thương liên tục):
+            // Trước đây mỗi lần nhận damage là gọi SetAnimationTrigger("Knockback") và KHÔNG có
+            // bước trả về Idle. Khi bị đánh liên tục (multi-hit / burn / phản chiếu / passive),
+            // trigger Knockback bị đặt đi đặt lại, xóa luôn trigger khác, và nhân vật kẹt ở tư thế
+            // Knockback/Hurt. PlayHitReaction quản lý đúng: chống spam trigger + TỰ ĐỘNG trả về Idle
+            // khi chuỗi damage kết thúc.
+            PlayHitReaction();
             UpdateHealthBar();
 
             Vector2 direction = Vector2.up;
@@ -660,7 +672,62 @@ public void PlaySkillEffects(float duration)
         return 0.5f;
     }
 
-    public void TriggerHitFlash() => StartCoroutine(HitFlash());
+    /// <summary>
+    /// Phản hồi khi bị đánh: bật Knockback + hit-flash, và TỰ ĐỘNG trả về Idle khi hết chuỗi damage.
+    /// 🔥 FIX root cause của "kẹt animation khi bị gây sát thương liên tục":
+    /// - Spam trigger Knockback trong cùng một chuỗi hit sẽ làm trigger bị "nuốt" / lệch trạng thái.
+    ///   Ta đặt trigger tối thiểu cách nhau HurtTriggerMinInterval để giữ tư thế bị đánh liên tục
+    ///   mà không đẩy state machine về hướng sai.
+    /// - Mỗi hit đăng ký một coroutine reset-to-Idle; chỉ coroutine của hit MỚI NHẤT (gen cao nhất)
+    ///   được trả về Idle, do đó nhân vật luôn hết kẹt ngay khi chuỗi damage dừng — kể cả khi damage
+    ///   xảy ra ngoài animation tấn công (burn, phản chiếu, passive, đòn phạt).
+    /// </summary>
+    private void PlayHitReaction()
+    {
+        if (animator == null || !animator.isActiveAndEnabled) return;
+
+        _hurtCoGeneration++;
+        int generation = _hurtCoGeneration;
+
+        float now = Time.time;
+        if (now - _lastHurtAnimTime >= HurtTriggerMinInterval)
+        {
+            SetAnimationTrigger(AnimationConstants.Knockback);
+            _lastHurtAnimTime = now;
+        }
+
+        TriggerHitFlash();
+
+        StartCoroutine(ResetToIdleAfterHurt(generation));
+    }
+
+    private IEnumerator ResetToIdleAfterHurt(int generation)
+    {
+        // Chờ đủ clip Knockback để nó có thời gian thể hiện. Nếu damage mới ới trong khoảng này,
+        // PlayHitReaction đã bump _hurtCoGeneration → sau khi chờ xong, coroutine cũ bỏ qua (không
+        // vội về Idle giữa chuỗi). Chỉ cú damage cuối cùng (gen mới nhất, không còn hit mới) sẽ về Idle.
+        float clipLen = GetClipLength(AnimationConstants.Knockback);
+        float delay = Mathf.Max(0.25f, clipLen);
+        yield return new WaitForSeconds(delay);
+
+        if (generation != _hurtCoGeneration) yield break; // đã có hit mới hơn, để hit đó quyết định
+        // Không trả về Idle nếu unit đã chết (DeathFade sẽ đưa về "Die" và tắt object).
+        if (LinkedUnit != null && !LinkedUnit.IsAlive) yield break;
+
+        SetAnimationTrigger(AnimationConstants.Idle);
+    }
+
+    private Coroutine _hitFlashCo = null;
+    public void TriggerHitFlash()
+    {
+        if (spriteRenderer == null) return;
+        // 🔥 FIX: nếu đợt flash trước vẫn đang chạy thì dừng lại trước khi chạy flash mới.
+        // Trước đây nhiều HitFlash chạy chồng lên nhau (damage liên tục) → màu bị dừng ở đỏ/tím,
+        // trông như "kẹt" hiệu ứng.
+        if (_hitFlashCo != null) StopCoroutine(_hitFlashCo);
+        _hitFlashCo = StartCoroutine(HitFlash());
+    }
+
     private IEnumerator HitFlash()
     {
         spriteRenderer.color = Color.red;
@@ -670,6 +737,7 @@ public void PlaySkillEffects(float duration)
         spriteRenderer.color = Color.red;
         yield return new WaitForSeconds(0.08f);
         RestoreColorAfterFlash();
+        _hitFlashCo = null;
     }
 
     public void TriggerHealFlash() => StartCoroutine(HealFlash());
