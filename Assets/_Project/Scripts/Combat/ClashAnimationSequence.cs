@@ -188,6 +188,11 @@ public class ClashAnimationSequence : MonoBehaviour
         if (targets.Any())
             actorView.SetCurrentTarget(targets.First());
 
+        // CAMERA: reset buoc rung progressive ve 0 moi skill moi.
+        if (cameraManager != null)
+            cameraManager.ResetHitShakeProgress();
+
+
 // Hit Handler - chỉ SFX + shake + hurt.
             // VFX được spawn bởi UnitView.PlayHitVFXSequence (rải đều theo thời lượng animation)
         // — KHÔNG spawn hết ở đây, tránh trùng lặp và spawn sai thứ tự.
@@ -207,7 +212,10 @@ public class ClashAnimationSequence : MonoBehaviour
             {
                 var targetView = GetViewForUnit(outcome.Target);
                 if (targetView == null) continue;
-                if (cameraManager != null && !isAOE) cameraManager.PlayImpactShake();
+                // CAMERA: mỗi onhit rung 1 cú (ngắn), càng về sau càng mạnh (progressive).
+                // Beam dùng AdvanceBeamShake riêng (rung liên tục tăng dần).
+                if (cameraManager != null && !isAOE && !(skill != null && skill.isBeam))
+                    cameraManager.PlayProgressiveHitShake();
                 targetView.SetAnimationTrigger(AnimationConstants.Hurt);
             }
         };

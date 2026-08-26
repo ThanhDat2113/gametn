@@ -240,7 +240,32 @@ public class CombatCameraManager : MonoBehaviour
         isShaking = false;
     }
 
-    private Coroutine beamShakeCoroutine;
+// ── Continuous Shake (rung liên tục trong suốt skill — cho skill OnHit) ────
+        // -- Progressive Hit Shake (moi onhit sau cang rung manh hon) ---
+    [Header("Progressive Hit Shake (onhit)")]
+    public float hitShakeBaseIntensity = 0.30f;   // do rung cua hit dau tien
+    public float hitShakeStepIntensity = 0.10f;   // tang them moi hit sau
+    public float hitShakeMaxIntensity = 1.2f;     // gioi han toi da
+    public float hitShakeDuration = 0.3f;         // thoi luong moi cu rung
+    private int _hitShakeStep = 0;
+
+    /// <summary>Reset buoc rung ve 0 - goi vao dau moi skill.</summary>
+    public void ResetHitShakeProgress()
+    {
+        _hitShakeStep = 0;
+    }
+
+    /// <summary>
+    /// Play shake cho tung onhit - hit cang ve sau cang rung manh (tang dan theo _hitShakeStep).
+    /// </summary>
+    public void PlayProgressiveHitShake()
+    {
+        StopCoroutineIfRunning(shakeCoroutine);
+        float intensity = Mathf.Min(hitShakeBaseIntensity + hitShakeStepIntensity * _hitShakeStep, hitShakeMaxIntensity);
+        _hitShakeStep++;
+        shakeCoroutine = StartCoroutine(ShakeCoroutine(intensity, hitShakeDuration));
+    }
+private Coroutine beamShakeCoroutine;
 
     /// <summary>
     /// Rung liên tục theo thời lượng beamShakeDuration, càng lâu càng rung mạnh.
@@ -288,6 +313,8 @@ public class CombatCameraManager : MonoBehaviour
         StopCoroutineIfRunning(followCoroutine);
         StopCoroutineIfRunning(frameTargetsCoroutine);
         StopCoroutineIfRunning(beamShakeCoroutine);
+        StopCoroutineIfRunning(shakeCoroutine);
+        _hitShakeStep = 0;
         _beamShakeActive = false;
         _beamCurrentIntensity = 0f;
         followTarget = null;
@@ -531,11 +558,14 @@ public class CombatCameraManager : MonoBehaviour
 
     private IEnumerator ShakeCoroutine(bool isFinalHit = false)
     {
+        yield return ShakeCoroutine(isFinalHit ? finalHitShakeIntensity : shakeIntensity,
+                                    isFinalHit ? finalHitShakeDuration : shakeDuration);
+    }
+
+    private IEnumerator ShakeCoroutine(float intensity, float duration)
+    {
         isShaking = true;
         shakeElapsed = 0f;
-        float duration = isFinalHit ? finalHitShakeDuration : shakeDuration;
-        float intensity = isFinalHit ? finalHitShakeIntensity : shakeIntensity;
-
         while (shakeElapsed < duration)
         {
             shakeElapsed += Time.deltaTime;

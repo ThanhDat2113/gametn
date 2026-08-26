@@ -17,6 +17,10 @@ public class EnemyGroupData : ScriptableObject
     public int combatArea = 1;
     public AudioClip bgmClip;
 
+    [Header("Background")]
+    [Tooltip("Background image riêng cho enemy group này khi vào combat scene.")]
+    public Sprite backgroundImage;
+
     [Header("Audio")]
     public AudioClip introStinger;
     public AudioClip victoryFanfare;

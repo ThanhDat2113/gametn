@@ -102,6 +102,10 @@ public delegate void DamageModificationHandler(ActionOutcome outcome, CombatUnit
     public CanvasGroup combatUICanvasGroup;
     private TargetingArrowController arrowController;
 
+    [Header("Background")]
+    [Tooltip("Controller đổi background theo EnemyGroupData. Nếu để trống sẽ tự tìm trong scene.")]
+    public CombatBackgroundController backgroundController;
+
     private void Awake()
     {
         if (Instance != null) { Destroy(gameObject); return; }
@@ -148,6 +152,9 @@ public delegate void DamageModificationHandler(ActionOutcome outcome, CombatUnit
         PlayerUnits.Clear(); EnemyUnits.Clear();
         CurrentPlayerAP = STARTING_PLAYER_AP;
         OnAPChanged?.Invoke(CurrentPlayerAP);
+
+        // Đổi background theo enemy group
+        ApplyEnemyGroupBackground(enemyGroup);
 
         // Tạo player units
         foreach (var slot in playerFormation.slots)
@@ -209,6 +216,26 @@ public delegate void DamageModificationHandler(ActionOutcome outcome, CombatUnit
         var enemyGroup = ScriptableObject.CreateInstance<EnemyGroupData>();
         enemyGroup.enemies = enemySetup.ConvertAll(e => new EnemyGroupData.EnemyEntry { data = e.data, level = e.level, gridSlot = e.gridSlot }).ToArray();
         StartCombat(formation, enemyGroup);
+    }
+
+    /// <summary>
+    /// Đổi background combat scene theo EnemyGroupData.
+    /// Nếu enemy group có backgroundImage, sẽ set vào SpriteRenderer background.
+    /// </summary>
+    private void ApplyEnemyGroupBackground(EnemyGroupData enemyGroup)
+    {
+        if (enemyGroup == null || enemyGroup.backgroundImage == null) return;
+
+        if (backgroundController == null)
+            backgroundController = FindFirstObjectByType<CombatBackgroundController>();
+
+        if (backgroundController == null)
+        {
+            Debug.LogWarning("[CombatManager] Không tìm thấy CombatBackgroundController trong scene!");
+            return;
+        }
+
+        backgroundController.SetBackground(enemyGroup.backgroundImage);
     }
 
     private void SpawnUnitViews()
@@ -533,7 +560,13 @@ public delegate void DamageModificationHandler(ActionOutcome outcome, CombatUnit
             {
                 unit.ClearStatus(StatusEffectType.Stun);
                 var view = GetUnitView(unit);
-                if (view != null) view.SetStunVisual(false);
+                if (view != null)
+                {
+                    view.SetStunVisual(false);
+                    // 🔥 FIX (kẹt animation khi hết stun): đưa nhân vật về Idle ngay lập tức,
+                    // không để nó giữ nguyên pose Knockback/Hurt từ đòn gây stun.
+                    view.SetAnimationTrigger(AnimationConstants.Idle);
+                }
                 Debug.Log($"[CombatManager] {unit.UnitName} hết Stun sau khi player turn kết thúc.");
             }
         }
@@ -863,6 +896,12 @@ private IEnumerator ProcessCharlotteFollowUp()
             var view = unitViews.FirstOrDefault(v => v.LinkedUnit == unit);
             if (view != null) view.TriggerHitFlash();
             yield return new WaitForSeconds(0.5f);
+
+            // 🔥 FIX (kẹt animation đầu lượt): burn tick chạy ngoài ClashAnimationSequence,
+            // nên OnDamageTaken → SetAnimationTrigger("Knockback") không có bước reset về Idle
+            // phía sau — nhân vật bị kẹt trong animation Knockback/Hurt suốt lượt của chính nó.
+            // Trả nhân vật về Idle sau khi hết nhịp hit để kết thúc trạng thái burn.
+            if (view != null) view.SetAnimationTrigger(AnimationConstants.Idle);
         }
     }
 
