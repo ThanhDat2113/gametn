@@ -142,7 +142,7 @@ public class CombatPlanningUI : MonoBehaviour
         isSelectingUnit = true; // Bắt đầu chế độ chọn unit
 
         ShowUI();
-        SetInstruction("Click vào unit để chọn hành động");
+        SetInstruction("Chọn 1 nhân vật sáng để ra lệnh hành động");
         UpdateAPDisplay();
         UpdateUnitEmphasis(unitsCanAct);
     }
@@ -208,7 +208,7 @@ public class CombatPlanningUI : MonoBehaviour
             if (remaining.Count > 0)
             {
                 isSelectingUnit = true;
-                SetInstruction("Click vào unit để chọn hành động");
+                SetInstruction("Chọn 1 nhân vật sáng để ra lệnh hành động");
                 UpdateUnitEmphasis(remaining);
             }
         }
@@ -318,7 +318,7 @@ public class CombatPlanningUI : MonoBehaviour
             AddHoverEffect(go, unit, i, skill);
             activeSkillButtons.Add(go);
         }
-        SetInstruction($"{unit.UnitName} — Choose a skill");
+        SetInstruction($"{unit.UnitName} — Chọn kỹ năng (di chuột vào để xem mô tả)");
     }
 
     private void CloseSkillWheel()
@@ -373,7 +373,7 @@ public class CombatPlanningUI : MonoBehaviour
             selectedSkill = skill;
             isChoosingTarget = true;
             HighlightValidTargets(skill);
-            SetInstruction($"Choose a target for [{skill.skillName}] (Right-click to cancel)");
+            SetInstruction($"Chọn mục tiêu cho [{skill.skillName}] (Chuột phải để hủy)");
             CloseSkillWheel();
         }
     }
@@ -420,7 +420,7 @@ public class CombatPlanningUI : MonoBehaviour
             ClearTargetHighlights();
             var view = combat.GetAllUnitViews().FirstOrDefault(v => v.LinkedUnit == currentUnit);
             if (view != null) OpenSkillWheel(currentUnit, view);
-            else SetInstruction("Action canceled. Select a unit.");
+            else SetInstruction("Đã hủy. Chọn 1 nhân vật sáng để ra lệnh hành động.");
             return;
         }
 
@@ -434,7 +434,7 @@ public class CombatPlanningUI : MonoBehaviour
             selectedSkill = null;
             isSelectingUnit = true;
             var remaining = combat.PlayerUnits.Where(u => u.IsAlive && !u.HasActedThisTurn).ToList();
-            SetInstruction("Click vào unit để chọn hành động");
+            SetInstruction("Chọn 1 nhân vật sáng để ra lệnh hành động");
             UpdateUnitEmphasis(remaining);
             return;
         }
@@ -487,6 +487,11 @@ public class CombatPlanningUI : MonoBehaviour
             var img = go.GetComponent<Image>();
             if (img != null) img.color = skillHoverColor;
             AudioManager.Instance?.PlayUIHover();
+
+            // Hiển thị mô tả kỹ năng khi hover vào nút kỹ năng
+            string targetHint = GetTargetTypeHint(skill.targetType);
+            string desc = string.IsNullOrEmpty(skill.description) ? "Chưa có mô tả." : skill.description;
+            SetInstruction($"{skill.skillName} (AP: {skill.apCost})\n{targetHint}\n{desc}");
         });
         trigger.triggers.Add(enterEntry);
 
@@ -499,8 +504,28 @@ public class CombatPlanningUI : MonoBehaviour
                 StartCoroutine(HoverScaleCoroutine(rect, rect.localScale.x, 1f));
             var img = go.GetComponent<Image>();
             if (img != null) img.color = (selectedSkill == skill) ? skillSelectedColor : skillNormalColor;
+
+            // Khôi phục text hướng dẫn khi rời khỏi nút kỹ năng
+            if (currentUnit != null && !isChoosingTarget)
+                SetInstruction($"{currentUnit.UnitName} — Chọn kỹ năng (di chuột vào để xem mô tả)");
         });
         trigger.triggers.Add(exitEntry);
+    }
+
+    /// <summary>
+    /// Chuyển TargetType thành text hướng dẫn ngắn gọn.
+    /// </summary>
+    private string GetTargetTypeHint(TargetType type)
+    {
+        switch (type)
+        {
+            case TargetType.SingleEnemy: return "Mục tiêu: 1 kẻ địch";
+            case TargetType.AllEnemies: return "Mục tiêu: Tất cả kẻ địch";
+            case TargetType.SingleAlly: return "Mục tiêu: 1 đồng minh";
+            case TargetType.AllAllies: return "Mục tiêu: Tất cả đồng minh";
+            case TargetType.Self: return "Mục tiêu: Bản thân";
+            default: return "";
+        }
     }
 
     private IEnumerator HoverScaleCoroutine(RectTransform rect, float from, float to)
