@@ -73,8 +73,16 @@ public class MinimapController : MonoBehaviour
     [SerializeField] private RawImage minimapRawImage;
     [SerializeField] private Image minimapMaskImage;
     [SerializeField] private RectTransform markerContainer;
-    [SerializeField] private RectTransform playerIcon;
+    [SerializeField] private Image playerIcon;
     [SerializeField] private GameObject minimapUIRoot;
+
+    [Header("Player Icon Style")]
+    [Tooltip("Sprite hiển thị player trên minimap. Để trống sẽ dùng sprite mặc định của Image.")]
+    [SerializeField] private Sprite playerIconSprite;
+    [Tooltip("Màu tint của player icon.")]
+    [SerializeField] private Color playerIconColor = Color.white;
+    [Tooltip("Kích thước player icon trên minimap (pixel). MinimapMarkerUI dùng giá trị này để đồng bộ dotSize.")]
+    [SerializeField] [Min(4f)] private float playerIconSize = 14f;
 
     [Header("Auto-Hide khi UI Panel mở")]
     [SerializeField] private GameObject[] uiPanelsToWatch;
@@ -109,13 +117,31 @@ public class MinimapController : MonoBehaviour
     public float EffectiveWorldSize => mapScale * zoomMultiplier;
 
     /// <summary>
-    /// Kích thước icon player trên minimap (pixel, lấy từ sizeDelta của playerIcon).
+    /// Kích thước icon player trên minimap (pixel).
     /// MinimapMarkerUI dùng giá trị này để đồng bộ dotSize với player.
-    /// Trả về 0 nếu playerIcon chưa được gán.
     /// </summary>
-    public float PlayerIconSize => playerIcon != null
-        ? Mathf.Max(playerIcon.sizeDelta.x, playerIcon.sizeDelta.y)
-        : 0f;
+    public float PlayerIconSize => playerIconSize;
+
+    /// <summary>
+    /// Đổi sprite player icon lúc runtime (ví dụ: theo class/mount nhân vật).
+    /// </summary>
+    public void SetPlayerIconSprite(Sprite sprite, Color? tint = null)
+    {
+        playerIconSprite = sprite;
+        if (tint.HasValue) playerIconColor = tint.Value;
+        ApplyPlayerIconSprite();
+    }
+
+    /// <summary>
+    /// Đổi kích thước player icon lúc runtime.
+    /// MinimapMarkerUI sẽ tự đồng bộ trong LateUpdate tiếp theo.
+    /// </summary>
+    public void SetPlayerIconSize(float size)
+    {
+        playerIconSize = Mathf.Max(4f, size);
+        if (playerIcon != null)
+            playerIcon.rectTransform.sizeDelta = Vector2.one * playerIconSize;
+    }
 
     // ── Static API ─────────────────────────────────────────────────
     public static void NotifyCombatStateChanged(bool isInCombat)
@@ -154,6 +180,7 @@ public class MinimapController : MonoBehaviour
         ResolveUIRoot();
         SetupDisplayMode();
         ApplyMaskShape();
+        ApplyPlayerIconSprite();
 
         SceneManager.sceneLoaded += OnSceneLoaded;
         SceneManager.sceneUnloaded += OnSceneUnloaded;
@@ -450,6 +477,17 @@ public class MinimapController : MonoBehaviour
         mask.showMaskGraphic = false;
     }
 
+    private void ApplyPlayerIconSprite()
+    {
+        if (playerIcon == null) return;
+
+        if (playerIconSprite != null)
+            playerIcon.sprite = playerIconSprite;
+
+        playerIcon.color = playerIconColor;
+        playerIcon.rectTransform.sizeDelta = Vector2.one * playerIconSize;
+    }
+
     // ─── Update Logic ─────────────────────────────────────────────
 
     private void UpdateCameraFollow()
@@ -502,13 +540,13 @@ public class MinimapController : MonoBehaviour
             pivot.localRotation = Quaternion.Euler(0f, 0f, player.eulerAngles.y);
 
         if (playerIcon != null)
-            playerIcon.localRotation = Quaternion.identity;
+            playerIcon.rectTransform.localRotation = Quaternion.identity;
     }
 
     private void ApplyPlayerIconRotation()
     {
         if (playerIcon != null)
-            playerIcon.localRotation = Quaternion.Euler(0f, 0f, -player.eulerAngles.y);
+            playerIcon.rectTransform.localRotation = Quaternion.Euler(0f, 0f, -player.eulerAngles.y);
     }
 
     // ─── World ↔ Minimap ──────────────────────────────────────────

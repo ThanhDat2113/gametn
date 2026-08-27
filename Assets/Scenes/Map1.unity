@@ -37367,6 +37367,37 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 430991133}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &432096625
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 432096626}
+  m_Layer: 0
+  m_Name: GameObject
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &432096626
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 432096625}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 2.05, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1411435404}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &432990759
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -43833,6 +43864,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: a843fcfe867e8c048bfa90bdf36f953f, type: 3}
       insertIndex: 0
       addedObject: {fileID: 1286861966}
+    - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: a843fcfe867e8c048bfa90bdf36f953f, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 432096626}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: a843fcfe867e8c048bfa90bdf36f953f, type: 3}
       insertIndex: -1
@@ -43840,6 +43874,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: a843fcfe867e8c048bfa90bdf36f953f, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1411435405}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: a843fcfe867e8c048bfa90bdf36f953f, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1411435406}
     - targetCorrespondingSourceObject: {fileID: -6617727074767417042, guid: a843fcfe867e8c048bfa90bdf36f953f, type: 3}
       insertIndex: -1
       addedObject: {fileID: 520545279}
@@ -99180,6 +99217,22 @@ MonoBehaviour:
   puzzleUIPrefab: {fileID: 1420041967434598955, guid: 5dbc5305998c7f74ba32565cf3b545d9, type: 3}
   interactKey: 101
   interactionPrompt: {fileID: 1286861965}
+--- !u!114 &1411435406
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 520545274}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ab9b14809ca169f4ba53024fe3809516, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestMarkerBridge
+  questId: 4
+  stepIndex: 1
+  headPosition: {fileID: 432096626}
+  defaultHeadOffset: 2
 --- !u!1001 &1411807628
 PrefabInstance:
   m_ObjectHideFlags: 0

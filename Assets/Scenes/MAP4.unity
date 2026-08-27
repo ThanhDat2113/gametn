@@ -1407,6 +1407,7 @@ Terrain:
   m_AllowAutoConnect: 1
   m_EnableHeightmapRayTracing: 1
   m_EnableTreesAndDetailsRayTracing: 0
+  m_EnableHeightmapLODFrustumCulling: 1
   m_TreeMotionVectorModeOverride: 3
 --- !u!4 &12032645
 Transform:
@@ -5715,6 +5716,58 @@ Transform:
   - {fileID: 1745259469}
   m_Father: {fileID: 488635419}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &40547307
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 40547308}
+  m_Layer: 0
+  m_Name: GameObject (1)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &40547308
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 40547307}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 2053264105}
+  - {fileID: 1861404541}
+  - {fileID: 1474908514}
+  - {fileID: 1920995175}
+  - {fileID: 1154519965}
+  - {fileID: 330299291}
+  - {fileID: 1770135948}
+  - {fileID: 1363225501}
+  - {fileID: 1947974917}
+  - {fileID: 299665806}
+  - {fileID: 1897147173}
+  - {fileID: 190928122}
+  - {fileID: 55791414}
+  - {fileID: 940489833}
+  - {fileID: 481487495}
+  - {fileID: 993090507}
+  - {fileID: 1382027525}
+  - {fileID: 2047758783}
+  - {fileID: 659171673}
+  - {fileID: 1213042539}
+  - {fileID: 238705998}
+  m_Father: {fileID: 635879303}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &41082875
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -8071,6 +8124,7 @@ MonoBehaviour:
   combatPrompt: {fileID: 0}
   interactKey: 101
   autoStartCombatOnTouch: 1
+  interactionRange: 0
 --- !u!114 &55791409
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8246,7 +8300,7 @@ Transform:
   - {fileID: 221819924}
   - {fileID: 244282256}
   - {fileID: 715999095}
-  m_Father: {fileID: 635879303}
+  m_Father: {fileID: 40547308}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &56767172
 GameObject:
@@ -32504,6 +32558,7 @@ Terrain:
   m_AllowAutoConnect: 1
   m_EnableHeightmapRayTracing: 1
   m_EnableTreesAndDetailsRayTracing: 0
+  m_EnableHeightmapLODFrustumCulling: 1
   m_TreeMotionVectorModeOverride: 3
 --- !u!4 &187296455
 Transform:
@@ -33147,8 +33202,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ab9b14809ca169f4ba53024fe3809516, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::QuestMarkerBridge
-  questId: 1
-  stepIndex: 0
+  questId: 11
+  stepIndex: 4
   headPosition: {fileID: 1127342497}
   defaultHeadOffset: 0
 --- !u!65 &190928118
@@ -33285,7 +33340,7 @@ Transform:
   - {fileID: 540597755}
   - {fileID: 1127342497}
   - {fileID: 1477474392}
-  m_Father: {fileID: 635879303}
+  m_Father: {fileID: 40547308}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &191784363 stripped
 GameObject:
@@ -39731,11 +39786,11 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0.6239779, y: -0.32320544, z: -0.31568673, w: 0.6375984}
   m_LocalPosition: {x: 137.5, y: -50.8, z: -346.3}
-  m_LocalScale: {x: 306.68265, y: 404.20764, z: 306.6826}
+  m_LocalScale: {x: 306.68262, y: 404.20767, z: 306.6826}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 766727576}
-  m_Father: {fileID: 635879303}
+  m_Father: {fileID: 40547308}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &239142405
 PrefabInstance:
@@ -48065,6 +48120,7 @@ MonoBehaviour:
   combatPrompt: {fileID: 0}
   interactKey: 101
   autoStartCombatOnTouch: 1
+  interactionRange: 0
 --- !u!114 &299665801
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -48247,7 +48303,7 @@ Transform:
   - {fileID: 2108738025}
   - {fileID: 1706093833}
   - {fileID: 1338950059}
-  m_Father: {fileID: 635879303}
+  m_Father: {fileID: 40547308}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &300360641 stripped
 GameObject:
@@ -54178,6 +54234,7 @@ MonoBehaviour:
   combatPrompt: {fileID: 0}
   interactKey: 101
   autoStartCombatOnTouch: 1
+  interactionRange: 0
 --- !u!114 &330299286
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -54355,7 +54412,7 @@ Transform:
   - {fileID: 1247845477}
   - {fileID: 229268766}
   - {fileID: 1794520967}
-  m_Father: {fileID: 635879303}
+  m_Father: {fileID: 40547308}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &331514054 stripped
 GameObject:
@@ -56936,6 +56993,37 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 400000, guid: abc00000000010181745809292828636, type: 3}
   m_PrefabInstance: {fileID: 339418566}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &340601598
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 340601599}
+  m_Layer: 0
+  m_Name: GameObject
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &340601599
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 340601598}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 103.6, y: 0, z: -6.49}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2009449321}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &341295821
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -60428,6 +60516,7 @@ Terrain:
   m_AllowAutoConnect: 1
   m_EnableHeightmapRayTracing: 1
   m_EnableTreesAndDetailsRayTracing: 0
+  m_EnableHeightmapLODFrustumCulling: 1
   m_TreeMotionVectorModeOverride: 3
 --- !u!4 &372785201
 Transform:
@@ -75248,6 +75337,7 @@ MonoBehaviour:
   combatPrompt: {fileID: 0}
   interactKey: 101
   autoStartCombatOnTouch: 1
+  interactionRange: 0
 --- !u!114 &481487490
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -75424,7 +75514,7 @@ Transform:
   - {fileID: 843282588}
   - {fileID: 1855817497}
   - {fileID: 1615189804}
-  m_Father: {fileID: 635879303}
+  m_Father: {fileID: 40547308}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &481862053
 PrefabInstance:
@@ -85264,6 +85354,7 @@ Terrain:
   m_AllowAutoConnect: 1
   m_EnableHeightmapRayTracing: 1
   m_EnableTreesAndDetailsRayTracing: 0
+  m_EnableHeightmapLODFrustumCulling: 1
   m_TreeMotionVectorModeOverride: 3
 --- !u!4 &542198819
 Transform:
@@ -104343,27 +104434,7 @@ Transform:
   - {fileID: 205464816}
   - {fileID: 488635419}
   - {fileID: 1005113134}
-  - {fileID: 1861404541}
-  - {fileID: 1474908514}
-  - {fileID: 1920995175}
-  - {fileID: 1154519965}
-  - {fileID: 330299291}
-  - {fileID: 1770135948}
-  - {fileID: 1363225501}
-  - {fileID: 1947974917}
-  - {fileID: 299665806}
-  - {fileID: 1897147173}
-  - {fileID: 190928122}
-  - {fileID: 55791414}
   - {fileID: 722782828}
-  - {fileID: 940489833}
-  - {fileID: 481487495}
-  - {fileID: 2053264105}
-  - {fileID: 993090507}
-  - {fileID: 1382027525}
-  - {fileID: 2047758783}
-  - {fileID: 659171673}
-  - {fileID: 1213042539}
   - {fileID: 1567684582}
   - {fileID: 403400657}
   - {fileID: 2009449321}
@@ -104372,10 +104443,10 @@ Transform:
   - {fileID: 62187498}
   - {fileID: 2123257577}
   - {fileID: 1078663052}
-  - {fileID: 238705998}
   - {fileID: 324962328}
   - {fileID: 491907389}
   - {fileID: 2032948083}
+  - {fileID: 40547308}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &635936120
@@ -106807,7 +106878,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 635879303}
+  m_Father: {fileID: 40547308}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &659171674
 MonoBehaviour:
@@ -123112,6 +123183,7 @@ GameObject:
   - component: {fileID: 766727576}
   - component: {fileID: 766727575}
   - component: {fileID: 766727574}
+  - component: {fileID: 766727577}
   m_Layer: 0
   m_Name: Puzzle
   m_TagString: Untagged
@@ -123170,8 +123242,25 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 895285494}
+  - {fileID: 1971713136}
   m_Father: {fileID: 238705998}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &766727577
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 766727573}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ab9b14809ca169f4ba53024fe3809516, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestMarkerBridge
+  questId: 11
+  stepIndex: 2
+  headPosition: {fileID: 1971713136}
+  defaultHeadOffset: 2
 --- !u!1 &766761578 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 100000, guid: abc00000000015060796866134989649, type: 3}
@@ -143459,6 +143548,7 @@ Terrain:
   m_AllowAutoConnect: 1
   m_EnableHeightmapRayTracing: 1
   m_EnableTreesAndDetailsRayTracing: 0
+  m_EnableHeightmapLODFrustumCulling: 1
   m_TreeMotionVectorModeOverride: 3
 --- !u!4 &904494286
 Transform:
@@ -148914,6 +149004,7 @@ MonoBehaviour:
   combatPrompt: {fileID: 0}
   interactKey: 101
   autoStartCombatOnTouch: 1
+  interactionRange: 0
 --- !u!114 &940489828
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -149102,7 +149193,7 @@ Transform:
   - {fileID: 18169675}
   - {fileID: 56767173}
   - {fileID: 731383612}
-  m_Father: {fileID: 635879303}
+  m_Father: {fileID: 40547308}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &940619526
 PrefabInstance:
@@ -155179,7 +155270,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::QuestMarkerBridge
   questId: 11
-  stepIndex: 2
+  stepIndex: 3
   headPosition: {fileID: 0}
   defaultHeadOffset: 2
 --- !u!114 &993090504
@@ -155201,6 +155292,7 @@ MonoBehaviour:
   combatPrompt: {fileID: 0}
   interactKey: 101
   autoStartCombatOnTouch: 1
+  interactionRange: 0
 --- !u!114 &993090505
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -155279,7 +155371,7 @@ Transform:
   - {fileID: 744016298}
   - {fileID: 410636981}
   - {fileID: 486956709}
-  m_Father: {fileID: 635879303}
+  m_Father: {fileID: 40547308}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &994579035
 PrefabInstance:
@@ -177322,6 +177414,7 @@ GameObject:
   - component: {fileID: 1154519962}
   - component: {fileID: 1154519961}
   - component: {fileID: 1154519960}
+  - component: {fileID: 1154519966}
   m_Layer: 7
   m_Name: Soldier (Quest 4-1-1)
   m_TagString: Untagged
@@ -177477,8 +177570,24 @@ Transform:
   - {fileID: 1629150460}
   - {fileID: 2020461981}
   - {fileID: 1722331207}
-  m_Father: {fileID: 635879303}
+  m_Father: {fileID: 40547308}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1154519966
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1154519959}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ab9b14809ca169f4ba53024fe3809516, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestMarkerBridge
+  questId: 10
+  stepIndex: 4
+  headPosition: {fileID: 0}
+  defaultHeadOffset: 2
 --- !u!1 &1154851983 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 5223527203922765218, guid: 764c5ef1094e9344ebeb016e8e37b60f, type: 3}
@@ -184866,7 +184975,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 635879303}
+  m_Father: {fileID: 40547308}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1213042540
 MonoBehaviour:
@@ -209428,6 +209537,7 @@ MonoBehaviour:
   combatPrompt: {fileID: 0}
   interactKey: 101
   autoStartCombatOnTouch: 1
+  interactionRange: 0
 --- !u!114 &1363225496
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -209610,7 +209720,7 @@ Transform:
   - {fileID: 1446502727}
   - {fileID: 1163900966}
   - {fileID: 1797189182}
-  m_Father: {fileID: 635879303}
+  m_Father: {fileID: 40547308}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1363296917
 PrefabInstance:
@@ -212881,6 +212991,7 @@ MonoBehaviour:
   combatPrompt: {fileID: 0}
   interactKey: 101
   autoStartCombatOnTouch: 1
+  interactionRange: 0
 --- !u!114 &1382027523
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -212962,7 +213073,7 @@ Transform:
   - {fileID: 1521852354}
   - {fileID: 1987240684}
   - {fileID: 135231442}
-  m_Father: {fileID: 635879303}
+  m_Father: {fileID: 40547308}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1382027526
 MonoBehaviour:
@@ -226639,6 +226750,7 @@ MonoBehaviour:
   combatPrompt: {fileID: 0}
   interactKey: 101
   autoStartCombatOnTouch: 1
+  interactionRange: 0
 --- !u!114 &1474908509
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -226819,7 +226931,7 @@ Transform:
   - {fileID: 1793516652}
   - {fileID: 2131370958}
   - {fileID: 1168859843}
-  m_Father: {fileID: 635879303}
+  m_Father: {fileID: 40547308}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1474991743
 PrefabInstance:
@@ -233760,6 +233872,7 @@ Terrain:
   m_AllowAutoConnect: 1
   m_EnableHeightmapRayTracing: 1
   m_EnableTreesAndDetailsRayTracing: 0
+  m_EnableHeightmapLODFrustumCulling: 1
   m_TreeMotionVectorModeOverride: 3
 --- !u!4 &1505538296
 Transform:
@@ -273014,6 +273127,7 @@ GameObject:
   - component: {fileID: 1770135945}
   - component: {fileID: 1770135944}
   - component: {fileID: 1770135943}
+  - component: {fileID: 1770135949}
   m_Layer: 7
   m_Name: 'Soldier (Quest 4-1-2) '
   m_TagString: Untagged
@@ -273169,8 +273283,24 @@ Transform:
   - {fileID: 474987194}
   - {fileID: 1638008478}
   - {fileID: 1474036226}
-  m_Father: {fileID: 635879303}
+  m_Father: {fileID: 40547308}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1770135949
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1770135942}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ab9b14809ca169f4ba53024fe3809516, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestMarkerBridge
+  questId: 10
+  stepIndex: 6
+  headPosition: {fileID: 0}
+  defaultHeadOffset: 2
 --- !u!1001 &1771503996
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -288734,6 +288864,7 @@ MonoBehaviour:
   combatPrompt: {fileID: 0}
   interactKey: 101
   autoStartCombatOnTouch: 0
+  interactionRange: 0
 --- !u!114 &1861404536
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -288917,7 +289048,7 @@ Transform:
   - {fileID: 1919951853}
   - {fileID: 126467233}
   - {fileID: 334395674}
-  m_Father: {fileID: 635879303}
+  m_Father: {fileID: 40547308}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1861703859 stripped
 GameObject:
@@ -294588,6 +294719,7 @@ MonoBehaviour:
   combatPrompt: {fileID: 0}
   interactKey: 101
   autoStartCombatOnTouch: 1
+  interactionRange: 0
 --- !u!114 &1897147168
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -294769,7 +294901,7 @@ Transform:
   - {fileID: 1052515842}
   - {fileID: 1830062181}
   - {fileID: 1693902976}
-  m_Father: {fileID: 635879303}
+  m_Father: {fileID: 40547308}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1897395891
 PrefabInstance:
@@ -298536,6 +298668,7 @@ MonoBehaviour:
   combatPrompt: {fileID: 0}
   interactKey: 101
   autoStartCombatOnTouch: 1
+  interactionRange: 0
 --- !u!114 &1920995170
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -298719,7 +298852,7 @@ Transform:
   - {fileID: 870217005}
   - {fileID: 878839452}
   - {fileID: 1279023407}
-  m_Father: {fileID: 635879303}
+  m_Father: {fileID: 40547308}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1922300116
 PrefabInstance:
@@ -301926,6 +302059,7 @@ GameObject:
   - component: {fileID: 1947974914}
   - component: {fileID: 1947974913}
   - component: {fileID: 1947974912}
+  - component: {fileID: 1947974918}
   m_Layer: 7
   m_Name: 'Soldier (Quest 4-2-1) '
   m_TagString: Untagged
@@ -302081,8 +302215,24 @@ Transform:
   - {fileID: 1396286123}
   - {fileID: 741345810}
   - {fileID: 1416274097}
-  m_Father: {fileID: 635879303}
+  m_Father: {fileID: 40547308}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1947974918
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1947974911}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ab9b14809ca169f4ba53024fe3809516, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestMarkerBridge
+  questId: 10
+  stepIndex: 7
+  headPosition: {fileID: 0}
+  defaultHeadOffset: 2
 --- !u!1001 &1948055713
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -305332,6 +305482,37 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 400000, guid: abc00000000015060796866134989649, type: 3}
   m_PrefabInstance: {fileID: 1970409536}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1971713135
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1971713136}
+  m_Layer: 0
+  m_Name: GameObject
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1971713136
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1971713135}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0, y: 0.0138, z: 0.0001}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 766727576}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1972040699 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 100000, guid: abc00000000015060796866134989649, type: 3}
@@ -310294,6 +310475,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2009449321}
   - component: {fileID: 2009449322}
+  - component: {fileID: 2009449323}
   m_Layer: 0
   m_Name: Block
   m_TagString: Untagged
@@ -310313,7 +310495,8 @@ Transform:
   m_LocalPosition: {x: -478, y: -17.000046, z: -669.3}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 340601599}
   m_Father: {fileID: 635879303}
   m_LocalEulerAnglesHint: {x: 0, y: 18.65, z: 0}
 --- !u!65 &2009449322
@@ -310337,6 +310520,22 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 74.50804, y: 46.680298, z: 83.34032}
   m_Center: {x: 58.15607, y: -7.488777, z: -18.753313}
+--- !u!114 &2009449323
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2009449320}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ab9b14809ca169f4ba53024fe3809516, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestMarkerBridge
+  questId: 12
+  stepIndex: 5
+  headPosition: {fileID: 340601599}
+  defaultHeadOffset: 2
 --- !u!1001 &2010286797
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -316403,7 +316602,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 635879303}
+  m_Father: {fileID: 40547308}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &2047758784
 MonoBehaviour:
@@ -317300,6 +317499,7 @@ MonoBehaviour:
   combatPrompt: {fileID: 0}
   interactKey: 101
   autoStartCombatOnTouch: 1
+  interactionRange: 0
 --- !u!114 &2053264103
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -317380,7 +317580,7 @@ Transform:
   - {fileID: 1613506436}
   - {fileID: 1301462283}
   - {fileID: 137474324}
-  m_Father: {fileID: 635879303}
+  m_Father: {fileID: 40547308}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &2053690698
 PrefabInstance:
