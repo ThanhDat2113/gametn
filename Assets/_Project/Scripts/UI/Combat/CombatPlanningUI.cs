@@ -21,6 +21,7 @@ public class CombatPlanningUI : MonoBehaviour
     public RectTransform rightSkillContainer;
     public float skillColumnOffset = 160f;
     public float skillRowSpacing = 70f;
+    public float skillWheelOffsetY = 0f;
 
     [Header("Skill Wheel Visual")]
     public Color skillNormalColor = new Color(0.1f, 0.1f, 0.15f, 0.92f);
@@ -276,12 +277,12 @@ public class CombatPlanningUI : MonoBehaviour
         if (leftSkillContainer != null)
         {
             leftSkillContainer.gameObject.SetActive(true);
-            leftSkillContainer.anchoredPosition = new Vector2(canvasPos.x - skillColumnOffset, canvasPos.y);
+            leftSkillContainer.anchoredPosition = new Vector2(canvasPos.x - skillColumnOffset, canvasPos.y + skillWheelOffsetY);
         }
         if (rightSkillContainer != null)
         {
             rightSkillContainer.gameObject.SetActive(true);
-            rightSkillContainer.anchoredPosition = new Vector2(canvasPos.x + skillColumnOffset, canvasPos.y);
+            rightSkillContainer.anchoredPosition = new Vector2(canvasPos.x + skillColumnOffset, canvasPos.y + skillWheelOffsetY);
         }
 
         for (int i = 0; i < skills.Length; i++)
