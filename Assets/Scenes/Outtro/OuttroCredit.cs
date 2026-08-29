@@ -1,5 +1,5 @@
 // ============================================
-// OuttroCreditManager.cs - FIXED (chạy hết credit)
+// OuttroCreditManager.cs - FIXED (Ending text nhanh, mượt)
 // ============================================
 
 using System.Collections;
@@ -12,33 +12,32 @@ public class OuttroCreditManager : MonoBehaviour
 {
     [Header("=== THÀNH PHẦN UI ===")]
     public CanvasGroup mainCanvas;
-    public RectTransform creditContainer;   // Scroll View
-    public TextMeshProUGUI creditText;      // Text bên trong Content
+    public RectTransform creditContainer;
+    public TextMeshProUGUI creditText;
     public TextMeshProUGUI endingText;
     public Image blackOverlay;
     
     [Header("=== CÀI ĐẶT ===")]
-    public float scrollSpeed = 30f;         // GIẢM TỐC ĐỘ
+    public float scrollSpeed = 40f;
     public float fadeDuration = 1.5f;
-    public float endDelay = 3f;
-    public float extraWaitTime = 5f;        // THÊM THỜI GIAN CHỜ DƯ
+    public float endDelay = 2f;
     
     [Header("=== AUDIO ===")]
     public AudioSource bgmSource;
     public AudioClip bgmCredit;
     
     private bool isScrolling = false;
+    private bool hasEnded = false;
     private Vector2 startPos;
     
     void Start()
     {
-        // Lưu vị trí ban đầu của Content (KHÔNG phải container)
         startPos = creditContainer.anchoredPosition;
         
         mainCanvas.alpha = 0;
+        creditContainer.gameObject.SetActive(false);
+        endingText.gameObject.SetActive(false);
         blackOverlay.color = new Color(0, 0, 0, 1);
-        endingText.gameObject.SetActive(true);
-        endingText.alpha = 0;
         
         StartCoroutine(PlaySequence());
     }
@@ -52,53 +51,37 @@ public class OuttroCreditManager : MonoBehaviour
             creditContainer.anchoredPosition = pos;
         }
         
-        if (Input.GetKeyDown(KeyCode.Space))
+        if (Input.GetKeyDown(KeyCode.Space) && !hasEnded)
         {
-            SceneManager.LoadScene("MainMenu");
+            SkipCredit();
         }
     }
     
     IEnumerator PlaySequence()
     {
-        // === 1. GIỮ MÀN ĐEN ===
-        yield return new WaitForSeconds(0.5f);
+        // === 1. ENDING TEXT - HIỆN NGAY LẬP TỨC ===
+        endingText.gameObject.SetActive(true);
+        endingText.alpha = 1;  // HIỆN LUÔN, KHÔNG FADE IN
         
-        // === 2. HIỆN ENDING TEXT ===
-        if (endingText != null)
+        // Giữ nguyên 2 giây
+        yield return new WaitForSeconds(2f);
+        
+        // === 2. FADE OUT ENDING TEXT (NHANH) ===
+        float t = 0;
+        while (t < 1)
         {
-            endingText.gameObject.SetActive(true);
-            endingText.alpha = 0;
-            
-            string[] lines = endingText.text.Split('\n');
-            endingText.text = "";
-            
-            foreach (string line in lines)
-            {
-                if (!string.IsNullOrEmpty(line.Trim()))
-                {
-                    endingText.text += line + "\n";
-                    yield return new WaitForSeconds(0.6f);
-                }
-            }
-            
-            yield return new WaitForSeconds(2f);
-            
-            // Fade out
-            float t = 0;
-            while (t < 1)
-            {
-                t += Time.deltaTime / 1f;
-                endingText.alpha = 1 - t;
-                yield return null;
-            }
-            endingText.gameObject.SetActive(false);
+            t += Time.deltaTime / 0.3f;  // 0.3 giây là xong
+            endingText.alpha = 1 - t;
+            yield return null;
         }
+        endingText.alpha = 0;
+        endingText.gameObject.SetActive(false);
         
-        // === 3. MỞ MÀN ===
+        // === 3. FADE OUT BLACK OVERLAY ===
         yield return FadeImage(blackOverlay, 1, 0, fadeDuration);
         
         // === 4. HIỆN CREDIT ===
-        // Reset vị trí
+        creditContainer.gameObject.SetActive(true);
         creditContainer.anchoredPosition = startPos;
         mainCanvas.alpha = 1;
         
@@ -108,13 +91,12 @@ public class OuttroCreditManager : MonoBehaviour
             bgmSource.Play();
         }
         
-        // === 5. CUỘN CREDIT - CHỜ CHO ĐẾN KHI HẾT ===
+        // === 5. CUỘN CREDIT ===
         isScrolling = true;
-        
-        // ĐỢI CREDIT CHẠY HẾT (QUAN TRỌNG!)
         yield return StartCoroutine(WaitForCreditComplete());
         
         isScrolling = false;
+        hasEnded = true;
         
         // === 6. FADE OUT VÀ VỀ MENU ===
         yield return FadeCanvas(mainCanvas, 1, 0, fadeDuration);
@@ -123,26 +105,15 @@ public class OuttroCreditManager : MonoBehaviour
         SceneManager.LoadScene("MainMenu");
     }
     
-    // ============================================
-    // HÀM ĐỢI CREDIT CHẠY HẾT (CỐT LÕI)
-    // ============================================
     IEnumerator WaitForCreditComplete()
     {
-        // Lấy chiều cao THỰC TẾ của text
+        Canvas.ForceUpdateCanvases();
+        
         float textHeight = creditText.preferredHeight;
-        
-        // Lấy chiều cao của container (viewport)
         float containerHeight = creditContainer.rect.height;
-        
-        // Tính tổng quãng đường cần cuộn
-        // textHeight + containerHeight = cuộn từ dưới lên trên hết
-        float totalDistance = textHeight + containerHeight + 200; // thêm 200 để dư
-        
-        // Tính thời gian cần
+        float totalDistance = textHeight + containerHeight + 200f;
         float timeNeeded = totalDistance / scrollSpeed;
-        
-        // Cộng thêm thời gian dư
-        float waitTime = timeNeeded + extraWaitTime;
+        float waitTime = timeNeeded + 3f;
         
         Debug.Log($"📊 Credit Height: {textHeight}, Container: {containerHeight}");
         Debug.Log($"⏱️ Cần chờ: {waitTime} giây");
@@ -150,9 +121,24 @@ public class OuttroCreditManager : MonoBehaviour
         yield return new WaitForSeconds(waitTime);
     }
     
-    // ============================================
-    // HÀM FADE
-    // ============================================
+    void SkipCredit()
+    {
+        if (hasEnded) return;
+        
+        isScrolling = false;
+        hasEnded = true;
+        
+        StopAllCoroutines();
+        StartCoroutine(SkipSequence());
+    }
+    
+    IEnumerator SkipSequence()
+    {
+        yield return FadeCanvas(mainCanvas, 1, 0, 0.5f);
+        yield return new WaitForSeconds(0.3f);
+        SceneManager.LoadScene("MainMenu");
+    }
+    
     IEnumerator FadeCanvas(CanvasGroup target, float from, float to, float duration)
     {
         target.alpha = from;
