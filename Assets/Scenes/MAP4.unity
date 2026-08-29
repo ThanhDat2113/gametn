@@ -155173,6 +155173,7 @@ GameObject:
   - component: {fileID: 993090505}
   - component: {fileID: 993090504}
   - component: {fileID: 993090503}
+  - component: {fileID: 993090508}
   m_Layer: 0
   m_Name: Quest 4-2-1
   m_TagString: Untagged
@@ -155296,6 +155297,28 @@ Transform:
   - {fileID: 486956709}
   m_Father: {fileID: 635879303}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &993090508
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 993090502}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5ad82cdbe057f4b4c98bf85627c6d0f0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestTimelineTrigger
+  questId: 11
+  stepIndex: 3
+  timeline: {fileID: 1401607960}
+  waitForTimeline: 1
+  objectsToHideDuringTimeline:
+  - {fileID: 1897147165}
+  - {fileID: 55791406}
+  hidePlayerRenderersDuringTimeline: 1
+  timelineCamera: {fileID: 0}
+  dialogueWaitTimeout: 30
 --- !u!1001 &994579035
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -216622,6 +216645,11 @@ PrefabInstance:
 --- !u!4 &1401607959 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8862719189336630953, guid: 402749970e219124d8afcaf05841b144, type: 3}
+  m_PrefabInstance: {fileID: 1401607958}
+  m_PrefabAsset: {fileID: 0}
+--- !u!320 &1401607960 stripped
+PlayableDirector:
+  m_CorrespondingSourceObject: {fileID: 3822074858682219916, guid: 402749970e219124d8afcaf05841b144, type: 3}
   m_PrefabInstance: {fileID: 1401607958}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1402532653
