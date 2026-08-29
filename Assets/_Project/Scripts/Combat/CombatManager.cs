@@ -93,6 +93,7 @@ public delegate void DamageModificationHandler(ActionOutcome outcome, CombatUnit
         => OnDebuffApplied?.Invoke(caster, target, status);
 
     public CombatPhase CurrentPhase => stateMachine.Current;
+    public bool IsWaitingForPlayerSelection => _isWaitingForPlayerSelection;
 
     private EnemyGroupData _currentEnemyGroup;
 

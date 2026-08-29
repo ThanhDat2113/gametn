@@ -27,7 +27,7 @@ namespace QLDATN.ProjectTracker
         private const double HeartbeatSeconds = 30.0;
         private const double GitRefreshSeconds = 60.0;
         private const double RecentSourceActivitySeconds = 90.0;
-        private const string ClientVersion = "qldatn-unity-3.7.0";
+        private const string ClientVersion = "qldatn-unity-3.8.0";
         private const string PendingUpdatePreference = "QLDATN_PROJECT_TRACKER_PENDING_UPDATE";
         private const int MaximumOfflinePayloads = 50;
         private const string TrackerFileName = "QLDATNSceneTracker.cs";
@@ -37,7 +37,6 @@ namespace QLDATN.ProjectTracker
         private const int MaximumLiveSourceSnapshotChars = 96000;
         private const int MaximumLiveSourceDiffChars = 8000;
         private const int MaximumLiveSourceSnapshots = 500;
-        private const int MaximumInitialLiveSourceChars = 2000000;
         private static readonly double[] RetryDelaysSeconds = { 2.0, 5.0, 15.0 };
 
         private static readonly string SessionIdPath = Path.Combine(
@@ -70,6 +69,9 @@ namespace QLDATN.ProjectTracker
         private static double _lastSourceActivity = -RecentSourceActivitySeconds;
         private static long _lastSequence;
         private static bool _updateCompilationFailed;
+        private static bool _gitRefreshInFlight;
+        private static readonly object GitStateLock = new object();
+        private static GitState _pendingGitState;
         private static readonly Dictionary<string, double> LastLiveActivityAt =
             new Dictionary<string, double>();
         private static readonly Dictionary<string, string> LiveSourceSnapshots =
@@ -77,7 +79,7 @@ namespace QLDATN.ProjectTracker
 
         static SceneTracker()
         {
-            EnsureBranchRecoveryCache();
+            ScheduleBranchRecoveryCache();
             RestorePendingPayloads();
             EditorApplication.update += OnEditorUpdate;
             EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
@@ -91,8 +93,9 @@ namespace QLDATN.ProjectTracker
 
             EditorApplication.delayCall += () =>
             {
-                PrimeLiveSourceSnapshots();
-                RefreshState(true);
+                // Return control after domain reload; source baselines are lazy per file.
+                RefreshState(false);
+                RequestGitRefresh();
                 _lastKnownDirty = _isDirty;
                 QueueSend(CurrentStatus());
             };
@@ -109,6 +112,7 @@ namespace QLDATN.ProjectTracker
         private static void OnEditorUpdate()
         {
             if (!IsConfigured()) return;
+            ApplyPendingGitState();
             var now = EditorApplication.timeSinceStartup;
             if (_pendingAssetChanges > 0 && now >= _assetFlushAt)
             {
@@ -214,21 +218,78 @@ namespace QLDATN.ProjectTracker
                     : !string.IsNullOrEmpty(active.name)
                         ? active.name
                         : "(Untitled Scene)";
-            if (refreshGit) RefreshGitState();
+            if (refreshGit) RequestGitRefresh();
         }
 
-        private static void RefreshGitState()
+        private static void RequestGitRefresh()
         {
+            lock (GitStateLock)
+            {
+                if (_gitRefreshInFlight) return;
+                _gitRefreshInFlight = true;
+            }
             _lastGitRefresh = EditorApplication.timeSinceStartup;
             var projectDirectory = Directory.GetParent(Application.dataPath)?.FullName;
-            if (string.IsNullOrEmpty(projectDirectory)) return;
-            var previousRevision = _revision;
-            _branch = RunGit(projectDirectory, "rev-parse --abbrev-ref HEAD", 120);
-            _revision = RunGit(projectDirectory, "rev-parse --short=12 HEAD", 64);
+            if (string.IsNullOrEmpty(projectDirectory))
+            {
+                lock (GitStateLock)
+                {
+                    _gitRefreshInFlight = false;
+                }
+                return;
+            }
+            _ = Task.Run(() =>
+            {
+                try
+                {
+                    var state = ReadGitState(projectDirectory);
+                    lock (GitStateLock)
+                    {
+                        _pendingGitState = state;
+                    }
+                }
+                catch
+                {
+                    // Git is optional; a failed refresh must not block future attempts.
+                }
+                finally
+                {
+                    lock (GitStateLock)
+                    {
+                        _gitRefreshInFlight = false;
+                    }
+                }
+            });
+        }
+
+        private static GitState ReadGitState(string projectDirectory)
+        {
+            var branch = RunGit(projectDirectory, "rev-parse --abbrev-ref HEAD", 120);
+            var revision = RunGit(projectDirectory, "rev-parse --short=12 HEAD", 64);
             var changes = RunGit(projectDirectory, "status --porcelain", 200000);
-            _uncommittedFiles = string.IsNullOrEmpty(changes)
-                ? 0
-                : changes.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).Length;
+            return new GitState
+            {
+                branch = branch,
+                revision = revision,
+                uncommittedFiles = string.IsNullOrEmpty(changes)
+                    ? 0
+                    : changes.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).Length
+            };
+        }
+
+        private static void ApplyPendingGitState()
+        {
+            GitState state;
+            lock (GitStateLock)
+            {
+                state = _pendingGitState;
+                _pendingGitState = null;
+            }
+            if (state == null) return;
+            var previousRevision = _revision;
+            _branch = state.branch;
+            _revision = state.revision;
+            _uncommittedFiles = state.uncommittedFiles;
             if (
                 !string.IsNullOrEmpty(previousRevision)
                 && !string.IsNullOrEmpty(_revision)
@@ -239,19 +300,20 @@ namespace QLDATN.ProjectTracker
             }
         }
 
+        private static void ScheduleBranchRecoveryCache()
+        {
+            var projectDirectory = Directory.GetParent(Application.dataPath)?.FullName;
+            var trackerPath = Path.Combine(Application.dataPath, "Editor", TrackerFileName);
+            if (string.IsNullOrEmpty(projectDirectory)) return;
+            _ = Task.Run(() => EnsureBranchRecoveryCache(projectDirectory, trackerPath));
+        }
+
         // Keep a credential-free copy inside .git so a branch switch can restore
         // this ignored tracker file without relying on any branch's source tree.
-        private static void EnsureBranchRecoveryCache()
+        private static void EnsureBranchRecoveryCache(string projectDirectory, string trackerPath)
         {
             try
             {
-                var projectDirectory = Directory.GetParent(Application.dataPath)?.FullName;
-                if (string.IsNullOrEmpty(projectDirectory)) return;
-                var trackerPath = Path.Combine(
-                    Application.dataPath,
-                    "Editor",
-                    TrackerFileName
-                );
                 if (!IsQldatnTrackerFile(trackerPath)) return;
 
                 var gitDirectory = ResolveGitDirectory(projectDirectory);
@@ -415,7 +477,7 @@ namespace QLDATN.ProjectTracker
 
         private static void MarkExecutable(string path, string workingDirectory)
         {
-            if (Application.platform == RuntimePlatform.WindowsEditor) return;
+            if (Environment.OSVersion.Platform == PlatformID.Win32NT) return;
             try
             {
                 var startInfo = new System.Diagnostics.ProcessStartInfo
@@ -486,7 +548,9 @@ namespace QLDATN.ProjectTracker
                     WorkingDirectory = workingDirectory,
                     UseShellExecute = false,
                     RedirectStandardOutput = true,
-                    RedirectStandardError = true,
+                    // stderr is intentionally not captured so a noisy Git hook cannot
+                    // fill an unread pipe and hold the background refresh forever.
+                    RedirectStandardError = false,
                     CreateNoWindow = true
                 };
                 using var process = System.Diagnostics.Process.Start(startInfo);
@@ -1007,40 +1071,6 @@ namespace QLDATN.ProjectTracker
             }
         }
 
-        private static void PrimeLiveSourceSnapshots()
-        {
-            try
-            {
-                var totalCharacters = 0;
-                foreach (var fullPath in Directory.GetFiles(
-                    Application.dataPath,
-                    "*",
-                    SearchOption.AllDirectories
-                ))
-                {
-                    if (
-                        LiveSourceSnapshots.Count >= MaximumLiveSourceSnapshots
-                        || totalCharacters >= MaximumInitialLiveSourceChars
-                    ) {
-                        return;
-                    }
-                    var relative = fullPath.Substring(Application.dataPath.Length)
-                        .TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
-                        .Replace("\\", "/");
-                    var sourcePath = NormalizeLiveSourcePath("Assets/" + relative);
-                    if (string.IsNullOrEmpty(sourcePath)) continue;
-                    if (!TryReadLiveSource(sourcePath, out var source)) continue;
-                    if (source.Length > MaximumInitialLiveSourceChars - totalCharacters) continue;
-                    LiveSourceSnapshots[sourcePath] = source;
-                    totalCharacters += source.Length;
-                }
-            }
-            catch
-            {
-                // Priming only improves the first live diff and must not affect the editor.
-            }
-        }
-
         private static bool TryReadLiveSource(string sourcePath, out string source)
         {
             source = "";
@@ -1322,6 +1352,14 @@ namespace QLDATN.ProjectTracker
             return Convert.ToBase64String(
                 hmac.ComputeHash(Encoding.UTF8.GetBytes(message))
             ).TrimEnd('=').Replace('+', '-').Replace('/', '_');
+        }
+
+        [Serializable]
+        private class GitState
+        {
+            public string branch;
+            public string revision;
+            public int uncommittedFiles;
         }
 
         [Serializable]

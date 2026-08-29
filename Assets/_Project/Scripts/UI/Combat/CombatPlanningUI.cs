@@ -77,6 +77,7 @@ public class CombatPlanningUI : MonoBehaviour
 
         combat.OnPlayerTurnStart += OnPlayerTurn;
         combat.OnActionResolved += OnActionResolved;
+        combat.OnPlayerTurnEnd += HideUI;
         combat.OnVictory += (_) => HideUI();
         combat.OnDefeat += HideUI;
         combat.OnCombatStarted += OnCombatStarted;
@@ -108,6 +109,7 @@ public class CombatPlanningUI : MonoBehaviour
         if (combat == null) return;
         combat.OnPlayerTurnStart -= OnPlayerTurn;
         combat.OnActionResolved -= OnActionResolved;
+        combat.OnPlayerTurnEnd -= HideUI;
         combat.OnVictory -= (_) => HideUI();
         combat.OnDefeat -= HideUI;
         combat.OnCombatStarted -= OnCombatStarted;
@@ -116,12 +118,11 @@ public class CombatPlanningUI : MonoBehaviour
     private void Update()
     {
         if (planningCanvas == null || !planningCanvas.gameObject.activeSelf) return;
+        if (combat.CurrentPhase != CombatPhase.PlayerTurn || !combat.IsWaitingForPlayerSelection) return;
 
-        // Xử lý click chọn unit trên world
         if (isSelectingUnit && Input.GetMouseButtonDown(0) && !EventSystem.current.IsPointerOverGameObject())
             HandleUnitSelectionClick(Input.mousePosition);
 
-        // Xử lý click chọn target
         if (isChoosingTarget && Input.GetMouseButtonDown(0) && !EventSystem.current.IsPointerOverGameObject())
             HandleWorldClick(Input.mousePosition);
 
