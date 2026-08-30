@@ -13,9 +13,11 @@ MonoBehaviour:
   m_Name: Edward_Skill1
   m_EditorClassIdentifier: Assembly-CSharp::SkillData
   autoConfirmOnSelect: 0
-  movementOverride: 1
+  movementOverride: 0
   skillName: Automail Strike
-  description: "Đấm mạnh bằng tay cơ khí automail, làm chậm và suy yếu đối thủ (giảm 20% sát thương trong 2 lượt)."
+  description: "\u0110\u1EA5m m\u1EA1nh b\u1EB1ng tay c\u01A1 kh\xED automail, l\xE0m
+    ch\u1EADm v\xE0 suy y\u1EBFu \u0111\u1ED1i th\u1EE7 (gi\u1EA3m 20% s\xE1t th\u01B0\u01A1ng
+    trong 2 l\u01B0\u1EE3t)."
   icon: {fileID: 0}
   type: 0
   targetType: 0
@@ -28,6 +30,7 @@ MonoBehaviour:
     spawnMode: 1
     offset: {x: 0, y: 0, z: 0}
     attachToCaster: 0
+  vfxTriggerMode: 1
   rangedVfxEvents: []
   hitVfxEvents: []
   sfxClips:
