@@ -53,7 +53,7 @@ GameTN is a sophisticated turn-based tactical RPG featuring:
 | **Playable Characters** | 12+ (Lucio, Charlotte, Aeos, Aleus, Celine, etc.) |
 | **Combat Phases** | 7 (Intro, EnemyPlan, PlayerPlan, RetargetCheck, Execute, RoundEnd, Victory/Defeat) |
 | **Team Size** | Max 5 units per team |
-| **Starting AP** | 3, Max 5 |
+| **Starting AP** | 5, Max 5 |
 | **Status Effects** | 12+ types (Taunt, ThieuDot, DiemYeu, SieuViet, etc.) |
 | **Crit Stacking** | Max 20 stacks (+5% crit rate, +10% crit damage per stack) |
 | **Grid Layout** | 3×3 (9 slots) with 3 rows (Back, Mid, Front) |

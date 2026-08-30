@@ -202,6 +202,15 @@ public class CombatPlanningUI : MonoBehaviour
     
     private void OnActionResolved(ActionResult result)
     {
+        // ── Thông tin kỹ năng KẺ ĐỊCH đang sử dụng ──
+        // Chỉ hiển thị khi ngoài lượt player (enemy turn / Madara opening blitz)
+        // để không đè lên text đang hướng dẫn người chơi giữa chừng.
+        if (result != null && result.Actor != null && result.Skill != null
+            && !result.Actor.IsPlayer && combat.CurrentPhase != CombatPhase.PlayerTurn)
+        {
+            ShowEnemySkillInfo(result);
+        }
+
         // Sau khi resolve xong, quay lại chế độ chọn unit
         if (currentUnit != null && result.Actor == currentUnit)
         {
@@ -214,6 +223,38 @@ public class CombatPlanningUI : MonoBehaviour
                 UpdateUnitEmphasis(remaining);
             }
         }
+    }
+
+    /// <summary>
+    /// Hiển thị thông tin kỹ năng mà kẻ địch đang dùng, tái sử dụng đúng định dạng
+    /// như bảng mô tả khi hover nút kỹ năng của player (tên + mục tiêu + mô tả).
+    /// Canvas chuyển sang chế độ xem-only: alpha = 1 nhưng interactable = false,
+    /// nút End Turn giữ nguyên trạng thái ẩn (đang ngoài lượt player).
+    /// Text tự được thay thế khi lượt player bắt đầu (OnPlayerTurn → SetInstruction)
+    /// hoặc bị ẩn khi trận đấu kết thúc (HideUI do OnVictory/OnDefeat gọi).
+    /// </summary>
+    private void ShowEnemySkillInfo(ActionResult result)
+    {
+        if (planningCanvasGroup != null)
+        {
+            planningCanvasGroup.alpha = 1;
+            planningCanvasGroup.interactable = false;
+        }
+
+        string targetHint = GetTargetTypeHint(result.Skill.targetType);
+        string desc = string.IsNullOrEmpty(result.Skill.description) ? "Chưa có mô tả." : result.Skill.description;
+
+        string targetsLine = "";
+        if (result.InitialTargets != null && result.InitialTargets.Count > 0)
+        {
+            string names = string.Join(", ", result.InitialTargets
+                .Where(t => t != null)
+                .Select(t => t.UnitName));
+            if (!string.IsNullOrEmpty(names))
+                targetsLine = $"\n<size=60%>Vào: {names}</size>";
+        }
+
+        SetInstruction($"<color=#FF6B6B>{result.Actor.UnitName}</color> dùng [{result.Skill.skillName}]\n{targetHint}\n{desc}{targetsLine}");
     }
 
     private void ShowUI()

@@ -3,11 +3,11 @@ using System.Linq;
 using UnityEngine;
 
 /// <summary>
-/// Passive của Aleus: Mỗi khi sử dụng 1 kỹ năng lên đồng đội, Aleus hồi phục cho 1 đồng minh thấp máu nhất 2% máu tối đa.
+/// Passive của Aleus: Mỗi khi sử dụng 1 kỹ năng lên đồng đội, Aleus hồi phục cho 1 đồng minh thấp máu nhất 10% máu tối đa.
 /// </summary>
 public class AleusPassive : PassiveAbility
 {
-    private const float HEAL_PERCENT = 0.02f;
+    private const float HEAL_PERCENT = 0.10f;
 
     public override void Initialize(CombatUnit owner)
         {

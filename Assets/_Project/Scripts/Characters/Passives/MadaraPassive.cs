@@ -7,8 +7,10 @@ using System.Linq;
 /// 1. Tạo 1 clone có HP = MaxHP của Madara
 /// 2. Clone lặp lại chính xác skill Madara đang dùng lên cùng target
 /// 3. Clone tồn tại đến khi bị tiêu diệt, không thể tạo lại
-/// 4. Izanagi (Phase 3 - 1 lần): Khi HP về 0, hồi 100% máu, clear debuff
+/// 4. Izanagi (Phase 3 - 1 lần): Khi HP về 0, hồi 30% máu, clear debuff
 ///    - Giảm 20% ATK/PDEF/MDEF nhưng tăng MaxActions lên 3
+/// 5. Opening Blitz: Khi trận mới bắt đầu, tự dùng ngay skill 3 (Thiêu đốt AoE)
+///    vào toàn bộ team player trước khi player được hành động.
 /// </summary>
 public class MadaraPassive : PassiveAbility
 {
@@ -26,12 +28,21 @@ public class MadaraPassive : PassiveAbility
     public override void Initialize(CombatUnit owner)
     {
         base.Initialize(owner);
-        owner.MaxActionsPerTurn = 2;
+        owner.MaxActionsPerTurn = 4;
 
         // Đăng ký sự kiện OnActionConfirmed để clone lặp lại skill
         owner.OnActionConfirmed += OnMadaraActionConfirmed;
 
         Debug.Log($"[{Owner.UnitName}'s Passive] Shadow Clone! Tạo 1 clone có HP ngang với Madara. Clone lặp lại skill của Madara.");
+    }
+
+    public override void OnTurnStart()
+    {
+        base.OnTurnStart();
+        // Reset giới hạn Skill 3 (AoE) — mỗi lượt của Madara chỉ dùng tối đa 1 lần.
+        // TriggerTurnStart() được CombatManager gọi đúng 1 lần ở đầu mỗi lượt enemy
+        // (firstAction), trước khi vòng lặp multi-action bắt đầu chọn skill.
+        MadaraAI.ResetSkill3UsageThisTurn();
     }
 
     public override void OnTakeDamage(CombatUnit attacker, int damage)
@@ -56,8 +67,8 @@ public class MadaraPassive : PassiveAbility
             _izanagiUsed = true;
             _isDead = false;
 
-            // Hồi 100% máu
-            Owner.CurrentHP = Owner.MaxHP;
+            // Hồi 30% máu
+            Owner.CurrentHP = Mathf.RoundToInt(Owner.MaxHP * 0.30f);
 
             // Clear tất cả debuff
             Owner.ClearStatus(StatusEffectType.Stun);
