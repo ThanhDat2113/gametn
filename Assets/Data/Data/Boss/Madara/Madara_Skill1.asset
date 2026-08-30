@@ -15,8 +15,8 @@ MonoBehaviour:
   autoConfirmOnSelect: 0
   movementOverride: 0
   skillName: Uchiha Strike
-  description: "\u0110\u1EA5m m\u1EA1nh v\xE0o 1 m\u1EE5c ti\xEAu b\u1EB1ng s\u1EE9c
-    m\u1EA1nh Uchiha, g\xE2y s\xE1t th\u01B0\u01A1ng v\u1EADt l\xFD."
+  description: "\u0110\u1EA5m m\u1EA1nh v\xE0o 1 m\u1EE5c ti\xEAu g\xE2y s\xE1t th\u01B0\u01A1ng
+    ph\xE9p."
   icon: {fileID: 0}
   type: 0
   targetType: 0
@@ -29,10 +29,13 @@ MonoBehaviour:
     spawnMode: 1
     offset: {x: 0, y: 0, z: 0}
     attachToCaster: 0
+  vfxTriggerMode: 0
   rangedVfxEvents: []
   hitVfxEvents: []
   sfxClips:
   - {fileID: 8300000, guid: e5c7d64f4c429ad489b6609b37cae71b, type: 3}
+  playSFX: 1
+  sfxTriggerMode: 0
   chargeSound: {fileID: 0}
   voiceLines: []
   animationTrigger: Skill1
@@ -48,4 +51,4 @@ MonoBehaviour:
   vfxPrefab: {fileID: 0}
   vfxOffset: 0
   effects:
-  - {fileID: 11400000, guid: 186c848ef2fb99c44a33e82dec8bf63c, type: 2}
+  - {fileID: 11400000, guid: a4824b7cf5d4bcf46995e3cce65e4ceb, type: 2}

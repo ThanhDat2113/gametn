@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SkillData
   autoConfirmOnSelect: 0
   movementOverride: 2
-  skillName: Katon - Great Fire Annihilation
+  skillName: "H\u1ECFa Ng\u1EE5c"
   description: "Phun ra ng\u1ECDn l\u1EEDa h\u1EE7y di\u1EC7t thi\xEAu \u0111\u1ED1t
     to\xE0n b\u1ED9 k\u1EBB \u0111\u1ECBch, g\xE2y s\xE1t th\u01B0\u01A1ng ph\xE9p
     v\xE0 thi\xEAu \u0111\u1ED1t."
@@ -24,12 +24,13 @@ MonoBehaviour:
   isChargeable: 0
   doesNotEndTurn: 0
   apCost: 1
-  hitCount: 1
+  hitCount: 8
   vfxEvents:
   - vfxPrefab: {fileID: 6456602204954101844, guid: 575d62325299a5d418cb0ad4789569ff, type: 3}
     spawnMode: 0
     offset: {x: 0, y: 0, z: 0}
     attachToCaster: 0
+  vfxTriggerMode: 0
   rangedVfxEvents: []
   hitVfxEvents: []
   sfxClips:
@@ -51,5 +52,5 @@ MonoBehaviour:
   vfxPrefab: {fileID: 0}
   vfxOffset: 0
   effects:
-  - {fileID: 11400000, guid: 186c848ef2fb99c44a33e82dec8bf63c, type: 2}
+  - {fileID: 11400000, guid: a4824b7cf5d4bcf46995e3cce65e4ceb, type: 2}
   - {fileID: 11400000, guid: 3cde3e56a5e18ef45babedfd232f4c25, type: 2}

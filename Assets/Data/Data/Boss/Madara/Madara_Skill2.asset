@@ -14,9 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SkillData
   autoConfirmOnSelect: 0
   movementOverride: 0
-  skillName: Mokuton - Binding Strike
+  skillName: "M\u1ED9c"
   description: "Tri\u1EC7u h\u1ED3i c\xE2y c\u1ED1i kh\u1ED5ng l\u1ED3 qu\u1EADt
-    v\xE0o 1 m\u1EE5c ti\xEAu, g\xE2y s\xE1t th\u01B0\u01A1ng v\xE0 l\xE0m cho\xE1ng."
+    v\xE0o 1 m\u1EE5c ti\xEAu, g\xE2y s\xE1t th\u01B0\u01A1ng l\u1EDBn l\xEAn 1 m\u1EE5c
+    ti\xEAu."
   icon: {fileID: 0}
   type: 0
   targetType: 0
@@ -29,13 +30,21 @@ MonoBehaviour:
     spawnMode: 1
     offset: {x: 0, y: 0, z: 0}
     attachToCaster: 0
+  vfxTriggerMode: 0
   rangedVfxEvents: []
   hitVfxEvents: []
   sfxClips:
   - {fileID: 8300000, guid: 71d59a65970c8fa44b85d2cb7e10d5eb, type: 3}
+  playSFX: 1
+  sfxTriggerMode: 0
   chargeSound: {fileID: 0}
   voiceLines: []
   animationTrigger: Skill2
+  isBeam: 0
+  beamShakeBaseIntensity: 0.35
+  beamShakeStepIntensity: 0.12
+  beamShakeDuration: 0.5
+  beamShakeFrequency: 24
   isRanged: 0
   projectilePrefab: {fileID: 0}
   projectileOffset: {x: 0, y: 0, z: 0}
@@ -43,5 +52,5 @@ MonoBehaviour:
   vfxPrefab: {fileID: 0}
   vfxOffset: 0
   effects:
-  - {fileID: 11400000, guid: 186c848ef2fb99c44a33e82dec8bf63c, type: 2}
-  - {fileID: 11400000, guid: 186c848ef2fb99c44a33e82dec8bf63c, type: 2}
+  - {fileID: 11400000, guid: a4824b7cf5d4bcf46995e3cce65e4ceb, type: 2}
+  - {fileID: 11400000, guid: a4824b7cf5d4bcf46995e3cce65e4ceb, type: 2}
