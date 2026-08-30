@@ -101,21 +101,14 @@ AnimationClip:
   m_HasMotionFloatCurves: 0
   m_Events:
   - time: 0.06666667
-    functionName: OnSpawnVFX
+    functionName: OnHit
     data: 
     objectReferenceParameter: {fileID: 0}
     floatParameter: 0
     intParameter: 0
     messageOptions: 0
   - time: 0.06666667
-    functionName: OnHit
-    data: 
-    objectReferenceParameter: {fileID: 0}
-    floatParameter: 0
-    intParameter: 0
-    messageOptions: 0
-  - time: 0.45
-    functionName: OnHit
+    functionName: OnSpawnVFX
     data: 
     objectReferenceParameter: {fileID: 0}
     floatParameter: 0
@@ -128,7 +121,7 @@ AnimationClip:
     floatParameter: 0
     intParameter: 1
     messageOptions: 0
-  - time: 0.95
+  - time: 0.45
     functionName: OnHit
     data: 
     objectReferenceParameter: {fileID: 0}
@@ -140,7 +133,14 @@ AnimationClip:
     data: 
     objectReferenceParameter: {fileID: 0}
     floatParameter: 0
-    intParameter: 1
+    intParameter: 2
+    messageOptions: 0
+  - time: 0.95
+    functionName: OnHit
+    data: 
+    objectReferenceParameter: {fileID: 0}
+    floatParameter: 0
+    intParameter: 0
     messageOptions: 0
   - time: 1.75
     functionName: OnSkillAnimationEnd
