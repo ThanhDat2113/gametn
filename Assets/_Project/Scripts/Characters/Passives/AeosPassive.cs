@@ -5,7 +5,7 @@ using UnityEngine;
 /// </summary>
 public class AeosPassive : PassiveAbility
 {
-    private const float BASE_PENETRATION = 0.3f;
+    private const float BASE_PENETRATION = 0.5f;
     private const float BONUS_PER_KILL = 0.1f;
     private const float MAX_BONUS = 0.2f;
 

@@ -20,6 +20,13 @@ public class UnitView : MonoBehaviour
     public Color warningColor = Color.yellow;
     public Color dangerColor = Color.red;
 
+    [Header("Hover Highlight")]
+    [Tooltip("Màu viền hiện khi rê chuột vào nhân vật (chỉ trong lượt player)")]
+    public Color hoverBorderColor = new Color(1f, 0.85f, 0.2f, 0.9f);
+    [Tooltip("Độ phóng của viền so với thân nhân vật")]
+    public float hoverBorderScale = 1.08f;
+    private SpriteRenderer hoverOutline;
+
     public event System.Action OnHitAnimationEvent;
     public event System.Action OnAnimationEndEvent;
     
@@ -853,6 +860,37 @@ public void PlaySkillEffects(float duration)
             c.a = alpha;
             spriteRenderer.color = c;
         }
+    }
+
+    // ── Hover Highlight (viền sáng khi rê chuột — chỉ trong lượt player) ──
+    /// <summary>
+    /// Bật/tắt viền sáng phía sau nhân vật. Viền là 1 silhouette sprite cùng hình,
+    /// scale to hơn thân 1 chút, nằm sau body (sortingOrder thấp hơn) — tạo hiệu ứng viền.
+    /// </summary>
+    public void SetHoverHighlight(bool on)
+    {
+        EnsureHoverOutline();
+        if (hoverOutline == null) return;
+        hoverOutline.enabled = on;
+        hoverOutline.flipX = spriteRenderer != null && spriteRenderer.flipX; // đồng bộ flip với body
+    }
+
+    private void EnsureHoverOutline()
+    {
+        if (hoverOutline != null) return;
+        if (spriteRenderer == null || spriteRenderer.sprite == null) return;
+
+        var go = new GameObject("HoverOutline");
+        go.transform.SetParent(transform, false);
+        go.transform.localPosition = Vector3.zero;
+        go.transform.localScale = Vector3.one * hoverBorderScale;
+
+        hoverOutline = go.AddComponent<SpriteRenderer>();
+        hoverOutline.sprite = spriteRenderer.sprite;
+        hoverOutline.color = hoverBorderColor;
+        hoverOutline.flipX = spriteRenderer.flipX;
+        hoverOutline.sortingOrder = spriteRenderer.sortingOrder - 1; // sau body, trước background
+        hoverOutline.enabled = false;
     }
 public void DisableRootMotion() { if (animator != null) animator.applyRootMotion = false; }
 
