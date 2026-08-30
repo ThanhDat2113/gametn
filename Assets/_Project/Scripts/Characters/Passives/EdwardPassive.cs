@@ -2,17 +2,17 @@ using UnityEngine;
 
 /// <summary>
 /// Passive của Edward (Boss 2) — "Giả kim thuật hút sinh":
-/// Mỗi lần gây sát thương, Edward hồi máu bằng 2% sát thương gây ra (lifesteal).
+/// Mỗi lần gây sát thương, Edward hồi máu bằng 25% sát thương gây ra (lifesteal).
 /// Edward có thể hành động 3 lần mỗi lượt (MaxActionsPerTurn = 3).
 /// Mọi skill của Edward đều giảm 20% ATK mục tiêu trúng đòn trong 2 lượt (AtkDebuff.asset).
-/// Khi dùng skill mạnh nhất sẽ ưu tiên target yếu máu (AI generic đã xử lý).
+/// EdwardAI riêng: Skill 3 AoE chiếm 40% lựa chọn, Skill 1/2 mỗi skill 30%.
 /// </summary>
 public class EdwardPassive : PassiveAbility
 {
-    // % sát thương gây ra được hồi thành máu (2% = 0.02f).
-    // LƯU Ý CÂN BẰNG: ATK 70 × 1.5x ≈ 105 dmg/hit → chỉ hồi ~2 HP/hit.
-    // Nếu muốn lifesteal cảm nhận rõ, tăng lên 0.25f - 0.5f.
-    private const float HEAL_PERCENT = 0.02f;
+    // % sát thương gây ra được hồi thành máu (25% = 0.25f).
+    // ⚠ Từng để 2% → chỉ ~2 HP/hit trên pool 4000 HP = vô hình (feedback "chưa heal được").
+    // 25% ≈ 26 HP/hit, ~79 HP/turn với 3 actions — thấy rõ mà chưa quá tay.
+    private const float HEAL_PERCENT = 0.60f;
 
     public override void Initialize(CombatUnit owner)
     {

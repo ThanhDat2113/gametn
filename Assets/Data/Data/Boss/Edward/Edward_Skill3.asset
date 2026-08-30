@@ -13,9 +13,11 @@ MonoBehaviour:
   m_Name: Edward_Skill3
   m_EditorClassIdentifier: Assembly-CSharp::SkillData
   autoConfirmOnSelect: 0
-  movementOverride: 1
+  movementOverride: 2
   skillName: Stone Wall
-  description: "Triệu hồi tường đá đè lên toàn bộ kẻ địch và giảm 20% sát thương của chúng trong 2 lượt."
+  description: "Tri\u1EC7u h\u1ED3i t\u01B0\u1EDDng \u0111\xE1 \u0111\xE8 l\xEAn
+    to\xE0n b\u1ED9 k\u1EBB \u0111\u1ECBch v\xE0 gi\u1EA3m 20% s\xE1t th\u01B0\u01A1ng
+    c\u1EE7a ch\xFAng trong 2 l\u01B0\u1EE3t."
   icon: {fileID: 0}
   type: 0
   targetType: 2
@@ -29,7 +31,7 @@ MonoBehaviour:
     offset: {x: 0.5, y: -1, z: 0}
     attachToCaster: 0
   - vfxPrefab: {fileID: 7758453510493496614, guid: 0d33d2405335289488c8179b6c1fa636, type: 3}
-    spawnMode: 0
+    spawnMode: 2
     offset: {x: 0, y: 0, z: 0}
     attachToCaster: 0
   vfxTriggerMode: 1

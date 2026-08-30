@@ -30,6 +30,7 @@ public class CombatManager : MonoBehaviour
     private ActionResolver actionResolver = new();
     private EnemyAI enemyAI = new();
     private MadaraAI madaraAI = new();
+    private EdwardAI edwardAI = new();
     private GilgameshAI gilgameshAI = new();
 
     private readonly Queue<ICombatCommand> _commandQueue = new Queue<ICombatCommand>();
@@ -1030,6 +1031,7 @@ private IEnumerator ProcessCharlotteFollowUp()
         switch (enemy.UnitName)
         {
             case "Madara": return madaraAI;
+            case "Edward": return edwardAI;
             case "Gilgamesh": return gilgameshAI;
             default: return enemyAI;
         }
