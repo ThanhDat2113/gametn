@@ -41,7 +41,7 @@ public class CombatManager : MonoBehaviour
     // ── AP System (Shared Pool) ───────────────────────────────
     public int CurrentPlayerAP { get; private set; }
     private const int MAX_PLAYER_AP = 5;
-    private const int STARTING_PLAYER_AP = 3;
+    private const int STARTING_PLAYER_AP = 5;
 
     [Header("Grid Spawn Settings")]
     public Transform[] playerGridSlots;
@@ -383,6 +383,49 @@ public delegate void DamageModificationHandler(ActionOutcome outcome, CombatUnit
         yield return FadeUI(1f, 0.5f);
         cameraManager.EndIntroSequence();
         OnIntroEnded?.Invoke();
+
+        // ═══ MADARA OPENING BLITZ ═══
+        // Madara mở đầu trận bằng Skill 3 (AoE toàn màn) vào toàn bộ team người chơi,
+        // diễn ra ngay sau intro và TRƯỚC khi lượt player bắt đầu.
+        var madara = EnemyUnits.FirstOrDefault(e => e.IsAlive && e.UnitName == "Madara");
+        if (madara != null)
+        {
+            var skills = madara.AvailableSkills;
+            if (skills != null && skills.Count > 0)
+            {
+                // Ưu tiên skill AoE (targetType = AllEnemies = Skill 3),
+                // fallback về skill index 2 rồi skill đầu tiên để an toàn nếu data đổi.
+                var skill3 = skills.FirstOrDefault(s => s != null && s.targetType == TargetType.AllEnemies)
+                             ?? (skills.Count > 2 ? skills[2] : skills[0]);
+
+                var blitzTargets = PlayerUnits.Where(p => p.IsAlive).ToList();
+                if (blitzTargets.Count > 0)
+                {
+                    Debug.Log("=== MADARA OPENING BLITZ ===");
+
+                    // Đầu lượt: burn tick + turn-start trigger
+                    // (Clone chưa spawn lúc này nên OnActionConfirmed sẽ không lặp đòn)
+                    yield return HandleStartOfTurnEffects(madara);
+                    if (madara.IsAlive)
+                    {
+                        OnUnitTurnStart?.Invoke(madara);
+                        madara.TriggerTurnStart();
+
+                        // Ép dùng Skill 3 vào toàn bộ team ta
+                        madara.SelectSkill(skill3, blitzTargets);
+                        yield return ResolveAction(new PlannedAction(madara, madara.SelectedSkill, madara.SelectedTargets));
+
+                        // Reset action residue — nếu không, lượt EnemyTurn thật sẽ đọc
+                        // giá trị dư này làm Madara được thêm action thừa (extraFromPlayerTurn)
+                        madara.ActionsRemainingThisTurn = 0;
+
+                        TickAllStatuses();
+                        if (CheckForCombatEnd()) yield break;
+                    }
+                    Debug.Log("=== END MADARA OPENING BLITZ ===");
+                }
+            }
+        }
 
         // Kiểm tra enemy nào có AlwaysActsFirst (ví dụ: Sói)
         // Những enemy này sẽ act trước cả player
