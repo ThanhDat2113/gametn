@@ -681,6 +681,12 @@ public delegate void DamageModificationHandler(ActionOutcome outcome, CombatUnit
                 TickAllStatuses();
                 if (CheckForCombatEnd()) yield break;
             }
+
+            // Edward hành động xong chuỗi 3 đòn → bật Counter Stance:
+            // trong lượt player, mỗi lần hắn nhận sát thương sẽ phản công bằng
+            // Skill 1 (tối đa 20 dmg) qua hệ thống Interrupt có sẵn.
+            if (enemy.IsAlive && enemy.Passive is EdwardPassive edwardPassive)
+                edwardPassive.EnableCounterStance();
         }
 
         Debug.Log("=== END ENEMY TURN ===");
@@ -734,6 +740,21 @@ public delegate void DamageModificationHandler(ActionOutcome outcome, CombatUnit
 
         Debug.Log($"[Interrupt] {enemy.UnitName} phản đòn {target?.UnitName}!");
 
+        // Edward counter: dùng ĐÚNG Skill 1 (animation/VFX như đòn đánh thường),
+        // damage giới hạn 20 qua bản clone DamageEffect có maxDamage.
+        if (enemy.Passive is EdwardPassive edwardPassive)
+        {
+            var counterSkill = edwardPassive.PrepareCounterSkill();
+            if (counterSkill != null)
+            {
+                edwardPassive.PlayCounterFeedback();
+                enemy.SelectSkill(counterSkill, new List<CombatUnit> { target });
+                yield return ResolveAction(new PlannedAction(enemy, counterSkill, new List<CombatUnit> { target }));
+                Object.Destroy(counterSkill);
+            }
+        }
+        else
+        {
         // AI chọn skill (nếu enemy không có skill hợp lệ, dùng skill đầu tiên)
         GetAIForEnemy(enemy).PlanTurn(enemy, PlayerUnits);
 
@@ -754,6 +775,8 @@ public delegate void DamageModificationHandler(ActionOutcome outcome, CombatUnit
                 enemy.SelectSkill(fallbackSkill, new List<CombatUnit> { target ?? enemy });
                 yield return ResolveAction(new PlannedAction(enemy, fallbackSkill, new List<CombatUnit> { target ?? enemy }));
             }
+        }
+
         }
 
         TickAllStatuses();

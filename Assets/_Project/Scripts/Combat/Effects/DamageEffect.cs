@@ -7,6 +7,9 @@ public class DamageEffect : SkillEffect
     [Range(0.1f, 5f)] public float multiplier = 1f;
     public DamageType damageType = DamageType.Physical;
 
+    [Tooltip("Giới hạn sát thương TỔNG lên 1 mục tiêu. 0 = không giới hạn (mặc định).")]
+    public int maxDamage = 0;
+
     public override void Apply(CombatUnit caster, CombatUnit[] targets)
     {
         foreach (var target in targets)
@@ -47,6 +50,8 @@ public class DamageEffect : SkillEffect
             baseDamage = Mathf.RoundToInt(baseDamage * caster.CritDamage);
 
         int totalDmg = Mathf.RoundToInt(baseDamage * target.GetDamageTakenMultiplier());
+        if (maxDamage > 0 && totalDmg > maxDamage)
+            totalDmg = maxDamage;
 
         for (int i = 0; i < hitCount; i++)
         {
