@@ -55,7 +55,7 @@ public class ChestRewardUI : MonoBehaviour
             {
                 if (reward.item == null) continue;
                 string amountText = reward.amount > 1 ? $" x{reward.amount}" : "";
-                itemList += $"- {reward.item.itemName}{amountText}\n";
+                itemList += $"{reward.item.itemName}{amountText}\n";
             }
         }
         else
