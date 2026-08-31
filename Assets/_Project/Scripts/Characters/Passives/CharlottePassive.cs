@@ -22,7 +22,7 @@ public class CharlottePassive : PassiveAbility
         {
             CombatManager.Instance.OnDebuffApplied += OnDebuffApplied;
         }
-        Debug.Log($"[{Owner.UnitName}'s Passive] Gió Tiên kích hoạt! Khi đồng minh áp debuff lên kẻ địch, Charlotte nhảy lượt và dùng skill 1 ngay lập tức.");
+        Debug.Log($"[{Owner.UnitName}'s Passive] Zafkiel kích hoạt! Khi một kẻ địch nhận hiệu ứng xấu, Kurumi lập tức tấn công kẻ đó bằng skill 1 (tối đa 2 lần/lượt).");
     }
 
     public override void Cleanup()

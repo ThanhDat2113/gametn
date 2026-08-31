@@ -64,6 +64,7 @@ public class CombatPlanningUI : MonoBehaviour
 
     private List<GameObject> activeSkillButtons = new();
     private List<GameObject> targetHighlights = new();
+    private UnitView _hoveredView; // unit đang được rê chuột (hover viền + hiện nội tại)
 
     private void Start()
     {
@@ -118,7 +119,15 @@ public class CombatPlanningUI : MonoBehaviour
     private void Update()
     {
         if (planningCanvas == null || !planningCanvas.gameObject.activeSelf) return;
-        if (combat.CurrentPhase != CombatPhase.PlayerTurn || !combat.IsWaitingForPlayerSelection) return;
+        if (combat.CurrentPhase != CombatPhase.PlayerTurn || !combat.IsWaitingForPlayerSelection)
+        {
+            // Ngoài lượt chọn (action đang chạy / lượt địch) → tắt hover, không inspect
+            ClearHoverHighlight();
+            return;
+        }
+
+        // ── Hover: viền sáng + hiển thị nội tại của unit đang rê chuột ──
+        UpdateHoverHighlight();
 
         if (isSelectingUnit && Input.GetMouseButtonDown(0) && !EventSystem.current.IsPointerOverGameObject())
             HandleUnitSelectionClick(Input.mousePosition);
@@ -158,7 +167,7 @@ public class CombatPlanningUI : MonoBehaviour
         foreach (var hit in hits2D)
         {
             var view = hit.collider?.GetComponent<UnitView>();
-            if (view != null && view.LinkedUnit.IsAlive && view.LinkedUnit.IsPlayer && !view.LinkedUnit.HasActedThisTurn && !view.LinkedUnit.HasStatus(StatusEffectType.Stun))
+            if (view != null && view.LinkedUnit.IsPlayer && view.LinkedUnit.CanActThisTurn)
             { clickedView = view; break; }
         }
         if (clickedView == null)
@@ -166,7 +175,7 @@ public class CombatPlanningUI : MonoBehaviour
             if (Physics.Raycast(ray, out RaycastHit hit3D, 100f))
             {
                 clickedView = hit3D.collider?.GetComponent<UnitView>();
-                if (clickedView != null && (!clickedView.LinkedUnit.IsAlive || !clickedView.LinkedUnit.IsPlayer || clickedView.LinkedUnit.HasActedThisTurn || clickedView.LinkedUnit.HasStatus(StatusEffectType.Stun)))
+                if (clickedView != null && (!clickedView.LinkedUnit.IsPlayer || !clickedView.LinkedUnit.CanActThisTurn))
                     clickedView = null;
             }
         }
@@ -202,6 +211,8 @@ public class CombatPlanningUI : MonoBehaviour
     
     private void OnActionResolved(ActionResult result)
     {
+        ClearHoverHighlight();
+
         // ── Thông tin kỹ năng KẺ ĐỊCH đang sử dụng ──
         // Chỉ hiển thị khi ngoài lượt player (enemy turn / Madara opening blitz)
         // để không đè lên text đang hướng dẫn người chơi giữa chừng.
@@ -211,18 +222,11 @@ public class CombatPlanningUI : MonoBehaviour
             ShowEnemySkillInfo(result);
         }
 
-        // Sau khi resolve xong, quay lại chế độ chọn unit
-        if (currentUnit != null && result.Actor == currentUnit)
-        {
-            // Kiểm tra còn unit nào có thể act không
-            var remaining = combat.PlayerUnits.Where(u => u.IsAlive && !u.HasActedThisTurn).ToList();
-            if (remaining.Count > 0)
-            {
-                isSelectingUnit = true;
-                SetInstruction("Chọn 1 nhân vật sáng để ra lệnh hành động");
-                UpdateUnitEmphasis(remaining);
-            }
-        }
+        // KHÔNG reset UI ở đây — OnActionResolved chạy TRƯỚC khi CombatManager cấp
+        // extra action (ExtraTurnEffect deferred grant nằm sau `yield return ResolveAction`).
+        // Nếu reset/update emphasis tại đây sẽ dùng trạng thái cũ (target chưa được cấp lượt)
+        // → target bị mờ và không click được. Thay vào đó, vòng lặp DoPlayerTurn sẽ gọi
+        // OnPlayerTurnStart(unitsCanAct) NGAY SAU khi grant xong → UI refresh đúng trạng thái mới.
     }
 
     /// <summary>
@@ -281,6 +285,7 @@ public class CombatPlanningUI : MonoBehaviour
         selectedSkill = null;
         isChoosingTarget = false;
         isSelectingUnit = false;
+        ClearHoverHighlight();
         SetInstruction("");
         UpdateUnitEmphasis(null);
     }
@@ -476,7 +481,7 @@ public class CombatPlanningUI : MonoBehaviour
             currentUnit = null;
             selectedSkill = null;
             isSelectingUnit = true;
-            var remaining = combat.PlayerUnits.Where(u => u.IsAlive && !u.HasActedThisTurn).ToList();
+            var remaining = combat.PlayerUnits.Where(u => u.CanActThisTurn).ToList();
             SetInstruction("Chọn 1 nhân vật sáng để ra lệnh hành động");
             UpdateUnitEmphasis(remaining);
             return;
@@ -592,13 +597,14 @@ public class CombatPlanningUI : MonoBehaviour
         
         if (isSelectingUnit && selectableUnits != null)
         {
-            // Chế độ chọn unit: highlight unit có thể chọn, dim unit đã act / bị stun
+            // Chế độ chọn unit: highlight đúng unit trong danh sách selectable (dùng Contains,
+            // thay vì suy từ HasActedThisTurn) — đảm bảo unit được ExtraTurnEffect cấp thêm
+            // lượt (ActionsRemainingThisTurn > 0) luôn sáng để player chọn.
             foreach (var view in allViews)
             {
-                if (view.LinkedUnit.IsPlayer && view.LinkedUnit.IsAlive && !view.LinkedUnit.HasActedThisTurn && !view.LinkedUnit.HasStatus(StatusEffectType.Stun))
-                    view.SetAlpha(1f); // Có thể chọn
-                else
-                    view.SetAlpha(0.4f); // Đã act / bị stun / enemy / dead
+                bool selectable = view.LinkedUnit.IsPlayer && view.LinkedUnit.IsAlive
+                                  && (selectableUnits.Contains(view.LinkedUnit) || view.LinkedUnit.CanActThisTurn);
+                view.SetAlpha(selectable ? 1f : 0.4f);
             }
             return;
         }
@@ -620,4 +626,87 @@ public class CombatPlanningUI : MonoBehaviour
     }
 
     private void UpdateAPDisplay() { if (apDisplay != null) apDisplay.text = $"AP: {combat.CurrentPlayerAP}"; }
+
+    // ── Hover Inspect (viền sáng + xem nội tại — chỉ trong lượt player) ──
+    /// <summary>
+    /// Tìm UnitView dưới con trỏ chuột (raycast 2D rồi 3D fallback). Chỉ nhận unit còn sống.
+    /// </summary>
+    private UnitView GetUnitUnderCursor()
+    {
+        Ray ray = MainCam.ScreenPointToRay(Input.mousePosition);
+
+        foreach (var hit in Physics2D.GetRayIntersectionAll(ray))
+        {
+            var view = hit.collider?.GetComponent<UnitView>();
+            if (view != null && view.LinkedUnit != null && view.LinkedUnit.IsAlive) return view;
+        }
+
+        if (Physics.Raycast(ray, out RaycastHit hit3D, 100f))
+        {
+            var view = hit3D.collider?.GetComponent<UnitView>();
+            if (view != null && view.LinkedUnit != null && view.LinkedUnit.IsAlive) return view;
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// Theo dõi unit đang hover: bật viền sáng + hiện mô tả nội tại lên bảng instruction.
+    /// Rời chuột → tắt viền + trả lại text hướng dẫn theo ngữ cảnh hiện tại.
+    /// </summary>
+    private void UpdateHoverHighlight()
+    {
+        UnitView hovered = null;
+        if (!isChoosingTarget && !EventSystem.current.IsPointerOverGameObject())
+            hovered = GetUnitUnderCursor();
+
+        if (hovered == _hoveredView) return;
+
+        if (_hoveredView != null) _hoveredView.SetHoverHighlight(false);
+        _hoveredView = hovered;
+
+        if (_hoveredView != null)
+        {
+            _hoveredView.SetHoverHighlight(true);
+            ShowUnitPassiveInfo(_hoveredView.LinkedUnit);
+        }
+        else
+        {
+            RestoreDefaultInstruction();
+        }
+    }
+
+    private void ClearHoverHighlight()
+    {
+        if (_hoveredView != null)
+        {
+            if (_hoveredView != null && _hoveredView.gameObject != null)
+                _hoveredView.SetHoverHighlight(false);
+            _hoveredView = null;
+        }
+    }
+
+    /// <summary>
+    /// Hiển thị mô tả nội tại của unit lên bảng instruction (màu xanh = ta, đỏ = địch).
+    /// Không đụng CanvasGroup — trong lượt player canvas đã tương tác bình thường.
+    /// </summary>
+    private void ShowUnitPassiveInfo(CombatUnit unit)
+    {
+        string color = unit.IsPlayer ? "#7CFC00" : "#FF6B6B";
+        string desc = PassiveDescriptions.Get(unit);
+        if (string.IsNullOrEmpty(desc)) desc = "Không có nội tại đặc biệt.";
+        SetInstruction($"<color={color}>{unit.UnitName}</color> — Nội tại\n{desc}");
+    }
+
+    /// <summary>
+    /// Trả lại text hướng dẫn phù hợp với trạng thái UI hiện tại (dùng khi hover rời khỏi unit).
+    /// </summary>
+    private void RestoreDefaultInstruction()
+    {
+        if (isChoosingTarget && selectedSkill != null)
+            SetInstruction($"Chọn mục tiêu cho [{selectedSkill.skillName}] (Chuột phải để hủy)");
+        else if (currentUnit != null && !isSelectingUnit)
+            SetInstruction($"{currentUnit.UnitName} — Chọn kỹ năng (di chuột vào để xem mô tả)");
+        else
+            SetInstruction("Chọn 1 nhân vật sáng để ra lệnh hành động");
+    }
 }

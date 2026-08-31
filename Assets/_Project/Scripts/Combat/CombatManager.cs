@@ -39,6 +39,10 @@ public class CombatManager : MonoBehaviour
     public List<CombatUnit> PlayerUnits { get; private set; } = new();
     public List<CombatUnit> EnemyUnits { get; private set; } = new();
 
+    // Deferred ExtraAction: ExtraTurnEffect chỉ đánh dấu mục tiêu ở đây,
+    // việc grant thực sự diễn ra ngay sau ResolveAction trong DoPlayerTurn (an toàn timing).
+    private List<CombatUnit> _pendingExtraActions = null;
+
     // ── AP System (Shared Pool) ───────────────────────────────
     public int CurrentPlayerAP { get; private set; }
     private const int MAX_PLAYER_AP = 5;
@@ -292,7 +296,7 @@ public delegate void DamageModificationHandler(ActionOutcome outcome, CombatUnit
     // Dùng khi passiveScript bị null/missing trên CharacterData asset.
     private static readonly Dictionary<string, string> PassiveNameFallback = new Dictionary<string, string>
     {
-        { "Kurumi", "CharlottePassive" },   // Kurumi dùng passive của Charlotte (Gió Tiên)
+        { "Kurumi", "CharlottePassive" },   // Kurumi dùng passive Zafkiel (class tên cũ CharlottePassive)
         { "Charlotte", "CharlottePassive" }
     };
 
@@ -498,6 +502,9 @@ public delegate void DamageModificationHandler(ActionOutcome outcome, CombatUnit
         _charlotteFollowUpPending = false;
         _charlotteFollowUpTarget = null;
 
+        // Reset deferred extra-action (không để dư từ lượt trước / enemy turn)
+        _pendingExtraActions = null;
+
 // Reset HasActedThisTurn và ActionsRemainingThisTurn cho tất cả player units
         foreach (var unit in PlayerUnits)
         {
@@ -518,8 +525,11 @@ public delegate void DamageModificationHandler(ActionOutcome outcome, CombatUnit
         // Vòng lặp: player chọn unit → chọn skill → target → resolve
         while (!_playerEndedTurn)
         {
-            // Lấy danh sách unit còn có thể act (còn sống, chưa act, không bị Stun)
-            var unitsCanAct = PlayerUnits.Where(u => u.IsAlive && !u.HasActedThisTurn && !u.HasStatus(StatusEffectType.Stun)).ToList();
+            // Lấy danh sách unit còn có thể act (còn sống, còn action, không bị Stun).
+            // Dùng CanActThisTurn (ActionsRemainingThisTurn > 0) thay vì HasActedThisTurn:
+            // unit được ExtraTurnEffect cấp thêm lượt (vd: Kurumi self, Eugeo buff đồng minh)
+            // có ActionsRemainingThisTurn++ đúng lúc → chắc chắn xuất hiện lại để được chọn.
+            var unitsCanAct = PlayerUnits.Where(u => u.CanActThisTurn).ToList();
             if (unitsCanAct.Count == 0)
             {
                 Debug.Log("[PlayerTurn] Không còn unit nào có thể hành động.");
@@ -558,6 +568,20 @@ public delegate void DamageModificationHandler(ActionOutcome outcome, CombatUnit
 
             // Resolve action
             yield return ResolveAction(new PlannedAction(_selectedUnit, _selectedSkill, _selectedTargets));
+
+            // Cấp lượt thêm (deferred ExtraTurnEffect) — ngay khi animation hoàn tất.
+            // Grant ở đây thay vì trong effect.Apply để target được cấp lượt chắc chắn xuất hiện
+            // trong danh sách unitsCanAct của vòng lặp kế (tránh bị nuốt vì timing UI).
+            if (_pendingExtraActions != null)
+            {
+                foreach (var extraTarget in _pendingExtraActions)
+                {
+                    if (extraTarget == null || !extraTarget.IsAlive) continue;
+                    GrantExtraAction(extraTarget);
+                    Debug.Log($"[ExtraAction] {extraTarget.UnitName} được cấp thêm lượt bởi skill của {_selectedUnit.UnitName}!");
+                }
+                _pendingExtraActions = null;
+            }
 
             // Kiểm tra kết thúc combat
             if (CheckForCombatEnd()) yield break;
@@ -681,6 +705,12 @@ public delegate void DamageModificationHandler(ActionOutcome outcome, CombatUnit
                 TickAllStatuses();
                 if (CheckForCombatEnd()) yield break;
             }
+
+            // Edward hành động xong chuỗi 3 đòn → bật Counter Stance:
+            // trong lượt player, mỗi lần hắn nhận sát thương sẽ phản công bằng
+            // Skill 1 (tối đa 20 dmg) qua hệ thống Interrupt có sẵn.
+            if (enemy.IsAlive && enemy.Passive is EdwardPassive edwardPassive)
+                edwardPassive.EnableCounterStance();
         }
 
         Debug.Log("=== END ENEMY TURN ===");
@@ -734,6 +764,21 @@ public delegate void DamageModificationHandler(ActionOutcome outcome, CombatUnit
 
         Debug.Log($"[Interrupt] {enemy.UnitName} phản đòn {target?.UnitName}!");
 
+        // Edward counter: dùng ĐÚNG Skill 1 (animation/VFX như đòn đánh thường),
+        // damage giới hạn 20 qua bản clone DamageEffect có maxDamage.
+        if (enemy.Passive is EdwardPassive edwardPassive)
+        {
+            var counterSkill = edwardPassive.PrepareCounterSkill();
+            if (counterSkill != null)
+            {
+                edwardPassive.PlayCounterFeedback();
+                enemy.SelectSkill(counterSkill, new List<CombatUnit> { target });
+                yield return ResolveAction(new PlannedAction(enemy, counterSkill, new List<CombatUnit> { target }));
+                Object.Destroy(counterSkill);
+            }
+        }
+        else
+        {
         // AI chọn skill (nếu enemy không có skill hợp lệ, dùng skill đầu tiên)
         GetAIForEnemy(enemy).PlanTurn(enemy, PlayerUnits);
 
@@ -754,6 +799,8 @@ public delegate void DamageModificationHandler(ActionOutcome outcome, CombatUnit
                 enemy.SelectSkill(fallbackSkill, new List<CombatUnit> { target ?? enemy });
                 yield return ResolveAction(new PlannedAction(enemy, fallbackSkill, new List<CombatUnit> { target ?? enemy }));
             }
+        }
+
         }
 
         TickAllStatuses();
@@ -919,6 +966,17 @@ private IEnumerator ProcessCharlotteFollowUp()
         if (!_isWaitingForPlayerSelection) return;
         _playerEndedTurn = true;
         _isWaitingForPlayerSelection = false;
+    }
+
+    /// <summary>
+    /// Deferred ExtraAction: ExtraTurnEffect gọi hàm này để ĐÁNH DẤU mục tiêu được cấp lượt.
+    /// Việc grant thực sự diễn ra ngay sau ResolveAction trong DoPlayerTurn.
+    /// Hỗ trợ cả: Skill Self (Kurumi → target = chính mình) và Skill SingleAlly (Eugeo → target = đồng minh khác).
+    /// </summary>
+    public void RequestExtraAction(CombatUnit[] targets)
+    {
+        if (targets == null) return;
+        _pendingExtraActions = targets.Where(t => t != null && t.IsAlive).ToList();
     }
 
     /// <summary>
