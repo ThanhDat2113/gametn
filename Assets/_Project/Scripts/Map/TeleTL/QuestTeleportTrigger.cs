@@ -4,6 +4,29 @@ using UnityEngine.Playables;
 using UnityEngine.SceneManagement;
 
 /// <summary>
+/// Clear màn đen "giữ" từ trigger teleport khi scene mới load xong (BEFORE render).
+/// Subscribe vào SceneManager.sceneLoaded 1 lần duy nhất ở AppStart; mỗi lần load
+/// scene mới sẽ clear canvas đen TRƯỚC khi Unity render frame đầu của scene đó.
+/// </summary>
+internal static class QuestTeleportBlackScreenBootstrap
+{
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterAssembliesLoaded)]
+    private static void Hook()
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+        SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    private static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        // Clear mọi màn đen còn sống từ scene trước (DontDestroyOnLoad canvas).
+        // sceneLoaded callback chạy TRƯỚC khi Unity render frame đầu của scene mới
+        // → không có frame nào của scene mới bị che đen.
+        QuestTeleportTrigger.ClearBlackScreen();
+    }
+}
+
+/// <summary>
 /// Gắn lên cùng GameObject với QuestMarkerBridge (hoặc NPC bất kỳ).
 /// Tự động theo dõi khi đúng quest/step hoàn thành + dialogue kết thúc,
 /// sau đó phát 1 Timeline (vd: fade-out, hiệu ứng tele...) rồi teleport player.
@@ -53,6 +76,11 @@ public class QuestTeleportTrigger : MonoBehaviour
     [Tooltip("Nếu bật: chờ Timeline phát xong mới teleport. " +
              "Nếu tắt: teleport ngay khi Timeline bắt đầu (dùng khi Timeline tự xử lý scene load).")]
     [SerializeField] private bool waitForTimeline = true;
+
+    [Tooltip("Chỉ áp dụng khi useSceneTransition = true. Bật để giữ màn hình đen từ lúc " +
+             "Timeline kết thúc cho tới khi scene mới load xong (che đi khoảng đen giữa " +
+             "2 scene). Khi tắt hoặc tele trong cùng scene: hành vi giữ nguyên như cũ.")]
+    [SerializeField] private bool keepBlackUntilSceneLoaded = true;
 
     [Header("Scene Transition")]
     [Tooltip("Bật để load scene mới sau Timeline. Tắt để teleport trong cùng scene.")]
@@ -212,8 +240,14 @@ public class QuestTeleportTrigger : MonoBehaviour
             // Timeline chạy xong — báo TimelinePlaybackManager để nhân vật/UI được mở khoá
             TimelinePlaybackManager.EndTimeline();
 
-            // Timeline chạy xong — dừng, tắt lại object cha về trạng thái ẩn ban đầu,
-            // rồi xoá hẳn object chứa Timeline (dùng 1 lần, không cần giữ lại).
+            // Nếu sắp chuyển scene + bật keepBlackUntilSceneLoaded: tạo màn đen
+            // NGAY TRƯỚC khi Stop/Destroy timeline, để che khoảng "map lộ + timeline tắt"
+            // và khoảng "timeline tắt → scene mới load xong". Scene mới sẽ tự clear
+            // trong BeforeSceneLoad (xem dưới).
+            bool needBlackScreen = useSceneTransition && keepBlackUntilSceneLoaded;
+            if (needBlackScreen) CreateBlackScreen();
+
+            // Dừng timeline, khôi phục hierarchy, xoá object Timeline
             teleportTimeline.Stop();
             teleportTimeline.time = 0;
             teleportTimeline.Evaluate();
@@ -227,8 +261,60 @@ public class QuestTeleportTrigger : MonoBehaviour
         if (useSceneTransition)
             yield return StartCoroutine(TeleportToScene());
         else
+        {
+            // Tele trong cùng scene — nếu lỡ tạo black screen thì clear ngay
+            ClearBlackScreen();
             TeleportSameScene();
+        }
     }
+
+    // ── Scene Fade (giữ màn hình đen khi chuyển scene) ───────────────────────
+
+    /// <summary>
+    /// Tạo fullscreen black image phía trên cùng mọi UI/Camera để giữ màn hình đen.
+    /// KHÔNG tự huỷ — gọi ClearBlackScreen() khi scene mới đã load xong và muốn fade-in.
+    /// Lưu qua DontDestroyOnLoad để sống xuyên scene transition.
+    /// </summary>
+    private void CreateBlackScreen()
+    {
+        if (_blackScreenGO != null) return;
+
+        // Tạo Canvas riêng với sortingOrder cực cao
+        var canvasGO = new GameObject("QuestTeleport_BlackScreen");
+        Object.DontDestroyOnLoad(canvasGO);
+
+        var canvas = canvasGO.AddComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.sortingOrder = short.MaxValue;
+
+        // CanvasScaler/GraphicRaycaster không cần — ta chỉ vẽ ảnh đen
+        var imgGO = new GameObject("Black");
+        imgGO.transform.SetParent(canvasGO.transform, false);
+
+        var rt = imgGO.AddComponent<RectTransform>();
+        rt.anchorMin = Vector2.zero;
+        rt.anchorMax = Vector2.one;
+        rt.offsetMin = Vector2.zero;
+        rt.offsetMax = Vector2.zero;
+
+        var img = imgGO.AddComponent<UnityEngine.UI.Image>();
+        img.color = Color.black;
+        img.raycastTarget = false;
+
+        _blackScreenGO = canvasGO;
+    }
+
+    /// <summary>Huỷ màn đen (gọi từ scene mới sau khi load xong).</summary>
+    public static void ClearBlackScreen()
+    {
+        if (_blackScreenGO != null)
+        {
+            Object.Destroy(_blackScreenGO);
+            _blackScreenGO = null;
+        }
+    }
+
+    private static GameObject _blackScreenGO;
 
     // ── Teleport Implementations ──────────────────────────────────────────────
 
