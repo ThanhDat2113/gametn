@@ -1,5 +1,5 @@
 // ============================================
-// OuttroCreditManager.cs - FIXED (Ending text nhanh, mượt)
+// OuttroCreditManager.cs - Đơn giản, dùng Image
 // ============================================
 
 using System.Collections;
@@ -17,10 +17,13 @@ public class OuttroCreditManager : MonoBehaviour
     public TextMeshProUGUI endingText;
     public Image blackOverlay;
     
+    [Header("=== LOGO TEAM ===")]
+    public Image logoImage;                // Image logo (tắt ở Hierarchy)
+    public float logoDisplayTime = 3f;
+    
     [Header("=== CÀI ĐẶT ===")]
     public float scrollSpeed = 40f;
     public float fadeDuration = 1.5f;
-    public float endDelay = 2f;
     
     [Header("=== AUDIO ===")]
     public AudioSource bgmSource;
@@ -38,6 +41,12 @@ public class OuttroCreditManager : MonoBehaviour
         creditContainer.gameObject.SetActive(false);
         endingText.gameObject.SetActive(false);
         blackOverlay.color = new Color(0, 0, 0, 1);
+        
+        // Tắt logo
+        if (logoImage != null)
+        {
+            logoImage.gameObject.SetActive(false);
+        }
         
         StartCoroutine(PlaySequence());
     }
@@ -59,28 +68,25 @@ public class OuttroCreditManager : MonoBehaviour
     
     IEnumerator PlaySequence()
     {
-        // === 1. ENDING TEXT - HIỆN NGAY LẬP TỨC ===
+        // === 1. ENDING TEXT ===
         endingText.gameObject.SetActive(true);
-        endingText.alpha = 1;  // HIỆN LUÔN, KHÔNG FADE IN
-        
-        // Giữ nguyên 2 giây
+        endingText.alpha = 1;
         yield return new WaitForSeconds(2f);
         
-        // === 2. FADE OUT ENDING TEXT (NHANH) ===
         float t = 0;
         while (t < 1)
         {
-            t += Time.deltaTime / 0.3f;  // 0.3 giây là xong
+            t += Time.deltaTime / 0.3f;
             endingText.alpha = 1 - t;
             yield return null;
         }
         endingText.alpha = 0;
         endingText.gameObject.SetActive(false);
         
-        // === 3. FADE OUT BLACK OVERLAY ===
+        // === 2. FADE OUT BLACK ===
         yield return FadeImage(blackOverlay, 1, 0, fadeDuration);
         
-        // === 4. HIỆN CREDIT ===
+        // === 3. HIỆN CREDIT ===
         creditContainer.gameObject.SetActive(true);
         creditContainer.anchoredPosition = startPos;
         mainCanvas.alpha = 1;
@@ -91,20 +97,78 @@ public class OuttroCreditManager : MonoBehaviour
             bgmSource.Play();
         }
         
-        // === 5. CUỘN CREDIT ===
+        // === 4. CUỘN CREDIT ===
         isScrolling = true;
         yield return StartCoroutine(WaitForCreditComplete());
         
         isScrolling = false;
-        hasEnded = true;
         
-        // === 6. FADE OUT VÀ VỀ MENU ===
+        // === 5. FADE OUT CREDIT ===
         yield return FadeCanvas(mainCanvas, 1, 0, fadeDuration);
-        yield return new WaitForSeconds(endDelay);
         
-        SceneManager.LoadScene("MainMenu");
+        // === 6. HIỆN LOGO ===
+        yield return StartCoroutine(ShowLogo());
+        
+        // === 7. KẾT THÚC ===
+        hasEnded = true;
+        yield return new WaitForSeconds(1f);
+        
+        #if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+        #else
+        Application.Quit();
+        #endif
     }
     
+    // ============================================
+    // HIỂN THỊ LOGO
+    // ============================================
+    IEnumerator ShowLogo()
+    {
+        if (logoImage == null)
+        {
+            Debug.LogWarning("⚠️ Logo chưa được gán!");
+            yield break;
+        }
+        
+        // Bật logo
+        logoImage.gameObject.SetActive(true);
+        
+        // Fade in
+        Color c = logoImage.color;
+        c.a = 0;
+        logoImage.color = c;
+        
+        float t = 0;
+        while (t < 1)
+        {
+            t += Time.deltaTime / 1f;
+            c.a = t;
+            logoImage.color = c;
+            yield return null;
+        }
+        c.a = 1;
+        logoImage.color = c;
+        
+        // Giữ logo
+        yield return new WaitForSeconds(logoDisplayTime);
+        
+        // Fade out
+        t = 0;
+        while (t < 1)
+        {
+            t += Time.deltaTime / 0.5f;
+            c.a = 1 - t;
+            logoImage.color = c;
+            yield return null;
+        }
+        c.a = 0;
+        logoImage.color = c;
+    }
+    
+    // ============================================
+    // HÀM ĐỢI CREDIT
+    // ============================================
     IEnumerator WaitForCreditComplete()
     {
         Canvas.ForceUpdateCanvases();
@@ -115,12 +179,12 @@ public class OuttroCreditManager : MonoBehaviour
         float timeNeeded = totalDistance / scrollSpeed;
         float waitTime = timeNeeded + 3f;
         
-        Debug.Log($"📊 Credit Height: {textHeight}, Container: {containerHeight}");
-        Debug.Log($"⏱️ Cần chờ: {waitTime} giây");
-        
         yield return new WaitForSeconds(waitTime);
     }
     
+    // ============================================
+    // SKIP
+    // ============================================
     void SkipCredit()
     {
         if (hasEnded) return;
@@ -136,9 +200,17 @@ public class OuttroCreditManager : MonoBehaviour
     {
         yield return FadeCanvas(mainCanvas, 1, 0, 0.5f);
         yield return new WaitForSeconds(0.3f);
-        SceneManager.LoadScene("MainMenu");
+        
+        #if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+        #else
+        Application.Quit();
+        #endif
     }
     
+    // ============================================
+    // HÀM FADE
+    // ============================================
     IEnumerator FadeCanvas(CanvasGroup target, float from, float to, float duration)
     {
         target.alpha = from;
