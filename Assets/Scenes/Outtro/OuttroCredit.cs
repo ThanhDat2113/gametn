@@ -1,5 +1,5 @@
 // ============================================
-// OuttroCreditManager.cs - Đơn giản, dùng Image
+// OuttroCreditManager.cs - 2 Logo (Team + Game)
 // ============================================
 
 using System.Collections;
@@ -17,9 +17,13 @@ public class OuttroCreditManager : MonoBehaviour
     public TextMeshProUGUI endingText;
     public Image blackOverlay;
     
+    [Header("=== LOGO GAME ===")]
+    public Image logoGame;                 // Logo team
+    public float logoTeamDisplayTime = 3f;
+    
     [Header("=== LOGO TEAM ===")]
-    public Image logoImage;                // Image logo (tắt ở Hierarchy)
-    public float logoDisplayTime = 3f;
+    public Image logoTeam;                 // Logo tên game
+    public float logoGameDisplayTime = 3f;
     
     [Header("=== CÀI ĐẶT ===")]
     public float scrollSpeed = 40f;
@@ -42,10 +46,16 @@ public class OuttroCreditManager : MonoBehaviour
         endingText.gameObject.SetActive(false);
         blackOverlay.color = new Color(0, 0, 0, 1);
         
-        // Tắt logo
-        if (logoImage != null)
+        // Tắt logo team
+        if (logoTeam != null)
         {
-            logoImage.gameObject.SetActive(false);
+            logoTeam.gameObject.SetActive(false);
+        }
+        
+        // Tắt logo game
+        if (logoGame != null)
+        {
+            logoGame.gameObject.SetActive(false);
         }
         
         StartCoroutine(PlaySequence());
@@ -106,64 +116,66 @@ public class OuttroCreditManager : MonoBehaviour
         // === 5. FADE OUT CREDIT ===
         yield return FadeCanvas(mainCanvas, 1, 0, fadeDuration);
         
-        // === 6. HIỆN LOGO ===
-        yield return StartCoroutine(ShowLogo());
+        // === 6. HIỆN LOGO TEAM ===
+        yield return StartCoroutine(ShowLogo(logoTeam, logoTeamDisplayTime));
         
-        // === 7. KẾT THÚC ===
+        // === 7. HIỆN LOGO GAME ===
+        yield return StartCoroutine(ShowLogo(logoGame, logoGameDisplayTime));
+        
+        // === 8. VỀ MENU ===
         hasEnded = true;
-        yield return new WaitForSeconds(1f);
+        yield return new WaitForSeconds(0.5f);
         
-        #if UNITY_EDITOR
-        UnityEditor.EditorApplication.isPlaying = false;
-        #else
-        Application.Quit();
-        #endif
+        SceneManager.LoadScene("MainMenu");
     }
     
     // ============================================
-    // HIỂN THỊ LOGO
+    // HIỂN THỊ LOGO (Dùng chung cho cả 2)
     // ============================================
-    IEnumerator ShowLogo()
+    IEnumerator ShowLogo(Image logo, float displayTime)
     {
-        if (logoImage == null)
+        if (logo == null)
         {
             Debug.LogWarning("⚠️ Logo chưa được gán!");
             yield break;
         }
         
         // Bật logo
-        logoImage.gameObject.SetActive(true);
+        logo.gameObject.SetActive(true);
         
-        // Fade in
-        Color c = logoImage.color;
+        // Fade in (1 giây)
+        Color c = logo.color;
         c.a = 0;
-        logoImage.color = c;
+        logo.color = c;
         
         float t = 0;
         while (t < 1)
         {
             t += Time.deltaTime / 1f;
             c.a = t;
-            logoImage.color = c;
+            logo.color = c;
             yield return null;
         }
         c.a = 1;
-        logoImage.color = c;
+        logo.color = c;
         
         // Giữ logo
-        yield return new WaitForSeconds(logoDisplayTime);
+        yield return new WaitForSeconds(displayTime);
         
-        // Fade out
+        // Fade out (0.5 giây)
         t = 0;
         while (t < 1)
         {
             t += Time.deltaTime / 0.5f;
             c.a = 1 - t;
-            logoImage.color = c;
+            logo.color = c;
             yield return null;
         }
         c.a = 0;
-        logoImage.color = c;
+        logo.color = c;
+        
+        // Tắt logo
+        logo.gameObject.SetActive(false);
     }
     
     // ============================================
@@ -200,12 +212,7 @@ public class OuttroCreditManager : MonoBehaviour
     {
         yield return FadeCanvas(mainCanvas, 1, 0, 0.5f);
         yield return new WaitForSeconds(0.3f);
-        
-        #if UNITY_EDITOR
-        UnityEditor.EditorApplication.isPlaying = false;
-        #else
-        Application.Quit();
-        #endif
+        SceneManager.LoadScene("MainMenu");
     }
     
     // ============================================
