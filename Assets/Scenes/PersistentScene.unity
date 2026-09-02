@@ -186,7 +186,7 @@ MonoBehaviour:
   minimapRawImage: {fileID: 1181060180}
   minimapMaskImage: {fileID: 28733872}
   markerContainer: {fileID: 1454303242}
-  playerIcon: {fileID: 699040741}
+  playerIcon: {fileID: 1921296221}
   minimapUIRoot: {fileID: 1880227149}
   playerIconSprite: {fileID: 276063120, guid: 9af1f28fb2f7ad541ab5b70bf26701c4, type: 3}
   playerIconColor: {r: 1, g: 1, b: 1, a: 1}
@@ -3899,11 +3899,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 478603516}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!224 &699040741 stripped
-RectTransform:
-  m_CorrespondingSourceObject: {fileID: 2518619955771519164, guid: ef89fb1dd3b6a83409e2392ed2c9f690, type: 3}
-  m_PrefabInstance: {fileID: 1921296216}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &769431707
 GameObject:
   m_ObjectHideFlags: 0
@@ -15421,6 +15416,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
+--- !u!114 &1921296221 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6094362746713842142, guid: ef89fb1dd3b6a83409e2392ed2c9f690, type: 3}
+  m_PrefabInstance: {fileID: 1921296216}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
 --- !u!1 &1949919246
 GameObject:
   m_ObjectHideFlags: 0
