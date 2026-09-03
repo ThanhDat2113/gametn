@@ -126,7 +126,7 @@ public class OuttroCreditManager : MonoBehaviour
         hasEnded = true;
         yield return new WaitForSeconds(0.5f);
         
-        SceneManager.LoadScene("MainMenu");
+        SceneManager.LoadScene("Main Menu");
     }
     
     // ============================================
@@ -212,7 +212,7 @@ public class OuttroCreditManager : MonoBehaviour
     {
         yield return FadeCanvas(mainCanvas, 1, 0, 0.5f);
         yield return new WaitForSeconds(0.3f);
-        SceneManager.LoadScene("MainMenu");
+        SceneManager.LoadScene("Main Menu");
     }
     
     // ============================================
