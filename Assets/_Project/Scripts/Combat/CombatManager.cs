@@ -658,8 +658,10 @@ public delegate void DamageModificationHandler(ActionOutcome outcome, CombatUnit
             unit.ActionsRemainingThisTurn = 0;
         }
 
-        // Lần lượt từng enemy hành động
-        foreach (var enemy in EnemyUnits.Where(e => e.IsAlive))
+        // Lần lượt từng enemy hành động (snapshot để tránh "Collection was modified"
+        // khi TickAllStatuses/ResolveAction xoá enemy chết hoặc Afterimage giữa vòng lặp)
+        var enemySnapshot = EnemyUnits.Where(e => e.IsAlive).ToList();
+        foreach (var enemy in enemySnapshot)
         {
             // Reset multi-action counter cho enemy này
             // Giữ lại extra action đã tích lũy từ player turn (GrantExtraAction)
