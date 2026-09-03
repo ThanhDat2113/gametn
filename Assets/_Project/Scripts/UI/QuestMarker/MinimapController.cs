@@ -372,13 +372,14 @@ public class MinimapController : MonoBehaviour
         foreach (Terrain t in _allTerrains)
         {
             if (t == null) continue;
-            Bounds bounds = t.terrainData.bounds;
-            bounds.center += t.transform.position;
+            Vector3 terrainPos = t.transform.position;
+            Vector3 terrainSize = t.terrainData.size;
+            Bounds bounds = new Bounds(terrainPos + terrainSize * 0.5f, terrainSize);
             bounds.Expand(0.5f);
             if (bounds.Contains(worldPos))
                 return t;
         }
-        return _allTerrains.Length > 0 ? _allTerrains[0] : null;
+        return null;
     }
 
     private void UpdateTerrainForCurrentPosition()
@@ -395,13 +396,25 @@ public class MinimapController : MonoBehaviour
     private float GetTerrainHeight(Vector3 worldPos)
     {
         if (_currentTerrain != null)
-            return _currentTerrain.SampleHeight(worldPos) + _currentTerrain.transform.position.y;
+        {
+            Vector3 terrainPos = _currentTerrain.transform.position;
+            Vector3 terrainSize = _currentTerrain.terrainData.size;
+            Bounds bounds = new Bounds(terrainPos + terrainSize * 0.5f, terrainSize);
+            if (bounds.Contains(worldPos))
+                return _currentTerrain.SampleHeight(worldPos) + _currentTerrain.transform.position.y;
+        }
 
         UpdateTerrainForCurrentPosition();
         if (_currentTerrain != null)
-            return _currentTerrain.SampleHeight(worldPos) + _currentTerrain.transform.position.y;
+        {
+            Vector3 terrainPos = _currentTerrain.transform.position;
+            Vector3 terrainSize = _currentTerrain.terrainData.size;
+            Bounds bounds = new Bounds(terrainPos + terrainSize * 0.5f, terrainSize);
+            if (bounds.Contains(worldPos))
+                return _currentTerrain.SampleHeight(worldPos) + _currentTerrain.transform.position.y;
+        }
 
-        return 0f;
+        return worldPos.y;
     }
 
     // ─── UI Setup ─────────────────────────────────────────────────
@@ -461,7 +474,7 @@ public class MinimapController : MonoBehaviour
         _minimapCamera.clearFlags = CameraClearFlags.SolidColor;
         _minimapCamera.backgroundColor = Color.black;
         _minimapCamera.nearClipPlane = 0.3f;
-        _minimapCamera.farClipPlane = cameraHeight + 50f;
+        _minimapCamera.farClipPlane = cameraHeight + mapScale + 50f;
         camGO.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
         UpdateCameraOrthoSize();
     }
