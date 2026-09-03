@@ -8049,7 +8049,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::QuestMarkerBridge
   questId: 11
-  stepIndex: 4
+  stepIndex: 5
   headPosition: {fileID: 715999095}
   defaultHeadOffset: 0
 --- !u!114 &55791408
@@ -57478,6 +57478,37 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 400000, guid: abc00000000011716978000896806194, type: 3}
   m_PrefabInstance: {fileID: 347725137}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &347761231
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 347761232}
+  m_Layer: 0
+  m_Name: GameObject
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &347761232
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 347761231}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 3.3, y: 8.9, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2053264105}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &347999629
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -104376,6 +104407,7 @@ Transform:
   - {fileID: 134042213}
   - {fileID: 62187498}
   - {fileID: 2123257577}
+  - {fileID: 1040695675}
   - {fileID: 1078663052}
   - {fileID: 238705998}
   - {fileID: 324962328}
@@ -106748,6 +106780,7 @@ GameObject:
   - component: {fileID: 659171670}
   - component: {fileID: 659171675}
   - component: {fileID: 659171674}
+  - component: {fileID: 659171676}
   m_Layer: 0
   m_Name: Object 4-2
   m_TagString: Untagged
@@ -106845,6 +106878,22 @@ MonoBehaviour:
   targetObject: {fileID: 190928115}
   config: {fileID: 11400000, guid: 195967be0a514654eaf3c863497281c3, type: 2}
   defaultVisibility: 0
+--- !u!114 &659171676
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 659171669}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ab9b14809ca169f4ba53024fe3809516, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestMarkerBridge
+  questId: 11
+  stepIndex: 2
+  headPosition: {fileID: 1040695675}
+  defaultHeadOffset: 2
 --- !u!1001 &659898209
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -155195,8 +155244,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::QuestMarkerBridge
   questId: 11
-  stepIndex: 2
-  headPosition: {fileID: 0}
+  stepIndex: 3
+  headPosition: {fileID: 1670436033}
   defaultHeadOffset: 2
 --- !u!114 &993090504
 MonoBehaviour:
@@ -155296,6 +155345,7 @@ Transform:
   - {fileID: 744016298}
   - {fileID: 410636981}
   - {fileID: 486956709}
+  - {fileID: 1670436033}
   m_Father: {fileID: 635879303}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &993090508
@@ -160960,6 +161010,37 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 5223527203922278786, guid: 764c5ef1094e9344ebeb016e8e37b60f, type: 3}
   m_PrefabInstance: {fileID: 1038128003}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1040695674
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1040695675}
+  m_Layer: 0
+  m_Name: GameObject
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1040695675
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1040695674}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.6239779, y: -0.32320544, z: -0.31568673, w: 0.6375984}
+  m_LocalPosition: {x: 180.73999, y: 9.62, z: -731.01}
+  m_LocalScale: {x: 306.6826, y: 404.20767, z: 306.6826}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 635879303}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1044002546
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -177420,6 +177501,7 @@ GameObject:
   - component: {fileID: 1154519962}
   - component: {fileID: 1154519961}
   - component: {fileID: 1154519960}
+  - component: {fileID: 1154519966}
   m_Layer: 7
   m_Name: Soldier (Quest 4-1-1)
   m_TagString: Untagged
@@ -177577,6 +177659,22 @@ Transform:
   - {fileID: 1722331207}
   m_Father: {fileID: 635879303}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1154519966
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1154519959}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ab9b14809ca169f4ba53024fe3809516, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestMarkerBridge
+  questId: 10
+  stepIndex: 4
+  headPosition: {fileID: 1794520967}
+  defaultHeadOffset: 0
 --- !u!1 &1154851983 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 5223527203922765218, guid: 764c5ef1094e9344ebeb016e8e37b60f, type: 3}
@@ -213054,6 +213152,7 @@ MonoBehaviour:
   useTimeline: 0
   teleportTimeline: {fileID: 0}
   waitForTimeline: 0
+  keepBlackUntilSceneLoaded: 1
   useSceneTransition: 0
   targetSceneName: 
   spawnPosKeyPrefix: Spawn
@@ -254233,7 +254332,7 @@ Transform:
   m_GameObject: {fileID: 1638008477}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.035, y: 0.858, z: 0}
+  m_LocalPosition: {x: 0.035, y: 0.408, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -259157,6 +259256,37 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.37067145, y: 3.8529058, z: 0.37067437}
   m_Center: {x: -0.000007674098, y: 1.9264526, z: 0.0000038295984}
+--- !u!1 &1670436032
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1670436033}
+  m_Layer: 0
+  m_Name: GameObject
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1670436033
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1670436032}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 26.5, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 993090507}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1671238315
 GameObject:
   m_ObjectHideFlags: 0
@@ -273236,6 +273366,7 @@ GameObject:
   - component: {fileID: 1770135945}
   - component: {fileID: 1770135944}
   - component: {fileID: 1770135943}
+  - component: {fileID: 1770135949}
   m_Layer: 7
   m_Name: 'Soldier (Quest 4-1-2) '
   m_TagString: Untagged
@@ -273393,6 +273524,22 @@ Transform:
   - {fileID: 1474036226}
   m_Father: {fileID: 635879303}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1770135949
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1770135942}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ab9b14809ca169f4ba53024fe3809516, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestMarkerBridge
+  questId: 10
+  stepIndex: 6
+  headPosition: {fileID: 1638008478}
+  defaultHeadOffset: 2
 --- !u!1001 &1771503996
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -294880,7 +295027,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::QuestMarkerBridge
   questId: 11
-  stepIndex: 5
+  stepIndex: 6
   headPosition: {fileID: 1693902976}
   defaultHeadOffset: 0
 --- !u!114 &1897147167
@@ -302217,6 +302364,7 @@ GameObject:
   - component: {fileID: 1947974914}
   - component: {fileID: 1947974913}
   - component: {fileID: 1947974912}
+  - component: {fileID: 1947974918}
   m_Layer: 7
   m_Name: 'Soldier (Quest 4-2-1) '
   m_TagString: Untagged
@@ -302374,6 +302522,22 @@ Transform:
   - {fileID: 1416274097}
   m_Father: {fileID: 635879303}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1947974918
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1947974911}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ab9b14809ca169f4ba53024fe3809516, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestMarkerBridge
+  questId: 11
+  stepIndex: 0
+  headPosition: {fileID: 741345810}
+  defaultHeadOffset: 2
 --- !u!1001 &1948055713
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -313151,7 +313315,7 @@ Transform:
   m_GameObject: {fileID: 2020461980}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.035, y: 0.858, z: 0}
+  m_LocalPosition: {x: 0.035, y: 0.362, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -317574,7 +317738,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::QuestMarkerBridge
   questId: 10
   stepIndex: 1
-  headPosition: {fileID: 0}
+  headPosition: {fileID: 347761232}
   defaultHeadOffset: 2
 --- !u!114 &2053264102
 MonoBehaviour:
@@ -317668,7 +317832,7 @@ Transform:
   m_GameObject: {fileID: 2053264100}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 98, y: -46.1, z: -459}
+  m_LocalPosition: {x: 98, y: -5.4, z: -459}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -317676,6 +317840,7 @@ Transform:
   - {fileID: 1613506436}
   - {fileID: 1301462283}
   - {fileID: 137474324}
+  - {fileID: 347761232}
   m_Father: {fileID: 635879303}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &2053690698
