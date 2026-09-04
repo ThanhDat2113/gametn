@@ -7,6 +7,7 @@ public class SyncShadow : MonoBehaviour
 
     [Header("Tùy chọn")]
     [SerializeField] private bool syncSpeed = true;
+    [SerializeField] private bool syncFacing = true;
 
     private Animator targetAnimator;
 
@@ -24,6 +25,20 @@ public class SyncShadow : MonoBehaviour
 
         if (syncSpeed)
             targetAnimator.speed = sourceAnimator.speed;
+
+        if (syncFacing)
+            SyncFacing();
+    }
+
+    private void SyncFacing()
+    {
+        Vector3 sourceScale = sourceAnimator.transform.localScale;
+        Vector3 targetScale = targetAnimator.transform.localScale;
+
+        if (Mathf.Abs(sourceScale.x) > 0.01f)
+            targetScale.x = Mathf.Sign(sourceScale.x) * Mathf.Abs(targetScale.x);
+
+        targetAnimator.transform.localScale = targetScale;
     }
 
     private void SyncAnimatorState(Animator target)
